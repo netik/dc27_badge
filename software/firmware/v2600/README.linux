@@ -1,0 +1,39 @@
+Linux ELF Binary Readme.  
+======================== 
+Virtual 2600 is (C) 1995-98 Alex Hornby and others under the GNU
+general public license. Thanks to the X64 team for making
+their work available under the GPL.
+
+PC Joystick support requires that the joystick module be loaded.
+
+This is for those who have down loaded the Linux ELF binary
+release. This release supports sound.
+
+To install for X11 
+==================
+1. The V2600 resource file must be in a directory pointed to by the 
+XAPPLRESDIR environment variable.
+
+2. Add the v2600 binary and the au binary to your path.
+
+Watch out for the fileselector, it doesn't always work yet.
+
+To install for SVGAlib
+======================
+
+1. Add the v2600 and au binaries to your path. As root 
+
+chown root.root v2600
+chmod +s v2600
+
+This is so that SVGAlib can get I/O permissions.
+Remember that SVGAlib applications can and will lock up your machine!
+
+Getting Started
+===============
+type v2600
+This should bring up the built in okie dokie game. 
+
+--
+Alex Hornby 13.2.1998
+

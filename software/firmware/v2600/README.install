@@ -1,0 +1,49 @@
+How to build Virtual 2600 from source code
+------------------------------------------
+
+V2600 now uses the GNU autoconf configuration utilities to simplify 
+configuration. You do not need the autoconf package yourself! 
+
+For audio you will need the Network Audio System package. (Pointed to on the
+home page).
+
+For X11
+=======
+1. Make sure you have the Athena and (optionally FWF) widget sets. The FWF
+   set is necessary to get menus etc.
+
+2. run ./configure in the source directory.
+   Configure is an automatic script that attempts to set up everything, there
+   is no need (in theory) for any manual intervention. So if configure fails
+   on your machine, and it looks like its my fault I really want to know about
+   it. If you want to alter the default compiler flags 
+
+3. Type make.
+
+DO NOT RUN v2600 YET.
+
+Add the file V2600 to your Xt search path as pointed to by the environment
+variable XAPPLRESDIR. For example you might add the line:
+
+export XAPPLRESDIR=/home/alex/lib/X11/app-defaults 
+
+to your .bash_profile if you use bash as your shell.
+
+For SVGALib
+===========
+
+1. ./configure --with-svgalib
+
+2. make
+
+3. Switch to root to run the binary, or follow the instructions in 
+   README.linux to install properly.
+
+
+For DOS
+=======
+Not fully intergrated yet, get Dan Boris' port!
+
+
+Alex Hornby 28.8.1996
+

@@ -1,0 +1,142 @@
+.TH v2600 1 "21 August 1996" "Version 1.0 beta 2" "Alex Hornby"
+.ad b
+.ne 4
+.SH NAME
+v2600 \- Virtual 2600, An Atari 2600 Emulator
+.ne 4
+.SH SYNOPSIS
+v2600 [options] filename
+.ne 4
+.SH DESCRIPTION
+.br
+\fIv2600\fP is an X/SVGAlib  based emulation of the Atari 2600 video game system. It can
+take cartridges as either binary images (2K or 4K), commodore .prg 
+format files, Activision Action Pack .bin files and the new .c26 Common 2600
+file format files. 
+
+There are two versions, one for X11 and one for SVGAlib. Sound is supported
+though a network audio system server. Run au before running v2600 if you
+want sound. Use the -S option if you don't want/have sound.
+
+.br
+
+.SH OPTIONS
+.TP 8
+v2600 accepts both long and short option formats when compiled on Linux and
+other systems with GNU getopt_long(3), otherwise only the short options are
+accepted. 
+.TP
+.B \-f --framerate integer	
+Set the refresh rate
+.TP
+.B \-n --ntsc		
+Emulate an NTSC 2600 (default)
+.TP
+.B \-p --pal		
+Emulate a PAL 2600
+.TP
+.B \-h --help		
+Show usage information. Use this to see any options that are missing on this
+man page.
+.TP
+.B \-v --version		
+Show version.
+.TP
+.B \-f --framerate int  
+Set the refresh rate (1)
+.TP
+.B \-n --ntsc           
+Emulate an NTSC 2600 (default)
+.TP
+.B \-p --pal            
+Emulate a PAL 2600
+.TP
+.B         \-l --lcon  <type> 
+Left controller, 0=JOY, 1=PADDLE, 2=KEYPAD.
+.TP
+.B        \-r --rcon <type> 
+Right controller, 0=JOY, 1=PADDLE, 2=KEYPAD.
+.TP
+.B         \-b --bank <type>
+Bank switching scheme, 0=NONE,1=Atari 8k, 2=Atari 16k
+.TP
+.B         \-m --magstep <int>  
+The magnification to use (X11 only)        
+.TP
+.B       \-s --sound          
+Turn ON sound. (default)
+.TP
+.B        \-S --nosound        
+Turn OFF sound.
+.TP
+.B        \-w --swap           
+Swap the left and right control methods.
+
+
+.SH CONTROLS
+.br
+The default keys are:
+.TP
+.B Joystick movement
+Arrow keys	
+.TP 
+.B Joystick fire 
+Right Alt
+.TP 
+.B Reset
+F2 
+.TP 
+.B Select
+F3
+.TP
+.B Color/BW
+F4 Toggle
+.TP
+.B Player 1 difficultly
+F5=Amature F6=Pro
+.TP
+.B Player 2 difficultly
+F7=Amature F8=Pro
+.TP
+.B Quit
+F10 (X11 uses Window Manager delete button instead)
+
+.SH X RESOURCES
+Only applicable to the X11 version.
+
+The user configurable part of the X resources are chiefly the keyboard 
+bindings. These are in the *canvas.translations section of the V2600 
+app-defaults file and can be set to any key value as defined in 
+/usr/include/X11/keysymdef.h although this file may be on a different path on
+your system.
+.br
+
+The other X resources are in the file to make development changes easier and
+should not be altered by the average user.
+.br
+
+.SH BUGS and LIMITATIONS
+The sound support only plays the pure tone noises. The bank switching is
+fairly unstable. Keypad support doesn't work.
+
+.SH COPY POLICY
+Virtual 2600 is copyright 1995/96 Alex Hornby.
+
+Virtual 2600 is free software distributed under the terms of the GNU General 
+Public License. See the file COPYING for details.
+
+.SH AUTHOR
+Alex Hornby
+<ahornby@zetnet.co.uk>
+
+Check my web site at http://www.users.zetnet.co.uk/ahornby for updates.
+.ne 4
+.fi
+
+
+
+
+
+
+
+

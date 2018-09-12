@@ -1,0 +1,79 @@
+v2600*mitshm: true
+v2600*fileButton.label:	File
+v2600*fileButton.borderWidth: 0
+v2600*optionButton.label: Tools
+v2600*optionButton.borderWidth: 0
+v2600*optionMenu.optionRate.label: Report fps
+v2600*optionMenu.optionSkip.label: Set frame skipping
+
+v2600*fileMenu.load.label: Open
+v2600*fileMenu.quit.label: Exit
+v2600*fileMenu.debug.label: Debugger
+v2600.input: true
+v2600*input: true
+v2600.title: Virtual 2600
+v2600.maxWidth: 960
+v2600.minWidth: 320
+
+*showGrip: False
+v2600*canvas.translations:	#augment \n\
+			<ButtonPress>	: VcsButton() \n\
+			<ButtonRelease>	: VcsButton() \n\
+			<Motion>	: VcsMotion() \n\
+
+*filesel.width: 320
+*filesel_popup.title: Load Cartridge
+*fshell.title: File Selector
+
+
+*rateShell_popup.width: 150
+*rateShell_popup.title: Frame Rate
+*rateShell_popup*close.labelString: Close
+*rateShell_popup*update.labelString: Update
+
+*skipShell_popup.title: Set Frame Skipping
+*skipShell_popup*skipScroll.length: 320
+*skipShell_popup*skipScroll.shown: 0.12
+*skipShell_popup*skipScroll.minmumThumb: 7
+*skipShell_popup*close.labelString: Close
+
+*aboutDlg_popup.title: About Virtual 2600
+*aboutDlg_popup*messageString: Virtual 2600 is an Atari 2600 emulator\n\
+Copyright 1995-98 Alex Hornby and others\n\
+under the terms of the GNU General Public License\n\
+See file COPYING for details of license,\n\
+and CREDITS for details of contributors.
+
+*fileNotFoundDlg_popup.title: V2600 File Not Found
+*fileNotFoundDlg_popup*messageString: File Not Found
+
+
+*foreground:	black
+*background:	grey
+Debug*foreground:	black
+Debug*background:	grey
+
+*.MenuButton*font:	-b&h-*-medium-r-*-*-12-*-*-*-*-*-*-*
+*.Command*font:	-b&h-*-medium-r-*-*-12-*-*-*-*-*-*-*
+
+Hardware*apply.labelString:	Apply
+*Label.borderWidth: 0
+
+Debug.title: Virtual 2600 Debugger
+Debug*fileButton.borderWidth: 0
+Debug*toolsButton.borderWidth: 0
+Debug*toolsButton.label:    Tools
+Debug*fileMenu.quit.label:    Close
+Debug*apply.width:	135
+Debug*apply.label:	Apply
+Debug*raster.width:	135
+Debug*raster.label:	Raster
+Debug*raster.translations: #augment \n\
+				<Key>Return: raster()
+
+
+
+
+
+
+

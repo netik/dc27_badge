@@ -1,0 +1,77 @@
+Alex Hornby
+-----------
+Main author and maintainer.
+
+Ron Fries
+---------
+TIA Chip Sound Simulator v1.0. A superb piece of work.
+
+Dan Boris
+------------
+Creator of the DOS 16bit port, Virtual VCS. Also fixed some bugs in the 
+emulation.Thanks Dan! 
+
+Matthew Stroup
+--------------
+Amiga port
+
+Bob Colbert/Retroware
+---------------------
+For making okiedokie freeware.
+
+Jarkko Sonninen, 
+Teemu Rantanen,
+Jouko Valta 
+and Ettore Perazzoli.
+---------------------
+The x64 team. I based the CPU emulation on their 6510 emulation. The xdebugger
+is also based on x64 code.
+
+
+John Richardson
+---------------
+Added Motif (Lesstif) support, and tested V2600 on a chunky DEC Alpha.  
+
+
+Mark Szalga
+Paul Janzen
+James Burgess
+Eric Maillet
+Chris J. Kiick
+--------------
+Beta testing, caught some good bugs. The X11 libraries problem is 
+interesting! And now fixed.
+
+
+James McDuffie 
+--------------
+Told me I had forgotten to include the man page with beta 2. (The old uns are
+the best uns:)
+
+
+David Firth
+-----------
+Patches to allow beta 1 operation without the FWF widget set. Also wrote the
+excellent Atari800 emulator.
+
+
+The Free Widget Foundation
+--------------------------
+Some of the Xt widgets used.
+
+
+GNU/FSF
+-------
+For the compilers, editors, autoconf, tar etc....
+Even if RMS does try to rename Linux to Lignux!
+
+
+Linux kernel developers
+-----------------------
+Cheers. Now if only I could afford that Alpha to go with it :)
+
+
+
+
+
+

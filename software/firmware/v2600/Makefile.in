@@ -1,0 +1,184 @@
+# -----------------------------------------------------------------------
+# Copyright 1998 Alex Hornby see COPYING for details
+# -----------------------------------------------------------------------
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+INSTALL=@INSTALL@
+CC=@CC@
+
+
+# -----------------------------------------------------------------------
+# This is the directory the X resource file is copied to. 
+# -----------------------------------------------------------------------
+XAPPLOADDIR=@libdir@/X11/app-defaults
+
+# ----------------------------------------------------------------------
+# Spew printfs every where
+# ----------------------------------------------------------------------
+verbose= -DVerbose=1
+
+# -----------------------------------------------------------------------
+# Where are the graphics, sounds etc? in the datadir!
+# -----------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------
+# Name object files
+# -----------------------------------------------------------------------
+
+OBJS= raster.o @disp@_disp.o table.o misc.o @dbgtype@_debug.o files.o\
+	vmachine.o @dispfiles@ @mouse@_mouse.o dbg_mess.o \
+	memory.o cpu.o main.o @disp@_keyb.o limiter.o exmacro.o keyboard.o\
+	collision.o options.o tiasound.o @sound@_sound.o @ui@_ui.o \
+	@joy@_joy.o qsound.o
+
+options = $(verbose) $(libdef) 
+CDEBUGFLAGS =  @CFLAGS@ @X_CFLAGS@
+
+CCOPTIONS = $(options) -Wall  -pipe $(profile) 
+
+MY_CFLAGS=$(CDEBUGFLAGS)
+
+TRANSFORM=@program_transform_name@
+TARGET=v2600
+
+PROGRAMS=$(TARGET)
+
+all: $(PROGRAMS)
+
+LOCAL_LIBRARIES = @LDFLAGS@ @X_PRE_LIBS@ @LIBS@  @X_EXTRA_LIBS@
+
+
+# -----------------------------------------------------------------------
+# Don't change anything below the line unless you know what you are doing.
+# -----------------------------------------------------------------------
+
+.c.o:
+	$(CC) $(MY_CFLAGS) -c $<
+
+$(TARGET): $(OBJS)
+	$(CC) $(MY_CFLAGS) $(OBJS) -o $(TARGET) $(LOCAL_LIBRARIES) 
+
+backup: clean
+	tar cvf - @top_srcdir@ | gzip -9 > ~/v2600-backup.tgz
+
+rcs: 
+	ci config.in *.c *.h
+
+mostlyclean: clean
+
+clean:
+	-rm *.exe *.o *~ *.out *log $(TARGET)
+
+distclean: clean
+	-rm version.h config.cache config.h config.log configure.scan \
+	v2600.spec
+
+maintainer-clean: distclean
+	@echo "This command is intended for maintainers to use; it"
+	@echo "deletes files that may require special tools to rebuild." 
+
+
+distdir=$(TARGET)-@version@
+
+bindist: $(TARGET)
+	if test -d ../$(distdir) && ; then\
+		echo "Binary distribution already exists!";\
+		exit 1;\
+	else \
+	        strip ./v2600;\
+		mkdir ../$(distdir);\
+		cp v2600 v2600.man V2600 CREDITS COPYING README* *.lsm ../$(distdir);\
+		cd .. && tar cvf - $(distdir) | gzip -9 > \
+			$(TARGET)bin-@version@.tar.gz;\
+	fi
+
+dist:
+	if test -d ../$(distdir) ; then \
+		echo "Source distribution already exists!";\
+		rm -rf ../$(distdir); \
+	fi; \
+	mkdir ../$(distdir); \
+	chmod -R +rw ../$(distdir);\
+	tar cf - *.c *.h ./config/config* config/*.in config/install-sh \
+		V2600 v2600.man stamp-h.in \
+		Makefile.in config.h.in \
+		configure.in configure CREDITS COPYING \
+		README* INSTALL *.lsm \
+		| ( cd ../$(distdir) && tar xf -);\
+	(cd .. && tar cvf - $(distdir) )| gzip -9 > \
+	../$(TARGET)src-@version@.tar.gz;\
+
+
+#  Do not touch! Used for packaging
+rpm: ../$(TARGET)src-@version@.tar.gz
+	cp v2600.spec ${HOME}/rpmbuild/SPECS
+	cp ../$(TARGET)src-@version@.tar.gz ${HOME}/rpmbuild/SOURCES
+	cd ${HOME}/rpmbuild/SPECS && rpm -ba v2600.spec
+
+#cp ../$(TARGET)src-@version@.tar.gz /usr/src/redhat/SOURCES
+
+
+dossrc:
+	if test -d ../$(distdir); then\
+		echo "Source distribution already exists!";\
+		exit 1;\
+	else \
+		mkdir ../$(distdir);\
+		cp *.c *.h V2600 v2600.man \
+			install-sh configure.in configure CREDITS COPYING \
+			Makefile.dos config.dos README* *.lsm ../$(distdir);\
+		chmod -R +rw ../$(distdir);\
+		cd .. && tar cvf - $(distdir) | gzip -9 > \
+			$(TARGET)dos-@version@.tar.gz;\
+	fi
+
+# -----------------------------------------------------------------------
+# Configure rules
+# -----------------------------------------------------------------------
+
+${srcdir}/configure: configure.in
+	cd ${srcdir} && autoconf
+
+# autoheader might not change config.h.in so touch a stamp file
+${srcdir}/config.h.in: stamp-h.in
+${srcdir}/stamp-h.in: configure.in acconfig.h
+	cd ${srcdir} && autoheader
+	echo timestamp > ${srcdir}/stamp-h.in
+
+config.h: stamp-h
+stamp-h: config.h.in config.status
+	CONFIG_FILES= CONFIG_HEADERS=config.h ./config.status
+	echo timstamp > stamp-h
+
+Makefile: Makefile.in config.status
+	CONFIG_FILES=Makefile CONFIG_HEADERS= ./config.status
+
+config.status: configure
+	./config.status --recheck
+
+# -----------------------------------------------------------------------
+# Install rules
+# -----------------------------------------------------------------------
+
+install:
+	@INSTALL@ -d @bindir@
+	@INSTALL@ -s $(TARGET)  @bindir@/`echo $(TARGET)|sed '$(TRANSFORM)'`
+	@INSTALL@ -d $(XAPPLOADDIR)
+	@INSTALL_DATA@ V2600 $(XAPPLOADDIR)
+	@INSTALL@ -d @mandir@/man1
+	@INSTALL_DATA@ v2600.man @mandir@/man1/v2600.1
+
+
+uninstall:
+	-rm @bindir@/`echo $(TARGET)|sed '$(TRANSFORM)'`
+	-rm $(XAPPLOADDIR)/V2600
+
+
+
+
+
+

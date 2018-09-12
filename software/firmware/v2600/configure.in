@@ -1,0 +1,230 @@
+dnl Keep these here to easily turn caching on/off
+dnl define([AC_CACHE_LOAD],) 
+dnl define([AC_CACHE_SAVE],)
+AC_REVISION($Revision: 1.3 $)
+
+dnl Process this file with autoconf to produce a configure script.
+dnl Check for cpu.c to show that we are in the correct directory.
+AC_INIT(cpu.c)
+
+AC_CONFIG_AUX_DIR(./config/)
+
+dnl Set Version
+version="0.82"
+joy=no
+sound=no
+ui=motif
+mouse=no
+dos=no
+dbgtype=txt
+
+AC_SUBST(version)
+echo "#define VERSION \"$version\"">version.h
+ 
+AC_DEFINE(Verbose)
+
+disp="x11"
+dispfiles=""
+profile=""
+
+
+dnl User options
+AC_ARG_WITH(motif,--with-motif	Compiled for Motif,\
+	echo "Motif chosen"; ui=motif , disp=x11)
+AC_ARG_WITH(svgalib,
+	--with-svgalib	Compiled for Linux console,\
+ 	echo "SVGAlib chosen"; no_x=yes; mouse=svga; disp=svga, disp=x11)
+AC_ARG_WITH(dos, --with-dos	Organise files for DOS,\
+ 	echo "DOS chosen"; LIBS="-lalleg -lm";\
+	dbgtype=txt;dos=yes;no_x=yes; mouse=no; joy=dos; CC=gcc; disp=dos; sound=dos,)
+AC_ARG_WITH(profile, --with-profile	Use gprof, profile=yes)
+
+# Check for a modern gcc
+AC_PROG_CC
+
+if test "n$dos" = "nno" ; then
+AC_CANONICAL_SYSTEM
+case $target in
+i*86-*-linux)
+        echo 'An x86 Linux box. Nice OS, shame about the instruction set.'
+	if test "n$profile" != "n"; then
+          CFLAGS="-p -g -pipe -Wall -m486 -O"
+	else
+	  CFLAGS="-g -pipe -Wall -m486 -O3"
+	fi
+        AC_SUBST(CFLAGS)
+        AC_CHECK_HEADER(linux/joystick.h, joy=linux)	
+	sound=linux
+	;;
+esac
+
+# Allow some BSD functions on AIX
+AC_AIX
+# Boiler Plate
+AC_ISC_POSIX
+
+AC_C_BIGENDIAN
+
+# Allow program name transformation
+AC_ARG_PROGRAM
+
+if test "n$CC" != ngcc; then
+	echo "Using $CC, GCC might give better results."
+else
+	changequote(,)dnl
+	v=`gcc -v 2>&1|grep version|sed 's/^.*\([0-9]\.[0-9]\.[0-9]\).*/\1/g'`
+	if test `echo $v|sed 's/\.//g'` -lt 245; then
+        	echo "You have only version $v, please install a newer version of gcc!"
+        	exit 1
+	else
+	        echo "Using gcc version $v"
+	fi
+	changequote([,])dnl
+fi
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+# Check for non-X libraries.
+AC_CHECK_LIB(Dir, DirectoryOpen)
+AC_CHECK_LIB(m, acos)
+AC_CHECK_LIB(audio, AuSoundPlay)
+
+if test $sound = no; then
+	case $LIBS in
+	*laudio*)
+		echo "Using nassound.c for experimental sound support."
+		echo "Make sure you have an audio server started to run"
+		echo "v2600!"
+		sound=nas
+		;;
+	*)
+		echo "No sound support libs found!"
+		echo "using nosound.c"
+		sound=no
+		;;
+	esac
+fi
+
+# Look for the X paths
+AC_PATH_XTRA
+
+# Give a default if the macro failed
+if test "n$x_libraries" = "n"; then
+	x_libraries="/usr/lib"
+fi
+
+if test $disp = x11 && test "n$no_x" != nyes; then
+	# Check for X11 libraries
+	AC_CHECK_LIB(X11, XOpenDisplay,,, -L$x_libraries)	
+	AC_CHECK_LIB(Xext, XMissingExtension,,, -L$x_libraries)	
+	AC_CHECK_LIB(Xmu, XmuCvtFunctionToCallback,,, -L$x_libraries)
+	AC_CHECK_LIB(Xt,  XtDispatchEvent,,, -L$x_libraries)
+	AC_CHECK_LIB(Xaw, XawTextDisplay,,, -L$x_libraries)
+	AC_CHECK_LIB(Xpm, XpmReadFileToPixmap ,,, -L$x_libraries)
+	if test $ui = "motif"; then
+	  AC_CHECK_LIB(Xm, XmCreateForm,,, -L$x_libraries)
+	fi
+	# Check for the XFree86 vidmode extension
+	AC_CHECK_LIB(Xxf86vm, XF86VidModeQueryExtension,,,-L$x_libraries)
+	dnl Give a message if X11 not found.
+	case $LIBS in
+	*lX11*)  
+		disp=x11 
+		dispfiles="wmdelete.o x11_vidmode.o"
+	        dbgtype=x11
+		mouse=x11
+		AC_DEFINE(XDEBUGGER)
+		;;
+	*)
+		echo "No X11 libraries found, use --x-includes=dir"
+		echo "and --x-libraries=dir to specify the directories."
+		;;
+	esac
+
+	dnl Use the Lesstif/Motif widgets if available
+	if test "y$ac_cv_lib_Xm_XmCreateForm" = "yyes"; then 
+		echo "Using the Motif user interface"
+		if test $ui = "motif"; then
+                   dbgtype="motif"
+		   ui="motif"
+		fi
+	else
+		echo "No UI libs found, using noui.c"
+		dispfiles="$dispfiles Canvas.o"
+		ui=no
+	fi
+
+	AC_MSG_CHECKING(X11 resource directory)
+	if test "x$XAPPLRESDIR" = "x"; then
+		if test "x$prefix" != "x$ac_default_prefix" && test "x$prefix" != "x/usr";
+		then
+		  	AC_MSG_RESULT(no);
+			echo "Environment variable XAPPLRESDIR not set, could cause problems."
+			echo "try setting it to ~/lib/X11/app-defaults in your .profile"
+			echo "This can be a common cause of X11 lock ups."
+		else
+			AC_MSG_RESULT(yes);
+		fi
+	else
+		AC_MSG_RESULT(yes);
+	fi	
+else	
+	# SVGAlib
+	AC_CHECK_LIB(vga, vga_init,,,)	
+	ui=no
+	dbgtype=txt
+	case $LIBS in
+	*audio*) 
+	    	LIBS="$LIBS -L$x_libraries -lXau"
+		;;
+	*)
+		;;
+	esac
+	echo "$disp, $no_x, $dbgtype"	
+fi
+
+fi # end of DOS
+
+AC_SUBST(dbgtype)
+AC_SUBST(disp)
+AC_SUBST(dispfiles)
+AC_SUBST(joy)
+AC_SUBST(mouse)
+AC_SUBST(sound)
+AC_SUBST(ui)
+lsmdate=`date +%d%b%y`
+AC_SUBST(lsmdate)
+
+LIBS="$X_LIBS $LIBS"
+AC_HEADER_STDC
+AC_CHECK_HEADERS(sys/time.h unistd.h getopt.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+AC_HEADER_TIME
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(getopt_long)
+AC_CHECK_FUNCS(gettimeofday)
+AC_CHECK_FUNCS(select)
+AC_CHECK_FUNCS(atexit on_exit)
+
+
+if test "n$no_x" != nyes ; then
+	AC_CHECK_FUNCS(XShmAttach)
+fi
+
+AC_CONFIG_HEADER(config.h)
+
+AC_OUTPUT( Makefile v2600.spec:config/v2600.spec.in v2600.lsm:config/v2600.lsm.in, echo timestamp > stamp-h)
+
+echo "<<Please check the above output for any errors.>>"
+
+
+
+
+
+
+
+

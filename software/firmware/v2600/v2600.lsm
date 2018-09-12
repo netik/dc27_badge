@@ -1,0 +1,15 @@
+Begin3
+Title: Virtual 2600          
+Version: 	0.82    
+Entered-date: 	15Mar98  
+Description: 	An Atari 2600 emulator. Runs under X11/SVGAlib. 
+                supports sound using the network audio system. Web page at
+		http://www.users.zetnet.co.uk/ahornby/v2600.html
+Keywords: 	v2600 x2600 emulator Atari 2600 games vcs joystick
+Author: 	ahornby@zetnet.co.uk (Alex Hornby)       
+Maintained-by: 	ahornby@zetnet.co.uk (Alex Hornby)       
+Primary-site:	http://www.users.zetnet.co.uk/ahornby/v2600.html
+Secondary-site: ftp://ftp.demon.co.uk/pub/emulators/atari/
+Platform: 	X11 gcc NAS SVGAlib
+Copying-policy: GPL
+End

@@ -1,0 +1,31 @@
+Summary: Virtual 2600, Atari 2600 Emulator
+Name: v2600
+Version: @version@
+Release: 1
+Copyright: GPL
+Group: Games
+Source0: v2600src-@version@.tar.gz
+BuildRoot: /tmp/v2600
+
+%description
+Virtual 2600, Atari 2600 Emulator
+---------------------------------
+You can now experience all the fun of old 2600 games on your high powered 
+workstation. Thrill to the blocky graphics! Get headaches from the flicker! 
+Wallow in nostalgia! Includes built in game from RetroWare.
+-- Alex Hornby 1998
+
+%prep
+%setup
+%build
+configure --prefix=$RPM_BUILD_ROOT/usr
+make CFLAGS="$RPM_OPT_FLAGS" LDFLAGS=-s
+
+%install
+make install
+%files
+%doc README README.linux CREDITS COPYING
+
+/usr/bin/v2600
+/usr/lib/X11/app-defaults/V2600
+/usr/man/man1/v2600.1

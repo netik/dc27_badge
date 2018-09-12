@@ -1,0 +1,81 @@
+Virtual 2600 README
+===================
+
+$Id: README,v 1.2 1998/02/12 23:50:25 ahornby Exp ahornby $
+
+Virtual 2600 is BETA software, please report any bugs.
+
+Introduction
+------------
+Welcome to V2600, an Atari 2600 Emulator for UN*X/X, Linux/SVGAlib 
+and now DOS and Amiga. 
+
+The DOS and Amiga ports are currently distributed separately, this
+document applies to the X11 and SVGAlib versions.
+
+You can now experience all the fun of old 2600 games on your high powered 
+workstation. Thrill to the blocky graphics! Get headaches from the flicker! 
+Wallow in nostalgia!
+
+Using the Emulator
+------------------
+See the man page.
+
+Why?  
+---- 
+V2600 is the the result on my 3rd year university project
+plus my copious free time. I aimed to preserve old computer games that
+would otherwise be lost to the world.
+
+Platforms 
+--------- 
+
+I have tested V2600 on my home x86 Linux 2.x system and on a Sparc 2
+running SunOS 4.3. It _should_ work on any UNIX/X11 system, if you
+compile it on anything other OS or architecture please send me an
+email
+
+Performance
+-----------
+The 2600 is notoriously difficult to emulate, especially in C. So I would 
+recommend at least a Pentium level processor. The frame buffer speed also 
+matters.
+
+On my Pentium 100 it is just nice with frame skipping set to 2 with
+sound support enabled. Without sound I don't need fram skipping
+anymore.
+
+Note that enabling sound support slows down the emulation.
+Better performance has and will come in later releases.
+It also produces quite a bit of debugging output. Redirecting this to
+/dev/null speeds things up.
+
+Known Bugs/Limitations
+----------------------
+
+The SVGAlib version can lock up your machine. (In common with a lot of
+SVGAlib stuff!). I'll do a GGI target when the drivers for the S3-868
+are available (No time to do it myself!).
+
+Not all games work. (Spy hunter looks nice though:)
+
+Copyright
+---------
+Virtual 2600 is free software distributed under the terms of the GNU General 
+Public License. See the file COPYING for details.
+
+No warranty etc. etc.
+
+Credits
+-------
+A full list of contributors can be found in the file CREDITS. 
+
+Latest versions 
+--------------- 
+To get the latest versions look at
+http://www.plasma.ddns.org/. 
+
+--
+Alex Hornby 13.2.1998
+
+
