@@ -123,7 +123,7 @@ V2600 = $(CHIBIOS)/../v2600
 include $(V2600)/build.mk
 
 # Define linker script file here
-LDSCRIPT= NRF52832_softdecvice.ld
+LDSCRIPT= NRF52840_softdecvice.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
