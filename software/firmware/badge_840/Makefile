@@ -3,7 +3,7 @@
 # NOTE: Can be overridden externally.
 #
 
-PLATFORM=NRF5/NRF52832
+PLATFORM=NRF5/NRF52840
 BOARD=NONSTANDARD_NRF52840_IDES_OF_DEFCON
 
 # Compiler options here.
@@ -94,7 +94,7 @@ PROJECT = badge
 CHIBIOS         = ../ChibiOS
 CHIBIOS_CONTRIB = $(CHIBIOS)/../ChibiOS-Contrib
 # Startup files.
-include $(CHIBIOS_CONTRIB)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_nrf52.mk
+include $(CHIBIOS_CONTRIB)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_nrf52840.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
