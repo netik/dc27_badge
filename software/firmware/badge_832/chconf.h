@@ -29,6 +29,7 @@
 #define _CHCONF_H_
 
 #define _CHIBIOS_RT_CONF_
+#define _CHIBIOS_RT_CONF_VER_5_0_
 
 /*
  * Disable advanced kernel mode so that ChibiOS doesn't use the
@@ -73,6 +74,18 @@
  *          this value.
  */
 #define CH_CFG_ST_TIMEDELTA                 0
+
+/**
+ * @brief   Time intervals data size.
+ * @note    Allowed values are 16, 32 or 64 bits.
+ */
+#define CH_CFG_INTERVALS_SIZE               32
+
+/**
+ * @brief   Time types data size.
+ * @note    Allowed values are 16 or 32 bits.
+ */
+#define CH_CFG_TIME_TYPES_SIZE              32
 
 /** @} */
 
@@ -146,6 +159,24 @@
  * @{
  */
 /*===========================================================================*/
+
+#define CH_CFG_USE_OBJ_FIFOS FALSE
+#define CH_CFG_USE_FACTORY FALSE
+#define CH_CFG_FACTORY_MAX_NAMES_LENGTH     0
+#define CH_CFG_FACTORY_OBJECTS_REGISTRY     FALSE
+#define CH_CFG_FACTORY_GENERIC_BUFFERS      FALSE
+#define CH_CFG_FACTORY_SEMAPHORES           FALSE
+#define CH_CFG_FACTORY_MAILBOXES            FALSE
+#define CH_CFG_FACTORY_OBJ_FIFOS            FALSE
+
+#define CH_CFG_SYSTEM_EXTRA_FIELDS
+#define CH_CFG_SYSTEM_INIT_HOOK(tp) {                                       \
+  /* Add threads initialization code here.*/                                \
+}
+#define CH_CFG_THREAD_EXTRA_FIELDS
+#define CH_CFG_THREAD_INIT_HOOK(tp) {                                       \
+  /* Add threads initialization code here.*/                                \
+}
 
 /**
  * @brief   Time Measurement APIs.

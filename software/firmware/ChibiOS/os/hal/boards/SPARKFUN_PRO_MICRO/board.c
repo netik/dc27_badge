@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2015 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ void boardInit(void) {
    * External interrupts setup, all disabled initially.
    */
   EICRA  = 0x00;
-  EICRB  = 0x00;
+//  EICRB  = 0x00; /* Bug 758 */
   EIMSK  = 0x00;
 
 }

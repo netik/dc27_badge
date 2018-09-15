@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -360,7 +360,7 @@ void i2s_lld_start(I2SDriver *i2sp) {
       bool b;
 
       /* Enabling I2S unit clock.*/
-      rccEnableSPI1(FALSE);
+      rccEnableSPI1(true);
 
 #if STM32_I2S_RX_ENABLED(STM32_I2S_SPI1_MODE)
       b = dmaStreamAllocate(i2sp->dmarx,
@@ -394,7 +394,7 @@ void i2s_lld_start(I2SDriver *i2sp) {
       bool b;
 
       /* Enabling I2S unit clock.*/
-      rccEnableSPI2(FALSE);
+      rccEnableSPI2(true);
 
 #if STM32_I2S_RX_ENABLED(STM32_I2S_SPI2_MODE)
       b = dmaStreamAllocate(i2sp->dmarx,
@@ -428,7 +428,7 @@ void i2s_lld_start(I2SDriver *i2sp) {
       bool b;
 
       /* Enabling I2S unit clock.*/
-      rccEnableSPI3(FALSE);
+      rccEnableSPI3(true);
 
 #if STM32_I2S_RX_ENABLED(STM32_I2S_SPI3_MODE)
       b = dmaStreamAllocate(i2sp->dmarx,
@@ -484,17 +484,17 @@ void i2s_lld_stop(I2SDriver *i2sp) {
 
 #if STM32_I2S_USE_SPI1
     if (&I2SD1 == i2sp)
-      rccDisableSPI1(FALSE);
+      rccDisableSPI1();
 #endif
 
 #if STM32_I2S_USE_SPI2
     if (&I2SD2 == i2sp)
-      rccDisableSPI2(FALSE);
+      rccDisableSPI2();
 #endif
 
 #if STM32_I2S_USE_SPI3
     if (&I2SD3 == i2sp)
-      rccDisableSPI3(FALSE);
+      rccDisableSPI3();
 #endif
   }
 }

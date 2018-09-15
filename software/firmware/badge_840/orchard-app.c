@@ -213,18 +213,18 @@ void orchardAppTimer(const OrchardAppContext *context,
   context->instance->timer_repeating = repeating;
 
   /*
-   * The US2ST() macro used by ChibiOS does not work with
+   * The TIME_US2I() macro used by ChibiOS does not work with
    * large microsecond counts when the system tick resolution is
-   * fairly high. With a resolutio of 10000, the US2ST() macro
+   * fairly high. With a resolutio of 10000, the TIME_US2I() macro
    * macro wraps at 429496. So for values above this, we need to
    * base the calculation on milliseconds instead.
    */
 
   if (usecs > 429496)
-    chVTSet(&context->instance->timer, MS2ST(usecs / 1000),
+    chVTSet(&context->instance->timer, TIME_MS2I(usecs / 1000),
       timer_do_send_message, NULL);
   else
-    chVTSet(&context->instance->timer, US2ST(usecs),
+    chVTSet(&context->instance->timer, TIME_US2I(usecs),
       timer_do_send_message, NULL);
 
   return;

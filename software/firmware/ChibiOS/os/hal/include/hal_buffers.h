@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -217,7 +217,7 @@ typedef io_buffers_queue_t output_buffers_queue_t;
 }
 
 /**
- * @brief   Evaluates to @p TRUE if the specified input buffers queue is empty.
+ * @brief   Evaluates to @p true if the specified input buffers queue is empty.
  *
  * @param[in] ibqp      pointer to an @p input_buffers_queue_t structure
  * @return              The queue status.
@@ -229,7 +229,7 @@ typedef io_buffers_queue_t output_buffers_queue_t;
 #define ibqIsEmptyI(ibqp) ((bool)(bqSpaceI(ibqp) == 0U))
 
 /**
- * @brief   Evaluates to @p TRUE if the specified input buffers queue is full.
+ * @brief   Evaluates to @p true if the specified input buffers queue is full.
  *
  * @param[in] ibqp      pointer to an @p input_buffers_queue_t structure
  * @return              The queue status.
@@ -284,14 +284,14 @@ extern "C" {
   uint8_t *ibqGetEmptyBufferI(input_buffers_queue_t *ibqp);
   void ibqPostFullBufferI(input_buffers_queue_t *ibqp, size_t size);
   msg_t ibqGetFullBufferTimeout(input_buffers_queue_t *ibqp,
-                                systime_t timeout);
+                                sysinterval_t timeout);
   msg_t ibqGetFullBufferTimeoutS(input_buffers_queue_t *ibqp,
-                                 systime_t timeout);
+                                 sysinterval_t timeout);
   void ibqReleaseEmptyBuffer(input_buffers_queue_t *ibqp);
   void ibqReleaseEmptyBufferS(input_buffers_queue_t *ibqp);
-  msg_t ibqGetTimeout(input_buffers_queue_t *ibqp, systime_t timeout);
+  msg_t ibqGetTimeout(input_buffers_queue_t *ibqp, sysinterval_t timeout);
   size_t ibqReadTimeout(input_buffers_queue_t *ibqp, uint8_t *bp,
-                        size_t n, systime_t timeout);
+                        size_t n, sysinterval_t timeout);
   void obqObjectInit(output_buffers_queue_t *obqp, bool suspended, uint8_t *bp,
                      size_t size, size_t n, bqnotify_t onfy, void *link);
   void obqResetI(output_buffers_queue_t *obqp);
@@ -299,15 +299,15 @@ extern "C" {
                              size_t *sizep);
   void obqReleaseEmptyBufferI(output_buffers_queue_t *obqp);
   msg_t obqGetEmptyBufferTimeout(output_buffers_queue_t *obqp,
-                                 systime_t timeout);
+                                 sysinterval_t timeout);
   msg_t obqGetEmptyBufferTimeoutS(output_buffers_queue_t *obqp,
-                                  systime_t timeout);
+                                  sysinterval_t timeout);
   void obqPostFullBuffer(output_buffers_queue_t *obqp, size_t size);
   void obqPostFullBufferS(output_buffers_queue_t *obqp, size_t size);
   msg_t obqPutTimeout(output_buffers_queue_t *obqp, uint8_t b,
-                      systime_t timeout);
+                      sysinterval_t timeout);
   size_t obqWriteTimeout(output_buffers_queue_t *obqp, const uint8_t *bp,
-                         size_t n, systime_t timeout);
+                         size_t n, sysinterval_t timeout);
   bool obqTryFlushI(output_buffers_queue_t *obqp);
   void obqFlush(output_buffers_queue_t *obqp);
 #ifdef __cplusplus

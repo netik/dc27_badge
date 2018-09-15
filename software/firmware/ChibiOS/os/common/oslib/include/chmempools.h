@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -27,6 +27,10 @@
 
 #ifndef CHMEMPOOLS_H
 #define CHMEMPOOLS_H
+
+#if !defined(CH_CFG_USE_MEMPOOLS)
+#define CH_CFG_USE_MEMPOOLS                 FALSE
+#endif
 
 #if (CH_CFG_USE_MEMPOOLS == TRUE) || defined(__DOXYGEN__)
 
@@ -65,6 +69,7 @@ typedef struct {
   struct pool_header    *next;          /**< @brief Pointer to the header.  */
   size_t                object_size;    /**< @brief Memory pool objects
                                                     size.                   */
+  unsigned              align;          /**< @brief Required alignment.     */
   memgetfunc_t          provider;       /**< @brief Memory blocks provider
                                                     for this pool.          */
 } memory_pool_t;
@@ -91,10 +96,11 @@ typedef struct {
  *
  * @param[in] name      the name of the memory pool variable
  * @param[in] size      size of the memory pool contained objects
+ * @param[in] align     required memory alignment
  * @param[in] provider  memory provider function for the memory pool
  */
-#define _MEMORYPOOL_DATA(name, size, provider)                              \
-  {NULL, size, provider}
+#define _MEMORYPOOL_DATA(name, size, align, provider)                       \
+  {NULL, size, align, provider}
 
 /**
  * @brief   Static memory pool initializer.
@@ -103,11 +109,12 @@ typedef struct {
  *
  * @param[in] name      the name of the memory pool variable
  * @param[in] size      size of the memory pool contained objects
+ * @param[in] align     required memory alignment
  * @param[in] provider  memory provider function for the memory pool or @p NULL
  *                      if the pool is not allowed to grow automatically
  */
-#define MEMORYPOOL_DECL(name, size, provider)                               \
-  memory_pool_t name = _MEMORYPOOL_DATA(name, size, provider)
+#define MEMORYPOOL_DECL(name, size, align, provider)                        \
+  memory_pool_t name = _MEMORYPOOL_DATA(name, size, align, provider)
 
 #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
 /**
@@ -117,10 +124,11 @@ typedef struct {
  *
  * @param[in] name      the name of the memory pool variable
  * @param[in] size      size of the memory pool contained objects
+ * @param[in] align     required memory alignment
  */
-#define _GUARDEDMEMORYPOOL_DATA(name, size) {                               \
+#define _GUARDEDMEMORYPOOL_DATA(name, size, align) {                        \
   _SEMAPHORE_DATA(name.sem, (cnt_t)0),                                      \
-  _MEMORYPOOL_DATA(NULL, size, NULL)                                        \
+  _MEMORYPOOL_DATA(NULL, size, align, NULL)                                 \
 }
 
 /**
@@ -130,9 +138,10 @@ typedef struct {
  *
  * @param[in] name      the name of the guarded memory pool variable
  * @param[in] size      size of the memory pool contained objects
+ * @param[in] align     required memory alignment
  */
-#define GUARDEDMEMORYPOOL_DECL(name, size)                                  \
-  guarded_memory_pool_t name = _GUARDEDMEMORYPOOL_DATA(name, size)
+#define GUARDEDMEMORYPOOL_DECL(name, size, align)                           \
+  guarded_memory_pool_t name = _GUARDEDMEMORYPOOL_DATA(name, size, align)
 #endif /* CH_CFG_USE_SEMAPHORES == TRUE */
 
 /*===========================================================================*/
@@ -142,19 +151,22 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void chPoolObjectInit(memory_pool_t *mp, size_t size, memgetfunc_t provider);
+  void chPoolObjectInitAligned(memory_pool_t *mp, size_t size,
+                               unsigned align, memgetfunc_t provider);
   void chPoolLoadArray(memory_pool_t *mp, void *p, size_t n);
   void *chPoolAllocI(memory_pool_t *mp);
   void *chPoolAlloc(memory_pool_t *mp);
   void chPoolFreeI(memory_pool_t *mp, void *objp);
   void chPoolFree(memory_pool_t *mp, void *objp);
 #if CH_CFG_USE_SEMAPHORES == TRUE
-  void chGuardedPoolObjectInit(guarded_memory_pool_t *gmp, size_t size);
+  void chGuardedPoolObjectInitAligned(guarded_memory_pool_t *gmp,
+                                      size_t size,
+                                      unsigned align);
   void chGuardedPoolLoadArray(guarded_memory_pool_t *gmp, void *p, size_t n);
   void *chGuardedPoolAllocTimeoutS(guarded_memory_pool_t *gmp,
-                                   systime_t timeout);
+                                   sysinterval_t timeout);
   void *chGuardedPoolAllocTimeout(guarded_memory_pool_t *gmp,
-                                  systime_t timeout);
+                                  sysinterval_t timeout);
   void chGuardedPoolFreeI(guarded_memory_pool_t *gmp, void *objp);
   void chGuardedPoolFree(guarded_memory_pool_t *gmp, void *objp);
 #endif
@@ -165,6 +177,26 @@ extern "C" {
 /*===========================================================================*/
 /* Module inline functions.                                                  */
 /*===========================================================================*/
+
+/**
+ * @brief   Initializes an empty memory pool.
+ *
+ * @param[out] mp       pointer to a @p memory_pool_t structure
+ * @param[in] size      the size of the objects contained in this memory pool,
+ *                      the minimum accepted size is the size of a pointer to
+ *                      void.
+ * @param[in] provider  memory provider function for the memory pool or
+ *                      @p NULL if the pool is not allowed to grow
+ *                      automatically
+ *
+ * @init
+ */
+static inline void chPoolObjectInit(memory_pool_t *mp,
+                                    size_t size,
+                                    memgetfunc_t provider) {
+
+  chPoolObjectInitAligned(mp, size, PORT_NATURAL_ALIGN, provider);
+}
 
 /**
  * @brief   Adds an object to a memory pool.
@@ -203,12 +235,26 @@ static inline void chPoolAdd(memory_pool_t *mp, void *objp) {
  */
 static inline void chPoolAddI(memory_pool_t *mp, void *objp) {
 
-  chDbgCheckClassI();
-
   chPoolFreeI(mp, objp);
 }
 
 #if (CH_CFG_USE_SEMAPHORES == TRUE) || defined(__DOXYGEN__)
+/**
+ * @brief   Initializes an empty guarded memory pool.
+ *
+ * @param[out] gmp      pointer to a @p guarded_memory_pool_t structure
+ * @param[in] size      the size of the objects contained in this guarded
+ *                      memory pool, the minimum accepted size is the size
+ *                      of a pointer to void.
+ *
+ * @init
+ */
+static inline void chGuardedPoolObjectInit(guarded_memory_pool_t *gmp,
+                                           size_t size) {
+
+  chGuardedPoolObjectInitAligned(gmp, size, PORT_NATURAL_ALIGN);
+}
+
 /**
  * @brief   Adds an object to a guarded memory pool.
  * @pre     The guarded memory pool must be already been initialized.
@@ -244,9 +290,29 @@ static inline void chGuardedPoolAdd(guarded_memory_pool_t *gmp, void *objp) {
  */
 static inline void chGuardedPoolAddI(guarded_memory_pool_t *gmp, void *objp) {
 
-  chDbgCheckClassI();
-
   chGuardedPoolFreeI(gmp, objp);
+}
+
+/**
+ * @brief   Allocates an object from a guarded memory pool.
+ * @pre     The guarded memory pool must be already been initialized.
+ *
+ * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ * @return              The pointer to the allocated object.
+ * @retval NULL         if the pool is empty.
+ *
+ * @iclass
+ */
+static inline void *chGuardedPoolAllocI(guarded_memory_pool_t *gmp) {
+  void *p;
+
+  p = chPoolAllocI(&gmp->pool);
+  if (p != NULL) {
+    chSemFastWaitI(&gmp->sem);
+    chDbgAssert(chSemGetCounterI(&gmp->sem) >= (cnt_t)0,
+                "semaphore out of sync");
+  }
+  return p;
 }
 #endif /* CH_CFG_USE_SEMAPHORES == TRUE */
 

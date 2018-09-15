@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -116,6 +116,11 @@ typedef uint32_t ioline_t;
  *          variables of this type.
  */
 typedef uint32_t ioportid_t;
+
+/**
+ * @brief   Type of an pad identifier.
+ */
+typedef uint32_t iopadid_t;
 
 /*===========================================================================*/
 /* I/O Ports Identifiers.                                                    */
@@ -399,9 +404,30 @@ typedef uint32_t ioportid_t;
     (void)mode;                                                             \
   } while (false)
 
+/**
+ * @brief   Returns a PAL event structure associated to a pad.
+ *
+ * @param[in] port      port identifier
+ * @param[in] pad       pad number within the port
+ *
+ * @notapi
+ */
+#define pal_lld_get_pad_event(port, pad)                                    \
+  &_pal_events[0]; (void)(port); (void)pad
+
+/**
+ * @brief   Returns a PAL event structure associated to a line.
+ *
+ * @param[in] line      line identifier
+ *
+ * @notapi
+ */
+#define pal_lld_get_line_event(line)                                        \
+  &_pal_events[0]; (void)line
 
 #if !defined(__DOXYGEN__)
 extern const PALConfig pal_default_config;
+extern palevent_t _pal_events[1];
 #endif
 
 #ifdef __cplusplus

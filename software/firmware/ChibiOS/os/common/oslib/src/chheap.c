@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -135,7 +135,9 @@ void chHeapObjectInit(memory_heap_t *heapp, void *buf, size_t size) {
 
   /* Adjusting the size in case the initial block was not correctly
      aligned.*/
+  /*lint -save -e9033 [10.8] Required cast operations.*/
   size -= (size_t)((uint8_t *)hp - (uint8_t *)buf);
+  /*lint restore*/
 
   /* Initializing the heap header.*/
   heapp->provider = NULL;
@@ -345,9 +347,9 @@ void chHeapFree(void *p) {
  * @param[in] heapp     pointer to a heap descriptor or @p NULL in order to
  *                      access the default heap.
  * @param[in] totalp    pointer to a variable that will receive the total
- *                      fragmented free space or @ NULL
+ *                      fragmented free space or @p NULL
  * @param[in] largestp  pointer to a variable that will receive the largest
- *                      free free block found space or @ NULL
+ *                      free free block found space or @p NULL
  * @return              The number of fragments in the heap.
  *
  * @api

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ static bool mmc_write(void *instance, uint32_t startblk,
  * @brief   Virtual methods table.
  */
 static const struct MMCDriverVMT mmc_vmt = {
+  (size_t)0,
   (bool (*)(void *))mmc_lld_is_card_inserted,
   (bool (*)(void *))mmc_lld_is_write_protected,
   (bool (*)(void *))mmcConnect,

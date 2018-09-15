@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2017 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 */
 
 /**
- * @file    chconf.h
+ * @file    templates/chconf.h
  * @brief   Configuration file template.
  * @details A copy of this file must be placed in each project directory, it
  *          contains the application specific kernel settings.
@@ -29,6 +29,7 @@
 #define CHCONF_H
 
 #define _CHIBIOS_NIL_CONF_
+#define _CHIBIOS_NIL_CONF_VER_3_0_
 
 /*===========================================================================*/
 /**
@@ -57,7 +58,7 @@
  * @brief   System time counter resolution.
  * @note    Allowed values are 16 or 32 bits.
  */
-#define CH_CFG_ST_RESOLUTION                32
+#define CH_CFG_ST_RESOLUTION                16
 
 /**
  * @brief   System tick frequency.
@@ -65,7 +66,7 @@
  *          option defines the maximum amount of time allowed for
  *          timeouts.
  */
-#define CH_CFG_ST_FREQUENCY                 5000
+#define CH_CFG_ST_FREQUENCY                 10000
 
 /**
  * @brief   Time delta constant for the tick-less mode.
@@ -149,6 +150,15 @@
 #define CH_CFG_USE_MEMPOOLS                 TRUE
 
 /**
+ * @brief  Objects FIFOs APIs.
+ * @details If enabled then the objects FIFOs APIs are included
+ *          in the kernel.
+ *
+ * @note    The default is @p TRUE.
+ */
+#define CH_CFG_USE_OBJ_FIFOS                TRUE
+
+/**
  * @brief   Managed RAM size.
  * @details Size of the RAM area to be managed by the OS. If set to zero
  *          then the whole available RAM is used. The core memory is made
@@ -160,6 +170,56 @@
  * @note    Requires @p CH_CFG_USE_MEMCORE.
  */
 #define CH_CFG_MEMCORE_SIZE                 0
+
+/** @} */
+
+/*===========================================================================*/
+/**
+ * @name Objects factory options
+ * @{
+ */
+/*===========================================================================*/
+
+/**
+ * @brief   Objects Factory APIs.
+ * @details If enabled then the objects factory APIs are included in the
+ *          kernel.
+ *
+ * @note    The default is @p FALSE.
+ */
+#define CH_CFG_USE_FACTORY                  TRUE
+
+/**
+ * @brief   Maximum length for object names.
+ * @details If the specified length is zero then the name is stored by
+ *          pointer but this could have unintended side effects.
+ */
+#define CH_CFG_FACTORY_MAX_NAMES_LENGTH     8
+
+/**
+ * @brief   Enables the registry of generic objects.
+ */
+#define CH_CFG_FACTORY_OBJECTS_REGISTRY     TRUE
+
+/**
+ * @brief   Enables factory for generic buffers.
+ */
+#define CH_CFG_FACTORY_GENERIC_BUFFERS      TRUE
+
+/**
+ * @brief   Enables factory for semaphores.
+ */
+#define CH_CFG_FACTORY_SEMAPHORES           TRUE
+
+/**
+ * @brief   Enables factory for mailboxes.
+ */
+#define CH_CFG_FACTORY_MAILBOXES            TRUE
+
+/**
+ * @brief   Enables factory for objects FIFOs.
+ */
+#define CH_CFG_FACTORY_OBJ_FIFOS            TRUE
 
 /** @} */
 
@@ -268,8 +328,6 @@
 /*===========================================================================*/
 /* Port-specific settings (override port settings defaulted in nilcore.h).   */
 /*===========================================================================*/
-
-#define CORTEX_VTOR_INIT                    0x00200000U
 
 #endif  /* CHCONF_H */
 

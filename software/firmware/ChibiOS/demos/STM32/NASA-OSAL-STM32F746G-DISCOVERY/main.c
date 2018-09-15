@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 */
 
 #include "hal.h"
-#include "ch_test.h"
+#include "nasa_osal_test_root.h"
 #include "osapi.h"
 
 /*
@@ -67,7 +67,7 @@ int main(void) {
      waiting for a button event, then the test suite is executed.*/
   while (true) {
     if (palReadLine(LINE_BUTTON_USER))
-      test_execute((BaseSequentialStream *)&SD1);
+      test_execute((BaseSequentialStream *)&SD1, &nasa_osal_test_suite);
     OS_TaskDelay(500);
   }
 }

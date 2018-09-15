@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -395,7 +395,7 @@ void icu_lld_start(ICUDriver *icup) {
     /* Clock activation and timer reset.*/
 #if STM32_ICU_USE_TIM1
     if (&ICUD1 == icup) {
-      rccEnableTIM1(FALSE);
+      rccEnableTIM1(true);
       rccResetTIM1();
 #if !defined(STM32_TIM1_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM1_UP_NUMBER, STM32_ICU_TIM1_IRQ_PRIORITY);
@@ -411,7 +411,7 @@ void icu_lld_start(ICUDriver *icup) {
 
 #if STM32_ICU_USE_TIM2
     if (&ICUD2 == icup) {
-      rccEnableTIM2(FALSE);
+      rccEnableTIM2(true);
       rccResetTIM2();
 #if !defined(STM32_TIM2_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM2_NUMBER, STM32_ICU_TIM2_IRQ_PRIORITY);
@@ -426,7 +426,7 @@ void icu_lld_start(ICUDriver *icup) {
 
 #if STM32_ICU_USE_TIM3
     if (&ICUD3 == icup) {
-      rccEnableTIM3(FALSE);
+      rccEnableTIM3(true);
       rccResetTIM3();
 #if !defined(STM32_TIM3_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM3_NUMBER, STM32_ICU_TIM3_IRQ_PRIORITY);
@@ -441,7 +441,7 @@ void icu_lld_start(ICUDriver *icup) {
 
 #if STM32_ICU_USE_TIM4
     if (&ICUD4 == icup) {
-      rccEnableTIM4(FALSE);
+      rccEnableTIM4(true);
       rccResetTIM4();
 #if !defined(STM32_TIM4_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM4_NUMBER, STM32_ICU_TIM4_IRQ_PRIORITY);
@@ -456,7 +456,7 @@ void icu_lld_start(ICUDriver *icup) {
 
 #if STM32_ICU_USE_TIM5
     if (&ICUD5 == icup) {
-      rccEnableTIM5(FALSE);
+      rccEnableTIM5(true);
       rccResetTIM5();
 #if !defined(STM32_TIM5_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM5_NUMBER, STM32_ICU_TIM5_IRQ_PRIORITY);
@@ -471,7 +471,7 @@ void icu_lld_start(ICUDriver *icup) {
 
 #if STM32_ICU_USE_TIM8
     if (&ICUD8 == icup) {
-      rccEnableTIM8(FALSE);
+      rccEnableTIM8(true);
       rccResetTIM8();
 #if !defined(STM32_TIM8_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM8_UP_NUMBER, STM32_ICU_TIM8_IRQ_PRIORITY);
@@ -487,7 +487,7 @@ void icu_lld_start(ICUDriver *icup) {
 
 #if STM32_ICU_USE_TIM9
     if (&ICUD9 == icup) {
-      rccEnableTIM9(FALSE);
+      rccEnableTIM9(true);
       rccResetTIM9();
 #if !defined(STM32_TIM9_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM9_NUMBER, STM32_ICU_TIM9_IRQ_PRIORITY);
@@ -592,7 +592,7 @@ void icu_lld_stop(ICUDriver *icup) {
       nvicDisableVector(STM32_TIM1_UP_NUMBER);
       nvicDisableVector(STM32_TIM1_CC_NUMBER);
 #endif
-      rccDisableTIM1(FALSE);
+      rccDisableTIM1();
     }
 #endif
 
@@ -601,7 +601,7 @@ void icu_lld_stop(ICUDriver *icup) {
 #if !defined(STM32_TIM2_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM2_NUMBER);
 #endif
-      rccDisableTIM2(FALSE);
+      rccDisableTIM2();
     }
 #endif
 
@@ -610,7 +610,7 @@ void icu_lld_stop(ICUDriver *icup) {
 #if !defined(STM32_TIM3_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM3_NUMBER);
 #endif
-      rccDisableTIM3(FALSE);
+      rccDisableTIM3();
     }
 #endif
 
@@ -619,7 +619,7 @@ void icu_lld_stop(ICUDriver *icup) {
 #if !defined(STM32_TIM4_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM4_NUMBER);
 #endif
-      rccDisableTIM4(FALSE);
+      rccDisableTIM4();
     }
 #endif
 
@@ -628,7 +628,7 @@ void icu_lld_stop(ICUDriver *icup) {
 #if !defined(STM32_TIM5_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM5_NUMBER);
 #endif
-      rccDisableTIM5(FALSE);
+      rccDisableTIM5();
     }
 #endif
 
@@ -638,7 +638,7 @@ void icu_lld_stop(ICUDriver *icup) {
       nvicDisableVector(STM32_TIM8_UP_NUMBER);
       nvicDisableVector(STM32_TIM8_CC_NUMBER);
 #endif
-      rccDisableTIM8(FALSE);
+      rccDisableTIM8();
     }
 #endif
 
@@ -647,7 +647,7 @@ void icu_lld_stop(ICUDriver *icup) {
 #if !defined(STM32_TIM9_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM9_NUMBER);
 #endif
-      rccDisableTIM9(FALSE);
+      rccDisableTIM9();
     }
 #endif
   }
@@ -712,7 +712,8 @@ void icu_lld_stop_capture(ICUDriver *icup) {
 
 /**
  * @brief   Enables notifications.
- * @pre     The ICU unit must have been activated using @p icuStart().
+ * @pre     The ICU unit must have been activated using @p icuStart() and the
+ *          capture started using @p icuStartCapture().
  * @note    If the notification is already enabled then the call has no effect.
  *
  * @param[in] icup      pointer to the @p ICUDriver object
@@ -758,7 +759,8 @@ void icu_lld_enable_notifications(ICUDriver *icup) {
 
 /**
  * @brief   Disables notifications.
- * @pre     The ICU unit must have been activated using @p icuStart().
+ * @pre     The ICU unit must have been activated using @p icuStart() and the
+ *          capture started using @p icuStartCapture().
  * @note    If the notification is already disabled then the call has no effect.
  *
  * @param[in] icup      pointer to the @p ICUDriver object

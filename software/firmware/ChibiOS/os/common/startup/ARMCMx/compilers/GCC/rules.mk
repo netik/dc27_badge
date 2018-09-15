@@ -29,7 +29,7 @@ endif
 
 # FPU options default (Cortex-M4 and Cortex-M7 single precision).
 ifeq ($(USE_FPU_OPT),)
-  USE_FPU_OPT = -mfloat-abi=$(USE_FPU) -mfpu=fpv4-sp-d16 -fsingle-precision-constant
+  USE_FPU_OPT = -mfloat-abi=$(USE_FPU) -mfpu=fpv4-sp-d16
 endif
 
 # FPU-related options
@@ -66,6 +66,15 @@ endif
 ifeq ($(BUILDDIR),.)
   BUILDDIR = build
 endif
+
+# Dependencies directory
+ifeq ($(DEPDIR),)
+  DEPDIR = .dep
+endif
+ifeq ($(DEPDIR),.)
+  DEPDIR = .dep
+endif
+
 OUTFILES := $(BUILDDIR)/$(PROJECT).elf \
             $(BUILDDIR)/$(PROJECT).hex \
             $(BUILDDIR)/$(PROJECT).bin \
@@ -99,7 +108,7 @@ TCOBJS    := $(addprefix $(OBJDIR)/, $(notdir $(TCSRC:.c=.o)))
 TCPPOBJS  := $(addprefix $(OBJDIR)/, $(notdir $(TCPPSRC:.cpp=.o)))
 ASMOBJS   := $(addprefix $(OBJDIR)/, $(notdir $(ASMSRC:.s=.o)))
 ASMXOBJS  := $(addprefix $(OBJDIR)/, $(notdir $(ASMXSRC:.S=.o)))
-OBJS	  := $(ASMXOBJS) $(ASMOBJS) $(ACOBJS) $(TCOBJS) $(ACPPOBJS) $(TCPPOBJS)
+OBJS      := $(ASMXOBJS) $(ASMOBJS) $(ACOBJS) $(TCOBJS) $(ACPPOBJS) $(TCPPOBJS)
 
 # Paths
 IINCDIR   := $(patsubst %,-I%,$(INCDIR) $(DINCDIR) $(UINCDIR))
@@ -108,14 +117,14 @@ LLIBDIR   += -L$(dir $(LDSCRIPT))
 
 # Macros
 DEFS      := $(DDEFS) $(UDEFS)
-ADEFS 	  := $(DADEFS) $(UADEFS)
+ADEFS     := $(DADEFS) $(UADEFS)
 
 # Libs
 LIBS      := $(DLIBS) $(ULIBS)
 
 # Various settings
 MCFLAGS   := -mcpu=$(MCU)
-ODFLAGS	  = -x --syms
+ODFLAGS   = -x --syms
 ASFLAGS   = $(MCFLAGS) $(OPT) -Wa,-amhls=$(LSTDIR)/$(notdir $(<:.s=.lst)) $(ADEFS)
 ASXFLAGS  = $(MCFLAGS) $(OPT) -Wa,-amhls=$(LSTDIR)/$(notdir $(<:.S=.lst)) $(ADEFS)
 CFLAGS    = $(MCFLAGS) $(OPT) $(COPT) $(CWARN) -Wa,-alms=$(LSTDIR)/$(notdir $(<:.c=.lst)) $(DEFS)
@@ -153,10 +162,10 @@ else
 endif
 
 # Generate dependency information
-ASFLAGS  += -MD -MP -MF .dep/$(@F).d
-ASXFLAGS += -MD -MP -MF .dep/$(@F).d
-CFLAGS   += -MD -MP -MF .dep/$(@F).d
-CPPFLAGS += -MD -MP -MF .dep/$(@F).d
+ASFLAGS  += -MD -MP -MF $(DEPDIR)/$(@F).d
+ASXFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
+CFLAGS   += -MD -MP -MF $(DEPDIR)/$(@F).d
+CPPFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
 
 # Paths where to search for sources
 VPATH     = $(SRCPATHS)
@@ -171,7 +180,7 @@ PRE_MAKE_ALL_RULE_HOOK:
 
 POST_MAKE_ALL_RULE_HOOK:
 
-$(OBJS): | $(BUILDDIR) $(OBJDIR) $(LSTDIR)
+$(OBJS): | $(BUILDDIR) $(OBJDIR) $(LSTDIR) $(DEPDIR)
 
 $(BUILDDIR):
 ifneq ($(USE_VERBOSE_COMPILE),yes)
@@ -187,7 +196,10 @@ $(OBJDIR):
 $(LSTDIR):
 	@mkdir -p $(LSTDIR)
 
-$(ACPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile
+$(DEPDIR):
+	@mkdir -p $(DEPDIR)
+
+$(ACPPOBJS) : $(OBJDIR)/%.o : %.cpp $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CPPC) -c $(CPPFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
@@ -196,7 +208,7 @@ else
 	@$(CPPC) -c $(CPPFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(TCPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile
+$(TCPPOBJS) : $(OBJDIR)/%.o : %.cpp $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CPPC) -c $(CPPFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
@@ -205,7 +217,7 @@ else
 	@$(CPPC) -c $(CPPFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ACOBJS) : $(OBJDIR)/%.o : %.c Makefile
+$(ACOBJS) : $(OBJDIR)/%.o : %.c $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(CFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
@@ -214,7 +226,7 @@ else
 	@$(CC) -c $(CFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(TCOBJS) : $(OBJDIR)/%.o : %.c Makefile
+$(TCOBJS) : $(OBJDIR)/%.o : %.c $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(CFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
@@ -223,7 +235,7 @@ else
 	@$(CC) -c $(CFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ASMOBJS) : $(OBJDIR)/%.o : %.s Makefile
+$(ASMOBJS) : $(OBJDIR)/%.o : %.s $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
@@ -232,7 +244,7 @@ else
 	@$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ASMXOBJS) : $(OBJDIR)/%.o : %.S Makefile
+$(ASMXOBJS) : $(OBJDIR)/%.o : %.S $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(ASXFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
@@ -306,7 +318,11 @@ $(BUILDDIR)/lib$(PROJECT).a: $(OBJS)
 
 clean: CLEAN_RULE_HOOK
 	@echo Cleaning
-	-rm -fR .dep $(BUILDDIR)
+	@echo - $(DEPDIR)
+	@-rm -fR $(DEPDIR)/* $(BUILDDIR)/* 2>/dev/null
+	@-if [ -d "$(DEPDIR)" ]; then rmdir -p $(subst ./,,$(DEPDIR)) 2>/dev/null; fi
+	@echo - $(BUILDDIR)
+	@-if [ -d "$(BUILDDIR)" ]; then rmdir -p $(subst ./,,$(BUILDDIR)) 2>/dev/null; fi
 	@echo
 	@echo Done
 
@@ -315,6 +331,6 @@ CLEAN_RULE_HOOK:
 #
 # Include the dependency files, should be the last of the makefile
 #
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+-include $(wildcard $(DEPDIR)/*)
 
 # *** EOF ***

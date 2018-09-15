@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -91,7 +91,7 @@ thread_t *_thread_init(thread_t *tp, const char *name, tprio_t prio) {
   tp->state     = CH_STATE_WTSTART;
   tp->flags     = CH_FLAG_MODE_STATIC;
 #if CH_CFG_TIME_QUANTUM > 0
-  tp->preempt   = (tslices_t)CH_CFG_TIME_QUANTUM;
+  tp->ticks     = (tslices_t)CH_CFG_TIME_QUANTUM;
 #endif
 #if CH_CFG_USE_MUTEXES == TRUE
   tp->realprio  = prio;
@@ -139,7 +139,7 @@ void _thread_memfill(uint8_t *startp, uint8_t *endp, uint8_t v) {
     *startp++ = v;
   }
 }
-#endif /* CH_DBG_FILL_THREADS */
+#endif /* CH_DBG_FILL_THREADS == TRUE */
 
 /**
  * @brief   Creates a new thread into a static memory area.
@@ -280,7 +280,8 @@ thread_t *chThdCreateI(const thread_descriptor_t *tdp) {
 thread_t *chThdCreate(const thread_descriptor_t *tdp) {
   thread_t *tp;
 
-#if CH_CFG_USE_REGISTRY == TRUE
+#if (CH_CFG_USE_REGISTRY == TRUE) &&                                        \
+    ((CH_DBG_ENABLE_STACK_CHECK == TRUE) || (CH_CFG_USE_DYNAMIC == TRUE))
   chDbgAssert(chRegFindThreadByWorkingArea(tdp->wbase) == NULL,
               "working area in use");
 #endif
@@ -329,7 +330,8 @@ thread_t *chThdCreateStatic(void *wsp, size_t size,
              MEM_IS_ALIGNED(size, PORT_STACK_ALIGN) &&
              (prio <= HIGHPRIO) && (pf != NULL));
 
-#if CH_CFG_USE_REGISTRY == TRUE
+#if (CH_CFG_USE_REGISTRY == TRUE) &&                                        \
+    ((CH_DBG_ENABLE_STACK_CHECK == TRUE) || (CH_CFG_USE_DYNAMIC == TRUE))
   chDbgAssert(chRegFindThreadByWorkingArea(wsp) == NULL,
               "working area in use");
 #endif
@@ -387,7 +389,7 @@ thread_t *chThdStart(thread_t *tp) {
 #if (CH_CFG_USE_REGISTRY == TRUE) || defined(__DOXYGEN__)
 /**
  * @brief   Adds a reference to a thread object.
- * @pre     The configuration option @p CH_CFG_USE_DYNAMIC must be enabled in
+ * @pre     The configuration option @p CH_CFG_USE_REGISTRY must be enabled in
  *          order to use this function.
  *
  * @param[in] tp        pointer to the thread
@@ -414,7 +416,7 @@ thread_t *chThdAddRef(thread_t *tp) {
  *          from the registry.<br>
  *          Threads whose counter reaches zero and are still active become
  *          "detached" and will be removed from registry on termination.
- * @pre     The configuration option @p CH_CFG_USE_DYNAMIC must be enabled in
+ * @pre     The configuration option @p CH_CFG_USE_REGISTRY must be enabled in
  *          order to use this function.
  * @note    Static threads are not affected.
  *
@@ -646,7 +648,7 @@ void chThdTerminate(thread_t *tp) {
  *
  * @api
  */
-void chThdSleep(systime_t time) {
+void chThdSleep(sysinterval_t time) {
 
   chSysLock();
   chThdSleepS(time);
@@ -667,11 +669,12 @@ void chThdSleep(systime_t time) {
  * @api
  */
 void chThdSleepUntil(systime_t time) {
+  sysinterval_t interval;
 
   chSysLock();
-  time -= chVTGetSystemTimeX();
-  if (time > (systime_t)0) {
-    chThdSleepS(time);
+  interval = chTimeDiffX(chVTGetSystemTimeX(), time);
+  if (interval > (sysinterval_t)0) {
+    chThdSleepS(interval);
   }
   chSysUnlock();
 }
@@ -695,8 +698,8 @@ systime_t chThdSleepUntilWindowed(systime_t prev, systime_t next) {
 
   chSysLock();
   time = chVTGetSystemTimeX();
-  if (chVTIsTimeWithinX(time, prev, next)) {
-    chThdSleepS(next - time);
+  if (chTimeIsInRangeX(time, prev, next)) {
+    chThdSleepS(chTimeDiffX(time, next));
   }
   chSysUnlock();
 
@@ -758,7 +761,7 @@ msg_t chThdSuspendS(thread_reference_t *trp) {
  *
  * @sclass
  */
-msg_t chThdSuspendTimeoutS(thread_reference_t *trp, systime_t timeout) {
+msg_t chThdSuspendTimeoutS(thread_reference_t *trp, sysinterval_t timeout) {
   thread_t *tp = chThdGetSelfX();
 
   chDbgAssert(*trp == NULL, "not NULL");
@@ -858,7 +861,7 @@ void chThdResume(thread_reference_t *trp, msg_t msg) {
  *
  * @sclass
  */
-msg_t chThdEnqueueTimeoutS(threads_queue_t *tqp, systime_t timeout) {
+msg_t chThdEnqueueTimeoutS(threads_queue_t *tqp, sysinterval_t timeout) {
 
   if (TIME_IMMEDIATE == timeout) {
     return MSG_TIMEOUT;

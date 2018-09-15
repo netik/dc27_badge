@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -27,6 +27,10 @@
 
 #ifndef CHMEMCORE_H
 #define CHMEMCORE_H
+
+#if !defined(CH_CFG_USE_MEMCORE)
+#define CH_CFG_USE_MEMCORE                  FALSE
+#endif
 
 #if (CH_CFG_USE_MEMCORE == TRUE) || defined(__DOXYGEN__)
 

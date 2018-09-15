@@ -9,6 +9,9 @@
       <instance locked="false" id="org.chibios.spc5.components.portable.generic_startup" />
       <instance locked="false" id="org.chibios.spc5.components.portable.chibios_unitary_tests_engine">
         <description>
+          <brief>
+            <value>NASA OSAL Test Suite.</value>
+          </brief>
           <copyright>
             <value><![CDATA[/* Copyright statement.*/]]></value>
           </copyright>
@@ -17,6 +20,9 @@
           </introduction>
         </description>
         <global_data_and_code>
+          <code_prefix>
+            <value>nasa_osal_</value>
+          </code_prefix>
           <global_definitions>
             <value><![CDATA[#define TEST_SUITE_NAME                     "NASA OSAL over ChibiOS/RT Test Suite"
 

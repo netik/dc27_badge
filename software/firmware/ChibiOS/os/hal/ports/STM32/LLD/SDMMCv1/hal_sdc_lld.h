@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,6 +63,14 @@
  */
 #if !defined(STM32_SDC_SDMMC_UNALIGNED_SUPPORT) || defined(__DOXYGEN__)
 #define STM32_SDC_SDMMC_UNALIGNED_SUPPORT   TRUE
+#endif
+
+/**
+ * @brief   Enable clock bypass.
+ * @note    Allow clock speed up to 50 Mhz.
+ */
+#if !defined(STM32_SDC_SDMMC_50MHZ) || defined(__DOXYGEN__)
+#define STM32_SDC_SDMMC_50MHZ               FALSE
 #endif
 
 /**
@@ -161,16 +169,37 @@
 #endif
 
 /* Clock related tests.*/
-#if !defined(STM32_SDMMCCLK)
-#error "STM32_SDMMCCLK not defined"
+#if STM32_HAS_SDMMC1 && !defined(STM32_SDMMC1CLK)
+#error "STM32_SDMMC1CLK not defined"
+#endif
+
+/* Clock related tests.*/
+#if STM32_HAS_SDMMC2 && !defined(STM32_SDMMC2CLK)
+#error "STM32_SDMMC2CLK not defined"
 #endif
 
 #if !defined(STM32_HCLK)
 #error "STM32_HCLK not defined"
 #endif
 
-#if STM32_SDMMCCLK * 10 > STM32_HCLK * 7
-#error "STM32_SDC_USE_SDMMC1 must not exceed STM32_HCLK * 0.7"
+#if STM32_HAS_SDMMC1 && (STM32_SDMMC1CLK * 10 > STM32_HCLK * 7)
+#error "STM32_SDMMC1CLK must not exceed STM32_HCLK * 0.7"
+#endif
+
+#if STM32_HAS_SDMMC2 && (STM32_SDMMC2CLK * 10 > STM32_HCLK * 7)
+#error "STM32_SDMMC2CLK must not exceed STM32_HCLK * 0.7"
+#endif
+
+#if STM32_HAS_SDMMC1 && (STM32_SDMMC1CLK > 48000000)
+#error "STM32_SDMMC1CLK must not exceed 48MHz"
+#endif
+
+#if STM32_HAS_SDMMC2 && (STM32_SDMMC2CLK > 48000000)
+#error "STM32_SDMMC2CLK must not exceed 48MHz"
+#endif
+
+#if defined(STM32_SDC_SDMMC_50MHZ) && STM32_SDC_SDMMC_50MHZ && !defined(STM32F7XX)
+#error "50 Mhz clock only works for STM32F7XX"
 #endif
 
 /* SDMMC IRQ priority tests.*/
@@ -300,6 +329,14 @@ struct SDCDriver {
    * @brief Thread waiting for I/O completion IRQ.
    */
   thread_reference_t        thread;
+  /**
+   * @brief     DTIMER register value for read operations.
+   */
+  uint32_t                  rtmo;
+  /**
+   * @brief     DTIMER register value for write operations.
+   */
+  uint32_t                  wtmo;
   /**
    * @brief     DMA mode bit mask.
    */

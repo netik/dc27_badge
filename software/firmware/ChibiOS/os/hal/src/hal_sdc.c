@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ typedef enum {
  * @brief   Virtual methods table.
  */
 static const struct SDCDriverVMT sdc_vmt = {
+  (size_t)0,
   (bool (*)(void *))sdc_lld_is_card_inserted,
   (bool (*)(void *))sdc_lld_is_write_protected,
   (bool (*)(void *))sdcConnect,

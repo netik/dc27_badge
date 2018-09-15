@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -77,12 +77,15 @@ static void qspi_lld_serve_dma_interrupt(QSPIDriver *qspip, uint32_t flags) {
  */
 static void qspi_lld_serve_interrupt(QSPIDriver *qspip) {
 
-  /* Stop everything.*/
-  dmaStreamDisable(qspip->dma);
-
   /* Portable QSPI ISR code defined in the high level driver, note, it is
      a macro.*/
   _qspi_isr_code(qspip);
+
+  /* Stop everything, we need to give DMA enough time to complete the ongoing
+     operation. Race condition hidden here.*/
+  while (dmaStreamGetTransactionSize(qspip->dma) > 0U)
+    ;
+  dmaStreamDisable(qspip->dma);
 }
 
 /*===========================================================================*/
@@ -157,7 +160,7 @@ void qspi_lld_start(QSPIDriver *qspip) {
                                  (stm32_dmaisr_t)qspi_lld_serve_dma_interrupt,
                                  (void *)qspip);
       osalDbgAssert(!b, "stream already allocated");
-      rccEnableQUADSPI1(false);
+      rccEnableQUADSPI1(true);
     }
 #endif
 
@@ -194,7 +197,7 @@ void qspi_lld_stop(QSPIDriver *qspip) {
     /* Stopping involved clocks.*/
 #if STM32_QSPI_USE_QUADSPI1
     if (&QSPID1 == qspip) {
-      rccDisableQUADSPI1(FALSE);
+      rccDisableQUADSPI1();
     }
 #endif
   }
@@ -324,7 +327,7 @@ void qspi_lld_map_flash(QSPIDriver *qspip,
 }
 
 /**
- * @brief   Maps in memory space a QSPI flash device.
+ * @brief   Unmaps from memory space a QSPI flash device.
  * @post    The memory flash device must be re-initialized for normal
  *          commands exchange.
  *

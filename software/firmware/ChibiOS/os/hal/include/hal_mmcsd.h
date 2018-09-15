@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -428,7 +428,7 @@ typedef struct {
  * @{
  */
 /**
- * @brief   Evaluates to @p TRUE if the R1 response contains error flags.
+ * @brief   Evaluates to @p true if the R1 response contains error flags.
  *
  * @param[in] r1        the r1 response
  */
@@ -442,7 +442,7 @@ typedef struct {
 #define MMCSD_R1_STS(r1)                (((r1) >> 9U) & 15U)
 
 /**
- * @brief   Evaluates to @p TRUE if the R1 response indicates a locked card.
+ * @brief   Evaluates to @p true if the R1 response indicates a locked card.
  *
  * @param[in] r1        the r1 response
  */

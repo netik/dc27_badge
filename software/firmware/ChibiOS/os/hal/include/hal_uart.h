@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,6 +41,13 @@
 #define UART_OVERRUN_ERROR      16  /**< @brief Overflow happened.          */
 #define UART_NOISE_ERROR        32  /**< @brief Noise on the line.          */
 #define UART_BREAK_DETECTED     64  /**< @brief Break detected.             */
+/** @} */
+
+/**
+ * @name    UART error conditions
+ * @{
+ */
+#define UART_ERR_NOT_ACTIVE     (size_t)-1
 /** @} */
 
 /*===========================================================================*/
@@ -359,11 +366,11 @@ extern "C" {
   size_t uartStopReceiveI(UARTDriver *uartp);
 #if UART_USE_WAIT == TRUE
   msg_t uartSendTimeout(UARTDriver *uartp, size_t *np,
-                        const void *txbuf, systime_t timeout);
+                        const void *txbuf, sysinterval_t timeout);
   msg_t uartSendFullTimeout(UARTDriver *uartp, size_t *np,
-                            const void *txbuf, systime_t timeout);
+                            const void *txbuf, sysinterval_t timeout);
   msg_t uartReceiveTimeout(UARTDriver *uartp, size_t *np,
-                           void *rxbuf, systime_t timeout);
+                           void *rxbuf, sysinterval_t timeout);
 #endif
 #if UART_USE_MUTUAL_EXCLUSION == TRUE
   void uartAcquireBus(UARTDriver *uartp);

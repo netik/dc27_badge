@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -91,10 +91,6 @@
 /*===========================================================================*/
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
-
-#if !defined(CH_CFG_TRACE_HOOK)
-#error "CH_CFG_TRACE_HOOK not defined in chconf.h"
-#endif
 
 /*===========================================================================*/
 /* Module data structures and types.                                         */

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -156,12 +156,22 @@ typedef uint32_t iomode_t;
 typedef uint32_t ioline_t;
 
 /**
+ * @brief   Type of an event mode.
+ */
+typedef uint32_t ioeventmode_t;
+
+/**
  * @brief   Port Identifier.
  * @details This type can be a scalar or some kind of pointer, do not make
  *          any assumption about it, use the provided macros when populating
  *          variables of this type.
  */
 typedef GPIO_TypeDef * ioportid_t;
+
+/**
+ * @brief   Type of an pad identifier.
+ */
+typedef uint32_t iopadid_t;
 
 /*===========================================================================*/
 /* I/O Ports Identifiers.                                                    */
@@ -356,7 +366,56 @@ typedef GPIO_TypeDef * ioportid_t;
  */
 #define pal_lld_writepad(port, pad, bit) pal_lld_writegroup(port, 1, pad, bit)
 
+/**
+ * @brief   Pad event enable.
+ * @note    Programming an unknown or unsupported mode is silently ignored.
+ *
+ * @param[in] port      port identifier
+ * @param[in] pad       pad number within the port
+ * @param[in] mode      pad event mode
+ *
+ * @notapi
+ */
+#define pal_lld_enablepadevent(port, pad, mode)                             \
+  _pal_lld_enablepadevent(port, pad, mode)
+
+/**
+ * @brief   Pad event disable.
+ * @details This function disables previously programmed event callbacks.
+ *
+ * @param[in] port      port identifier
+ * @param[in] pad       pad number within the port
+ *
+ * @notapi
+ */
+#define pal_lld_disablepadevent(port, pad)                                  \
+  _pal_lld_disablepadevent(port, pad)
+
+/**
+ * @brief   Returns a PAL event structure associated to a pad.
+ *
+ * @param[in] port      port identifier
+ * @param[in] pad       pad number within the port
+ *
+ * @notapi
+ */
+#define pal_lld_get_pad_event(port, pad)                                    \
+  &_pal_events[pad]; (void)(port)
+
+/**
+ * @brief   Returns a PAL event structure associated to a line.
+ *
+ * @param[in] line      line identifier
+ *
+ * @notapi
+ */
+#define pal_lld_get_line_event(line)                                        \
+  &_pal_events[PAL_PAD(line)]
+
+#if !defined(__DOXYGEN__)
 extern const PALConfig pal_default_config;
+extern palevent_t _pal_events[16];
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -365,6 +424,12 @@ extern "C" {
   void _pal_lld_setgroupmode(ioportid_t port,
                              ioportmask_t mask,
                              iomode_t mode);
+#if PAL_USE_CALLBACKS || PAL_USE_WAIT
+  void _pal_lld_enablepadevent(ioportid_t port,
+                               iopadid_t pad,
+                               ioeventmode_t mode);
+  void _pal_lld_disablepadevent(ioportid_t port, iopadid_t pad);
+#endif
 #ifdef __cplusplus
 }
 #endif

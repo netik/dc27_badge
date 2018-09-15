@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,11 +25,17 @@
 #ifndef HAL_PAL_LLD_H
 #define HAL_PAL_LLD_H
 
+#include "stm32_gpio.h"
+
 #if HAL_USE_PAL || defined(__DOXYGEN__)
 
 /*===========================================================================*/
 /* Unsupported modes and specific modes                                      */
 /*===========================================================================*/
+
+/* Specifies palInit() without parameter, required until all platforms will
+   be updated to the new style.*/
+#define PAL_NEW_INIT
 
 #undef PAL_MODE_RESET
 #undef PAL_MODE_UNCONNECTED
@@ -86,12 +92,12 @@
  * @{
  */
 /**
- * @brief   This mode is implemented as input.
+ * @brief   Implemented as input.
  */
 #define PAL_MODE_RESET                  PAL_STM32_MODE_INPUT
 
 /**
- * @brief   This mode is implemented as input with pull-up.
+ * @brief   Implemented as input with pull-up.
  */
 #define PAL_MODE_UNCONNECTED            PAL_MODE_INPUT_PULLUP
 
@@ -128,39 +134,6 @@
  */
 #define PAL_MODE_OUTPUT_OPENDRAIN       (PAL_STM32_MODE_OUTPUT |            \
                                          PAL_STM32_OTYPE_OPENDRAIN)
-/** @} */
-
-/* Discarded definitions from the ST headers, the PAL driver uses its own
-   definitions in order to have an unified handling for all devices.
-   Unfortunately the ST headers have no uniform definitions for the same
-   objects across the various sub-families.*/
-#undef GPIOA
-#undef GPIOB
-#undef GPIOC
-#undef GPIOD
-#undef GPIOE
-#undef GPIOF
-#undef GPIOG
-#undef GPIOH
-#undef GPIOI
-#undef GPIOJ
-#undef GPIOK
-
-/**
- * @name    GPIO ports definitions
- * @{
- */
-#define GPIOA                           ((stm32_gpio_t *)GPIOA_BASE)
-#define GPIOB                           ((stm32_gpio_t *)GPIOB_BASE)
-#define GPIOC                           ((stm32_gpio_t *)GPIOC_BASE)
-#define GPIOD                           ((stm32_gpio_t *)GPIOD_BASE)
-#define GPIOE                           ((stm32_gpio_t *)GPIOE_BASE)
-#define GPIOF                           ((stm32_gpio_t *)GPIOF_BASE)
-#define GPIOG                           ((stm32_gpio_t *)GPIOG_BASE)
-#define GPIOH                           ((stm32_gpio_t *)GPIOH_BASE)
-#define GPIOI                           ((stm32_gpio_t *)GPIOI_BASE)
-#define GPIOJ                           ((stm32_gpio_t *)GPIOJ_BASE)
-#define GPIOK                           ((stm32_gpio_t *)GPIOK_BASE)
 /** @} */
 
 /*===========================================================================*/
@@ -216,104 +189,6 @@
 /** @} */
 
 /**
- * @brief   STM32 GPIO registers block.
- */
-typedef struct {
-
-  volatile uint32_t     MODER;
-  volatile uint32_t     OTYPER;
-  volatile uint32_t     OSPEEDR;
-  volatile uint32_t     PUPDR;
-  volatile uint32_t     IDR;
-  volatile uint32_t     ODR;
-  volatile union {
-    uint32_t            W;
-    struct {
-      uint16_t          set;
-      uint16_t          clear;
-    } H;
-  } BSRR;
-  volatile uint32_t     LCKR;
-  volatile uint32_t     AFRL;
-  volatile uint32_t     AFRH;
-  volatile uint32_t     BRR;
-} stm32_gpio_t;
-
-/**
- * @brief   GPIO port setup info.
- */
-typedef struct {
-  /** Initial value for MODER register.*/
-  uint32_t              moder;
-  /** Initial value for OTYPER register.*/
-  uint32_t              otyper;
-  /** Initial value for OSPEEDR register.*/
-  uint32_t              ospeedr;
-  /** Initial value for PUPDR register.*/
-  uint32_t              pupdr;
-  /** Initial value for ODR register.*/
-  uint32_t              odr;
-  /** Initial value for AFRL register.*/
-  uint32_t              afrl;
-  /** Initial value for AFRH register.*/
-  uint32_t              afrh;
-} stm32_gpio_setup_t;
-
-/**
- * @brief   STM32 GPIO static initializer.
- * @details An instance of this structure must be passed to @p palInit() at
- *          system startup time in order to initialize the digital I/O
- *          subsystem. This represents only the initial setup, specific pads
- *          or whole ports can be reprogrammed at later time.
- */
-typedef struct {
-#if STM32_HAS_GPIOA || defined(__DOXYGEN__)
-  /** @brief Port A setup data.*/
-  stm32_gpio_setup_t    PAData;
-#endif
-#if STM32_HAS_GPIOB || defined(__DOXYGEN__)
-  /** @brief Port B setup data.*/
-  stm32_gpio_setup_t    PBData;
-#endif
-#if STM32_HAS_GPIOC || defined(__DOXYGEN__)
-  /** @brief Port C setup data.*/
-  stm32_gpio_setup_t    PCData;
-#endif
-#if STM32_HAS_GPIOD || defined(__DOXYGEN__)
-  /** @brief Port D setup data.*/
-  stm32_gpio_setup_t    PDData;
-#endif
-#if STM32_HAS_GPIOE || defined(__DOXYGEN__)
-  /** @brief Port E setup data.*/
-  stm32_gpio_setup_t    PEData;
-#endif
-#if STM32_HAS_GPIOF || defined(__DOXYGEN__)
-  /** @brief Port F setup data.*/
-  stm32_gpio_setup_t    PFData;
-#endif
-#if STM32_HAS_GPIOG || defined(__DOXYGEN__)
-  /** @brief Port G setup data.*/
-  stm32_gpio_setup_t    PGData;
-#endif
-#if STM32_HAS_GPIOH || defined(__DOXYGEN__)
-  /** @brief Port H setup data.*/
-  stm32_gpio_setup_t    PHData;
-#endif
-#if STM32_HAS_GPIOI || defined(__DOXYGEN__)
-  /** @brief Port I setup data.*/
-  stm32_gpio_setup_t    PIData;
-#endif
-#if STM32_HAS_GPIOJ || defined(__DOXYGEN__)
-  /** @brief Port I setup data.*/
-  stm32_gpio_setup_t    PJData;
-#endif
-#if STM32_HAS_GPIOK || defined(__DOXYGEN__)
-  /** @brief Port I setup data.*/
-  stm32_gpio_setup_t    PKData;
-#endif
-} PALConfig;
-
-/**
  * @brief   Type of digital I/O port sized unsigned integer.
  */
 typedef uint32_t ioportmask_t;
@@ -329,12 +204,22 @@ typedef uint32_t iomode_t;
 typedef uint32_t ioline_t;
 
 /**
- * @brief   Port Identifier.
+ * @brief   Type of an event mode.
+ */
+typedef uint32_t ioeventmode_t;
+
+/**
+ * @brief   Type of a port Identifier.
  * @details This type can be a scalar or some kind of pointer, do not make
  *          any assumption about it, use the provided macros when populating
  *          variables of this type.
  */
 typedef stm32_gpio_t * ioportid_t;
+
+/**
+ * @brief   Type of an pad identifier.
+ */
+typedef uint32_t iopadid_t;
 
 /*===========================================================================*/
 /* I/O Ports Identifiers.                                                    */
@@ -429,7 +314,7 @@ typedef stm32_gpio_t * ioportid_t;
  *
  * @notapi
  */
-#define pal_lld_init(config) _pal_lld_init(config)
+#define pal_lld_init() _pal_lld_init()
 
 /**
  * @brief   Reads an I/O port.
@@ -539,15 +424,67 @@ typedef stm32_gpio_t * ioportid_t;
  */
 #define pal_lld_writepad(port, pad, bit) pal_lld_writegroup(port, 1, pad, bit)
 
-extern const PALConfig pal_default_config;
+/**
+ * @brief   Pad event enable.
+ * @note    Programming an unknown or unsupported mode is silently ignored.
+ *
+ * @param[in] port      port identifier
+ * @param[in] pad       pad number within the port
+ * @param[in] mode      pad event mode
+ *
+ * @notapi
+ */
+#define pal_lld_enablepadevent(port, pad, mode)                             \
+  _pal_lld_enablepadevent(port, pad, mode)
+
+/**
+ * @brief   Pad event disable.
+ * @details This function disables previously programmed event callbacks.
+ *
+ * @param[in] port      port identifier
+ * @param[in] pad       pad number within the port
+ *
+ * @notapi
+ */
+#define pal_lld_disablepadevent(port, pad)                                  \
+  _pal_lld_disablepadevent(port, pad)
+
+/**
+ * @brief   Returns a PAL event structure associated to a pad.
+ *
+ * @param[in] port      port identifier
+ * @param[in] pad       pad number within the port
+ *
+ * @notapi
+ */
+#define pal_lld_get_pad_event(port, pad)                                    \
+  &_pal_events[pad]; (void)(port)
+
+/**
+ * @brief   Returns a PAL event structure associated to a line.
+ *
+ * @param[in] line      line identifier
+ *
+ * @notapi
+ */
+#define pal_lld_get_line_event(line)                                        \
+  &_pal_events[PAL_PAD(line)]
+
+#if !defined(__DOXYGEN__)
+extern palevent_t _pal_events[16];
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void _pal_lld_init(const PALConfig *config);
+  void _pal_lld_init(void);
   void _pal_lld_setgroupmode(ioportid_t port,
                              ioportmask_t mask,
                              iomode_t mode);
+  void _pal_lld_enablepadevent(ioportid_t port,
+                               iopadid_t pad,
+                               ioeventmode_t mode);
+  void _pal_lld_disablepadevent(ioportid_t port, iopadid_t pad);
 #ifdef __cplusplus
 }
 #endif

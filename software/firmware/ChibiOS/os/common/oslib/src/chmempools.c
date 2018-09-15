@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -67,26 +67,31 @@
  * @param[in] size      the size of the objects contained in this memory pool,
  *                      the minimum accepted size is the size of a pointer to
  *                      void.
+ * @param[in] align     required memory alignment
  * @param[in] provider  memory provider function for the memory pool or
  *                      @p NULL if the pool is not allowed to grow
  *                      automatically
  *
  * @init
  */
-void chPoolObjectInit(memory_pool_t *mp, size_t size, memgetfunc_t provider) {
+void chPoolObjectInitAligned(memory_pool_t *mp, size_t size,
+                             unsigned align, memgetfunc_t provider) {
 
   chDbgCheck((mp != NULL) && (size >= sizeof(void *)));
 
   mp->next = NULL;
   mp->object_size = size;
+  mp->align = align;
   mp->provider = provider;
 }
 
 /**
  * @brief   Loads a memory pool with an array of static objects.
- * @pre     The memory pool must be already been initialized.
+ * @pre     The memory pool must already be initialized.
  * @pre     The array elements must be of the right size for the specified
  *          memory pool.
+ * @pre     The array elements size must be a multiple of the alignment
+ *          requirement for the pool.
  * @post    The memory pool contains the elements of the input array.
  *
  * @param[in] mp        pointer to a @p memory_pool_t structure
@@ -110,7 +115,7 @@ void chPoolLoadArray(memory_pool_t *mp, void *p, size_t n) {
 
 /**
  * @brief   Allocates an object from a memory pool.
- * @pre     The memory pool must be already been initialized.
+ * @pre     The memory pool must already be initialized.
  *
  * @param[in] mp        pointer to a @p memory_pool_t structure
  * @return              The pointer to the allocated object.
@@ -130,7 +135,7 @@ void *chPoolAllocI(memory_pool_t *mp) {
     mp->next = mp->next->next;
   }
   else if (mp->provider != NULL) {
-    objp = mp->provider(mp->object_size, PORT_NATURAL_ALIGN); /* TODO: Alignment is not properly handled */
+    objp = mp->provider(mp->object_size, mp->align);
   }
   /*lint -restore*/
 
@@ -139,7 +144,7 @@ void *chPoolAllocI(memory_pool_t *mp) {
 
 /**
  * @brief   Allocates an object from a memory pool.
- * @pre     The memory pool must be already been initialized.
+ * @pre     The memory pool must already be initialized.
  *
  * @param[in] mp        pointer to a @p memory_pool_t structure
  * @return              The pointer to the allocated object.
@@ -159,7 +164,7 @@ void *chPoolAlloc(memory_pool_t *mp) {
 
 /**
  * @brief   Releases an object into a memory pool.
- * @pre     The memory pool must be already been initialized.
+ * @pre     The memory pool must already be initialized.
  * @pre     The freed object must be of the right size for the specified
  *          memory pool.
  * @pre     The added object must be properly aligned.
@@ -175,13 +180,16 @@ void chPoolFreeI(memory_pool_t *mp, void *objp) {
   chDbgCheckClassI();
   chDbgCheck((mp != NULL) && (objp != NULL));
 
+  chDbgAssert(((size_t)objp & MEM_ALIGN_MASK(mp->align)) == 0U,
+              "unaligned object");
+
   php->next = mp->next;
   mp->next = php;
 }
 
 /**
  * @brief   Releases an object into a memory pool.
- * @pre     The memory pool must be already been initialized.
+ * @pre     The memory pool must already be initialized.
  * @pre     The freed object must be of the right size for the specified
  *          memory pool.
  * @pre     The added object must be properly aligned.
@@ -206,18 +214,21 @@ void chPoolFree(memory_pool_t *mp, void *objp) {
  * @param[in] size      the size of the objects contained in this guarded
  *                      memory pool, the minimum accepted size is the size
  *                      of a pointer to void.
+ * @param[in] align     required memory alignment
  *
  * @init
  */
-void chGuardedPoolObjectInit(guarded_memory_pool_t *gmp, size_t size) {
+void chGuardedPoolObjectInitAligned(guarded_memory_pool_t *gmp,
+                                    size_t size,
+                                    unsigned align) {
 
-  chPoolObjectInit(&gmp->pool, size, NULL);
+  chPoolObjectInitAligned(&gmp->pool, size, align, NULL);
   chSemObjectInit(&gmp->sem, (cnt_t)0);
 }
 
 /**
  * @brief   Loads a guarded memory pool with an array of static objects.
- * @pre     The guarded memory pool must be already been initialized.
+ * @pre     The guarded memory pool must already be initialized.
  * @pre     The array elements must be of the right size for the specified
  *          guarded memory pool.
  * @post    The guarded memory pool contains the elements of the input array.
@@ -243,7 +254,7 @@ void chGuardedPoolLoadArray(guarded_memory_pool_t *gmp, void *p, size_t n) {
 
 /**
  * @brief   Allocates an object from a guarded memory pool.
- * @pre     The guarded memory pool must be already been initialized.
+ * @pre     The guarded memory pool must already be initialized.
  *
  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
  * @param[in] timeout   the number of ticks before the operation timeouts,
@@ -257,7 +268,7 @@ void chGuardedPoolLoadArray(guarded_memory_pool_t *gmp, void *p, size_t n) {
  * @sclass
  */
 void *chGuardedPoolAllocTimeoutS(guarded_memory_pool_t *gmp,
-                                 systime_t timeout) {
+                                 sysinterval_t timeout) {
   msg_t msg;
 
   msg = chSemWaitTimeoutS(&gmp->sem, timeout);
@@ -270,7 +281,7 @@ void *chGuardedPoolAllocTimeoutS(guarded_memory_pool_t *gmp,
 
 /**
  * @brief   Allocates an object from a guarded memory pool.
- * @pre     The guarded memory pool must be already been initialized.
+ * @pre     The guarded memory pool must already be initialized.
  *
  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
  * @param[in] timeout   the number of ticks before the operation timeouts,
@@ -284,7 +295,7 @@ void *chGuardedPoolAllocTimeoutS(guarded_memory_pool_t *gmp,
  * @api
  */
 void *chGuardedPoolAllocTimeout(guarded_memory_pool_t *gmp,
-                                systime_t timeout) {
+                                sysinterval_t timeout) {
   void *p;
 
   chSysLock();
@@ -296,7 +307,7 @@ void *chGuardedPoolAllocTimeout(guarded_memory_pool_t *gmp,
 
 /**
  * @brief   Releases an object into a guarded memory pool.
- * @pre     The guarded memory pool must be already been initialized.
+ * @pre     The guarded memory pool must already be initialized.
  * @pre     The freed object must be of the right size for the specified
  *          guarded memory pool.
  * @pre     The added object must be properly aligned.
@@ -314,7 +325,7 @@ void chGuardedPoolFreeI(guarded_memory_pool_t *gmp, void *objp) {
 
 /**
  * @brief   Releases an object into a guarded memory pool.
- * @pre     The guarded memory pool must be already been initialized.
+ * @pre     The guarded memory pool must already be initialized.
  * @pre     The freed object must be of the right size for the specified
  *          guarded memory pool.
  * @pre     The added object must be properly aligned.

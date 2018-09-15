@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -100,6 +100,7 @@ void _pal_lld_setgroupmode(ioportid_t port,
     break;
   case PAL_MODE_UNCONNECTED:
     port->FIO_PIN |= mask;
+    /* Falls through.*/
   case PAL_MODE_OUTPUT_PUSHPULL:
     port->FIO_DIR |= mask;
     break;

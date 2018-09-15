@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -39,7 +39,7 @@
 /**
  * @brief   This port supports a realtime counter.
  */
-#define PORT_SUPPORTS_RT                FALSE
+#define PORT_SUPPORTS_RT                TRUE
 
 /**
  * @brief   Natural alignment constant.
@@ -93,6 +93,8 @@
  */
 #define ARM_CORE_ARM7TDMI               7
 #define ARM_CORE_ARM9                   9
+#define ARM_CORE_CORTEX_A5              105
+#define ARM_CORE_CORTEX_A7              107
 #define ARM_CORE_CORTEX_A8              108
 #define ARM_CORE_CORTEX_A9              109
 /** @} */
@@ -147,6 +149,15 @@
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
+#if ARM_CORE < 100
+#define ARM_CORE_CLASSIC                1
+#define ARM_CORE_CORTEX_A               0
+#elif ARM_CORE < 200
+#define ARM_CORE_CLASSIC                0
+#define ARM_CORE_CORTEX_A               1
+#else
+#endif
+
 /* The following code is not processed when the file is included from an
    asm module.*/
 #if !defined(_FROM_ASM_)
@@ -161,6 +172,16 @@
 #define PORT_ARCHITECTURE_ARM_ARM9
 #define PORT_ARCHITECTURE_NAME          "ARMv5T"
 #define PORT_CORE_VARIANT_NAME          "ARM9"
+
+#elif ARM_CORE == ARM_CORE_CORTEX_A5
+#define PORT_ARCHITECTURE_ARM_CORTEXA5
+#define PORT_ARCHITECTURE_NAME          "ARMv7"
+#define PORT_CORE_VARIANT_NAME          "ARM Cortex-A5"
+
+#elif ARM_CORE == ARM_CORE_CORTEX_A7
+#define PORT_ARCHITECTURE_ARM_CORTEXA5
+#define PORT_ARCHITECTURE_NAME          "ARMv7"
+#define PORT_CORE_VARIANT_NAME          "ARM Cortex-A7"
 
 #elif ARM_CORE == ARM_CORE_CORTEX_A8
 #define PORT_ARCHITECTURE_ARM_CORTEXA8
@@ -531,6 +552,24 @@ static inline void port_enable(void) {
   __asm volatile ("bl     _port_enable_thumb" : : : "r3", "lr", "memory");
 #else
   __asm volatile ("msr     CPSR_c, #0x1F" : : : "memory");
+#endif
+}
+
+/**
+ * @brief   Returns the current value of the realtime counter.
+ *
+ * @return              The realtime counter value.
+ */
+static inline rtcnt_t port_rt_get_counter_value(void) {
+
+#if ARM_CORE_CORTEX_A
+  rtcnt_t cyc;
+
+  __asm volatile("mrc p15, 0, %[p0], c9, c13, 0" : [p0] "=r" (cyc) :);
+
+  return cyc;
+#else
+  return 0;
 #endif
 }
 

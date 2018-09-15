@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -150,20 +150,24 @@ OSAL_IRQ_HANDLER(STM32_DMA1_CH4567_HANDLER) {
  */
 void hal_lld_init(void) {
 
-  /* Reset of all peripherals.*/
+  /* Reset of all peripherals except those on IOP.*/
   rccResetAHB(~RCC_AHBRSTR_MIFRST);
   rccResetAPB1(~RCC_APB1RSTR_PWRRST);
   rccResetAPB2(~0);
 
   /* PWR clock enabled.*/
-  rccEnablePWRInterface(FALSE);
+  rccEnablePWRInterface(true);
 
   /* Initializes the backup domain.*/
   hal_lld_backup_domain_init();
 
+  /* DMA subsystems initialization.*/
 #if defined(STM32_DMA_REQUIRED)
   dmaInit();
 #endif
+
+  /* IRQ subsystem initialization.*/
+  irqInit();
 
   /* Programmable voltage detector enable.*/
 #if STM32_PVD_ENABLE
@@ -262,14 +266,14 @@ void stm32_clock_init(void) {
 
 #if STM32_ACTIVATE_HSI48
   /* Enabling SYSCFG clock. */
-  rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, FALSE);
+  rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, true);
   /* Configuring SYSCFG to enable VREFINT and HSI48 VREFINT buffer. */
   SYSCFG->CFGR3 = STM32_VREFINT_EN | SYSCFG_CFGR3_ENREF_HSI48;
 
   while (!(SYSCFG->CFGR3 & SYSCFG_CFGR3_VREFINT_RDYF))
     ;                             /* Waits until VREFINT is stable.         */
   /* Disabling SYSCFG clock. */
-  rccDisableAPB2(RCC_APB2ENR_SYSCFGEN, FALSE);
+  rccDisableAPB2(RCC_APB2ENR_SYSCFGEN);
 
   /* Enabling HSI48. */
   RCC->CRRCR |= RCC_CRRCR_HSI48ON;
@@ -301,7 +305,7 @@ void stm32_clock_init(void) {
 
   /* SYSCFG clock enabled here because it is a multi-functional unit shared
      among multiple drivers.*/
-  rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, TRUE);
+  rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, true);
 #endif /* STM32_NO_INIT */
 }
 

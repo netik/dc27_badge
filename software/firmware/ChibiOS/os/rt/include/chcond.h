@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -98,8 +98,8 @@ extern "C" {
   msg_t chCondWait(condition_variable_t *cp);
   msg_t chCondWaitS(condition_variable_t *cp);
 #if CH_CFG_USE_CONDVARS_TIMEOUT == TRUE
-  msg_t chCondWaitTimeout(condition_variable_t *cp, systime_t time);
-  msg_t chCondWaitTimeoutS(condition_variable_t *cp, systime_t time);
+  msg_t chCondWaitTimeout(condition_variable_t *cp, sysinterval_t timeout);
+  msg_t chCondWaitTimeoutS(condition_variable_t *cp, sysinterval_t timeout);
 #endif
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -267,7 +267,7 @@ void mac_lld_init(void) {
   rccResetETH();
 
   /* MAC clocks temporary activation.*/
-  rccEnableETH(false);
+  rccEnableETH(true);
 
   /* PHY address setup.*/
 #if defined(BOARD_PHY_ADDRESS)
@@ -295,7 +295,7 @@ void mac_lld_init(void) {
 #endif
 
   /* MAC clocks stopped again.*/
-  rccDisableETH(false);
+  rccDisableETH();
 }
 
 /**
@@ -317,7 +317,7 @@ void mac_lld_start(MACDriver *macp) {
   macp->txptr = (stm32_eth_tx_descriptor_t *)__eth_td;
 
   /* MAC clocks activation and commanded reset procedure.*/
-  rccEnableETH(false);
+  rccEnableETH(true);
 #if defined(STM32_MAC_DMABMR_SR)
   ETH->DMABMR |= ETH_DMABMR_SR;
   while(ETH->DMABMR & ETH_DMABMR_SR)
@@ -396,7 +396,7 @@ void mac_lld_stop(MACDriver *macp) {
     ETH->DMASR    = ETH->DMASR;
 
     /* MAC clocks stopped.*/
-    rccDisableETH(false);
+    rccDisableETH();
 
     /* ISR vector disabled.*/
     nvicDisableVector(STM32_ETH_NUMBER);

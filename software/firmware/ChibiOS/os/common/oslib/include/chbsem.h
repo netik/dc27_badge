@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -72,7 +72,7 @@
  *
  * @brief   Binary semaphore type.
  */
-typedef struct {
+typedef struct ch_binary_semaphore {
   semaphore_t           sem;
 } binary_semaphore_t;
 
@@ -166,7 +166,7 @@ static inline msg_t chBSemWaitS(binary_semaphore_t *bsp) {
  * @brief   Wait operation on the binary semaphore.
  *
  * @param[in] bsp       pointer to a @p binary_semaphore_t structure
- * @param[in] time      the number of ticks before the operation timeouts,
+ * @param[in] timeout   the number of ticks before the operation timeouts,
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
@@ -182,18 +182,18 @@ static inline msg_t chBSemWaitS(binary_semaphore_t *bsp) {
  * @sclass
  */
 static inline msg_t chBSemWaitTimeoutS(binary_semaphore_t *bsp,
-                                       systime_t time) {
+                                       sysinterval_t timeout) {
 
   chDbgCheckClassS();
 
-  return chSemWaitTimeoutS(&bsp->sem, time);
+  return chSemWaitTimeoutS(&bsp->sem, timeout);
 }
 
 /**
  * @brief   Wait operation on the binary semaphore.
  *
  * @param[in] bsp       pointer to a @p binary_semaphore_t structure
- * @param[in] time      the number of ticks before the operation timeouts,
+ * @param[in] timeout   the number of ticks before the operation timeouts,
  *                      the following special values are allowed:
  *                      - @a TIME_IMMEDIATE immediate timeout.
  *                      - @a TIME_INFINITE no timeout.
@@ -209,9 +209,9 @@ static inline msg_t chBSemWaitTimeoutS(binary_semaphore_t *bsp,
  * @api
  */
 static inline msg_t chBSemWaitTimeout(binary_semaphore_t *bsp,
-                                      systime_t time) {
+                                      sysinterval_t timeout) {
 
-  return chSemWaitTimeout(&bsp->sem, time);
+  return chSemWaitTimeout(&bsp->sem, timeout);
 }
 
 /**
@@ -297,7 +297,7 @@ static inline void chBSemSignal(binary_semaphore_t *bsp) {
  *
  * @iclass
  */
-static inline bool chBSemGetStateI(binary_semaphore_t *bsp) {
+static inline bool chBSemGetStateI(const binary_semaphore_t *bsp) {
 
   chDbgCheckClassI();
 

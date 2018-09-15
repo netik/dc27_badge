@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ void adc_lld_start(ADCDriver *adcp) {
                                  (void *)adcp);
       osalDbgAssert(!b, "stream already allocated");
       dmaStreamSetPeripheral(adcp->dmastp, &ADC1->DR);
-      rccEnableADC1(FALSE);
+      rccEnableADC1(true);
     }
 #endif /* STM32_ADC_USE_ADC1 */
 
@@ -186,7 +186,7 @@ void adc_lld_stop(ADCDriver *adcp) {
 
 #if STM32_ADC_USE_ADC1
     if (&ADCD1 == adcp)
-      rccDisableADC1(FALSE);
+      rccDisableADC1();
 #endif
   }
 }

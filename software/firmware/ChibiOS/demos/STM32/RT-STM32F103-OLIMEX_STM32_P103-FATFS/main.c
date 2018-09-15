@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "ch_test.h"
 
 #include "chprintf.h"
 #include "shell.h"
@@ -73,7 +72,7 @@ static void tmrfunc(void *p) {
       chEvtBroadcastI(&removed_event);
     }
   }
-  chVTSetI(&tmr, MS2ST(POLLING_DELAY), tmrfunc, bbdp);
+  chVTSetI(&tmr, TIME_MS2I(POLLING_DELAY), tmrfunc, bbdp);
   chSysUnlockFromISR();
 }
 
@@ -90,7 +89,7 @@ static void tmr_init(void *p) {
   chEvtObjectInit(&removed_event);
   chSysLock();
   cnt = POLLING_INTERVAL;
-  chVTSetI(&tmr, MS2ST(POLLING_DELAY), tmrfunc, p);
+  chVTSetI(&tmr, TIME_MS2I(POLLING_DELAY), tmrfunc, p);
   chSysUnlock();
 }
 
@@ -107,10 +106,10 @@ static FATFS SDC_FS;
 static bool fs_ready = FALSE;
 
 /* Maximum speed SPI configuration (18MHz, CPHA=0, CPOL=0, MSb first).*/
-static SPIConfig hs_spicfg = {NULL, IOPORT2, GPIOB_SPI2NSS, 0, 0};
+static SPIConfig hs_spicfg = {false, NULL, IOPORT2, GPIOB_SPI2NSS, 0, 0};
 
 /* Low speed SPI configuration (281.250kHz, CPHA=0, CPOL=0, MSb first).*/
-static SPIConfig ls_spicfg = {NULL, IOPORT2, GPIOB_SPI2NSS,
+static SPIConfig ls_spicfg = {false, NULL, IOPORT2, GPIOB_SPI2NSS,
                               SPI_CR1_BR_2 | SPI_CR1_BR_1,
                               0};
 
@@ -324,6 +323,6 @@ int main(void) {
                                     "shell", NORMALPRIO + 1,
                                     shellThread, (void *)&shell_cfg1);
     }
-    chEvtDispatch(evhndl, chEvtWaitOneTimeout(ALL_EVENTS, MS2ST(500)));
+    chEvtDispatch(evhndl, chEvtWaitOneTimeout(ALL_EVENTS, TIME_MS2I(500)));
   }
 }

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ typedef struct MACDriver MACDriver;
  * @{
  */
 /**
- * @brief   Returns the received frames event source.
+ * @brief   Enables the zero-copy API.
  *
  * @param[in] macp      pointer to the @p MACDriver object
  * @return              The pointer to the @p EventSource structure.
@@ -184,11 +184,11 @@ extern "C" {
   void macSetAddress(MACDriver *macp, const uint8_t *p);
   msg_t macWaitTransmitDescriptor(MACDriver *macp,
                                   MACTransmitDescriptor *tdp,
-                                  systime_t timeout);
+                                  sysinterval_t timeout);
   void macReleaseTransmitDescriptor(MACTransmitDescriptor *tdp);
   msg_t macWaitReceiveDescriptor(MACDriver *macp,
                                  MACReceiveDescriptor *rdp,
-                                 systime_t timeout);
+                                 sysinterval_t timeout);
   void macReleaseReceiveDescriptor(MACReceiveDescriptor *rdp);
   bool macPollLinkStatus(MACDriver *macp);
 #ifdef __cplusplus

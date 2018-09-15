@@ -58,13 +58,21 @@ endif
 ifeq ($(BUILDDIR),.)
   BUILDDIR = build
 endif
+
+# Dependencies directory
+ifeq ($(DEPDIR),)
+  DEPDIR = .dep
+endif
+ifeq ($(DEPDIR),.)
+  DEPDIR = .dep
+endif
+
 OUTFILES = $(BUILDDIR)/$(PROJECT).elf $(BUILDDIR)/$(PROJECT).hex \
            $(BUILDDIR)/$(PROJECT).mot $(BUILDDIR)/$(PROJECT).bin \
            $(BUILDDIR)/$(PROJECT).dmp $(BUILDDIR)/$(PROJECT).list
-           
 
 # Source files groups and paths
-SRC	      = $(CSRC)$(CPPSRC)
+SRC       = $(CSRC)$(CPPSRC)
 SRCPATHS  = $(sort $(dir $(ASMXSRC)) $(dir $(ASMSRC)) $(dir $(SRC)))
 
 # Various directories
@@ -76,7 +84,7 @@ COBJS     = $(addprefix $(OBJDIR)/, $(notdir $(CSRC:.c=.o)))
 CPPOBJS   = $(addprefix $(OBJDIR)/, $(notdir $(CPPSRC:.cpp=.o)))
 ASMOBJS   = $(addprefix $(OBJDIR)/, $(notdir $(ASMSRC:.s=.o)))
 ASMXOBJS  = $(addprefix $(OBJDIR)/, $(notdir $(ASMXSRC:.S=.o)))
-OBJS	  = $(ASMXOBJS) $(ASMOBJS) $(COBJS) $(CPPOBJS)
+OBJS      = $(ASMXOBJS) $(ASMOBJS) $(COBJS) $(CPPOBJS)
 
 # Paths
 IINCDIR   = $(patsubst %,-I%,$(INCDIR) $(DINCDIR) $(UINCDIR))
@@ -84,14 +92,14 @@ LLIBDIR   = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
 
 # Macros
 DEFS      = $(DDEFS) $(UDEFS)
-ADEFS 	  = $(DADEFS) $(UADEFS)
+ADEFS     = $(DADEFS) $(UADEFS)
 
 # Libs
 LIBS      = $(DLIBS) $(ULIBS)
 
 # Various settings
 MCFLAGS   = -mcpu=$(MCU)
-ODFLAGS	  = -x --syms
+ODFLAGS   = -x --syms
 ASFLAGS   = $(MCFLAGS) $(OPT) -Wa,-amhls=$(LSTDIR)/$(notdir $(<:.s=.lst)) $(ADEFS)
 ASXFLAGS  = $(MCFLAGS) $(OPT) -Wa,-amhls=$(LSTDIR)/$(notdir $(<:.S=.lst)) $(ADEFS)
 CFLAGS    = $(MCFLAGS) $(OPT) $(COPT) $(CWARN) -Wa,-alms=$(LSTDIR)/$(notdir $(<:.c=.lst)) $(DEFS)
@@ -99,10 +107,10 @@ CPPFLAGS  = $(MCFLAGS) $(OPT) $(CPPOPT) $(CPPWARN) -Wa,-alms=$(LSTDIR)/$(notdir 
 LDFLAGS   = $(MCFLAGS) $(OPT) -nostartfiles $(LLIBDIR) -Wl,-Map=$(BUILDDIR)/$(PROJECT).map,--cref,--no-warn-mismatch,--library-path=$(RULESPATH)/ld,$(LDOPT),--script=$(LDSCRIPT)
 
 # Generate dependency information
-ASFLAGS  += -MD -MP -MF .dep/$(@F).d
-ASXFLAGS += -MD -MP -MF .dep/$(@F).d
-CFLAGS   += -MD -MP -MF .dep/$(@F).d
-CPPFLAGS += -MD -MP -MF .dep/$(@F).d
+ASFLAGS  += -MD -MP -MF $(DEPDIR)/$(@F).d
+ASXFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
+CFLAGS   += -MD -MP -MF $(DEPDIR)/$(@F).d
+CPPFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
 
 # Paths where to search for sources
 VPATH     = $(SRCPATHS)
@@ -117,7 +125,7 @@ PRE_MAKE_ALL_RULE_HOOK:
 
 POST_MAKE_ALL_RULE_HOOK:
 
-$(OBJS): | $(BUILDDIR) $(OBJDIR) $(LSTDIR)
+$(OBJS): | $(BUILDDIR) $(OBJDIR) $(LSTDIR) $(DEPDIR)
 
 $(BUILDDIR):
 ifneq ($(USE_VERBOSE_COMPILE),yes)
@@ -133,7 +141,10 @@ $(OBJDIR):
 $(LSTDIR):
 	@mkdir -p $(LSTDIR)
 
-$(CPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile
+$(DEPDIR):
+	@mkdir -p $(DEPDIR)
+
+$(CPPOBJS) : $(OBJDIR)/%.o : %.cpp $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CPPC) -c $(CPPFLAGS) -I. $(IINCDIR) $< -o $@
@@ -142,7 +153,7 @@ else
 	@$(CPPC) -c $(CPPFLAGS) -I. $(IINCDIR) $< -o $@
 endif
 
-$(COBJS) : $(OBJDIR)/%.o : %.c Makefile
+$(COBJS) : $(OBJDIR)/%.o : %.c $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(CFLAGS) -I. $(IINCDIR) $< -o $@
@@ -151,7 +162,7 @@ else
 	@$(CC) -c $(CFLAGS) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ASMOBJS) : $(OBJDIR)/%.o : %.s Makefile
+$(ASMOBJS) : $(OBJDIR)/%.o : %.s $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
@@ -160,7 +171,7 @@ else
 	@$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ASMXOBJS) : $(OBJDIR)/%.o : %.S Makefile
+$(ASMXOBJS) : $(OBJDIR)/%.o : %.S $(MAKEFILE_LIST)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(ASXFLAGS) -I. $(IINCDIR) $< -o $@
@@ -231,7 +242,11 @@ $(BUILDDIR)/lib$(PROJECT).a: $(OBJS)
 
 clean: CLEAN_RULE_HOOK
 	@echo Cleaning
-	-rm -fR .dep $(BUILDDIR)
+	@echo - $(DEPDIR)
+	@-rm -fR $(DEPDIR)/* $(BUILDDIR)/* 2>/dev/null
+	@-if [ -d "$(DEPDIR)" ]; then rmdir -p --ignore-fail-on-non-empty $(subst ./,,$(DEPDIR)) 2>/dev/null; fi
+	@echo - $(BUILDDIR)
+	@-if [ -d "$(BUILDDIR)" ]; then rmdir -p --ignore-fail-on-non-empty $(subst ./,,$(BUILDDIR)) 2>/dev/null; fi
 	@echo
 	@echo Done
 
@@ -240,6 +255,6 @@ CLEAN_RULE_HOOK:
 #
 # Include the dependency files, should be the last of the makefile
 #
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+-include $(wildcard $(DEPDIR)/*)
 
 # *** EOF ***

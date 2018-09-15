@@ -1,7 +1,13 @@
 # List of all the ChibiOS/RT kernel files, there is no need to remove the files
 # from this list, you can disable parts of the kernel by editing chconf.h.
 ifeq ($(USE_SMART_BUILD),yes)
-CHCONF := $(strip $(shell cat chconf.h | egrep -e "\#define"))
+
+# Configuration files directory
+ifeq ($(CONFDIR),)
+  CONFDIR = .
+endif
+
+CHCONF := $(strip $(shell cat $(CONFDIR)/chconf.h | egrep -e "\#define"))
 
 KERNSRC := $(CHIBIOS)/os/rt/src/chsys.c \
            $(CHIBIOS)/os/rt/src/chdebug.c \
@@ -48,6 +54,9 @@ endif
 ifneq ($(findstring CH_CFG_USE_MEMPOOLS TRUE,$(CHCONF)),)
 KERNSRC += $(CHIBIOS)/os/common/oslib/src/chmempools.c
 endif
+ifneq ($(findstring CH_CFG_USE_FACTORY TRUE,$(CHCONF)),)
+KERNSRC += $(CHIBIOS)/os/common/oslib/src/chfactory.c
+endif
 else
 KERNSRC := $(CHIBIOS)/os/rt/src/chsys.c \
            $(CHIBIOS)/os/rt/src/chdebug.c \
@@ -67,9 +76,14 @@ KERNSRC := $(CHIBIOS)/os/rt/src/chsys.c \
            $(CHIBIOS)/os/common/oslib/src/chmboxes.c \
            $(CHIBIOS)/os/common/oslib/src/chmemcore.c \
            $(CHIBIOS)/os/common/oslib/src/chheap.c \
-           $(CHIBIOS)/os/common/oslib/src/chmempools.c
+           $(CHIBIOS)/os/common/oslib/src/chmempools.c \
+           $(CHIBIOS)/os/common/oslib/src/chfactory.c
 endif
 
 # Required include directories
 KERNINC := $(CHIBIOS)/os/rt/include \
            $(CHIBIOS)/os/common/oslib/include
+
+# Shared variables
+ALLCSRC += $(KERNSRC)
+ALLINC  += $(KERNINC)

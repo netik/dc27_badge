@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ void adc_lld_init(void) {
                   STM32_DMA_CR_TEIE;
 
   /* Temporary activation.*/
-  rccEnableADC1(FALSE);
+  rccEnableADC1(true);
   ADC1->CR1 = 0;
   ADC1->CR2 = ADC_CR2_ADON;
 
@@ -115,7 +115,7 @@ void adc_lld_init(void) {
 
   /* Return the ADC in low power mode.*/
   ADC1->CR2 = 0;
-  rccDisableADC1(FALSE);
+  rccDisableADC1();
 #endif
 }
 
@@ -139,7 +139,7 @@ void adc_lld_start(ADCDriver *adcp) {
                             (void *)adcp);
       osalDbgAssert(!b, "stream already allocated");
       dmaStreamSetPeripheral(adcp->dmastp, &ADC1->DR);
-      rccEnableADC1(FALSE);
+      rccEnableADC1(true);
     }
 #endif
 
@@ -166,7 +166,7 @@ void adc_lld_stop(ADCDriver *adcp) {
       ADC1->CR1 = 0;
       ADC1->CR2 = 0;
       dmaStreamRelease(adcp->dmastp);
-      rccDisableADC1(FALSE);
+      rccDisableADC1();
     }
 #endif
   }

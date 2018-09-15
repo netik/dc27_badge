@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -2583,6 +2583,9 @@
 #define STM32_HAS_TIM20                     FALSE
 #define STM32_HAS_TIM21                     FALSE
 #define STM32_HAS_TIM22                     FALSE
+
+/* HRTIM attributes.*/
+#define STM32_HAS_HRTIM1                    TRUE
 
 /* USART attributes.*/
 #define STM32_HAS_USART1                    TRUE

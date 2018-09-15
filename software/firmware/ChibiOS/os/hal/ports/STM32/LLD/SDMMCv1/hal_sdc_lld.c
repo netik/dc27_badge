@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,14 +28,6 @@
 
 #if HAL_USE_SDC || defined(__DOXYGEN__)
 
-#if !defined(STM32_SDMMCCLK)
-#error "STM32_SDMMCCLK not defined"
-#endif
-
-#if STM32_SDMMCCLK > 48000000
-#error "STM32_SDMMCCLK exceeding 48MHz"
-#endif
-
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -56,11 +48,18 @@
 #define SDMMC_CLKDIV_HS         (2 - 2)
 #define SDMMC_CLKDIV_LS         (120 - 2)
 
-#define SDMMC_WRITE_TIMEOUT                                                 \
-  (((STM32_SDMMCCLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                      \
+#define SDMMC1_WRITE_TIMEOUT                                                \
+  (((STM32_SDMMC1CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
    STM32_SDC_SDMMC_WRITE_TIMEOUT)
-#define SDMMC_READ_TIMEOUT                                                  \
-  (((STM32_SDMMCCLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                      \
+#define SDMMC1_READ_TIMEOUT                                                 \
+  (((STM32_SDMMC1CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
+   STM32_SDC_SDMMC_READ_TIMEOUT)
+
+#define SDMMC2_WRITE_TIMEOUT                                                \
+  (((STM32_SDMMC2CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
+   STM32_SDC_SDMMC_WRITE_TIMEOUT)
+#define SDMMC2_READ_TIMEOUT                                                 \
+  (((STM32_SDMMC2CLK / (SDMMC_CLKDIV_HS + 2)) / 1000) *                     \
    STM32_SDC_SDMMC_READ_TIMEOUT)
 
 #define SDMMC1_DMA_CHANNEL                                                  \
@@ -129,7 +128,7 @@ static bool sdc_lld_prepare_read_bytes(SDCDriver *sdcp,
                                        uint8_t *buf, uint32_t bytes) {
   osalDbgCheck(bytes < 0x1000000);
 
-  sdcp->sdmmc->DTIMER = SDMMC_READ_TIMEOUT;
+  sdcp->sdmmc->DTIMER = sdcp->rtmo;
 
   /* Checks for errors and waits for the card to be ready for reading.*/
   if (_sdc_wait_for_transfer_state(sdcp))
@@ -396,6 +395,8 @@ void sdc_lld_init(void) {
 #if STM32_SDC_USE_SDMMC1
   sdcObjectInit(&SDCD1);
   SDCD1.thread = NULL;
+  SDCD1.rtmo   = SDMMC1_READ_TIMEOUT;
+  SDCD1.wtmo   = SDMMC1_WRITE_TIMEOUT;
   SDCD1.dma    = STM32_DMA_STREAM(STM32_SDC_SDMMC1_DMA_STREAM);
   SDCD1.sdmmc  = SDMMC1;
   nvicEnableVector(STM32_SDMMC1_NUMBER, STM32_SDC_SDMMC1_IRQ_PRIORITY);
@@ -404,6 +405,8 @@ void sdc_lld_init(void) {
 #if STM32_SDC_USE_SDMMC2
   sdcObjectInit(&SDCD2);
   SDCD2.thread = NULL;
+  SDCD2.rtmo   = SDMMC2_READ_TIMEOUT;
+  SDCD2.wtmo   = SDMMC2_WRITE_TIMEOUT;
   SDCD2.dma    = STM32_DMA_STREAM(STM32_SDC_SDMMC2_DMA_STREAM);
   SDCD2.sdmmc  = SDMMC2;
   nvicEnableVector(STM32_SDMMC2_NUMBER, STM32_SDC_SDMMC2_IRQ_PRIORITY);
@@ -424,9 +427,7 @@ void sdc_lld_start(SDCDriver *sdcp) {
     sdcp->config = &sdc_default_cfg;
   }
 
-  sdcp->dmamode = STM32_DMA_CR_CHSEL(SDMMC1_DMA_CHANNEL) |
-                  STM32_DMA_CR_PL(STM32_SDC_SDMMC1_DMA_PRIORITY) |
-                  STM32_DMA_CR_PSIZE_WORD |
+  sdcp->dmamode = STM32_DMA_CR_PSIZE_WORD |
                   STM32_DMA_CR_MSIZE_WORD |
                   STM32_DMA_CR_MINC;
 
@@ -445,12 +446,14 @@ void sdc_lld_start(SDCDriver *sdcp) {
 
       osalDbgAssert(!b, "stream already allocated");
 
+      sdcp->dmamode |= STM32_DMA_CR_CHSEL(SDMMC1_DMA_CHANNEL) |
+                       STM32_DMA_CR_PL(STM32_SDC_SDMMC1_DMA_PRIORITY);
       dmaStreamSetPeripheral(sdcp->dma, &sdcp->sdmmc->FIFO);
 #if STM32_DMA_ADVANCED
       dmaStreamSetFIFO(sdcp->dma, STM32_DMA_FCR_DMDIS |
                                   STM32_DMA_FCR_FTH_FULL);
 #endif
-      rccEnableSDMMC1(FALSE);
+      rccEnableSDMMC1(true);
     }
 #endif /* STM32_SDC_USE_SDMMC1 */
 
@@ -461,12 +464,14 @@ void sdc_lld_start(SDCDriver *sdcp) {
 
       osalDbgAssert(!b, "stream already allocated");
 
+      sdcp->dmamode |= STM32_DMA_CR_CHSEL(SDMMC2_DMA_CHANNEL) |
+                       STM32_DMA_CR_PL(STM32_SDC_SDMMC2_DMA_PRIORITY);
       dmaStreamSetPeripheral(sdcp->dma, &sdcp->sdmmc->FIFO);
 #if STM32_DMA_ADVANCED
       dmaStreamSetFIFO(sdcp->dma, STM32_DMA_FCR_DMDIS |
                                   STM32_DMA_FCR_FTH_FULL);
 #endif
-      rccEnableSDMMC2(FALSE);
+      rccEnableSDMMC2(true);
     }
 #endif /* STM32_SDC_USE_SDMMC2 */
   }
@@ -501,13 +506,13 @@ void sdc_lld_stop(SDCDriver *sdcp) {
     /* Clock deactivation.*/
 #if STM32_SDC_USE_SDMMC1
     if (&SDCD1 == sdcp) {
-      rccDisableSDMMC1(FALSE);
+      rccDisableSDMMC1();
     }
 #endif
 
 #if STM32_SDC_USE_SDMMC2
     if (&SDCD2 == sdcp) {
-      rccDisableSDMMC2(FALSE);
+      rccDisableSDMMC2();
     }
 #endif
   }
@@ -528,11 +533,11 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
   sdcp->sdmmc->CLKCR |= SDMMC_CLKCR_CLKEN;
 
   /* Clock activation delay.*/
-  osalThreadSleep(OSAL_MS2ST(STM32_SDC_SDMMC_CLOCK_DELAY));
+  osalThreadSleep(OSAL_MS2I(STM32_SDC_SDMMC_CLOCK_DELAY));
 }
 
 /**
- * @brief   Sets the SDIO clock to data mode (25MHz or less).
+ * @brief   Sets the SDIO clock to data mode (25/50 MHz or less).
  *
  * @param[in] sdcp      pointer to the @p SDCDriver object
  * @param[in] clk       the clock mode
@@ -540,7 +545,7 @@ void sdc_lld_start_clk(SDCDriver *sdcp) {
  * @notapi
  */
 void sdc_lld_set_data_clk(SDCDriver *sdcp, sdcbusclk_t clk) {
-#if 0
+#if STM32_SDC_SDMMC_50MHZ && defined(STM32F7XX)
   if (SDC_CLK_50MHz == clk) {
     sdcp->sdmmc->CLKCR = (sdcp->sdmmc->CLKCR & 0xFFFFFF00U) |
 #if STM32_SDC_SDMMC_PWRSAV
@@ -788,7 +793,7 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
 
   osalDbgCheck(blocks < 0x1000000 / MMCSD_BLOCK_SIZE);
 
-  sdcp->sdmmc->DTIMER = SDMMC_READ_TIMEOUT;
+  sdcp->sdmmc->DTIMER = sdcp->rtmo;
 
   /* Checks for errors and waits for the card to be ready for reading.*/
   if (_sdc_wait_for_transfer_state(sdcp))
@@ -816,10 +821,10 @@ bool sdc_lld_read_aligned(SDCDriver *sdcp, uint32_t startblk,
                        SDMMC_DCTRL_DMAEN |
                        SDMMC_DCTRL_DTEN;
 
-  if (sdc_lld_prepare_read(sdcp, startblk, blocks, resp) == TRUE)
+  if (sdc_lld_prepare_read(sdcp, startblk, blocks, resp) == true)
     goto error;
 
-  if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == TRUE)
+  if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == true)
     goto error;
 
   return HAL_SUCCESS;
@@ -849,7 +854,7 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
 
   osalDbgCheck(blocks < 0x1000000 / MMCSD_BLOCK_SIZE);
 
-  sdcp->sdmmc->DTIMER = SDMMC_WRITE_TIMEOUT;
+  sdcp->sdmmc->DTIMER = sdcp->wtmo;
 
   /* Checks for errors and waits for the card to be ready for writing.*/
   if (_sdc_wait_for_transfer_state(sdcp))
@@ -871,7 +876,7 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
   sdcp->sdmmc->DLEN  = blocks * MMCSD_BLOCK_SIZE;
 
   /* Talk to card what we want from it.*/
-  if (sdc_lld_prepare_write(sdcp, startblk, blocks, resp) == TRUE)
+  if (sdc_lld_prepare_write(sdcp, startblk, blocks, resp) == true)
     goto error;
 
   /* Transaction starts just after DTEN bit setting.*/
@@ -880,7 +885,7 @@ bool sdc_lld_write_aligned(SDCDriver *sdcp, uint32_t startblk,
                        SDMMC_DCTRL_DMAEN |
                        SDMMC_DCTRL_DTEN;
 
-  if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == TRUE)
+  if (sdc_lld_wait_transaction_end(sdcp, blocks, resp) == true)
     goto error;
 
   return HAL_SUCCESS;

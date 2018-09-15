@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ _start:
                 ldr     pc, _fiq
 
 _reset:
-                .word   Reset_Handler
+                .word   Boot_Handler
 _undefined:
                 .word   Und_Handler
 _swi:
@@ -92,7 +92,13 @@ Irq_Handler:
                 .weak   _unhandled_exception
 _unhandled_exception:
                 b       _unhandled_exception
-
+/*
+ * Default boot handler. Jump to Reset_Handler.
+ */
+                .section .boot, "ax"
+                .weak	Boot_Handler
+Boot_Handler:
+                b       Reset_Handler
 #endif
 
 /** @} */

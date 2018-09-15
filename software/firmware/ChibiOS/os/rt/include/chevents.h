@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -125,6 +125,7 @@ extern "C" {
                                   eventmask_t events,
                                   eventflags_t wflags);
   void chEvtUnregister(event_source_t *esp, event_listener_t *elp);
+  eventmask_t chEvtGetAndClearEventsI(eventmask_t events);
   eventmask_t chEvtGetAndClearEvents(eventmask_t events);
   eventmask_t chEvtAddEvents(eventmask_t events);
   eventflags_t chEvtGetAndClearFlags(event_listener_t *elp);
@@ -140,9 +141,9 @@ extern "C" {
   eventmask_t chEvtWaitAll(eventmask_t events);
 #endif
 #if CH_CFG_USE_EVENTS_TIMEOUT == TRUE
-  eventmask_t chEvtWaitOneTimeout(eventmask_t events, systime_t time);
-  eventmask_t chEvtWaitAnyTimeout(eventmask_t events, systime_t time);
-  eventmask_t chEvtWaitAllTimeout(eventmask_t events, systime_t time);
+  eventmask_t chEvtWaitOneTimeout(eventmask_t events, sysinterval_t timeout);
+  eventmask_t chEvtWaitAnyTimeout(eventmask_t events, sysinterval_t timeout);
+  eventmask_t chEvtWaitAllTimeout(eventmask_t events, sysinterval_t timeout);
 #endif
 #ifdef __cplusplus
 }
@@ -254,6 +255,20 @@ static inline void chEvtBroadcast(event_source_t *esp) {
 static inline void chEvtBroadcastI(event_source_t *esp) {
 
   chEvtBroadcastFlagsI(esp, (eventflags_t)0);
+}
+
+/**
+ * @brief   Adds (OR) a set of events to the current thread, this is
+ *          @b much faster than using @p chEvtBroadcast() or @p chEvtSignal().
+ *
+ * @param[in] events    the events to be added
+ * @return              The mask of currently pending events.
+ *
+ * @iclass
+ */
+static inline eventmask_t chEvtAddEventsI(eventmask_t events) {
+
+  return currp->epending |= events;
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@
  * @return              An error code.
  * @retval FLASH_NO_ERROR if there is no erase operation in progress.
  * @retval FLASH_ERROR_ERASE if the erase operation failed.
+ * @retval FLASH_ERROR_HW_FAILURE if access to the memory failed.
  */
 flash_error_t flashWaitErase(BaseFlash *devp) {
 

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "ch_test.h"
 
 #include "chprintf.h"
 #include "shell.h"
@@ -76,7 +75,7 @@ static void tmrfunc(void *p) {
       chEvtBroadcastI(&removed_event);
     }
   }
-  chVTSetI(&tmr, MS2ST(POLLING_DELAY), tmrfunc, bbdp);
+  chVTSetI(&tmr, TIME_MS2I(POLLING_DELAY), tmrfunc, bbdp);
   chSysUnlockFromISR();
 }
 
@@ -93,7 +92,7 @@ static void tmr_init(void *p) {
   chEvtObjectInit(&removed_event);
   chSysLock();
   cnt = POLLING_INTERVAL;
-  chVTSetI(&tmr, MS2ST(POLLING_DELAY), tmrfunc, p);
+  chVTSetI(&tmr, TIME_MS2I(POLLING_DELAY), tmrfunc, p);
   chSysUnlock();
 }
 
@@ -322,6 +321,6 @@ int main(void) {
                                     "shell", NORMALPRIO + 1,
                                     shellThread, (void *)&shell_cfg1);
     }
-    chEvtDispatch(evhndl, chEvtWaitOneTimeout(ALL_EVENTS, MS2ST(500)));
+    chEvtDispatch(evhndl, chEvtWaitOneTimeout(ALL_EVENTS, TIME_MS2I(500)));
   }
 }

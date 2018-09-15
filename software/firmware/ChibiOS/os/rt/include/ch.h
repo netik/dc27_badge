@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -48,12 +48,12 @@
 /**
  * @brief   Kernel version string.
  */
-#define CH_KERNEL_VERSION       "4.0.3"
+#define CH_KERNEL_VERSION       "5.0.0"
 
 /**
  * @brief   Kernel version major number.
  */
-#define CH_KERNEL_MAJOR         4
+#define CH_KERNEL_MAJOR         5
 
 /**
  * @brief   Kernel version minor number.
@@ -63,23 +63,51 @@
 /**
  * @brief   Kernel version patch number.
  */
-#define CH_KERNEL_PATCH         3
+#define CH_KERNEL_PATCH         0
 /** @} */
 
-/* Core headers.*/
-#include "chtypes.h"
-#include "chconf.h"
-
-#if !defined(_CHIBIOS_RT_CONF_)
-#error "invalid configuration file"
+/**
+ * @name    Constants for configuration options
+ */
+/**
+ * @brief   Generic 'false' preprocessor boolean constant.
+ * @note    It is meant to be used in configuration files as switch.
+ */
+#if !defined(FALSE) || defined(__DOXYGEN__)
+#define FALSE               0
 #endif
 
-#include "chlicense.h"
+/**
+ * @brief   Generic 'true' preprocessor boolean constant.
+ * @note    It is meant to be used in configuration files as switch.
+ */
+#if !defined(TRUE) || defined(__DOXYGEN__)
+#define TRUE                1
+#endif
+/** @} */
+
+/* Configuration headers, checks and licensing restrictions.*/
+#include "chconf.h"
 #include "chchecks.h"
+#include "chlicense.h"
+#include "chrestrictions.h"
+
+/* Early function prototype required by the following headers.*/
+#ifdef __cplusplus
+extern "C" {
+#endif
+  void chSysHalt(const char *reason);
+#ifdef __cplusplus
+}
+#endif
+
+/* Base kernel headers.*/
+#include "chtypes.h" /* TODO: Rename and rework.*/
 #include "chsystypes.h"
+#include "chdebug.h"
+#include "chtime.h"
 #include "chalign.h"
 #include "chcore.h"
-#include "chdebug.h"
 #include "chtrace.h"
 #include "chtm.h"
 #include "chstats.h"
@@ -96,15 +124,15 @@
 #include "chcond.h"
 #include "chevents.h"
 #include "chmsg.h"
+
+/* OSLIB headers.*/
 #include "chmboxes.h"
 #include "chmemcore.h"
 #include "chheap.h"
 #include "chmempools.h"
+#include "chfifo.h"
+#include "chfactory.h"
 #include "chdynamic.h"
-
-#if !defined(_CHIBIOS_RT_CONF_)
-#error "missing or wrong configuration file"
-#endif
 
 #endif /* CH_H */
 

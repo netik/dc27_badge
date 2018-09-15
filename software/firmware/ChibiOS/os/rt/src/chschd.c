@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -297,7 +297,7 @@ void chSchGoSleepS(tstate_t newstate) {
 #if CH_CFG_TIME_QUANTUM > 0
   /* The thread is renouncing its remaining time slices so it will have a new
      time quantum when it will wakeup.*/
-  otp->preempt = (tslices_t)CH_CFG_TIME_QUANTUM;
+  otp->ticks = (tslices_t)CH_CFG_TIME_QUANTUM;
 #endif
 
   /* Next thread in ready list becomes current.*/
@@ -332,12 +332,13 @@ static void wakeup(void *p) {
 #if CH_CFG_USE_SEMAPHORES == TRUE
   case CH_STATE_WTSEM:
     chSemFastSignalI(tp->u.wtsemp);
-    /* Falls into, intentional. */
 #endif
+    /* Falls through.*/
+  case CH_STATE_QUEUED:
+    /* Falls through.*/
 #if (CH_CFG_USE_CONDVARS == TRUE) && (CH_CFG_USE_CONDVARS_TIMEOUT == TRUE)
   case CH_STATE_WTCOND:
 #endif
-  case CH_STATE_QUEUED:
     /* States requiring dequeuing.*/
     (void) queue_dequeue(tp);
     break;
@@ -359,7 +360,7 @@ static void wakeup(void *p) {
  *          @ref thread_states are defined into @p threads.h.
  *
  * @param[in] newstate  the new thread state
- * @param[in] time      the number of ticks before the operation timeouts, the
+ * @param[in] timeout   the number of ticks before the operation timeouts, the
  *                      special values are handled as follow:
  *                      - @a TIME_INFINITE the thread enters an infinite sleep
  *                        state, this is equivalent to invoking
@@ -371,14 +372,14 @@ static void wakeup(void *p) {
  *
  * @sclass
  */
-msg_t chSchGoSleepTimeoutS(tstate_t newstate, systime_t time) {
+msg_t chSchGoSleepTimeoutS(tstate_t newstate, sysinterval_t timeout) {
 
   chDbgCheckClassS();
 
-  if (TIME_INFINITE != time) {
+  if (TIME_INFINITE != timeout) {
     virtual_timer_t vt;
 
-    chVTDoSetI(&vt, time, wakeup, currp);
+    chVTDoSetI(&vt, timeout, wakeup, currp);
     chSchGoSleepS(newstate);
     if (chVTIsArmedI(&vt)) {
       chVTDoResetI(&vt);
@@ -461,6 +462,7 @@ void chSchRescheduleS(void) {
   }
 }
 
+#if !defined(CH_SCH_IS_PREEMPTION_REQUIRED_HOOKED)
 /**
  * @brief   Evaluates if preemption is required.
  * @details The decision is taken by comparing the relative priorities and
@@ -483,13 +485,14 @@ bool chSchIsPreemptionRequired(void) {
      if the first thread on the ready queue has a higher priority.
      Otherwise, if the running thread has used up its time quantum, reschedule
      if the first thread on the ready queue has equal or higher priority.*/
-  return (currp->preempt > (tslices_t)0) ? (p1 > p2) : (p1 >= p2);
+  return (currp->ticks > (tslices_t)0) ? (p1 > p2) : (p1 >= p2);
 #else
   /* If the round robin preemption feature is not enabled then performs a
      simpler comparison.*/
   return p1 > p2;
 #endif
 }
+#endif /* !defined(CH_SCH_IS_PREEMPTION_REQUIRED_HOOKED) */
 
 /**
  * @brief   Switches to the first thread on the runnable queue.
@@ -515,7 +518,7 @@ void chSchDoRescheduleBehind(void) {
 
 #if CH_CFG_TIME_QUANTUM > 0
   /* It went behind peers so it gets a new time quantum.*/
-  otp->preempt = (tslices_t)CH_CFG_TIME_QUANTUM;
+  otp->ticks = (tslices_t)CH_CFG_TIME_QUANTUM;
 #endif
 
   /* Placing in ready list behind peers.*/
@@ -553,6 +556,7 @@ void chSchDoRescheduleAhead(void) {
   chSysSwitch(currp, otp);
 }
 
+#if !defined(CH_SCH_DO_RESCHEDULE_HOOKED)
 /**
  * @brief   Switches to the first thread on the runnable queue.
  * @details The current thread is positioned in the ready list behind or
@@ -578,14 +582,14 @@ void chSchDoReschedule(void) {
 #if CH_CFG_TIME_QUANTUM > 0
   /* If CH_CFG_TIME_QUANTUM is enabled then there are two different scenarios
      to handle on preemption: time quantum elapsed or not.*/
-  if (currp->preempt == (tslices_t)0) {
+  if (currp->ticks == (tslices_t)0) {
 
     /* The thread consumed its time quantum so it is enqueued behind threads
        with same priority level, however, it acquires a new time quantum.*/
     otp = chSchReadyI(otp);
 
     /* The thread being swapped out receives a new time quantum.*/
-    otp->preempt = (tslices_t)CH_CFG_TIME_QUANTUM;
+    otp->ticks = (tslices_t)CH_CFG_TIME_QUANTUM;
   }
   else {
     /* The thread didn't consume all its time quantum so it is put ahead of
@@ -601,5 +605,6 @@ void chSchDoReschedule(void) {
   /* Swap operation as tail call.*/
   chSysSwitch(currp, otp);
 }
+#endif /*!defined(CH_SCH_DO_RESCHEDULE_HOOKED) */
 
 /** @} */

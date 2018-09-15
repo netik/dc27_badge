@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -226,26 +226,26 @@ void dac_lld_start(DACDriver *dacp) {
     /* Enabling the clock source.*/
 #if STM32_DAC_USE_DAC1_CH1
     if (&DACD1 == dacp) {
-      rccEnableDAC1(false);
+      rccEnableDAC1(true);
     }
 #endif
 
 #if STM32_DAC_USE_DAC1_CH2
     if (&DACD2 == dacp) {
-      rccEnableDAC1(false);
+      rccEnableDAC1(true);
       channel = 1;
     }
 #endif
 
 #if STM32_DAC_USE_DAC2_CH1
     if (&DACD3 == dacp) {
-      rccEnableDAC2(false);
+      rccEnableDAC2(true);
     }
 #endif
 
 #if STM32_DAC_USE_DAC2_CH2
     if (&DACD4 == dacp) {
-      rccEnableDAC2(false);
+      rccEnableDAC2(true);
       channel = 1;
     }
 #endif
@@ -288,7 +288,7 @@ void dac_lld_stop(DACDriver *dacp) {
 #if STM32_DAC_USE_DAC1_CH1
     if (&DACD1 == dacp) {
       if ((dacp->params->dac->CR & DAC_CR_EN1) == 0U) {
-        rccDisableDAC1(false);
+        rccDisableDAC1();
       }
     }
 #endif
@@ -296,7 +296,7 @@ void dac_lld_stop(DACDriver *dacp) {
 #if STM32_DAC_USE_DAC1_CH2
     if (&DACD2 == dacp) {
       if ((dacp->params->dac->CR & DAC_CR_EN2) == 0U) {
-        rccDisableDAC1(false);
+        rccDisableDAC1();
       }
     }
 #endif
@@ -304,7 +304,7 @@ void dac_lld_stop(DACDriver *dacp) {
 #if STM32_DAC_USE_DAC2_CH1
     if (&DACD3 == dacp) {
       if ((dacp->params->dac->CR & DAC_CR_EN1) == 0U) {
-        rccDisableDAC2(false);
+        rccDisableDAC2();
       }
     }
 #endif
@@ -312,7 +312,7 @@ void dac_lld_stop(DACDriver *dacp) {
 #if STM32_DAC_USE_DAC2_CH2
     if (&DACD4 == dacp) {
       if ((dacp->params->dac->CR & DAC_CR_EN2) == 0U) {
-        rccDisableDAC2(false);
+        rccDisableDAC2();
       }
     }
 #endif

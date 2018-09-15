@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -373,7 +373,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
     /* Clock activation and timer reset.*/
 #if STM32_PWM_USE_TIM1
     if (&PWMD1 == pwmp) {
-      rccEnableTIM1(FALSE);
+      rccEnableTIM1(true);
       rccResetTIM1();
 #if !defined(STM32_TIM1_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM1_UP_NUMBER, STM32_PWM_TIM1_IRQ_PRIORITY);
@@ -389,7 +389,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 
 #if STM32_PWM_USE_TIM2
     if (&PWMD2 == pwmp) {
-      rccEnableTIM2(FALSE);
+      rccEnableTIM2(true);
       rccResetTIM2();
 #if !defined(STM32_TIM2_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM2_NUMBER, STM32_PWM_TIM2_IRQ_PRIORITY);
@@ -404,7 +404,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 
 #if STM32_PWM_USE_TIM3
     if (&PWMD3 == pwmp) {
-      rccEnableTIM3(FALSE);
+      rccEnableTIM3(true);
       rccResetTIM3();
 #if !defined(STM32_TIM3_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM3_NUMBER, STM32_PWM_TIM3_IRQ_PRIORITY);
@@ -419,7 +419,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 
 #if STM32_PWM_USE_TIM4
     if (&PWMD4 == pwmp) {
-      rccEnableTIM4(FALSE);
+      rccEnableTIM4(true);
       rccResetTIM4();
 #if !defined(STM32_TIM4_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM4_NUMBER, STM32_PWM_TIM4_IRQ_PRIORITY);
@@ -434,7 +434,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 
 #if STM32_PWM_USE_TIM5
     if (&PWMD5 == pwmp) {
-      rccEnableTIM5(FALSE);
+      rccEnableTIM5(true);
       rccResetTIM5();
 #if !defined(STM32_TIM5_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM5_NUMBER, STM32_PWM_TIM5_IRQ_PRIORITY);
@@ -449,7 +449,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 
 #if STM32_PWM_USE_TIM8
     if (&PWMD8 == pwmp) {
-      rccEnableTIM8(FALSE);
+      rccEnableTIM8(true);
       rccResetTIM8();
 #if !defined(STM32_TIM8_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM8_UP_NUMBER, STM32_PWM_TIM8_IRQ_PRIORITY);
@@ -465,7 +465,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
 
 #if STM32_PWM_USE_TIM9
     if (&PWMD9 == pwmp) {
-      rccEnableTIM9(FALSE);
+      rccEnableTIM9(true);
       rccResetTIM9();
 #if !defined(STM32_TIM9_SUPPRESS_ISR)
       nvicEnableVector(STM32_TIM9_NUMBER, STM32_PWM_TIM9_IRQ_PRIORITY);
@@ -519,32 +519,40 @@ void pwm_lld_start(PWMDriver *pwmp) {
   switch (pwmp->config->channels[0].mode & PWM_OUTPUT_MASK) {
   case PWM_OUTPUT_ACTIVE_LOW:
     ccer |= STM32_TIM_CCER_CC1P;
+    /* Falls through.*/
   case PWM_OUTPUT_ACTIVE_HIGH:
     ccer |= STM32_TIM_CCER_CC1E;
+    /* Falls through.*/
   default:
     ;
   }
   switch (pwmp->config->channels[1].mode & PWM_OUTPUT_MASK) {
   case PWM_OUTPUT_ACTIVE_LOW:
     ccer |= STM32_TIM_CCER_CC2P;
+    /* Falls through.*/
   case PWM_OUTPUT_ACTIVE_HIGH:
     ccer |= STM32_TIM_CCER_CC2E;
+    /* Falls through.*/
   default:
     ;
   }
   switch (pwmp->config->channels[2].mode & PWM_OUTPUT_MASK) {
   case PWM_OUTPUT_ACTIVE_LOW:
     ccer |= STM32_TIM_CCER_CC3P;
+    /* Falls through.*/
   case PWM_OUTPUT_ACTIVE_HIGH:
     ccer |= STM32_TIM_CCER_CC3E;
+    /* Falls through.*/
   default:
     ;
   }
   switch (pwmp->config->channels[3].mode & PWM_OUTPUT_MASK) {
   case PWM_OUTPUT_ACTIVE_LOW:
     ccer |= STM32_TIM_CCER_CC4P;
+    /* Falls through.*/
   case PWM_OUTPUT_ACTIVE_HIGH:
     ccer |= STM32_TIM_CCER_CC4E;
+    /* Falls through.*/
   default:
     ;
   }
@@ -561,24 +569,30 @@ void pwm_lld_start(PWMDriver *pwmp) {
     switch (pwmp->config->channels[0].mode & PWM_COMPLEMENTARY_OUTPUT_MASK) {
     case PWM_COMPLEMENTARY_OUTPUT_ACTIVE_LOW:
       ccer |= STM32_TIM_CCER_CC1NP;
+      /* Falls through.*/
     case PWM_COMPLEMENTARY_OUTPUT_ACTIVE_HIGH:
       ccer |= STM32_TIM_CCER_CC1NE;
+      /* Falls through.*/
     default:
       ;
     }
     switch (pwmp->config->channels[1].mode & PWM_COMPLEMENTARY_OUTPUT_MASK) {
     case PWM_COMPLEMENTARY_OUTPUT_ACTIVE_LOW:
       ccer |= STM32_TIM_CCER_CC2NP;
+      /* Falls through.*/
     case PWM_COMPLEMENTARY_OUTPUT_ACTIVE_HIGH:
       ccer |= STM32_TIM_CCER_CC2NE;
+      /* Falls through.*/
     default:
       ;
     }
     switch (pwmp->config->channels[2].mode & PWM_COMPLEMENTARY_OUTPUT_MASK) {
     case PWM_COMPLEMENTARY_OUTPUT_ACTIVE_LOW:
       ccer |= STM32_TIM_CCER_CC3NP;
+      /* Falls through.*/
     case PWM_COMPLEMENTARY_OUTPUT_ACTIVE_HIGH:
       ccer |= STM32_TIM_CCER_CC3NE;
+      /* Falls through.*/
     default:
       ;
     }
@@ -626,7 +640,7 @@ void pwm_lld_stop(PWMDriver *pwmp) {
       nvicDisableVector(STM32_TIM1_UP_NUMBER);
       nvicDisableVector(STM32_TIM1_CC_NUMBER);
 #endif
-      rccDisableTIM1(FALSE);
+      rccDisableTIM1();
     }
 #endif
 
@@ -635,7 +649,7 @@ void pwm_lld_stop(PWMDriver *pwmp) {
 #if !defined(STM32_TIM2_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM2_NUMBER);
 #endif
-      rccDisableTIM2(FALSE);
+      rccDisableTIM2();
     }
 #endif
 
@@ -644,7 +658,7 @@ void pwm_lld_stop(PWMDriver *pwmp) {
 #if !defined(STM32_TIM3_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM3_NUMBER);
 #endif
-      rccDisableTIM3(FALSE);
+      rccDisableTIM3();
     }
 #endif
 
@@ -653,7 +667,7 @@ void pwm_lld_stop(PWMDriver *pwmp) {
 #if !defined(STM32_TIM4_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM4_NUMBER);
 #endif
-      rccDisableTIM4(FALSE);
+      rccDisableTIM4();
     }
 #endif
 
@@ -662,7 +676,7 @@ void pwm_lld_stop(PWMDriver *pwmp) {
 #if !defined(STM32_TIM5_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM5_NUMBER);
 #endif
-      rccDisableTIM5(FALSE);
+      rccDisableTIM5();
     }
 #endif
 
@@ -672,7 +686,7 @@ void pwm_lld_stop(PWMDriver *pwmp) {
       nvicDisableVector(STM32_TIM8_UP_NUMBER);
       nvicDisableVector(STM32_TIM8_CC_NUMBER);
 #endif
-      rccDisableTIM8(FALSE);
+      rccDisableTIM8();
     }
 #endif
 
@@ -681,7 +695,7 @@ void pwm_lld_stop(PWMDriver *pwmp) {
 #if !defined(STM32_TIM9_SUPPRESS_ISR)
       nvicDisableVector(STM32_TIM9_NUMBER);
 #endif
-      rccDisableTIM9(FALSE);
+      rccDisableTIM9();
     }
 #endif
   }
@@ -757,8 +771,8 @@ void pwm_lld_enable_periodic_notification(PWMDriver *pwmp) {
   /* If the IRQ is not already enabled care must be taken to clear it,
      it is probably already pending because the timer is running.*/
   if ((dier & STM32_TIM_DIER_UIE) == 0) {
+    pwmp->tim->SR   = ~STM32_TIM_SR_UIF;
     pwmp->tim->DIER = dier | STM32_TIM_DIER_UIE;
-    pwmp->tim->SR &= STM32_TIM_SR_UIF;
   }
 }
 
@@ -799,8 +813,8 @@ void pwm_lld_enable_channel_notification(PWMDriver *pwmp,
   /* If the IRQ is not already enabled care must be taken to clear it,
      it is probably already pending because the timer is running.*/
   if ((dier & (2 << channel)) == 0) {
-    pwmp->tim->DIER = dier | (2 << channel);
     pwmp->tim->SR   = ~(2 << channel);
+    pwmp->tim->DIER = dier | (2 << channel);
   }
 }
 

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -434,10 +434,10 @@ extern "C" {
   void adcSTM32DisableVREF(void);
   void adcSTM32EnableTS(void);
   void adcSTM32DisableTS(void);
-#ifdef STM32F0XX
+#if defined(ADC_CCR_VBATEN)
   void adcSTM32EnableVBAT(void);
   void adcSTM32DisableVBAT(void);
-#endif /* STM32F0XX */
+#endif
 #ifdef __cplusplus
 }
 #endif

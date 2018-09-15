@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -51,26 +51,6 @@
 /*===========================================================================*/
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
-
-#if !defined(CH_CFG_IRQ_PROLOGUE_HOOK)
-#error "CH_CFG_IRQ_PROLOGUE_HOOK not defined in chconf.h"
-#endif
-
-#if !defined(CH_CFG_IRQ_EPILOGUE_HOOK)
-#error "CH_CFG_IRQ_EPILOGUE_HOOK not defined in chconf.h"
-#endif
-
-#if !defined(CH_CFG_CONTEXT_SWITCH_HOOK)
-#error "CH_CFG_CONTEXT_SWITCH_HOOK not defined in chconf.h"
-#endif
-
-#if !defined(CH_CFG_SYSTEM_TICK_HOOK)
-#error "CH_CFG_SYSTEM_TICK_HOOK not defined in chconf.h"
-#endif
-
-#if !defined(CH_CFG_SYSTEM_HALT_HOOK)
-#error "CH_CFG_SYSTEM_HALT_HOOK not defined in chconf.h"
-#endif
 
 /*===========================================================================*/
 /* Module data structures and types.                                         */
@@ -303,7 +283,6 @@ extern stkalign_t ch_idle_thread_wa[];
 extern "C" {
 #endif
   void chSysInit(void);
-  void chSysHalt(const char *reason);
   bool chSysIntegrityCheckI(unsigned testmask);
   void chSysTimerHandlerI(void);
   syssts_t chSysGetStatusAndLockX(void);

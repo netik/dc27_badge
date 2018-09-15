@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,9 +27,11 @@
  *          - STM32_VDD (as hundredths of Volt).
  *          .
  *          One of the following macros must also be defined:
+ *          - STM32F722xx, STM32F723xx very high-performance MCUs.
+ *          - STM32F732xx, STM32F733xx very high-performance MCUs.
  *          - STM32F745xx, STM32F746xx, STM32F756xx very high-performance MCUs.
- *          - STM32F767xx, STM32F769xx, STM32F777xx, STM32F779xx very
- *            high-performance MCUs.
+ *          - STM32F765xx, STM32F767xx, STM32F769xx very high-performance MCUs.
+ *          - STM32F777xx, STM32F779xx very high-performance MCUs.
  *          .
  *
  * @addtogroup HAL
@@ -54,7 +56,19 @@
  * @name    Platform identification macros
  * @{
  */
-#if defined(STM32F745xx) || defined(__DOXYGEN__)
+#if defined(STM32F722xx) || defined(__DOXYGEN__)
+#define PLATFORM_NAME           "STM32F745 Very High Performance with DSP and FPU"
+
+#elif defined(STM32F723xx)
+#define PLATFORM_NAME           "STM32F745 Very High Performance with DSP and FPU"
+
+#elif defined(STM32F732xx)
+#define PLATFORM_NAME           "STM32F745 Very High Performance with DSP and FPU"
+
+#elif defined(STM32F733xx)
+#define PLATFORM_NAME           "STM32F745 Very High Performance with DSP and FPU"
+
+#elif defined(STM32F745xx)
 #define PLATFORM_NAME           "STM32F745 Very High Performance with DSP and FPU"
 
 #elif defined(STM32F746xx)
@@ -62,6 +76,9 @@
 
 #elif defined(STM32F756xx)
 #define PLATFORM_NAME           "STM32F756 Very High Performance with DSP and FPU"
+
+#elif defined(STM32F765xx)
+#define PLATFORM_NAME           "STM32F767 Very High Performance with DSP and DP FPU"
 
 #elif defined(STM32F767xx)
 #define PLATFORM_NAME           "STM32F767 Very High Performance with DSP and DP FPU"
@@ -285,6 +302,7 @@
 #define STM32_MCO2SEL_PLLI2S    (1 << 30)   /**< PLLI2S clock on MCO2 pin.  */
 #define STM32_MCO2SEL_HSE       (2 << 30)   /**< HSE clock on MCO2 pin.     */
 #define STM32_MCO2SEL_PLL       (3 << 30)   /**< PLL clock on MCO2 pin.     */
+/** @} */
 
 /**
  * @name    RCC_PLLI2SCFGR register bits definitions
@@ -411,9 +429,13 @@
 #define STM32_CK48MSEL_PLL      (0 << 27)   /**< PLL48CLK source is PLL.    */
 #define STM32_CK48MSEL_PLLSAI   (1 << 27)   /**< PLL48CLK source is PLLSAI. */
 
-#define STM32_SDMMCSEL_MASK     (1 << 28)   /**< SDMMCSEL mask.             */
-#define STM32_SDMMCSEL_PLL48CLK (0 << 28)   /**< SDMMC source is PLL48CLK.  */
-#define STM32_SDMMCSEL_SYSCLK   (1 << 28)   /**< SDMMC source is SYSCLK.    */
+#define STM32_SDMMC1SEL_MASK     (1 << 28)  /**< SDMMC1SEL mask.            */
+#define STM32_SDMMC1SEL_PLL48CLK (0 << 28)  /**< SDMMC1 source is PLL48CLK. */
+#define STM32_SDMMC1SEL_SYSCLK   (1 << 28)  /**< SDMMC1 source is SYSCLK.   */
+
+#define STM32_SDMMC2SEL_MASK     (1 << 29)  /**< SDMMC2SEL mask.            */
+#define STM32_SDMMC2SEL_PLL48CLK (0 << 29)  /**< SDMMC2 source is PLL48CLK. */
+#define STM32_SDMMC2SEL_SYSCLK   (1 << 29)  /**< SDMMC2 source is SYSCLK.   */
 /** @} */
 
 /**
@@ -847,10 +869,17 @@
 #endif
 
 /**
- * @brief   SDMMC clock source.
+ * @brief   SDMMC1 clock source.
  */
-#if !defined(STM32_SDMMCSEL) || defined(__DOXYGEN__)
-#define STM32_SDMMCSEL                      STM32_SDMMCSEL_PLL48CLK
+#if !defined(STM32_SDMMC1SEL) || defined(__DOXYGEN__)
+#define STM32_SDMMC1SEL                     STM32_SDMMC1SEL_PLL48CLK
+#endif
+
+/**
+ * @brief   SDMMC2 clock source.
+ */
+#if !defined(STM32_SDMMC2SEL) || defined(__DOXYGEN__)
+#define STM32_SDMMC2SEL                     STM32_SDMMC2SEL_PLL48CLK
 #endif
 
 /**
@@ -901,8 +930,9 @@
 #define STM32_4WS_THRESHOLD         150000000
 #define STM32_5WS_THRESHOLD         180000000
 #define STM32_6WS_THRESHOLD         210000000
-#define STM32_7WS_THRESHOLD         0
+#define STM32_7WS_THRESHOLD         STM32_SYSCLK_MAX
 #define STM32_8WS_THRESHOLD         0
+#define STM32_9WS_THRESHOLD         0
 
 #elif (STM32_VDD >= 240) && (STM32_VDD < 270)
 #define STM32_0WS_THRESHOLD         24000000
@@ -913,7 +943,8 @@
 #define STM32_5WS_THRESHOLD         144000000
 #define STM32_6WS_THRESHOLD         168000000
 #define STM32_7WS_THRESHOLD         192000000
-#define STM32_8WS_THRESHOLD         0
+#define STM32_8WS_THRESHOLD         STM32_SYSCLK_MAX
+#define STM32_9WS_THRESHOLD         0
 
 #elif (STM32_VDD >= 210) && (STM32_VDD < 240)
 #define STM32_0WS_THRESHOLD         22000000
@@ -925,6 +956,7 @@
 #define STM32_6WS_THRESHOLD         154000000
 #define STM32_7WS_THRESHOLD         176000000
 #define STM32_8WS_THRESHOLD         198000000
+#define STM32_9WS_THRESHOLD         STM32_SYSCLK_MAX
 
 #elif (STM32_VDD >= 180) && (STM32_VDD < 210)
 #define STM32_0WS_THRESHOLD         20000000
@@ -935,7 +967,8 @@
 #define STM32_5WS_THRESHOLD         120000000
 #define STM32_6WS_THRESHOLD         140000000
 #define STM32_7WS_THRESHOLD         160000000
-#define STM32_8WS_THRESHOLD         0
+#define STM32_8WS_THRESHOLD         180000000
+#define STM32_9WS_THRESHOLD         0
 
 #else
 #error "invalid VDD voltage specified"
@@ -1908,7 +1941,7 @@
 #if (STM32_CK48MSEL == STM32_CK48MSEL_PLL) || defined(__DOXYGEN__)
 #define STM32_PLL48CLK              (STM32_PLLVCO / STM32_PLLQ_VALUE)
 #elif STM32_CK48MSEL == STM32_CK48MSEL_PLLSAI
-#define STM32_PLL48CLK              (STM32_PLLSAIVCO / STM32_PLLSAIQ_VALUE)
+#define STM32_PLL48CLK              (STM32_PLLSAIVCO / STM32_PLLSAIP_VALUE)
 #else
 #error "invalid source selected for PLL48CLK clock"
 #endif
@@ -1960,14 +1993,25 @@
 #endif
 
 /**
- * @brief   SDMMC frequency.
+ * @brief   SDMMC1 frequency.
  */
-#if (STM32_SDMMCSEL == STM32_SDMMCSEL_PLL48CLK) || defined(__DOXYGEN__)
-#define STM32_SDMMCCLK               STM32_PLL48CLK
-#elif STM32_SDMMCSEL == STM32_SDMMCSEL_SYSCLK
-#define STM32_SDMMCCLK               STM32_SYSCLK
+#if (STM32_SDMMC1SEL == STM32_SDMMC1SEL_PLL48CLK) || defined(__DOXYGEN__)
+#define STM32_SDMMC1CLK              STM32_PLL48CLK
+#elif STM32_SDMMC1SEL == STM32_SDMMC1SEL_SYSCLK
+#define STM32_SDMMC1CLK              STM32_SYSCLK
 #else
-#error "invalid source selected for SDMMC clock"
+#error "invalid source selected for SDMMC1 clock"
+#endif
+
+/**
+ * @brief   SDMMC2 frequency.
+ */
+#if (STM32_SDMMC2SEL == STM32_SDMMC2SEL_PLL48CLK) || defined(__DOXYGEN__)
+#define STM32_SDMMC2CLK              STM32_PLL48CLK
+#elif STM32_SDMMC2SEL == STM32_SDMMC2SEL_SYSCLK
+#define STM32_SDMMC2CLK              STM32_SYSCLK
+#else
+#error "invalid source selected for SDMMC2 clock"
 #endif
 
 /**
@@ -2018,8 +2062,11 @@
 #elif STM32_HCLK <= STM32_8WS_THRESHOLD
 #define STM32_FLASHBITS             0x00000008
 
-#else
+#elif STM32_HCLK <= STM32_9WS_THRESHOLD
 #define STM32_FLASHBITS             0x00000009
+
+#else
+#error "invalid frequency at specified VDD level"
 #endif
 
 /*===========================================================================*/
@@ -2036,7 +2083,9 @@
 
 /* Various helpers.*/
 #include "nvic.h"
-#include "mpu.h"
+#include "cache.h"
+#include "mpu_v7m.h"
+#include "stm32_isr.h"
 #include "stm32_dma.h"
 #include "stm32_rcc.h"
 

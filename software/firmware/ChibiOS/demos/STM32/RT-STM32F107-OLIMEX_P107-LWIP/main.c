@@ -1,5 +1,5 @@
 /*
-    ChibiOSch_ - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "ch_test.h"
+#include "rt_test_root.h"
+#include "oslib_test_root.h"
 
 #include "lwipthread.h"
 
@@ -75,8 +76,10 @@ int main(void) {
    * sleeping in a loop and check the button state.
    */
   while (true) {
-    if (palReadPad(GPIOC, GPIOC_SWITCH_TAMPER) == 0)
-      test_execute((BaseSequentialStream *)&SD3);
+    if (palReadPad(GPIOC, GPIOC_SWITCH_TAMPER) == 0) {
+      test_execute((BaseSequentialStream *)&SD3, &rt_test_suite);
+      test_execute((BaseSequentialStream *)&SD3, &oslib_test_suite);
+    }
     chThdSleepMilliseconds(500);
   }
 }

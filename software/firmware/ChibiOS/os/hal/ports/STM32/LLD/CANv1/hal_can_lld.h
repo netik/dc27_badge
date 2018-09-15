@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -189,9 +189,25 @@
 /*===========================================================================*/
 
 /**
+ * @brief   Type of a structure representing an CAN driver.
+ */
+typedef struct CANDriver CANDriver;
+
+/**
  * @brief   Type of a transmission mailbox index.
  */
 typedef uint32_t canmbx_t;
+
+#if (CAN_ENFORCE_USE_CALLBACKS == TRUE) || defined(__DOXYGEN__)
+/**
+ * @brief   Type of a CAN notification callback.
+ *
+ * @param[in] canp      pointer to the @p CANDriver object triggering the
+ *                      callback
+ * @param[in] flags     flags associated to the mailbox callback
+ */
+typedef void (*can_callback_t)(CANDriver *canp, uint32_t flags);
+#endif
 
 /**
  * @brief   CAN transmission frame.
@@ -259,7 +275,7 @@ typedef struct {
   /**
    * @brief   Number of the filter to be programmed.
    */
-  uint32_t                  filter;
+  uint32_t                  filter:16;
   /**
    * @brief   Filter mode.
    * @note    This bit represent the CAN_FM1R register bit associated to this
@@ -309,7 +325,7 @@ typedef struct {
 /**
  * @brief   Structure representing an CAN driver.
  */
-typedef struct {
+struct CANDriver {
   /**
    * @brief   Driver state.
    */
@@ -326,6 +342,7 @@ typedef struct {
    * @brief   Receive threads queue.
    */
   threads_queue_t           rxqueue;
+#if (CAN_ENFORCE_USE_CALLBACKS == FALSE) || defined(__DOXYGEN__)
   /**
    * @brief   One or more frames become available.
    * @note    After broadcasting this event it will not be broadcasted again
@@ -345,7 +362,6 @@ typedef struct {
    *          transmit mailboxes become empty.
    * @note    The upper 16 bits are transmission error flags associated
    *          to the transmit mailboxes.
-   *
    */
   event_source_t            txempty_event;
   /**
@@ -366,12 +382,41 @@ typedef struct {
    */
   event_source_t            wakeup_event;
 #endif /* CAN_USE_SLEEP_MODE */
+#else /* CAN_ENFORCE_USE_CALLBACKS == TRUE */
+  /**
+   * @brief   One or more frames become available.
+   * @note    After calling this function it will not be called again
+   *          until the received frames queue has been completely emptied. It
+   *          is <b>not</b> called for each received frame. It is
+   *          responsibility of the application to empty the queue by
+   *          repeatedly invoking @p chTryReceiveI().
+   *          This behavior minimizes the interrupt served by the system
+   *          because CAN traffic.
+   */
+  can_callback_t            rxfull_cb;
+  /**
+   * @brief   One or more transmission mailbox become available.
+   * @note    The flags associated to the callback will indicate which
+   *          transmit mailboxes become empty.
+   */
+  can_callback_t            txempty_cb;
+  /**
+   * @brief   A CAN bus error happened.
+   */
+  can_callback_t            error_cb;
+#if (CAN_USE_SLEEP_MODE == TRUE) || defined (__DOXYGEN__)
+  /**
+   * @brief   Exiting sleep state.
+   */
+  can_callback_t            wakeup_cb;
+#endif
+#endif
   /* End of the mandatory fields.*/
   /**
    * @brief   Pointer to the CAN registers.
    */
   CAN_TypeDef               *can;
-} CANDriver;
+};
 
 /*===========================================================================*/
 /* Driver macros.                                                            */

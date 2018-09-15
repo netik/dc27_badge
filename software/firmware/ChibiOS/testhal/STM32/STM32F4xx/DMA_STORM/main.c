@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ static void adccallback(ADCDriver *adcp, adcsample_t *buffer, size_t n) {
   (void)n;
 
   chSysLockFromISR();
-  chVTSetI(&adcvt, MS2ST(10), tmo, (void *)"ADC timeout");
+  chVTSetI(&adcvt, TIME_MS2I(10), tmo, (void *)"ADC timeout");
   chSysUnlockFromISR();
 }
 
@@ -86,6 +86,7 @@ static const ADCConversionGroup adcgrpcfg2 = {
  * Maximum speed SPI configuration (21MHz, CPHA=0, CPOL=0, MSb first).
  */
 static const SPIConfig hs_spicfg = {
+  false,
   NULL,
   GPIOB,
   12,
@@ -118,7 +119,7 @@ static THD_FUNCTION(spi_thread, p) {
   while (true) {
     /* Starts a VT working as watchdog to catch a malfunction in the SPI
        driver.*/
-    chVTSet(&vt, MS2ST(10), tmo, (void *)"SPI timeout");
+    chVTSet(&vt, TIME_MS2I(10), tmo, (void *)"SPI timeout");
 
     spiExchange(spip, sizeof(txbuf), txbuf, rxbuf);
 
@@ -172,7 +173,7 @@ int main(void) {
   adcSTM32EnableTSVREFE();
 
   /* Starts an ADC continuous conversion and its watchdog virtual timer.*/
-  chVTSet(&adcvt, MS2ST(10), tmo, (void *)"ADC timeout");
+  chVTSet(&adcvt, TIME_MS2I(10), tmo, (void *)"ADC timeout");
   adcStartConversion(&ADCD1, &adcgrpcfg2, samples2, ADC_GRP2_BUF_DEPTH);
 
   /* Activating SPI drivers.*/
@@ -204,7 +205,7 @@ int main(void) {
 
     /* Starts a VT working as watchdog to catch a malfunction in the DMA
        driver.*/
-    chVTSet(&vt, MS2ST(10), tmo, (void *)"copy timeout");
+    chVTSet(&vt, TIME_MS2I(10), tmo, (void *)"copy timeout");
 
     /* Copy pattern 1.*/
     dmaStartMemCopy(STM32_DMA2_STREAM6,

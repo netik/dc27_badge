@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -109,23 +109,29 @@ static void hal_lld_backup_domain_init(void) {
  */
 void hal_lld_init(void) {
 
-  /* Reset of all peripherals.*/
+  /* Reset of all peripherals.
+     Note, GPIOs are not reset because initialized before this point in
+     board files.*/
   rccResetAHB1(~0);
-  rccResetAHB2(~0);
+  rccResetAHB2(~STM32_GPIO_EN_MASK);
   rccResetAHB3(~0);
   rccResetAPB1R1(~RCC_APB1RSTR1_PWRRST);
   rccResetAPB1R2(~0);
   rccResetAPB2(~0);
 
   /* PWR clock enabled.*/
-  rccEnablePWRInterface(FALSE);
+  rccEnablePWRInterface(true);
 
   /* Initializes the backup domain.*/
   hal_lld_backup_domain_init();
 
+  /* DMA subsystems initialization.*/
 #if defined(STM32_DMA_REQUIRED)
   dmaInit();
 #endif
+
+  /* IRQ subsystem initialization.*/
+  irqInit();
 
   /* Programmable voltage detector enable.*/
 #if STM32_PVD_ENABLE
@@ -185,7 +191,16 @@ void stm32_clock_init(void) {
   /* HSI activation.*/
   RCC->CR |= RCC_CR_HSION;
   while ((RCC->CR & RCC_CR_HSIRDY) == 0)
-    ;                                       /* Wait until HSI is stable.    */
+    ;                                       /* Wait until HSI16 is stable.  */
+#endif
+
+#if STM32_CLOCK_HAS_HSI48
+#if STM32_HSI48_ENABLED
+  /* HSI activation.*/
+  RCC->CRRCR |= RCC_CRRCR_HSI48ON;
+  while ((RCC->CRRCR & RCC_CRRCR_HSI48RDY) == 0)
+    ;                                       /* Wait until HSI48 is stable.  */
+#endif
 #endif
 
 #if STM32_HSE_ENABLED
@@ -249,11 +264,19 @@ void stm32_clock_init(void) {
 
 #if STM32_ACTIVATE_PLL || STM32_ACTIVATE_PLLSAI1 || STM32_ACTIVATE_PLLSAI2
   /* PLLM and PLLSRC are common to all PLLs.*/
+#if defined(STM32L496xx) || defined(STM32L4A6xx)
+  RCC->PLLCFGR = STM32_PLLPDIV | STM32_PLLR  |
+                 STM32_PLLREN  | STM32_PLLQ  |
+                 STM32_PLLQEN  | STM32_PLLP  |
+                 STM32_PLLPEN  | STM32_PLLN  |
+                 STM32_PLLM    | STM32_PLLSRC;
+#else
   RCC->PLLCFGR = STM32_PLLR   | STM32_PLLREN |
                  STM32_PLLQ   | STM32_PLLQEN |
                  STM32_PLLP   | STM32_PLLPEN |
                  STM32_PLLN   | STM32_PLLM   |
                  STM32_PLLSRC;
+#endif
 #endif
 
 #if STM32_ACTIVATE_PLL
@@ -267,10 +290,17 @@ void stm32_clock_init(void) {
 
 #if STM32_ACTIVATE_PLLSAI1
   /* PLLSAI1 activation.*/
+#if defined(STM32L496xx) || defined(STM32L4A6xx)
+  RCC->PLLSAI1CFGR = STM32_PLLSAI1PDIV | STM32_PLLSAI1R |
+                     STM32_PLLSAI1REN  | STM32_PLLSAI1Q |
+                     STM32_PLLSAI1QEN  | STM32_PLLSAI1P |
+                     STM32_PLLSAI1PEN  | STM32_PLLSAI1N;
+#else
   RCC->PLLSAI1CFGR = STM32_PLLSAI1R | STM32_PLLSAI1REN |
                      STM32_PLLSAI1Q | STM32_PLLSAI1QEN |
                      STM32_PLLSAI1P | STM32_PLLSAI1PEN |
                      STM32_PLLSAI1N;
+#endif
   RCC->CR |= RCC_CR_PLLSAI1ON;
 
   /* Waiting for PLL lock.*/
@@ -280,9 +310,15 @@ void stm32_clock_init(void) {
 
 #if STM32_ACTIVATE_PLLSAI2
   /* PLLSAI2 activation.*/
+#if defined(STM32L496xx) || defined(STM32L4A6xx)
+  RCC->PLLSAI2CFGR = STM32_PLLSAI2PDIV | STM32_PLLSAI2R |
+                     STM32_PLLSAI2REN  | STM32_PLLSAI2P |
+                     STM32_PLLSAI2PEN  | STM32_PLLSAI2N;
+#else
   RCC->PLLSAI2CFGR = STM32_PLLSAI2R | STM32_PLLSAI2REN |
                      STM32_PLLSAI2P | STM32_PLLSAI2PEN |
                      STM32_PLLSAI2N;
+#endif
   RCC->CR |= RCC_CR_PLLSAI2ON;
 
   /* Waiting for PLL lock.*/
@@ -331,7 +367,7 @@ void stm32_clock_init(void) {
 
   /* SYSCFG clock enabled here because it is a multi-functional unit shared
      among multiple drivers.*/
-  rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, TRUE);
+  rccEnableAPB2(RCC_APB2ENR_SYSCFGEN, true);
 }
 
 /** @} */

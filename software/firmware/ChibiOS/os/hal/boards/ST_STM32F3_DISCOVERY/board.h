@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,6 +21,10 @@
 
 #ifndef BOARD_H
 #define BOARD_H
+
+/*===========================================================================*/
+/* Driver constants.                                                         */
+/*===========================================================================*/
 
 /*
  * Setup for STMicroelectronics STM32F3-Discovery board.
@@ -99,8 +103,8 @@
 #define GPIOC_PIN1                  1U
 #define GPIOC_PIN2                  2U
 #define GPIOC_PIN3                  3U
-#define GPIOC_PIN4                  4U
-#define GPIOC_PIN5                  5U
+#define GPIOC_VCP_RX                4U
+#define GPIOC_VCP_TX                5U
 #define GPIOC_PIN6                  6U
 #define GPIOC_PIN7                  7U
 #define GPIOC_PIN8                  8U
@@ -212,17 +216,15 @@
 #define LINE_USB_DP                 PAL_LINE(GPIOA, 12U)
 #define LINE_SWDIO                  PAL_LINE(GPIOA, 13U)
 #define LINE_SWCLK                  PAL_LINE(GPIOA, 14U)
-
 #define LINE_SWO                    PAL_LINE(GPIOB, 3U)
 #define LINE_I2C1_SCL               PAL_LINE(GPIOB, 6U)
 #define LINE_LSM303DLHC_SCL         PAL_LINE(GPIOB, 6U)
 #define LINE_I2C1_SDA               PAL_LINE(GPIOB, 7U)
 #define LINE_LSM303DLHC_SDA         PAL_LINE(GPIOB, 7U)
-
+#define LINE_VCP_RX                 PAL_LINE(GPIOC, 4U)
+#define LINE_VCP_TX                 PAL_LINE(GPIOC, 5U)
 #define LINE_OSC32_IN               PAL_LINE(GPIOC, 14U)
 #define LINE_OSC32_OUT              PAL_LINE(GPIOC, 15U)
-
-
 #define LINE_L3GD20_INT1            PAL_LINE(GPIOE, 0U)
 #define LINE_L3GD20_INT2            PAL_LINE(GPIOE, 1U)
 #define LINE_LSM303DLHC_DRDY        PAL_LINE(GPIOE, 2U)
@@ -238,11 +240,24 @@
 #define LINE_LED10_RED              PAL_LINE(GPIOE, 13U)
 #define LINE_LED8_ORANGE            PAL_LINE(GPIOE, 14U)
 #define LINE_LED6_GREEN             PAL_LINE(GPIOE, 15U)
-
 #define LINE_OSC_IN                 PAL_LINE(GPIOF, 0U)
 #define LINE_OSC_OUT                PAL_LINE(GPIOF, 1U)
 
+/*===========================================================================*/
+/* Driver pre-compile time settings.                                         */
+/*===========================================================================*/
 
+/*===========================================================================*/
+/* Derived constants and error checks.                                       */
+/*===========================================================================*/
+
+/*===========================================================================*/
+/* Driver data structures and types.                                         */
+/*===========================================================================*/
+
+/*===========================================================================*/
+/* Driver macros.                                                            */
+/*===========================================================================*/
 
 /*
  * I/O ports initial setup, this configuration is established soon after reset
@@ -507,8 +522,8 @@
  * PC1  - PIN1                      (input pullup).
  * PC2  - PIN2                      (input pullup).
  * PC3  - PIN3                      (input pullup).
- * PC4  - PIN4                      (input pullup).
- * PC5  - PIN5                      (input pullup).
+ * PC4  - VCP_RX                    (alternate 7).
+ * PC5  - VCP_TX                    (alternate 7).
  * PC6  - PIN6                      (input pullup).
  * PC7  - PIN7                      (input pullup).
  * PC8  - PIN8                      (input pullup).
@@ -524,8 +539,8 @@
                                      PIN_MODE_INPUT(GPIOC_PIN1) |           \
                                      PIN_MODE_INPUT(GPIOC_PIN2) |           \
                                      PIN_MODE_INPUT(GPIOC_PIN3) |           \
-                                     PIN_MODE_INPUT(GPIOC_PIN4) |           \
-                                     PIN_MODE_INPUT(GPIOC_PIN5) |           \
+                                     PIN_MODE_ALTERNATE(GPIOC_VCP_RX) |     \
+                                     PIN_MODE_ALTERNATE(GPIOC_VCP_TX) |     \
                                      PIN_MODE_INPUT(GPIOC_PIN6) |           \
                                      PIN_MODE_INPUT(GPIOC_PIN7) |           \
                                      PIN_MODE_INPUT(GPIOC_PIN8) |           \
@@ -540,8 +555,8 @@
                                      PIN_OTYPE_PUSHPULL(GPIOC_PIN1) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOC_PIN2) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOC_PIN3) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOC_PIN4) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOC_PIN5) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOC_VCP_RX) |     \
+                                     PIN_OTYPE_PUSHPULL(GPIOC_VCP_TX) |     \
                                      PIN_OTYPE_PUSHPULL(GPIOC_PIN6) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOC_PIN7) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOC_PIN8) |       \
@@ -556,8 +571,8 @@
                                      PIN_OSPEED_VERYLOW(GPIOC_PIN1) |       \
                                      PIN_OSPEED_VERYLOW(GPIOC_PIN2) |       \
                                      PIN_OSPEED_VERYLOW(GPIOC_PIN3) |       \
-                                     PIN_OSPEED_VERYLOW(GPIOC_PIN4) |       \
-                                     PIN_OSPEED_VERYLOW(GPIOC_PIN5) |       \
+                                     PIN_OSPEED_VERYLOW(GPIOC_VCP_RX) |     \
+                                     PIN_OSPEED_VERYLOW(GPIOC_VCP_TX) |     \
                                      PIN_OSPEED_VERYLOW(GPIOC_PIN6) |       \
                                      PIN_OSPEED_VERYLOW(GPIOC_PIN7) |       \
                                      PIN_OSPEED_VERYLOW(GPIOC_PIN8) |       \
@@ -572,8 +587,8 @@
                                      PIN_PUPDR_PULLUP(GPIOC_PIN1) |         \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN2) |         \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN3) |         \
-                                     PIN_PUPDR_PULLUP(GPIOC_PIN4) |         \
-                                     PIN_PUPDR_PULLUP(GPIOC_PIN5) |         \
+                                     PIN_PUPDR_PULLUP(GPIOC_VCP_RX) |       \
+                                     PIN_PUPDR_PULLUP(GPIOC_VCP_TX) |       \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN6) |         \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN7) |         \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN8) |         \
@@ -588,8 +603,8 @@
                                      PIN_ODR_HIGH(GPIOC_PIN1) |             \
                                      PIN_ODR_HIGH(GPIOC_PIN2) |             \
                                      PIN_ODR_HIGH(GPIOC_PIN3) |             \
-                                     PIN_ODR_HIGH(GPIOC_PIN4) |             \
-                                     PIN_ODR_HIGH(GPIOC_PIN5) |             \
+                                     PIN_ODR_HIGH(GPIOC_VCP_RX) |           \
+                                     PIN_ODR_HIGH(GPIOC_VCP_TX) |           \
                                      PIN_ODR_HIGH(GPIOC_PIN6) |             \
                                      PIN_ODR_HIGH(GPIOC_PIN7) |             \
                                      PIN_ODR_HIGH(GPIOC_PIN8) |             \
@@ -604,8 +619,8 @@
                                      PIN_AFIO_AF(GPIOC_PIN1, 0U) |          \
                                      PIN_AFIO_AF(GPIOC_PIN2, 0U) |          \
                                      PIN_AFIO_AF(GPIOC_PIN3, 0U) |          \
-                                     PIN_AFIO_AF(GPIOC_PIN4, 0U) |          \
-                                     PIN_AFIO_AF(GPIOC_PIN5, 0U) |          \
+                                     PIN_AFIO_AF(GPIOC_VCP_RX, 7U) |        \
+                                     PIN_AFIO_AF(GPIOC_VCP_TX, 7U) |        \
                                      PIN_AFIO_AF(GPIOC_PIN6, 0U) |          \
                                      PIN_AFIO_AF(GPIOC_PIN7, 0U))
 #define VAL_GPIOC_AFRH              (PIN_AFIO_AF(GPIOC_PIN8, 0U) |          \
@@ -1202,6 +1217,9 @@
                                      PIN_AFIO_AF(GPIOH_PIN14, 0U) |         \
                                      PIN_AFIO_AF(GPIOH_PIN15, 0U))
 
+/*===========================================================================*/
+/* External declarations.                                                    */
+/*===========================================================================*/
 
 #if !defined(_FROM_ASM_)
 #ifdef __cplusplus

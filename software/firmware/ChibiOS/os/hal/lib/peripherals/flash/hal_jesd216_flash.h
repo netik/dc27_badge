@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -137,7 +137,6 @@
 
 /**
  * @brief   @p JESD215Flash specific methods.
- * @note    No methods so far, just a common ancestor interface.
  */
 #define _jesd216_flash_methods_alone                                        \
   /* Read SFDP.*/                                                           \

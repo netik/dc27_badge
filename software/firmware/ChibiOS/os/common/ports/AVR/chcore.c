@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -70,6 +70,9 @@ bool __avr_in_isr;
 __attribute__((naked, weak))
 #endif
 void _port_switch(thread_t *ntp, thread_t *otp) {
+
+  (void)ntp;
+  (void)otp;
 
   asm volatile ("push    r2");
   asm volatile ("push    r3");
@@ -150,7 +153,12 @@ void _port_thread_start(void) {
   asm volatile ("movw    r24, r4");
   asm volatile ("movw    r30, r2");
   asm volatile ("icall");
-  asm volatile ("call    chThdExit");
+#if defined(_CHIBIOS_RT_)
+  asm volatile ("call    chThdExit");  /* Used for avr5 Architecture. */
+#endif
+#if defined(_CHIBIOS_NIL_)
+  asm volatile ("call    chSysHalt");  /* Used for avr5 Architecture. */
+#endif
 }
 
 /** @} */

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -138,6 +138,7 @@
 #define STM32_DMA_CR_TEIE           DMA_SxCR_TEIE
 #define STM32_DMA_CR_HTIE           DMA_SxCR_HTIE
 #define STM32_DMA_CR_TCIE           DMA_SxCR_TCIE
+#define STM32_DMA_CR_PFCTRL         DMA_SxCR_PFCTRL
 #define STM32_DMA_CR_DIR_MASK       DMA_SxCR_DIR
 #define STM32_DMA_CR_DIR_P2M        0
 #define STM32_DMA_CR_DIR_M2P        DMA_SxCR_DIR_0
@@ -214,10 +215,6 @@
 /*===========================================================================*/
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
-
-#if !defined(STM32_DMA_CACHE_HANDLING)
-#error "STM32_DMA_CACHE_HANDLING missing in registry"
-#endif
 
 #if !defined(STM32_HAS_DMA1)
 #error "STM32_HAS_DMA1 missing in registry"
@@ -383,71 +380,6 @@ typedef void (*stm32_dmaisr_t)(void *p, uint32_t flags);
 /*===========================================================================*/
 /* Driver macros.                                                            */
 /*===========================================================================*/
-
-#if STM32_DMA_CACHE_HANDLING || defined(__DOXYGEN__)
-/**
- * @brief   Invalidates the data cache lines overlapping a DMA buffer.
- * @details This function is meant to make sure that data written in
- *          data cache is invalidated. It is used for DMA buffers that
- *          must have been written by a DMA stream.
- * @note    On devices without data cache this function does nothing.
- * @note    The function does not consider the lower 5 bits of addresses,
- *          the buffers are meant to be aligned to a 32 bytes boundary or
- *          adjacent data can be invalidated as side effect.
- *
- * @param[in] saddr     start address of the DMA buffer
- * @param[in] n         size of the DMA buffer in bytes
- *
- * @api
- */
-#define dmaBufferInvalidate(saddr, n) {                                     \
-  uint8_t *start = (uint8_t *)(saddr);                                      \
-  uint8_t *end = start + (size_t)(n);                                       \
-  __DSB();                                                                  \
-  while (start < end) {                                                     \
-    SCB->DCIMVAC = (uint32_t)start;                                         \
-    start += 32U;                                                           \
-  }                                                                         \
-  __DSB();                                                                  \
-  __ISB();                                                                  \
-}
-
-/**
- * @brief   Flushes the data cache lines overlapping a DMA buffer.
- * @details This function is meant to make sure that data written in
- *          data cache is flushed to RAM. It is used for DMA buffers that
- *          must be read by a DMA stream.
- * @note    On devices without data cache this function does nothing.
- * @note    The function does not consider the lower 5 bits of addresses,
- *          the buffers are meant to be aligned to a 32 bytes boundary or
- *          adjacent data can be flushed as side effect.
- *
- * @param[in] saddr     start address of the DMA buffer
- * @param[in] n         size of the DMA buffer in bytes
- *
- * @api
- */
-#define dmaBufferFlush(saddr, n) {                                          \
-  uint8_t *start = (uint8_t *)(saddr);                                      \
-  uint8_t *end = start + (size_t)(n);                                       \
-  __DSB();                                                                  \
-  while (start < end) {                                                     \
-    SCB->DCCIMVAC = (uint32_t)start;                                        \
-    start += 32U;                                                           \
-  }                                                                         \
-  __DSB();                                                                  \
-  __ISB();                                                                  \
-}
-#else
-#define dmaBufferInvalidate(addr, size) {                                   \
-  (void)(addr);                                                             \
-  (void)(size);                                                             \
-}
-#define dmaBufferFlush(addr, size) {                                        \
-  (void)(addr);                                                             \
-  (void)(size);                                                             \
-}
-#endif
 
 /**
  * @name    Macro Functions
@@ -648,6 +580,20 @@ typedef void (*stm32_dmaisr_t)(void *p, uint32_t flags);
     ;                                                                       \
   dmaStreamClearInterrupt(dmastp);                                          \
 }
+
+/**
+ * @brief   DMA stream current target.
+ * @note    This function can be invoked in both ISR or thread context.
+ * @pre     The stream must have been allocated using @p dmaStreamAllocate().
+ * @post    After use the stream can be released using @p dmaStreamRelease().
+ *
+ * @param[in] dmastp    pointer to a stm32_dma_stream_t structure
+ * @return              Current memory target index.
+ *
+ * @special
+ */
+#define dmaStreamGetCurrentTarget(dmastp)                                   \
+  (((dmastp)->stream->CR >> DMA_SxCR_CT_Pos) & 1U)
 /** @} */
 
 /*===========================================================================*/

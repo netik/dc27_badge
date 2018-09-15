@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -27,6 +27,10 @@
 
 #ifndef CHHEAP_H
 #define CHHEAP_H
+
+#if !defined(CH_CFG_USE_HEAP)
+#define CH_CFG_USE_HEAP                     FALSE
+#endif
 
 #if (CH_CFG_USE_HEAP == TRUE) || defined(__DOXYGEN__)
 
@@ -80,7 +84,6 @@ typedef union heap_header heap_header_t;
  * @brief   Memory heap block header.
  */
 union heap_header {
-  stkalign_t align;
   struct {
     heap_header_t       *next;      /**< @brief Next block in free list.    */
     size_t              pages;      /**< @brief Size of the area in pages.  */
@@ -169,7 +172,7 @@ static inline void *chHeapAlloc(memory_heap_t *heapp, size_t size) {
  */
 static inline size_t chHeapGetSize(const void *p) {
 
-  return ((heap_header_t *)p)->used.size;
+  return ((heap_header_t *)p - 1U)->used.size;
 }
 
 #endif /* CH_CFG_USE_HEAP == TRUE */

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -114,18 +114,6 @@
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
-#if !defined(CH_CFG_IDLE_ENTER_HOOK)
-#error "CH_CFG_IDLE_ENTER_HOOK not defined in chconf.h"
-#endif
-
-#if !defined(CH_CFG_IDLE_LEAVE_HOOK)
-#error "CH_CFG_IDLE_LEAVE_HOOK not defined in chconf.h"
-#endif
-
-#if !defined(CH_CFG_IDLE_LOOP_HOOK)
-#error "CH_CFG_IDLE_LOOP_HOOK not defined in chconf.h"
-#endif
-
 /*===========================================================================*/
 /* Module data structures and types.                                         */
 /*===========================================================================*/
@@ -193,7 +181,7 @@ struct ch_thread {
    * @brief   Number of ticks remaining to this thread.
    */
 #if (CH_CFG_TIME_QUANTUM > 0) || defined(__DOXYGEN__)
-  tslices_t             preempt;
+  tslices_t             ticks;
 #endif
 #if (CH_DBG_THREADS_PROFILING == TRUE) || defined(__DOXYGEN__)
   /**
@@ -325,7 +313,7 @@ struct ch_thread {
 struct ch_virtual_timer {
   virtual_timer_t       *next;      /**< @brief Next timer in the list.     */
   virtual_timer_t       *prev;      /**< @brief Previous timer in the list. */
-  systime_t             delta;      /**< @brief Time delta before timeout.  */
+  sysinterval_t         delta;      /**< @brief Time delta before timeout.  */
   vtfunc_t              func;       /**< @brief Timer callback function
                                                 pointer.                    */
   void                  *par;       /**< @brief Timer callback function
@@ -343,7 +331,7 @@ struct ch_virtual_timers_list {
                                                 list.                       */
   virtual_timer_t       *prev;      /**< @brief Last timer in the delta
                                                 list.                       */
-  systime_t             delta;      /**< @brief Must be initialized to -1.  */
+  sysinterval_t         delta;      /**< @brief Must be initialized to -1.  */
 #if (CH_CFG_ST_TIMEDELTA == 0) || defined(__DOXYGEN__)
   volatile systime_t    systime;    /**< @brief System Time counter.        */
 #endif
@@ -438,6 +426,7 @@ struct ch_system {
    */
   kernel_stats_t        kernel_stats;
 #endif
+  CH_CFG_SYSTEM_EXTRA_FIELDS
 };
 
 /*===========================================================================*/
@@ -476,7 +465,7 @@ extern "C" {
   thread_t *chSchReadyI(thread_t *tp);
   thread_t *chSchReadyAheadI(thread_t *tp);
   void chSchGoSleepS(tstate_t newstate);
-  msg_t chSchGoSleepTimeoutS(tstate_t newstate, systime_t time);
+  msg_t chSchGoSleepTimeoutS(tstate_t newstate, sysinterval_t timeout);
   void chSchWakeupS(thread_t *ntp, msg_t msg);
   void chSchRescheduleS(void);
   bool chSchIsPreemptionRequired(void);
@@ -705,7 +694,7 @@ static inline void chSchPreemption(void) {
   tprio_t p2 = currp->prio;
 
 #if CH_CFG_TIME_QUANTUM > 0
-  if (currp->preempt > (tslices_t)0) {
+  if (currp->ticks > (tslices_t)0) {
     if (p1 > p2) {
       chSchDoRescheduleAhead();
     }

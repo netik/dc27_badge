@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
  * Maximum speed SPI configuration (18MHz, CPHA=0, CPOL=0, MSb first).
  */
 static const SPIConfig hs_spicfg = {
+  false,
   NULL,
   GPIOB,
   12,
@@ -114,12 +115,12 @@ int main(void) {
   m25qStart(&flash, &flashcfg);
 
   /* Programming a pattern.*/
-  err = flashProgram(&flash, 0, pattern, 128);
+  err = flashProgram(&flash, 0, 128, pattern);
   if (err != FLASH_NO_ERROR)
     chSysHalt("program error");
 
   /* Reading it back.*/
-  err = flashRead(&flash, 0, buffer, 128);
+  err = flashRead(&flash, 0, 128, buffer);
   if (err != FLASH_NO_ERROR)
     chSysHalt("read error");
 
@@ -135,7 +136,7 @@ int main(void) {
     chSysHalt("verify erase error");
 
   /* Reading back for confirmation.*/
-  err = flashRead(&flash, 0, buffer, 128);
+  err = flashRead(&flash, 0, 128, buffer);
   if (err != FLASH_NO_ERROR)
     chSysHalt("read error");
 

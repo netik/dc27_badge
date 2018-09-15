@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio.
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio.
 
     This file is part of ChibiOS.
 
@@ -43,17 +43,6 @@
 /*===========================================================================*/
 /* Module data structures and types.                                         */
 /*===========================================================================*/
-
-/**
- * @brief   Type of system time.
- */
-#if (CH_CFG_ST_RESOLUTION == 32) || defined(__DOXYGEN__)
-typedef uint32_t systime_t;
-#elif CH_CFG_ST_RESOLUTION == 16
-typedef uint16_t systime_t;
-#else
-#error "invalid CH_CFG_ST_RESOLUTION setting"
-#endif
 
 /**
  * @extends threads_queue_t

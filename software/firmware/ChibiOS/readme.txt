@@ -12,7 +12,6 @@
   |  +--hal/              - Builders for HAL.
   |  |  +--Doxyfile_*     - Doxygen project files (required for rebuild).
   |  |  +--html/          - Local HTML documentation (after rebuild).
-  |  |  +--reports/       - Test reports.
   |  |  +--rsc/           - Documentation resource files (required for rebuild).
   |  |  +--src/           - Documentation source files (required for rebuild).
   |  |  +--Doxyfile_*     - Doxygen project files (required for rebuild).
@@ -20,14 +19,12 @@
   |  +--nil/              - Builders for NIL.
   |  |  +--Doxyfile_*     - Doxygen project files (required for rebuild).
   |  |  +--html/          - Local HTML documentation (after rebuild).
-  |  |  +--reports/       - Test reports.
   |  |  +--rsc/           - Documentation resource files (required for rebuild).
   |  |  +--src/           - Documentation source files (required for rebuild).
   |  |  +--Doxyfile_*     - Doxygen project files (required for rebuild).
   |  |  +--index.html     - Local documentation access (after rebuild).
   |  +--rt/               - Builders for RT.
   |  |  +--html/          - Local HTML documentation (after rebuild).
-  |  |  +--reports/       - Test reports.
   |  |  +--rsc/           - Documentation resource files (required for rebuild).
   |  |  +--src/           - Documentation source files (required for rebuild).
   |  |  +--Doxyfile_*     - Doxygen project files (required for rebuild).
@@ -88,83 +85,50 @@
 *** Releases and Change Log                                               ***
 *****************************************************************************
 
-*** 17.6.3 ***
-- NIL: Fixed core and Heap allocators not functional in NIL (bug #902).
-- HAL: Fixed function uartSendFullTimeout() failing on STM32 USARTv1 and
-       v2 drivers (bug #901).
-- HAL: Fixed broken I2C fallback driver (bug #900).
-- LIB: Fixed heap buffer alignment not enforced (bug #899).
-- LIB: Fixed call protocol violation in chCoreAlloc() (bug #896).
-- RT:  Fixed trace Buffer activation bits state reversed in chconf.h
-       (bug #895).
-- BLD: Fixed USE_OPT not passed to assembler in rules.mk (bug #892).
-- HAL: Fixed IRQ sharing issue in STM32 DMAv1 driver (bug #891).
-- HAL: Fixed CHPRINTF_USE_FLOAT defaulted to TRUE (bug #890).
-- HAL: Fixed various STM32 registry problems (more instances)(bug #889).
+*** 18.2.1 ***
+- NEW: Added HAL support for STM32L443.
+- NEW: Improved some EX drivers and related test applications.
+- NEW: Improved VMT mechanisms to allow multiple interfaces.
+- NEW: Updated make mechanisms in demos/STM32, testhal/STM32 and testex/STM32:
+       now makefile are more shorter and inclusion are easier to do.
+- EX:  Updated HTS221 to 1.1.0.
+- EX:  Updated L3GD20 to 1.1.0.
+- EX:  Updated LIS3DSH to 1.1.0.
+- EX:  Updated LIS3MDL to 1.1.0.
+- EX:  Updated LIS302DL to 1.1.0.
+- EX:  Updated LPS25H to 1.1.0.
+- EX:  Updated LSM303DLHC to 1.1.0.
+- HAL: Fixed invalid settings in STM32F769I-Discovery board files (bug #942).
+- OTH: Fixed short branch to _unhandled_exception in vectors.S (bug #941).
+- HAL: Fixed IOBus PAL functions missing the const qualifier (bug #940).
+- HAL: Fixed STM32 USBv1 driver does not reset data toggling bits on endpoint
+       initialization (bug #939).
+- HAL: Fixed incorrect behavior of USB driver on SET CONFIGURATION (bug #938).
+- HAL: Fixed macro expansion problem in SPI high level driver (bug #937)
+- HAL: Fixed missing CAN2 macros from STM32L4xx stm32_rcc.h file (bug #936).
+- OTH: Fixed inclusion order problem in STM32L4 cmparams.h file (bug #935).
+- HAL: Fixed problem clearing UIF timer flag in STM32 PWM driver (bug #934).
+- HAL: Fixed USB Serial driver problem with zero-size OUT transactions
+       (bug #933).
+- HAL: Fixed race condition in STM32 QSPI driver (bug #932).
+- HAL: Fixed function mfsReadRecord() causes memory corruption because a
+       buffer overflow (bug #931).
+- HAL: Fixed silence GCC 7.3.0 warning (bug #930).
+- HAL: Fixed invalid SAI1 clock selection on STM32F7xx (bug #929).
+- HAL: Fixed invalid clock checks for SDMMC1 and SDMMC2 on STM32F7xx
+       (bug #928).
+- HAL: Fixed useless writes in read-only CFGR_SWS field on all STM32Fxx
+       (bug #927).
+- HAL: Fixed typo in hal_pal.h (bug #926).
+- HAL: Fixed UART driver stop functions confusing returned value (bug #925).
+- HAL: Fixed USB driver not stopped (bug #924).
+- HAL: Fixed I2C address not accepted (bug #923).
+- HAL: Fixed problem with HSI48 on STM32L4xx (bug #922).
+- HAL: Fixed invalid implementation of palWaitPadTimeoutS() and
+       palWaitLineTimeoutS() APIs (bug #921).
+- HAL: Fixed wrong DMA settings for STM32F76x I2C3 and I2C4 (bug #920).
+- HAL: Fixed wrong flash waiting state for STM32F7xx (bug #918).
 
-*** 17.6.2 ***
-- HAL: Fixed various STM32 registry problems (bug #889).
-- LIB: Fixed heap allocator returning unaligned blocks (bug #888).
+*** 18.2.0 ***
+- First 18.2.x release, see release note 18.2.0.
 
-*** 17.6.1 ***
-- NEW: Integrated the latest FatFS 0.13 with patches.
-- NEW: Improved RT and NIL test suite to report version numbers and
-       configuration settings.
-- NEW: Added a test suite generator tool written in FTL.
-- NEW: Added to the HAL USB driver a new function usbWakeupHost() for
-       standby exit.
-- NEW: Added shared Eclipse debug configurations for OpenOCD under
-       ./tools/eclipse/debug. Now it is no more required to re-create
-       those each time a new workspace is created, just import the global
-       ChibiOS project in it. The configurations will appear under the
-       Eclipse Tools menu. It is required to create an OPENOCD environment
-       variable pointing to the OpenOCD executable. It will be done in
-       ChibiStudio 20 by default.
-- NIL: Fixed duplicated entries in NIL documentation (bug #887).
-- HAL: Fixed EXT low level driver bug on AVR port (bug #886).
-- HAL: Fixed USB GET_DESCRIPTOR not handled for Interface Recipients (bug #885).
-- RT:  MAILBOX_DECL size parameter is actually a count (bug #884).
-- HAL: Fixed error in uartReceiveTimeout() and uartSendTimeout() (bug #883).
-- HAL: Fixed TIMx DBL field macro broken (bug #880).
-- HAL: Fixed STM32 SPI problem in spi_lld_start() (bug #879).
-- HAL: Fixed invalid STM32 CAN3 filters initialization (bug #878).
-- HAL: Fixed missing CAN definitions in STM32L432 registry entry (bug #877).
-- HAL: Fixed missing STM32_TIM_MAX_CHANNELS definition in STM32L0 registry
-       (bug #876).
-- HAL: Fixed STM32 OTGv1 driver fails on STM32L4 (bug #875).
-- HAL: Fixed wrong I2S and SAI freq divisor (bug #874).
-- HAL: Fixed wrong SAI1 and SAI2 clock selection (bug #873).
-- HAL: Fixed invalid number of DMA channels on STM32L011 (bug #872).
-- HAL: Fixed STM32 USARTv2 serial incorrect buffer size declarations
-       (bug #871).
-- HAL: Fixed bug in STM32L0xx port related to STM32L0x1 (bug #870).
-- HAL: Fixed board file configuration for STM32F3 Discovery REVC (bug #869).
-- HAL: Fixed wrong PPRE2 and LSI related macros in STM32L0 hal lld (bug #868).
-- HAL: Fixed wrong bit mask in STM32L0 hal lld (bug #866).
-- RT:  Fixed misplaced assertion in semaphores code (bug #865).
-- RT:  Fixed event cast cleanup for compilation warnings (bug #864).
-- HAL: Fixed STM32 USBv1 fails the state check when USB_USE_WAIT is TRUE
-       (bug #863).
-- HAL: Fixed incorrect OTG stepping in STM32F412 registry (bug #861).
-- HAL: Fixed missing DMA I2C3 streams in STM32F411 registry (bug #860).
-- HAL: Fixed missing Ethernet PHY in some STM32 Nucleo-144 board files (bug 
-       #859).
-- VAR: Fixed priority issue in STM32 Nucleo-64 F401RE demo (bug #858).
-- VAR: Fixed STM32L053 Discovery demo which is unaligned to standard demos (bug 
-       #857).
-- HAL: Fixed HSI48 which is not correctly enabled in STM32L0xx port (bug #856).
-- HAL: Fixed unaligned STM32F0xx mcuconf.h files (bug #855).
-- HAL: Fixed invalid handling of DST flag in STM32 RTCv2 (bug #854).
-- HAL: Fixed extra right parenthesis in STM32F4 registry (bug #853).
-- EX:  Fixed documentation-related issues (bug #852).
-- HAL: Fixed documentation-related issues (bug #852).
-- HAL: Fixed wrong frame size code in STM32 USARTv2 UART driver (bug #851).
-- NIL: Fixed documentation-related issues (bug #850).
-- RT:  Fixed documentation-related issues (bug #850).
-- RT:  Fixed leftover chcustomer.h file (bug #849).
-- RT:  Fixed invalid check in chchecks.h (bug #848).
-- HAL: Fixed STM32F070xB: USART invalid DMA channels (bug #847).
-- VAR: Fixed CMSIS_OS issue in timers (bug #846).
-
-*** 17.6.0 ***
-- First 17.6.0 release, see release note 17.6.0.

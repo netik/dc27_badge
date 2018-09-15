@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -688,7 +688,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
     if (&I2CD1 == i2cp) {
 
       rccResetI2C1();
-      rccEnableI2C1(FALSE);
+      rccEnableI2C1(true);
 #if STM32_I2C_USE_DMA == TRUE
       {
         bool b;
@@ -726,7 +726,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
     if (&I2CD2 == i2cp) {
 
       rccResetI2C2();
-      rccEnableI2C2(FALSE);
+      rccEnableI2C2(true);
 #if STM32_I2C_USE_DMA == TRUE
       {
         bool b;
@@ -764,7 +764,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
     if (&I2CD3 == i2cp) {
 
       rccResetI2C3();
-      rccEnableI2C3(FALSE);
+      rccEnableI2C3(true);
 #if STM32_I2C_USE_DMA == TRUE
       {
         bool b;
@@ -802,7 +802,7 @@ void i2c_lld_start(I2CDriver *i2cp) {
     if (&I2CD4 == i2cp) {
 
       rccResetI2C4();
-      rccEnableI2C4(FALSE);
+      rccEnableI2C4(true);
 #if STM32_I2C_USE_DMA == TRUE
       {
         bool b;
@@ -887,7 +887,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 #error "I2C1 interrupt numbers not defined"
 #endif
 
-      rccDisableI2C1(FALSE);
+      rccDisableI2C1();
     }
 #endif
 
@@ -902,7 +902,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 #error "I2C2 interrupt numbers not defined"
 #endif
 
-      rccDisableI2C2(FALSE);
+      rccDisableI2C2();
     }
 #endif
 
@@ -917,7 +917,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 #error "I2C3 interrupt numbers not defined"
 #endif
 
-      rccDisableI2C3(FALSE);
+      rccDisableI2C3();
     }
 #endif
 
@@ -932,7 +932,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
 #error "I2C4 interrupt numbers not defined"
 #endif
 
-      rccDisableI2C4(FALSE);
+      rccDisableI2C4();
     }
 #endif
   }
@@ -961,7 +961,7 @@ void i2c_lld_stop(I2CDriver *i2cp) {
  */
 msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                      uint8_t *rxbuf, size_t rxbytes,
-                                     systime_t timeout) {
+                                     sysinterval_t timeout) {
   msg_t msg;
   I2C_TypeDef *dp = i2cp->i2c;
   systime_t start, end;
@@ -984,7 +984,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   /* Calculating the time window for the timeout on the busy bus condition.*/
   start = osalOsGetSystemTimeX();
-  end = start + OSAL_MS2ST(STM32_I2C_BUSY_TIMEOUT);
+  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
 
   /* Waits until BUSY flag is reset or, alternatively, for a timeout
      condition.*/
@@ -998,7 +998,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
     /* If the system time went outside the allowed window then a timeout
        condition is returned.*/
-    if (!osalOsIsTimeWithinX(osalOsGetSystemTimeX(), start, end)) {
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
       return MSG_TIMEOUT;
     }
 
@@ -1064,7 +1064,7 @@ msg_t i2c_lld_master_receive_timeout(I2CDriver *i2cp, i2caddr_t addr,
 msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
                                       const uint8_t *txbuf, size_t txbytes,
                                       uint8_t *rxbuf, size_t rxbytes,
-                                      systime_t timeout) {
+                                      sysinterval_t timeout) {
   msg_t msg;
   I2C_TypeDef *dp = i2cp->i2c;
   systime_t start, end;
@@ -1094,7 +1094,7 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
   /* Calculating the time window for the timeout on the busy bus condition.*/
   start = osalOsGetSystemTimeX();
-  end = start + OSAL_MS2ST(STM32_I2C_BUSY_TIMEOUT);
+  end = osalTimeAddX(start, OSAL_MS2I(STM32_I2C_BUSY_TIMEOUT));
 
   /* Waits until BUSY flag is reset or, alternatively, for a timeout
      condition.*/
@@ -1108,7 +1108,7 @@ msg_t i2c_lld_master_transmit_timeout(I2CDriver *i2cp, i2caddr_t addr,
 
     /* If the system time went outside the allowed window then a timeout
        condition is returned.*/
-    if (!osalOsIsTimeWithinX(osalOsGetSystemTimeX(), start, end)) {
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
       return MSG_TIMEOUT;
     }
 

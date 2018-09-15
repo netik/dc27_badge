@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -264,14 +264,14 @@
 /**
  * @brief   ADC3 interrupt priority level setting.
  */
-#if !defined(STM32_ADC3_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#if !defined(STM32_ADC_ADC3_IRQ_PRIORITY) || defined(__DOXYGEN__)
 #define STM32_ADC_ADC3_IRQ_PRIORITY         5
 #endif
 
 /**
  * @brief   ADC4 interrupt priority level setting.
  */
-#if !defined(STM32_ADC4_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#if !defined(STM32_ADC_ADC4_IRQ_PRIORITY) || defined(__DOXYGEN__)
 #define STM32_ADC_ADC4_IRQ_PRIORITY         5
 #endif
 

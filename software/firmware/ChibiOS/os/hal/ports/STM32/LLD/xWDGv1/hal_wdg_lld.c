@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2016 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@
 #define KR_KEY_ENABLE                       0xCCCCU
 #define KR_KEY_WRITE                        0x5555U
 #define KR_KEY_PROTECT                      0x0000U
+
+#if !defined(IWDG) && defined(IWDG1)
+#define IWDG                                IWDG1
+#endif
 
 /*===========================================================================*/
 /* Driver exported variables.                                                */
@@ -115,7 +119,7 @@ void wdg_lld_start(WDGDriver *wdgp) {
  *
  * @param[in] wdgp      pointer to the @p WDGDriver object
  *
- * @api
+ * @notapi
  */
 void wdg_lld_stop(WDGDriver *wdgp) {
 
