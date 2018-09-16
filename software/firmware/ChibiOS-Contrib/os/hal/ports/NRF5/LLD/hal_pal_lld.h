@@ -86,19 +86,6 @@
 /** @} */
 
 /**
- * @brief   Generic I/O ports static initializer.
- * @details An instance of this structure must be passed to @p palInit() at
- *          system startup time in order to initialized the digital I/O
- *          subsystem. This represents only the initial setup, specific pads
- *          or whole ports can be reprogrammed at later time.
- * @note    Implementations may extend this structure to contain more,
- *          architecture dependent, fields.
- */
-typedef struct {
-  uint32_t pads[TOTAL_GPIO_PADS];
-} PALConfig;
-
-/**
  * @brief   Digital I/O port sized unsigned type.
  */
 typedef uint32_t ioportmask_t;
@@ -126,6 +113,20 @@ typedef NRF_GPIO_Type *ioportid_t;
  */
 typedef uint32_t iopadid_t;
 
+/**
+ * @brief   Generic I/O ports static initializer.
+ * @details An instance of this structure must be passed to @p palInit() at
+ *          system startup time in order to initialized the digital I/O
+ *          subsystem. This represents only the initial setup, specific pads
+ *          or whole ports can be reprogrammed at later time.
+ * @note    Implementations may extend this structure to contain more,
+ *          architecture dependent, fields.
+ */
+typedef struct {
+  uint32_t pads[TOTAL_GPIO_PADS];
+  ioportid_t port;
+} PALConfig;
+
 /*===========================================================================*/
 /* I/O Ports Identifiers.                                                    */
 /*===========================================================================*/
@@ -139,6 +140,7 @@ typedef uint32_t iopadid_t;
 #define IOPORT1         NRF_GPIO
 #else
 #define IOPORT1         NRF_P0
+#define IOPORT2         NRF_P1
 #endif
 
 /*===========================================================================*/
@@ -163,7 +165,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_readport(port) (IOPORT1->IN)
+#define pal_lld_readport(port) (port->IN)
 
 /**
  * @brief   Reads the output latch.
@@ -175,7 +177,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_readlatch(port) (IOPORT1->OUT)
+#define pal_lld_readlatch(port) (port->OUT)
 
 /**
  * @brief   Writes a bits mask on a I/O port.
@@ -185,7 +187,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_writeport(port, bits) (IOPORT1->OUT = (bits))
+#define pal_lld_writeport(port, bits) (port->OUT = (bits))
 
 /**
  * @brief   Sets a bits mask on a I/O port.
@@ -198,7 +200,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_setport(port, bits) (IOPORT1->OUTSET = (bits))
+#define pal_lld_setport(port, bits) (port->OUTSET = (bits))
 
 
 /**
@@ -212,7 +214,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_clearport(port, bits) (IOPORT1->OUTCLR = (bits))
+#define pal_lld_clearport(port, bits) (port->OUTCLR = (bits))
 
 /**
  * @brief   Pads group mode setup.
@@ -245,7 +247,7 @@ typedef uint32_t iopadid_t;
  * @notapi
  */
 #define pal_lld_readpad(port, pad)                                          \
-  ((IOPORT1->IN & ((uint32_t) 1 << pad)) ? PAL_HIGH : PAL_LOW)
+  ((port->IN & ((uint32_t) 1 << pad)) ? PAL_HIGH : PAL_LOW)
 
 /**
  * @brief   Writes a logical state on an output pad.
@@ -266,9 +268,9 @@ typedef uint32_t iopadid_t;
   do {                                                                      \
     (void)port;                                                             \
     if (bit == PAL_HIGH)                                                    \
-      IOPORT1->OUTSET = ((uint32_t) 1 << pad);                              \
+      port->OUTSET = ((uint32_t) 1 << pad);                              \
     else                                                                    \
-      IOPORT1->OUTCLR = ((uint32_t) 1 << pad);                              \
+      port->OUTCLR = ((uint32_t) 1 << pad);                              \
   } while (false)
 
 /**
@@ -282,7 +284,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_setpad(port, pad) (IOPORT1->OUTSET = (uint32_t) 1 << (pad))
+#define pal_lld_setpad(port, pad) (port->OUTSET = (uint32_t) 1 << (pad))
 
 /**
  * @brief   Clears a pad logical state to @p PAL_LOW.
@@ -295,7 +297,7 @@ typedef uint32_t iopadid_t;
  *
  * @notapi
  */
-#define pal_lld_clearpad(port, pad) (IOPORT1->OUTCLR = (uint32_t) 1 << (pad))
+#define pal_lld_clearpad(port, pad) (port->OUTCLR = (uint32_t) 1 << (pad))
 
 /**
  * @brief   Toggles a pad logical state.
@@ -310,11 +312,11 @@ typedef uint32_t iopadid_t;
  */
 #define pal_lld_togglepad(port, pad)                                        \
   do {                                                                      \
-    uint8_t bit = (IOPORT1->OUT >> (pad)) & 1;                              \
+    uint8_t bit = (port->OUT >> (pad)) & 1;                              \
     if (bit)                                                                \
-      IOPORT1->OUTCLR = 1 << (pad);                                         \
+      port->OUTCLR = 1 << (pad);                                         \
     else                                                                    \
-      IOPORT1->OUTSET = 1 << (pad);                                         \
+      port->OUTSET = 1 << (pad);                                         \
   } while (0)
 
 /**

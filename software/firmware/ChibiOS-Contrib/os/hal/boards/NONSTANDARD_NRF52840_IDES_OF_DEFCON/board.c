@@ -59,7 +59,53 @@ const PALConfig pal_default_config =
         PAL_MODE_OUTPUT_PULLUP,       /* P0.30: screen D6      */
         PAL_MODE_OUTPUT_PULLUP,       /* P0.31: screen D7      */
   },
+  .port = IOPORT1
 };
+
+/* 
+ * The NRF52840 has a second bank of 16 GPIO pins on a separate port.
+ * ChibiOS doesn't have an internal call to initialize a secondary
+ * GPIO bank, but that's ok: we can do it in the BSP.
+ */
+
+const PALConfig pal_default_config_p1 =
+{
+  .pads = {
+        PAL_MODE_UNCONNECTED,         /* P1.0 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.1 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.2 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.3 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.4 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.5 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.6 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.7 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.8 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.9 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.10:                */
+        PAL_MODE_UNCONNECTED,         /* P1.12:                */
+        PAL_MODE_UNCONNECTED,         /* P1.13:                */
+        PAL_MODE_UNCONNECTED,         /* P1.14:                */
+        PAL_MODE_UNCONNECTED,         /* P1.15:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+        PAL_MODE_UNCONNECTED,         /* P1.XX:                */
+  },
+  .port = IOPORT2
+};
+
 #endif
 
 /**
@@ -78,4 +124,5 @@ void __early_init(void)
  */
 void boardInit(void)
 {
+	palInit (&pal_default_config_p1);
 }
