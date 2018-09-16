@@ -277,7 +277,7 @@ ULIBS = -L$(CHIBIOS)/../SoftDevice_S132/lib -lsoftdevice -lc_nano -lnosys
 # End of user defines
 ##############################################################################
 
-.PHONY: updatebuildtime
+.PHONY: updatebuildtime flashnrf erasenrf
 
 RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/
 include $(RULESPATH)/rules.mk
@@ -304,4 +304,13 @@ flash: all jlink-flash
 debug: gdb-debug
 erase-all: jlink-erase-all
 debug-server: jlink-debug-server
+
+
+flashnrf:
+	@echo Flashing: build/badge.hex
+	nrfjprog -f nrf52 --program build/badge.hex --sectorerase
+	nrfjprog -f nrf52 --reset
+
+erasenrf:
+	nrfjprog -f nrf52 --eraseall
 
