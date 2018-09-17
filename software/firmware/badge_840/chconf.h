@@ -160,6 +160,8 @@
  */
 /*===========================================================================*/
 
+/* This group of definitions is new for ChibiOS kernel 5.x.x */
+
 #define CH_CFG_USE_OBJ_FIFOS FALSE
 #define CH_CFG_USE_FACTORY FALSE
 #define CH_CFG_FACTORY_MAX_NAMES_LENGTH     0
@@ -171,10 +173,6 @@
 
 #define CH_CFG_SYSTEM_EXTRA_FIELDS
 #define CH_CFG_SYSTEM_INIT_HOOK(tp) {                                       \
-  /* Add threads initialization code here.*/                                \
-}
-#define CH_CFG_THREAD_EXTRA_FIELDS
-#define CH_CFG_THREAD_INIT_HOOK(tp) {                                       \
   /* Add threads initialization code here.*/                                \
 }
 
