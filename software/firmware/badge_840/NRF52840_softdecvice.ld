@@ -113,7 +113,7 @@ SECTIONS
     {
         KEEP(*(.softdevice))
         /*
-         * The offset 0x26000 comes from the Nordic S132 SoftDevice
+         * The offset 0x26000 comes from the Nordic S140 SoftDevice
          * documentation. This is the address where "application" code
          * must begin.
          */
