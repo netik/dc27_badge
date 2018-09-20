@@ -44,6 +44,11 @@
 
 #include "ILI9341.h"
 
+#define DISPLAY_BUF (GDISP_SCREEN_HEIGHT)
+
+static uint8_t pixelbuf[DISPLAY_BUF];
+static int pixelpos;
+
 /*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
@@ -51,9 +56,7 @@
 // Some common routines and macros
 #define dummy_read(g)				{ volatile uint16_t dummy; dummy = read_data(g); (void) dummy; }
 #define write_reg(g, reg, data)		{ write_index(g, reg); write_data(g, data); }
-#ifdef notdef
 #define write_data16(g, data)		{ write_data(g, data >> 8); write_data(g, (uint8_t)data); }
-#endif
 #define delay(us)					gfxSleepMicroseconds(us)
 #define delayms(ms)					gfxSleepMilliseconds(ms)
 
@@ -240,13 +243,47 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #if GDISP_HARDWARE_STREAM_WRITE
 	LLDSPEC	void gdisp_lld_write_start(GDisplay *g) {
 		acquire_bus(g);
-		set_viewport(g);
-		write_index(g, 0x2C);
+		/*
+		 * If the x and y coordinates are the special
+		 * values -1/-1, then leave the viewport settings
+		 * as they are. This is a special mode for the
+		 * video player driver, which constantly streams
+		 * data to the same viewport coordinates. The only
+		 * thing it needs is the special mode and mutual
+		 * exclusion handling so that it shares the SPI
+		 * bus properly with the SD card and touch controller
+		 * drivers.
+		 */
+
+		pixelpos = 0;
+		if (g->p.x != -1 && g->p.y != -1) {
+			set_viewport(g);
+			write_index(g, 0x2C);
+		}
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		write_data16(g, gdispColor2Native(g->p.color));
+		volatile SPIDriver * spip;
+		spip = &SPID1;
+		while (spip->state != SPI_READY)
+			;
+		pixelbuf[pixelpos] = g->p.color >> 8;
+		pixelpos++;
+		pixelbuf[pixelpos] = g->p.color;
+		pixelpos++;
+		if (pixelpos == DISPLAY_BUF) {
+			spiStartSend (&SPID1, pixelpos, pixelbuf);
+			pixelpos = 0;
+		}
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
+		volatile SPIDriver * spip;
+		spip = &SPID1;
+		if (pixelpos != 0) {
+			spiStartSend (&SPID1, pixelpos, pixelbuf);
+			pixelpos = 0;
+		}
+		while (spip->state != SPI_READY)
+			;
 		release_bus(g);
 	}
 #endif
@@ -268,6 +305,29 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {
 		setwritemode(g);
 		release_bus(g);
+	}
+#endif
+
+#if GDISP_HARDWARE_BITFILLS
+#if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
+#error "GDISP: ILI9341: BitBlit is only available in RGB565 pixel format"
+#endif
+	LLDSPEC void gdisp_lld_blit_area(GDisplay *g) {
+		const pixel_t *	buffer;
+		coord_t		ycnt;
+
+		buffer = (pixel_t *)g->p.ptr + g->p.x1 + g->p.y1 * g->p.x2;
+
+		gdisp_lld_write_start (g);
+		if (g->p.x2 == g->p.cx) {
+			spiSend (&SPID1, g->p.cx*g->p.cy * 2, buffer);
+		} else {
+			for (ycnt = g->p.cy; ycnt; ycnt--, buffer += g->p.x2)
+				spiSend (&SPID1, g->p.cy * 2, buffer);
+		}
+		gdisp_lld_write_stop (g);
+
+		return;
 	}
 #endif
 

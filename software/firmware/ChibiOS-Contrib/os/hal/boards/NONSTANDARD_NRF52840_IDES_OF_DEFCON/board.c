@@ -72,14 +72,14 @@ const PALConfig pal_default_config_p1 =
 {
   .pads = {
         PAL_MODE_UNCONNECTED,         /* P1.0 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.1 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.2 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.3 :                */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.1 : Touch CS       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.2 : Screen CD      */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.3 : SD card CS     */
         PAL_MODE_UNCONNECTED,         /* P1.4 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.5 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.6 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.7 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.8 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.5 : SPI_SCK        */
+        PAL_MODE_UNCONNECTED,         /* P1.6 : SPI_MISO       */
+        PAL_MODE_UNCONNECTED,         /* P1.7 : SPI_MOSI       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.8 : Screen CS      */
         PAL_MODE_UNCONNECTED,         /* P1.9 :                */
         PAL_MODE_UNCONNECTED,         /* P1.10:                */
         PAL_MODE_UNCONNECTED,         /* P1.11:                */

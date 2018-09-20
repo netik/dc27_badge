@@ -36,9 +36,9 @@
 
 /* Peripheral controls (Platform dependent) */
 #define CS_LOW() 		/* Set MMC_CS = low */		\
-	IOPORT1->OUTCLR = 1 << IOPORT1_SDCARD_CS
+	IOPORT2->OUTCLR = 1 << IOPORT2_SDCARD_CS
 #define	CS_HIGH()		/* Set MMC_CS = high */		\
-	IOPORT1->OUTSET = 1 << IOPORT1_SDCARD_CS
+	IOPORT2->OUTSET = 1 << IOPORT2_SDCARD_CS
 #define MMC_CD		1			/* Test if card detected.   yes:true, no:false, default:true */
 #define MMC_WP		0			/* Test if write protected. yes:true, no:false, default:false */
 #define	FCLK_SLOW()				/* Set SPI slow clock (100-400kHz) */

@@ -49,6 +49,7 @@
 #include "osal.h"
 #include "hal_spi.h"
 #include "hal_pal.h"
+#include "badge.h"
 
 #include "xpt2046_reg.h"
 #include "xpt2046_lld.h"
@@ -88,7 +89,7 @@ uint16_t xptGet (uint8_t cmd)
 	freq = SPID1.port->FREQUENCY;
 	SPID1.port->FREQUENCY = NRF5_SPI_FREQ_125KBPS;
 
-	palClearPad (IOPORT1, IOPORT1_TOUCH_CS);
+	palClearPad (IOPORT2, IOPORT2_TOUCH_CS);
 
 	/* Send command byte */
 
@@ -102,12 +103,16 @@ uint16_t xptGet (uint8_t cmd)
 
 	spiReceive (&SPID1, 1, &v[1]);
 
-	palSetPad (IOPORT1, IOPORT1_TOUCH_CS);
+	palSetPad (IOPORT2, IOPORT2_TOUCH_CS);
 	SPID1.port->FREQUENCY = freq;
 	spiReleaseBus (&SPID1);
 
 	val = v[1] >> 3;
 	val |= v[0] << 5;
+
+	/* Only the 12 lower bits matter */
+
+	val &= 0xFFF;
 
 	return (val);
 }

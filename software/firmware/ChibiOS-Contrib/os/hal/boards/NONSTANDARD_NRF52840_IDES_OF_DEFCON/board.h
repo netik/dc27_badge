@@ -69,36 +69,36 @@
  * IO pins assignments.
  */
 /* Defined by board */
-#define IOPORT1_BTN1           13U
-#define IOPORT1_BTN2           14U
-#define IOPORT1_BTN3           15U
-#define IOPORT1_BTN4           16U
-#define IOPORT1_LED1           17U
-#define IOPORT1_LED2           18U
-#define IOPORT1_LED3           19U
-#define IOPORT1_LED4           20U
+#define IOPORT1_BTN1           11U
+#define IOPORT1_BTN2           12U
+#define IOPORT1_BTN3           24U
+#define IOPORT1_BTN4           25U
+#define IOPORT1_LED1           13U
+#define IOPORT1_LED2           14U
+#define IOPORT1_LED3           14U
+#define IOPORT1_LED4           16U
 #define IOPORT1_UART_RTS        5U
 #define IOPORT1_UART_TX         6U
 #define IOPORT1_UART_CTS        7U
 #define IOPORT1_UART_RX         8U
 #define IOPORT1_NFC1            9U
 #define IOPORT1_NFC2           10U
-#define IOPORT1_RESET          21U
+#define IOPORT1_RESET          18U
 
 /* Our definitions */
 
 #define IOPORT1_I2C_SCK         7U
 #define IOPORT1_I2C_SDA         8U
 
-#define IOPORT1_SPI_SCK         4U
-#define IOPORT1_SPI_MOSI       22U
-#define IOPORT1_SPI_MISO       23U
+#define IOPORT2_SPI_SCK         5U
+#define IOPORT2_SPI_MISO        6U
+#define IOPORT2_SPI_MOSI        7U
 
-#define IOPORT1_SDCARD_CS       3U
-#define IOPORT1_TOUCH_CS        2U
+#define IOPORT2_SDCARD_CS       3U
+#define IOPORT2_SCREEN_CD       2U
+#define IOPORT2_TOUCH_CS        1U
 
-#define IOPORT1_SCREEN_WR      11U
-#define IOPORT1_SCREEN_CD      12U
+#define IOPORT2_SCREEN_CS       8U
 
 #define IOPORT1_SCREEN_D0      24U
 #define IOPORT1_SCREEN_D1      26U

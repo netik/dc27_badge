@@ -38,10 +38,10 @@ bool watchdog_started = false;
 static const SPIConfig spi1_config = {
 	NULL,			/* enc_cp */
 	NRF5_SPI_FREQ_8MBPS,	/* freq */
-	IOPORT1_SPI_SCK,	/* sckpad */
-	IOPORT1_SPI_MOSI,	/* mosipad */
-	IOPORT1_SPI_MISO,	/* misopad */
-	IOPORT1_SDCARD_CS,	/* sspad */
+	0x20|IOPORT2_SPI_SCK,	/* sckpad */
+	0x20|IOPORT2_SPI_MOSI,	/* mosipad */
+	0x20|IOPORT2_SPI_MISO,	/* misopad */
+	0x20|IOPORT2_SDCARD_CS,	/* sspad */
 	FALSE,			/* lsbfirst */
 	2,			/* mode */
 	0xFF			/* dummy data for spiIgnore() */
@@ -207,15 +207,16 @@ int main(void)
     joyStart ();
     asyncIoStart ();
 
-    palSetPad (IOPORT1, IOPORT1_SPI_MOSI);
-    palSetPad (IOPORT1, IOPORT1_SPI_MISO);
-    palSetPad (IOPORT1, IOPORT1_SPI_SCK);
-    palSetPad (IOPORT1, IOPORT1_SDCARD_CS);
-    palSetPad (IOPORT1, IOPORT1_TOUCH_CS);
+    palSetPad (IOPORT2, IOPORT2_SPI_MOSI);
+    palSetPad (IOPORT2, IOPORT2_SPI_MISO);
+    palSetPad (IOPORT2, IOPORT2_SPI_SCK);
+    palSetPad (IOPORT2, IOPORT2_SDCARD_CS);
+    palSetPad (IOPORT2, IOPORT2_TOUCH_CS);
 
     spiStart (&SPID1, &spi1_config);
 #ifdef notyet
     i2cStart (&I2CD2, &i2c2_config);
+#endif
 
     gfxInit ();
 
@@ -223,7 +224,7 @@ int main(void)
         printf ("No SD card found.\r\n");
     else
         printf ("SD card detected.\r\n");
-#endif
+
     bleStart ();
 
     NRF_P0->DETECTMODE = 0;
@@ -234,11 +235,11 @@ int main(void)
     evtTableHook (orchard_events, shell_terminated, shell_termination_handler);
 
     shellRestart ();
-#ifdef notyet
+
     uiStart ();
     orchardAppInit ();
     orchardAppRestart ();
-#endif
+
     evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
 
     while (true) {
