@@ -486,5 +486,6 @@ bleGapDisconnect (void)
 	if (r != NRF_SUCCESS)
 		printf ("GAP disconnect failed: 0x%x\r\n", r);
 
+	bleGapAdvStart ();
 	return (r);
 }
