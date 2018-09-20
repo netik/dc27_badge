@@ -29,7 +29,7 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 
 
-VPATH= ../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52832 			\
+VPATH= ../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52840 			\
 	../ChibiOS-Contrib/os/hal/ports/NRF5/LLD			\
 	../ChibiOS/os/hal/ports/common/ARMCMx				\
 	../ChibiOS/os/hal/src ../FatFs/source ../badge_840
@@ -51,11 +51,11 @@ CFLAGS+=  -mcpu=cortex-m4 -Os -ggdb -fomit-frame-pointer		\
 	-D__VTOR_PRESENT=1						\
 	-DTHUMB_NO_INTERWORKING -mthumb -DTHUMB -I.			\
 	-I../badge_840 -I../ChibiOS/os/license				\
-	-I../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52832			\
+	-I../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52840			\
 	-I../ChibiOS-Contrib/os/hal/ports/NRF5/LLD			\
 	-I../ChibiOS-Contrib/os/hal/include				\
-	-I../ChibiOS/os/common/ext/CMSIS/include 			\
-	-I../ChibiOS-Contrib/os/common/startup/ARMCMx/devices/NRF52832	\
+	-I../ChibiOS/os/common/ext/ARM/CMSIS/Core/Include 		\
+	-I../ChibiOS-Contrib/os/common/startup/ARMCMx/devices/NRF52840	\
 	-I../ChibiOS/os/rt/include -I../ChibiOS/os/common/ports/ARMCMx	\
 	-I../ChibiOS/os/hal/ports/common/ARMCMx				\
 	-I../ChibiOS/os/common/ports/ARMCMx/compilers/GCC		\
