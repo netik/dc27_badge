@@ -60,10 +60,14 @@ scrollAreaSet (uint16_t TFA, uint16_t BFA)
 	init_board (NULL);
 
 	acquire_bus (NULL);
-	write_index (NULL, ILI9341_VSDEF);
-	write_data16 (NULL, TFA);
-	write_data16 (NULL, 320 - TFA - BFA);
-	write_data16 (NULL, BFA);
+
+        write_data (NULL, TFA >> 8);
+        write_data (NULL, (uint8_t)TFA);
+        write_data (NULL, (320 - TFA - BFA) >> 8);
+        write_data (NULL, (uint8_t)(320 - TFA - BFA));
+        write_data (NULL, BFA >> 8);
+        write_data (NULL, (uint8_t)BFA);
+
 	release_bus (NULL);
 
 	scroll_pos = gdispGetWidth() - 1;

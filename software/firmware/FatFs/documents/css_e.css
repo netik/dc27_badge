@@ -14,6 +14,7 @@ strong {}
 pre {border: 1px dashed gray; margin: 0.5em 1em; padding: 0.5em; line-height: 1.2em; font-size: 85%; font-family: "Consolas", "Courier New", monospace; background-color: white;}
 pre span.c {color: green;}
 pre span.k {color: blue;}
+pre span.e {color: red;}
 pre span.b {font-weight: bold;}
 pre span.arg {font-style: italic;}
 tt {margin: 0 0.2em; font-size: 0.85em; font-family: "Consolas", "Courier New", monospace; }

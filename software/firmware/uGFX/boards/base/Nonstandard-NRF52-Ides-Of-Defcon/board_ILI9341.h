@@ -22,10 +22,10 @@ static void init_board(GDisplay *g) {
 	(void) g;
 
 	/* Set all pins to initial (high) state */
-
+#ifdef IOPORT2
 	palSetPad (IOPORT2, IOPORT2_SCREEN_CD);
 	palSetPad (IOPORT2, IOPORT2_SCREEN_CS);
-
+#endif
 	return;
 }
 
@@ -46,13 +46,17 @@ static GFXINLINE void set_backlight(GDisplay *g, uint8_t percent) {
 static void acquire_bus(GDisplay *g) {
 	(void) g;
 	spiAcquireBus (&SPID1);
+#ifdef IOPORT2
 	palClearPad (IOPORT2, IOPORT2_SCREEN_CS);
+#endif
 	return;
 }
 
 static void release_bus(GDisplay *g) {
 	(void) g;
+#ifdef IOPORT2
 	palSetPad (IOPORT2, IOPORT2_SCREEN_CS);
+#endif
 	spiReleaseBus (&SPID1);
 	return;
 }
@@ -65,11 +69,16 @@ static void write_index(GDisplay *g, uint16_t index) {
 
 	b = index & 0xFF;
 
+#ifdef IOPORT2
 	palClearPad (IOPORT2, IOPORT2_SCREEN_CD);
+#endif
 
 	spiSend (&SPID1, 1, &b);
 
+#ifdef IOPORT2
 	palSetPad (IOPORT2, IOPORT2_SCREEN_CD);
+#endif
+
 	return;
 }
 

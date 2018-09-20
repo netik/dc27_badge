@@ -140,7 +140,9 @@ typedef struct {
 #define IOPORT1         NRF_GPIO
 #else
 #define IOPORT1         NRF_P0
+#ifdef NRF_P1
 #define IOPORT2         NRF_P1
+#endif
 #endif
 
 /*===========================================================================*/
