@@ -36,6 +36,34 @@
 /*===========================================================================*/
 
 /**
+ * @brief   Enable SPI controller 0
+ */
+#if !defined(NRF5_SPI_USE_SPI0) || defined(__DOXYGEN__)
+#define NRF5_SPI_USE_SPI0                 FALSE
+#endif
+
+/**
+ * @brief   Enable SPI controller 1
+ */
+#if !defined(NRF5_SPI_USE_SPI1) || defined(__DOXYGEN__)
+#define NRF5_SPI_USE_SPI1                 FALSE
+#endif
+
+/**
+ * @brief   Enable SPI controller 2
+ */
+#if !defined(NRF5_SPI_USE_SPI2) || defined(__DOXYGEN__)
+#define NRF5_SPI_USE_SPI2                 FALSE
+#endif
+
+/**
+ * @brief   Enable SPI controller 3 (note: SPIM3 supports > 8MHz clock)
+ */
+#if !defined(NRF5_SPI_USE_SPI3) || defined(__DOXYGEN__)
+#define NRF5_SPI_USE_SPI3                 FALSE
+#endif
+
+/**
  * @brief   Select SPIM with EasyDMA vs. legacy SPI
  */
 #if !defined(NRF5_SPI_USE_DMA) || defined(__DOXYGEN__)
@@ -138,6 +166,8 @@ typedef enum {
   NRF5_SPI_FREQ_2MBPS = (SPI_FREQUENCY_FREQUENCY_M2 << SPI_FREQUENCY_FREQUENCY_Pos),
   NRF5_SPI_FREQ_4MBPS = (SPI_FREQUENCY_FREQUENCY_M4 << SPI_FREQUENCY_FREQUENCY_Pos),
   NRF5_SPI_FREQ_8MBPS = (SPI_FREQUENCY_FREQUENCY_M8 << SPI_FREQUENCY_FREQUENCY_Pos),
+  NRF5_SPI_FREQ_16MBPS = (SPIM_FREQUENCY_FREQUENCY_M16 << SPI_FREQUENCY_FREQUENCY_Pos),
+  NRF5_SPI_FREQ_32MBPS = (SPIM_FREQUENCY_FREQUENCY_M32 << SPI_FREQUENCY_FREQUENCY_Pos),
 } spifreq_t;
 
 /**

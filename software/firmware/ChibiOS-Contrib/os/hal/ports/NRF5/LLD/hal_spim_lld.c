@@ -58,6 +58,16 @@ SPIDriver SPID1;
 SPIDriver SPID2;
 #endif
 
+#if NRF5_SPI_USE_SPI2 || defined(__DOXYGEN__)
+/** @brief SPI3 driver identifier.*/
+SPIDriver SPID3;
+#endif
+
+#if NRF5_SPI_USE_SPI3 || defined(__DOXYGEN__)
+/** @brief SPI4 driver identifier.*/
+SPIDriver SPID4;
+#endif
+
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
@@ -159,6 +169,7 @@ CH_IRQ_HANDLER(Vector4C)
 	return;
 }
 #endif
+
 #if NRF5_SPI_USE_SPI1 || defined(__DOXYGEN__)
 /**
  * @brief   SPI1 interrupt handler.
@@ -169,6 +180,36 @@ CH_IRQ_HANDLER(Vector50)
 {
 	CH_IRQ_PROLOGUE();
 	serve_interrupt(&SPID2);
+	CH_IRQ_EPILOGUE();
+	return;
+}
+#endif
+
+#if NRF5_SPI_USE_SPI2 || defined(__DOXYGEN__)
+/**
+ * @brief   SPI2 interrupt handler.
+ *
+ * @isr
+ */
+CH_IRQ_HANDLER(VectorCC)
+{
+	CH_IRQ_PROLOGUE();
+	serve_interrupt(&SPID3);
+	CH_IRQ_EPILOGUE();
+	return;
+}
+#endif
+
+#if NRF5_SPI_USE_SPI3 || defined(__DOXYGEN__)
+/**
+ * @brief   SPI3 interrupt handler.
+ *
+ * @isr
+ */
+CH_IRQ_HANDLER(VectorFC)
+{
+	CH_IRQ_PROLOGUE();
+	serve_interrupt(&SPID4);
 	CH_IRQ_EPILOGUE();
 	return;
 }
@@ -193,6 +234,14 @@ void spi_lld_init(void)
 	spiObjectInit(&SPID2);
 	SPID2.port = NRF_SPIM1;
 #endif
+#if NRF5_SPI_USE_SPI2
+	spiObjectInit(&SPID3);
+	SPID3.port = NRF_SPIM2;
+#endif
+#if NRF5_SPI_USE_SPI3
+	spiObjectInit(&SPID4);
+	SPID4.port = NRF_SPIM3;
+#endif
 }
 
 /**
@@ -216,6 +265,16 @@ void spi_lld_start(SPIDriver *spip)
 	if (&SPID2 == spip)
 		nvicEnableVector(SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQn,
 		    NRF5_SPI_SPI1_IRQ_PRIORITY);
+#endif
+#if NRF5_SPI_USE_SPI2
+	if (&SPID3 == spip)
+		nvicEnableVector(SPIM2_SPIS2_SPI2_IRQn,
+		    NRF5_SPI_SPI2_IRQ_PRIORITY);
+#endif
+#if NRF5_SPI_USE_SPI3
+	if (&SPID4 == spip)
+		nvicEnableVector(SPIM3_IRQn,
+		    NRF5_SPI_SPI2_IRQ_PRIORITY);
 #endif
 	}
 
@@ -333,6 +392,14 @@ void spi_lld_stop(SPIDriver *spip)
 		if (&SPID2 == spip)
 			nvicDisableVector (SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQn);
 #endif
+#if NRF5_SPI_USE_SPI1
+		if (&SPID3 == spip)
+			nvicDisableVector (SPIM2_SPIS2_SPI2_IRQn);
+#endif
+#if NRF5_SPI_USE_SPI1
+		if (&SPID4 == spip)
+			nvicDisableVector (SPIM3_IRQn);
+#endif
 	}
 	return;
 }
@@ -433,6 +500,7 @@ void spi_lld_exchange(SPIDriver *spip, size_t n,
  *
  * @notapi
  */
+
 void spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf)
 {
 	spip->rxptr = NULL;
