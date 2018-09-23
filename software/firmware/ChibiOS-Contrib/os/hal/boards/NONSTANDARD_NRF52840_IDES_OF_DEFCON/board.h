@@ -98,6 +98,13 @@
 #define IOPORT2_SCREEN_CD       2U
 #define IOPORT2_TOUCH_CS        1U
 
+#define IOPORT1_QSPI_SCK       19U
+#define IOPORT1_QSPI_CS        17U
+#define IOPORT1_QSPI_DIO0      20U
+#define IOPORT1_QSPI_DIO1      21U
+#define IOPORT1_QSPI_DIO2      22U
+#define IOPORT1_QSPI_DIO3      23U
+
 #define IOPORT2_SCREEN_CS       8U
 
 #define IOPORT1_SCREEN_D0      24U

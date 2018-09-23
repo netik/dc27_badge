@@ -106,6 +106,7 @@ include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 # Other files (optional).
 include $(CHIBIOS)/os/various/shell/shell.mk
+include $(CHIBIOS)/os/ex/Micron/m25q.mk
 
 # uGFX includes
 GFXLIB = $(CHIBIOS)/../uGFX
@@ -132,6 +133,7 @@ CSRC = $(STARTUPSRC) \
        $(PORTSRC) \
        $(OSALSRC) \
        $(HALSRC) \
+       $(M25QSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
@@ -204,7 +206,7 @@ ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
 INCDIR = $(CHIBIOS)/os/license \
          $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
-         $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
+         $(HALINC) $(M25QINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
 	 $(SHELLINC) $(GFXINC) $(FATFSINC) $(V2600INC) \
 	 $(CHIBIOS)/os/hal/lib/streams $(CHIBIOS)/os/various
 

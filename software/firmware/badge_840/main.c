@@ -22,6 +22,9 @@
 #include "orchard-ui.h"
 #include "orchard-app.h"
 
+#include "m25q.h"
+#include "hal_flash.h"
+
 #include "badge.h"
 
 struct evt_table orchard_events;
@@ -52,6 +55,24 @@ static const I2CConfig i2c2_config = {
 	IOPORT1_I2C_SCK,	/* scl_pad */
 	IOPORT1_I2C_SDA		/* sda_pad */
 };
+
+static const QSPIConfig qspi1_config = {
+	NULL,			/* enc_cp */
+	IOPORT1_QSPI_SCK,	/* SCK */
+	IOPORT1_QSPI_CS,	/* CS */
+	IOPORT1_QSPI_DIO0,	/* DIO0 */
+	IOPORT1_QSPI_DIO1,	/* DIO1 */
+	IOPORT1_QSPI_DIO2,	/* DIO2 */
+	IOPORT1_QSPI_DIO3,	/* DIO3 */
+	0x18000000		/* membase */
+};
+
+static const M25QConfig m25qcfg1 = {
+  .busp             = &QSPID1,
+  .buscfg           = &qspi1_config
+};
+
+M25QDriver FLASHD1;
 
 static void
 gpt_callback(GPTDriver *gptp)
@@ -167,6 +188,9 @@ int main(void)
     SCB->VTOR = 0;
     __enable_irq();
 #endif
+    uint32_t msec;
+    uint8_t * memp;
+    int r;
 
     halInit();
     chSysInit();
@@ -214,6 +238,20 @@ int main(void)
     palSetPad (IOPORT2, IOPORT2_TOUCH_CS);
 
     spiStart (&SPID1, &spi1_config);
+
+    m25qObjectInit (&FLASHD1);
+    m25qStart (&FLASHD1, &m25qcfg1);
+    m25qMemoryMap (&FLASHD1, &memp);
+
+#ifdef notyet
+    r = flashStartEraseSector(&FLASHD1, 0);
+
+    while (flashQueryErase(&FLASHD1, &msec) != FLASH_NO_ERROR)
+        chThdSleepMilliseconds (msec);
+
+    r = flashProgram (&FLASHD1, 0, 1024, (uint8_t *)0x20008000);
+#endif
+
 #ifdef notyet
     i2cStart (&I2CD2, &i2c2_config);
 #endif
