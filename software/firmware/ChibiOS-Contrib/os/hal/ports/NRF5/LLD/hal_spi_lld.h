@@ -113,6 +113,20 @@
 #endif
 
 /**
+ * @brief   SPI2 interrupt priority level setting.
+ */
+#if !defined(NRF5_SPI_SPI2_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define NRF5_SPI_SPI2_IRQ_PRIORITY    3
+#endif
+
+/**
+ * @brief   SPI3 interrupt priority level setting.
+ */
+#if !defined(NRF5_SPI_SPI3_IRQ_PRIORITY) || defined(__DOXYGEN__)
+#define NRF5_SPI_SPI3_IRQ_PRIORITY    3
+#endif
+
+/**
  * @brief   Overflow error hook.
  * @details The default action is to stop the system.
  */
