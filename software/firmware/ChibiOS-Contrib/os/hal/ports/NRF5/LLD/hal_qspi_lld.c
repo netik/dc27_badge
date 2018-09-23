@@ -39,7 +39,6 @@
  */
 
 #include "hal.h"
-#include "badge.h"
 
 #if (HAL_USE_QSPI == TRUE) || defined(__DOXYGEN__)
 
