@@ -222,10 +222,12 @@ void qspi_lld_start(QSPIDriver *qspip) {
     (QSPI_IFCONFIG0_PPSIZE_256Bytes << QSPI_IFCONFIG0_PPSIZE_Pos);
   port->IFCONFIG0 = reg;
 
+  /* Using 0 for the SCKFREQ divisor should get us a clock of 32MHz. */
+
   reg = port->IFCONFIG1;
   reg &= 0x00FFFF00;
   reg |=
-    (1 << QSPI_IFCONFIG1_SCKFREQ_Pos) |
+    (0 << QSPI_IFCONFIG1_SCKFREQ_Pos) |
     (QSPI_IFCONFIG1_DPMEN_Exit << QSPI_IFCONFIG1_DPMEN_Pos) |
     (QSPI_IFCONFIG1_SPIMODE_MODE0 << QSPI_IFCONFIG1_SPIMODE_Pos) |
     (1 << QSPI_IFCONFIG1_SCKDELAY_Pos);
