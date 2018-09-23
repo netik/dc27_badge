@@ -188,9 +188,11 @@ int main(void)
     SCB->VTOR = 0;
     __enable_irq();
 #endif
+#ifdef notyet
     uint32_t msec;
+#endif
     uint8_t * memp;
-    int r;
+    const flash_descriptor_t * pFlash;
 
     halInit();
     chSysInit();
@@ -243,13 +245,20 @@ int main(void)
     m25qStart (&FLASHD1, &m25qcfg1);
     m25qMemoryMap (&FLASHD1, &memp);
 
+    pFlash = flashGetDescriptor (&FLASHD1);
+
+    if (pFlash->sectors_count > 0) {
+        printf ("On-board QSPI flash detected: %dMB mapped at 0x%x\r\n",
+            (pFlash->sectors_count * pFlash->sectors_size) >> 20, memp);
+    }
+
 #ifdef notyet
-    r = flashStartEraseSector(&FLASHD1, 0);
+    flashStartEraseSector(&FLASHD1, 0);
 
     while (flashQueryErase(&FLASHD1, &msec) != FLASH_NO_ERROR)
         chThdSleepMilliseconds (msec);
 
-    r = flashProgram (&FLASHD1, 0, 1024, (uint8_t *)0x20008000);
+    flashProgram (&FLASHD1, 0, 1024, (uint8_t *)0x20008100);
 #endif
 
 #ifdef notyet
