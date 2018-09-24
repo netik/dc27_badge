@@ -141,7 +141,7 @@ qspi_lld_serve_interrupt(QSPIDriver *qspip)
 	_qspi_isr_code(qspip);
 	}
 
-  return;
+	return;
 }
 
 static void
@@ -327,18 +327,36 @@ qspi_lld_command(QSPIDriver *qspip, const qspi_command_t *cmdp)
 
 	port = qspip->port;
 
+	/*
+	 * We use the direct shortcut registers for the erase
+	 * commands. Note that once we access the flash via XIP
+	 * mode, the only way to get it to respond to regular
+	 * commands again is to issue an access via one of the
+	 * shortcut interfaces.
+	 */
+
+	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SECTOR_ERASE) {
+		port->ERASE.PTR = cmdp->addr;
+		port->ERASE.LEN = QSPI_ERASE_LEN_LEN_64KB;
+		port->TASKS_ERASESTART =
+		    QSPI_TASKS_ERASESTART_TASKS_ERASESTART_Msk;
+		return;
+	}
+
+	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SUBSECTOR_ERASE) {
+		port->ERASE.PTR = cmdp->addr;
+		port->ERASE.LEN = QSPI_ERASE_LEN_LEN_4KB;
+		port->TASKS_ERASESTART =
+		    QSPI_TASKS_ERASESTART_TASKS_ERASESTART_Msk;
+		return;
+	}
+
 	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_BULK_ERASE) {
 		port->ERASE.PTR = cmdp->addr;
 		port->ERASE.LEN = QSPI_ERASE_LEN_LEN_All;
 		port->TASKS_ERASESTART =
 		    QSPI_TASKS_ERASESTART_TASKS_ERASESTART_Msk;
 		return;
-	}
-
-	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SECTOR_ERASE ||
-	    (cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SUBSECTOR_ERASE) {
-		port->CINSTRDAT0 = cmdp->addr;
-		n = 3;
 	}
 
 	qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
@@ -449,7 +467,8 @@ qspi_lld_receive(QSPIDriver *qspip, const qspi_command_t *cmdp,
 
 	qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
 
-	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_READ) {
+	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_READ ||
+	    (cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CFG_CMD_MODE_NONE) {
 		port->READ.SRC = cmdp->addr;
 		port->READ.DST = (uint32_t)rxbuf;
 		port->READ.CNT = n;
