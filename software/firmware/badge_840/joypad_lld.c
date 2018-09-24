@@ -1,5 +1,5 @@
 /*- 
- * Copyright (c) 2017
+ * Copyright (c) 2017-2018
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 /*
- * This module implements joypad support for the NRF522832 board. The
+ * This module implements joypad support for the NRF52840 board. The
  * buttons are implemented using GPIOs, which are set for input mode
  * with internal pullups enabled. The GPIOTE module is used for sensing
  * state change events. The pins are configured to trigger interrupts
