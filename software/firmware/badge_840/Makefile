@@ -143,6 +143,7 @@ CSRC = $(STARTUPSRC) \
 
 CSRC += main.c \
 	cmd-radio.c \
+	cmd-reset.c \
 	cmd-random.c \
 	cmd-watchdog.c \
 	orchard-app.c \
