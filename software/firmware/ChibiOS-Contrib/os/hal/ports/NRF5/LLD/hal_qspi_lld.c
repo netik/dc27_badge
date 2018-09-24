@@ -68,74 +68,100 @@ QSPIDriver QSPID1;
  *
  * @param[in] qspip     pointer to the @p QSPIDriver object
  */
-static void qspi_lld_serve_interrupt(QSPIDriver *qspip) {
-  NRF_QSPI_Type * port;
-  uint32_t d0;
-  uint32_t d1;
-  size_t cnt;
-  size_t i;
+static void
+qspi_lld_serve_interrupt(QSPIDriver *qspip)
+{
+	NRF_QSPI_Type * port;
+	uint32_t d0;
+	uint32_t d1;
+	uint8_t sts;
+	size_t cnt;
+	size_t i;
 
-  port = qspip->port;
+	port = qspip->port;
 
-  if (port->EVENTS_READY) {
-    /* Ack the interrupt */
-    port->EVENTS_READY = 0;  
-    (void)port->EVENTS_READY;
+	if (port->EVENTS_READY) {
+		/* Ack the interrupt */
+		port->EVENTS_READY = 0;  
+		(void)port->EVENTS_READY;
 
-    if (qspip->rxbuf != NULL) {
+		/* Handle command response events */
 
-      d0 = port->CINSTRDAT0;
-      d1 = port->CINSTRDAT1;
+		if (qspip->rxbuf != NULL) {
 
-      if (qspip->rxlen > 4)
-        cnt = 4;
-      else
-        cnt = qspip->rxlen;
+			d0 = port->CINSTRDAT0;
+			d1 = port->CINSTRDAT1;
 
-      for (i = 0; i < cnt; i++) {
-        qspip->rxbuf[i] = d0 >> (i * 8);
-      }
+			if (qspip->rxlen > 4)
+				cnt = 4;
+			else
+				cnt = qspip->rxlen;
 
-      if (qspip->rxlen > 4) {
-        cnt = qspip->rxlen - 4;
-        for (i = 0; i < cnt; i++) {
-          qspip->rxbuf[i + 4] = d1 >> (i * 8);
-        }
-      }
+			for (i = 0; i < cnt; i++)
+				qspip->rxbuf[i] = d0 >> (i * 8);
 
-      if (qspip->cmd == QSPI_CMD_READ_FLAG_STATUS_REGISTER)
-        qspip->rxbuf[0] = 0x80;
+			if (qspip->rxlen > 4) {
+				cnt = qspip->rxlen - 4;
+				for (i = 0; i < cnt; i++)
+					qspip->rxbuf[i + 4] = d1 >> (i * 8);
+			}
 
-      qspip->rxbuf = NULL;
-      qspip->rxlen = 0;
-    }
+			/*
+			 * Workaround for using Macronix QSPI devices with the
+			 * ChibiOS Micron Technologies QSPI driver. The Micron
+			 * parts implement a "flag status" register which the
+			 * Macronics parts lack. The ChibiOS M25Q driver
+			 * insists on checking a bit in this register to
+			 * determine if a program or erase operation has
+			 * completed. We fake this up here using the
+			 * program/erase busy bit from the main status
+			 * register, which the Nordic QSPI controller saves
+			 * in the upper 24 bits of its controller status
+			 * register.
+			 */
 
-  /* Portable QSPI ISR code defined in the high level driver, note, it is
-     a macro.*/
-    _qspi_isr_code(qspip);
-  }
+			if (qspip->cmd == QSPI_CMD_READ_FLAG_STATUS_REGISTER) {
+				sts = port->STATUS >> 24;
+				if ((sts & QSPI_STS_WRBUSY) == 0)
+					qspip->rxbuf[0] =
+					    QSPI_FLGSTS_PROG_ERASE;
+				else
+ 					qspip->rxbuf[0] = 0;
+			}
+
+			qspip->rxbuf = NULL;
+			qspip->rxlen = 0;
+		}
+
+	/*
+	 * Portable QSPI ISR code defined in the high level driver,
+	 * note, it is a macro.
+	 */
+
+	_qspi_isr_code(qspip);
+	}
 
   return;
 }
 
-static void qspi_lld_cmd(QSPIDriver *qspip, uint8_t opcode, uint8_t len)
+static void
+qspi_lld_cmd(QSPIDriver *qspip, uint8_t opcode, uint8_t len)
 {
-  NRF_QSPI_Type * port;
-  volatile uint32_t reg;
+	NRF_QSPI_Type * port;
+	volatile uint32_t reg;
 
-  port = qspip->port;
+	port = qspip->port;
 
-  reg =
-    (QSPI_CINSTRCONF_WREN_Enable << QSPI_CINSTRCONF_WREN_Pos) |
-    (QSPI_CINSTRCONF_WIPWAIT_Enable << QSPI_CINSTRCONF_WIPWAIT_Pos) |
-    (1 << QSPI_CINSTRCONF_LIO2_Pos) |
-    (1 << QSPI_CINSTRCONF_LIO3_Pos) |
-    (len << QSPI_CINSTRCONF_LENGTH_Pos) |
-    (opcode << QSPI_CINSTRCONF_OPCODE_Pos);
+	reg = (QSPI_CINSTRCONF_WREN_Enable << QSPI_CINSTRCONF_WREN_Pos) |
+	    (QSPI_CINSTRCONF_WIPWAIT_Enable << QSPI_CINSTRCONF_WIPWAIT_Pos) |
+	    (1 << QSPI_CINSTRCONF_LIO2_Pos) |
+	    (1 << QSPI_CINSTRCONF_LIO3_Pos) |
+	    (len << QSPI_CINSTRCONF_LENGTH_Pos) |
+	    (opcode << QSPI_CINSTRCONF_OPCODE_Pos);
 
-  port->CINSTRCONF = reg;
+	port->CINSTRCONF = reg;
 
-  return;
+	return;
 }
 
 /*===========================================================================*/
@@ -171,11 +197,13 @@ CH_IRQ_HANDLER(VectorE4)
  *
  * @notapi
  */
-void qspi_lld_init(void) {
+void
+qspi_lld_init(void)
+{
 
 #if NRF5_QSPI_USE_QSPI1
-  QSPID1.port = NRF_QSPI;
-  qspiObjectInit(&QSPID1);
+	QSPID1.port = NRF_QSPI;
+	qspiObjectInit(&QSPID1);
 #endif
 }
 
@@ -186,67 +214,68 @@ void qspi_lld_init(void) {
  *
  * @notapi
  */
-void qspi_lld_start(QSPIDriver *qspip) {
-  NRF_QSPI_Type * port;
-  volatile uint32_t reg;
+void
+qspi_lld_start(QSPIDriver *qspip)
+{
+	NRF_QSPI_Type * port;
+	volatile uint32_t reg;
 
-  /* If in stopped state then full initialization.*/
-  if (qspip->state == QSPI_STOP) {
+	/* If in stopped state then full initialization.*/
+	if (qspip->state == QSPI_STOP) {
 #if NRF5_QSPI_USE_QSPI1
-    if (&QSPID1 == qspip) {
-        nvicEnableVector (QSPI_IRQn, NRF5_QSPI_QSPI3_IRQ_PRIORITY);
-    }
+		if (&QSPID1 == qspip) {
+			nvicEnableVector (QSPI_IRQn,
+			    NRF5_QSPI_QSPI3_IRQ_PRIORITY);
+		}
 #endif
 
-    /* Common initializations.*/
-  }
+	/* Common initializations.*/
+	}
 
-  qspip->rxbuf = NULL;
-  qspip->rxlen = 0;
+	qspip->rxbuf = NULL;
+	qspip->rxlen = 0;
 
-  /* QSPI setup and enable.*/
-  port = qspip->port;
+	/* QSPI setup and enable.*/
+	port = qspip->port;
 
-  port->PSEL.SCK = qspip->config->sckpad;
-  port->PSEL.CSN = qspip->config->csnpad;
-  port->PSEL.IO0 = qspip->config->dio0pad;
-  port->PSEL.IO1 = qspip->config->dio1pad;
-  port->PSEL.IO2 = qspip->config->dio2pad;
-  port->PSEL.IO3 = qspip->config->dio3pad;
+	port->PSEL.SCK = qspip->config->sckpad;
+	port->PSEL.CSN = qspip->config->csnpad;
+	port->PSEL.IO0 = qspip->config->dio0pad;
+	port->PSEL.IO1 = qspip->config->dio1pad;
+	port->PSEL.IO2 = qspip->config->dio2pad;
+	port->PSEL.IO3 = qspip->config->dio3pad;
 
-  reg =  
-    (QSPI_IFCONFIG0_READOC_READ4IO << QSPI_IFCONFIG0_READOC_Pos) |
-    (QSPI_IFCONFIG0_WRITEOC_PP4IO << QSPI_IFCONFIG0_WRITEOC_Pos) |
-    (QSPI_IFCONFIG0_DPMENABLE_Disable << QSPI_IFCONFIG0_DPMENABLE_Pos) |
-    (QSPI_IFCONFIG0_ADDRMODE_24BIT << QSPI_IFCONFIG0_ADDRMODE_Pos) |
-    (QSPI_IFCONFIG0_PPSIZE_256Bytes << QSPI_IFCONFIG0_PPSIZE_Pos);
-  port->IFCONFIG0 = reg;
+	reg = (QSPI_IFCONFIG0_READOC_READ4IO << QSPI_IFCONFIG0_READOC_Pos) |
+	    (QSPI_IFCONFIG0_WRITEOC_PP4IO << QSPI_IFCONFIG0_WRITEOC_Pos) |
+	    (QSPI_IFCONFIG0_DPMENABLE_Disable << QSPI_IFCONFIG0_DPMENABLE_Pos)|
+	    (QSPI_IFCONFIG0_ADDRMODE_24BIT << QSPI_IFCONFIG0_ADDRMODE_Pos) |
+	    (QSPI_IFCONFIG0_PPSIZE_256Bytes << QSPI_IFCONFIG0_PPSIZE_Pos);
+	port->IFCONFIG0 = reg;
 
-  /* Using 0 for the SCKFREQ divisor should get us a clock of 32MHz. */
+	/* Using 0 for the SCKFREQ divisor should get us a clock of 32MHz. */
 
-  reg = port->IFCONFIG1;
-  reg &= 0x00FFFF00;
-  reg |=
-    (0 << QSPI_IFCONFIG1_SCKFREQ_Pos) |
-    (QSPI_IFCONFIG1_DPMEN_Exit << QSPI_IFCONFIG1_DPMEN_Pos) |
-    (QSPI_IFCONFIG1_SPIMODE_MODE0 << QSPI_IFCONFIG1_SPIMODE_Pos) |
-    (1 << QSPI_IFCONFIG1_SCKDELAY_Pos);
-  port->IFCONFIG1 = reg;
+	reg = port->IFCONFIG1;
+	reg &= 0x00FFFF00;
+	reg |= (0 << QSPI_IFCONFIG1_SCKFREQ_Pos) |
+	    (QSPI_IFCONFIG1_DPMEN_Exit << QSPI_IFCONFIG1_DPMEN_Pos) |
+	    (QSPI_IFCONFIG1_SPIMODE_MODE0 << QSPI_IFCONFIG1_SPIMODE_Pos) |
+	    (1 << QSPI_IFCONFIG1_SCKDELAY_Pos);
+	port->IFCONFIG1 = reg;
 
-  port->ENABLE = QSPI_ENABLE_ENABLE_Msk;
+	port->ENABLE = QSPI_ENABLE_ENABLE_Msk;
 
-  port->EVENTS_READY = 0;
-  (void)port->EVENTS_READY;
+	port->EVENTS_READY = 0;
+	(void)port->EVENTS_READY;
 
-  port->INTENSET = QSPI_INTENSET_READY_Msk;
-  (void)port->INTENSET;
+	port->INTENSET = QSPI_INTENSET_READY_Msk;
+	(void)port->INTENSET;
 
-  osalSysLock ();
-  port->TASKS_ACTIVATE = QSPI_TASKS_ACTIVATE_TASKS_ACTIVATE_Msk;
-  (void) osalThreadSuspendS(&qspip->thread);
-  osalSysUnlock ();
+	osalSysLock ();
+	port->TASKS_ACTIVATE = QSPI_TASKS_ACTIVATE_TASKS_ACTIVATE_Msk;
+	(void) osalThreadSuspendS(&qspip->thread);
+	osalSysUnlock ();
 
-  return;
+	return;
 }
 
 /**
@@ -256,25 +285,27 @@ void qspi_lld_start(QSPIDriver *qspip) {
  *
  * @notapi
  */
-void qspi_lld_stop(QSPIDriver *qspip) {
-  NRF_QSPI_Type * port;
+void
+qspi_lld_stop(QSPIDriver *qspip)
+{
+	NRF_QSPI_Type * port;
 
-  /* If in ready state then disables QSPI.*/
-  if (qspip->state == QSPI_READY) {
+	/* If in ready state then disables QSPI.*/
+	if (qspip->state == QSPI_READY) {
 
-    /* QSPI disable.*/
+	/* QSPI disable.*/
 
-    port = qspip->port;
-    port->ENABLE = 0;
+	port = qspip->port;
+	port->ENABLE = 0;
 
-    /* Stopping involved clocks.*/
+	/* Stopping involved clocks.*/
 #if NRF5_QSPI_USE_QSPI1
-    if (&QSPID1 == qspip) {
-        nvicDisableVector (QSPI_IRQn);
-    }
+	if (&QSPID1 == qspip)
+		nvicDisableVector (QSPI_IRQn);
 #endif
 
-  }
+	}
+	return;
 }
 
 /**
@@ -286,38 +317,34 @@ void qspi_lld_stop(QSPIDriver *qspip) {
  *
  * @notapi
  */
-void qspi_lld_command(QSPIDriver *qspip, const qspi_command_t *cmdp) {
-  NRF_QSPI_Type * port;
+void
+qspi_lld_command(QSPIDriver *qspip, const qspi_command_t *cmdp)
+{
+	NRF_QSPI_Type * port;
+	size_t n = 0;
 
-  qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
+	qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
 
-  port = qspip->port;
+	port = qspip->port;
 
-  if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SECTOR_ERASE) {
-    port->ERASE.PTR = cmdp->addr;
-    port->ERASE.LEN = QSPI_ERASE_LEN_LEN_64KB;
-    port->TASKS_ERASESTART = QSPI_TASKS_ERASESTART_TASKS_ERASESTART_Msk;
-    return;
-  }
+	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_BULK_ERASE) {
+		port->ERASE.PTR = cmdp->addr;
+		port->ERASE.LEN = QSPI_ERASE_LEN_LEN_All;
+		port->TASKS_ERASESTART =
+		    QSPI_TASKS_ERASESTART_TASKS_ERASESTART_Msk;
+		return;
+	}
 
-  if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SUBSECTOR_ERASE) {
-    port->ERASE.PTR = cmdp->addr;
-    port->ERASE.LEN = QSPI_ERASE_LEN_LEN_4KB;
-    port->TASKS_ERASESTART = QSPI_TASKS_ERASESTART_TASKS_ERASESTART_Msk;
-    return;
-  }
+	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SECTOR_ERASE ||
+	    (cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_SUBSECTOR_ERASE) {
+		port->CINSTRDAT0 = cmdp->addr;
+		n = 3;
+	}
 
-  if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_BULK_ERASE) {
-    port->ERASE.PTR = cmdp->addr;
-    port->ERASE.LEN = QSPI_ERASE_LEN_LEN_All;
-    port->TASKS_ERASESTART = QSPI_TASKS_ERASESTART_TASKS_ERASESTART_Msk;
-    return;
-  }
+	qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
+	    QSPI_CINSTRCONF_LENGTH_1B + n);
 
-  qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
-    QSPI_CINSTRCONF_LENGTH_1B);
-
-  return;
+	return;
 }
 
 /**
@@ -331,72 +358,74 @@ void qspi_lld_command(QSPIDriver *qspip, const qspi_command_t *cmdp) {
  *
  * @notapi
  */
-void qspi_lld_send(QSPIDriver *qspip, const qspi_command_t *cmdp,
-                   size_t n, const uint8_t *txbuf) {
-  NRF_QSPI_Type * port;
-  uint32_t d0;
-  uint32_t d1;
-  size_t cnt;
-  size_t i;
+void
+qspi_lld_send(QSPIDriver *qspip, const qspi_command_t *cmdp,
+                   size_t n, const uint8_t *txbuf)
+{
+	NRF_QSPI_Type * port;
+	uint32_t d0;
+	uint32_t d1;
+	size_t cnt;
+	size_t i;
 
-  port = qspip->port;
+	port = qspip->port;
 
-  qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
+	qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
 
-  /*
-   * Ok, here's the deal: the qspiSend() and qspiReceive() APIs have been
-   * overloaded to handle both commands _and_ raw data. I suspect that this
-   * reflects the interface of the QSPI controller in the ST Micro part that
-   * was originally used to prototype QSPI support in ChibiOS.
-   *
-   * Rather than requiring you to use raw command transactions to handle
-   * plain flash reads and writes, the Nordic QSPI controller has a shortcut
-   * registers. These can be used to specify exactly what addresses and
-   * lengths to read/write, and the controller will issue the necessary
-   * QSPI commands internally.
-   *
-   * When asked to do a bare data write here, the addr field in the command
-   * descriptor will be non-zero. If we see that, then we issue a write via
-   * the shortcut registers instead of trying to issue a bare command.
-   */
+	/*
+	 * Ok, here's the deal: the qspiSend() and qspiReceive() APIs have
+	 * been overloaded to handle both commands _and_ raw data. I suspect
+	 * that this reflects the interface of the QSPI controller in the
+	 * ST Micro part that was originally used to prototype QSPI support
+	 *in ChibiOS.
+	 *
+	 * Rather than requiring you to use raw command transactions to handle
+	 * plain flash reads and writes, the Nordic QSPI controller has a
+	 * shortcut registers. These can be used to specify exactly what
+	 * addresses and lengths to read/write, and the controller will issue
+	 * the necessary QSPI commands internally.
+	 *
+	 * Unfortunately there isn't any clear hint that we need to do a bare
+	 * data write other than just looking at the command opcode directly.
+	 * So we have to special-case the "page program" command here.
+	 */
 
-  if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_PAGE_PROGRAM) {
-    port->WRITE.DST = cmdp->addr;
-    port->WRITE.SRC = (uint32_t)txbuf;
-    port->WRITE.CNT = n;
-    port->TASKS_WRITESTART = QSPI_TASKS_WRITESTART_TASKS_WRITESTART_Msk;
-    return;
-  }
+	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_PAGE_PROGRAM) {
+		port->WRITE.DST = cmdp->addr;
+		port->WRITE.SRC = (uint32_t)txbuf;
+		port->WRITE.CNT = n;
+		port->TASKS_WRITESTART =
+		    QSPI_TASKS_WRITESTART_TASKS_WRITESTART_Msk;
+		return;
+	}
 
-  if (n > 8)
-    return;
+	if (n > 8)
+		return;
 
-  d0 = 0;
-  d1 = 0;
+	d0 = 0;
+	d1 = 0;
 
-  if (n > 4)
-     cnt = 4;
-  else
-     cnt = n;
+	if (n > 4)
+		cnt = 4;
+	else
+		cnt = n;
 
-  for (i = 0; i < cnt; i++) {
-    d0 |= txbuf[i] << (i * 8);
-  }
+	for (i = 0; i < cnt; i++)
+		d0 |= txbuf[i] << (i * 8);
 
-  if (n > 4) {
-     cnt = n - 4;
-    for (i = 0; i < cnt; i++) {
-      d1 |= txbuf[i + 4] << (i * 8);
-    }
-  }
+	if (n > 4) {
+		cnt = n - 4;
+		for (i = 0; i < cnt; i++)
+			d1 |= txbuf[i + 4] << (i * 8);
+	}
 
-  port->CINSTRDAT0 = d0;
-  port->CINSTRDAT1 = d1;
+	port->CINSTRDAT0 = d0;
+	port->CINSTRDAT1 = d1;
 
-  qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
-    QSPI_CINSTRCONF_LENGTH_1B + n);
+	qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
+	    QSPI_CINSTRCONF_LENGTH_1B + n);
 
-  return;
+	return;
 }
 
 /**
@@ -410,34 +439,37 @@ void qspi_lld_send(QSPIDriver *qspip, const qspi_command_t *cmdp,
  *
  * @notapi
  */
-void qspi_lld_receive(QSPIDriver *qspip, const qspi_command_t *cmdp,
-                      size_t n, uint8_t *rxbuf) {
-  NRF_QSPI_Type * port;
+void
+qspi_lld_receive(QSPIDriver *qspip, const qspi_command_t *cmdp,
+                      size_t n, uint8_t *rxbuf)
+{
+	NRF_QSPI_Type * port;
 
-  port = qspip->port;
+	port = qspip->port;
 
-  qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
+	qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
 
-  if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_READ) {
-    port->READ.SRC = cmdp->addr;
-    port->READ.DST = (uint32_t)rxbuf;
-    port->READ.CNT = n;
-    port->TASKS_READSTART = QSPI_TASKS_READSTART_TASKS_READSTART_Msk;
-    return;
-  }
+	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_READ) {
+		port->READ.SRC = cmdp->addr;
+		port->READ.DST = (uint32_t)rxbuf;
+		port->READ.CNT = n;
+		port->TASKS_READSTART =
+		    QSPI_TASKS_READSTART_TASKS_READSTART_Msk;
+		return;
+	}
 
-  if (n > 8)
-    n = 8;
+	if (n > 8)
+		n = 8;
 
-  port->CINSTRDAT0 = 0;
-  port->CINSTRDAT1 = 0;
-  qspip->rxbuf = rxbuf;
-  qspip->rxlen = n;
+	port->CINSTRDAT0 = 0;
+	port->CINSTRDAT1 = 0;
+	qspip->rxbuf = rxbuf;
+	qspip->rxlen = n;
 
-  qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
-    QSPI_CINSTRCONF_LENGTH_1B + n);
+	qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
+	    QSPI_CINSTRCONF_LENGTH_1B + n);
 
-  (void)rxbuf;
+	return;
 }
 
 #if (QSPI_SUPPORTS_MEMMAP == TRUE) || defined(__DOXYGEN__)
@@ -453,23 +485,27 @@ void qspi_lld_receive(QSPIDriver *qspip, const qspi_command_t *cmdp,
  *
  * @notapi
  */
-void qspi_lld_map_flash(QSPIDriver *qspip,
+void
+qspi_lld_map_flash(QSPIDriver *qspip,
                         const qspi_command_t *cmdp,
-                        uint8_t **addrp) {
-  NRF_QSPI_Type * port;
+                        uint8_t **addrp)
+{
+	NRF_QSPI_Type * port;
 
-  (void)cmdp;
+	/* We don't need to send any commands to enable XIP mode. */
 
-  port = qspip->port;
+	(void)cmdp;
 
-  qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
-    QSPI_CINSTRCONF_LENGTH_1B);
+	port = qspip->port;
 
-  port->XIPOFFSET = qspip->config->membase;
+	qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
+	    QSPI_CINSTRCONF_LENGTH_1B);
 
-  *addrp = (uint8_t *)qspip->config->membase;
+	port->XIPOFFSET = qspip->config->membase;
 
-  return;
+	*addrp = (uint8_t *)qspip->config->membase;
+
+	return;
 }
 
 /**
@@ -481,16 +517,16 @@ void qspi_lld_map_flash(QSPIDriver *qspip,
  *
  * @notapi
  */
-void qspi_lld_unmap_flash(QSPIDriver *qspip) {
-  NRF_QSPI_Type * port;
+void
+qspi_lld_unmap_flash(QSPIDriver *qspip)
+{
+	NRF_QSPI_Type * port;
 
-  port = qspip->port;
+	port = qspip->port;
 
-  qspi_lld_stop (qspip);
-  port->XIPOFFSET = 0;
-  qspi_lld_start (qspip);
+	port->XIPOFFSET = 0;
 
-  return;
+	return;
 }
 #endif /* QSPI_SUPPORTS_MEMMAP == TRUE */
 
