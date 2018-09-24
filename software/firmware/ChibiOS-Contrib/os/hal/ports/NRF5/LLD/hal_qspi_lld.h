@@ -61,6 +61,21 @@
 #define QSPI_CMD_BULK_ERASE		    0xC7
 #define QSPI_CMD_READ_FLAG_STATUS_REGISTER  0x70
 
+#define QSPI_FLGSTS_PROG_ERASE	0x80
+#define QSPI_FLGSTS_ERASE_SUSP	0x40
+#define QSPI_FLGSTS_ERASE_ERR	0x20
+#define QSPI_FLGSTS_PRG_ERR	0x10
+#define QSPI_FLGSTS_VPP_ERR	0x08
+#define QSPI_FLGSTS_PROG_SUSP	0x04
+#define QSPI_FLGSTS_PROT_ERR	0x02
+#define QSPI_FLGSTS_RSVD	0x01
+
+#define QSPI_STS_STSWREN	0x80
+#define QSPI_STS_TOPBOT		0x40
+#define QSPI_STS_BLKPROT	0x3C
+#define QSPI_STS_WRENLATCH	0x02
+#define QSPI_STS_WRBUSY		0x01
+
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */
 /*===========================================================================*/
