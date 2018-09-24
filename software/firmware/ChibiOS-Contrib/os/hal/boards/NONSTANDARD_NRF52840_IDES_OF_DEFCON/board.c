@@ -43,13 +43,13 @@ const PALConfig pal_default_config =
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.14: LED2           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.15: LED3           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.16: LED4           */
-        PAL_MODE_UNCONNECTED,         /* P0.17: QSPI CS        */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.17: QSPI CS        */
         PAL_MODE_UNCONNECTED,         /* P0.18: RESET          */
-        PAL_MODE_UNCONNECTED,         /* P0.19: QSPI CLK       */
-        PAL_MODE_UNCONNECTED,         /* P0.20: QSPI DIO0      */
-        PAL_MODE_UNCONNECTED,         /* P0.21: QSPI_DIO1      */
-        PAL_MODE_UNCONNECTED,         /* P0.22: QSPI_DIO2      */
-        PAL_MODE_UNCONNECTED,         /* P0.23: QSPI_DIO3      */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.19: QSPI CLK       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.20: QSPI DIO0      */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.21: QSPI_DIO1      */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.22: QSPI_DIO2      */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.23: QSPI_DIO3      */
         PAL_MODE_INPUT_PULLUP,        /* P0.24: BTN3           */
         PAL_MODE_INPUT_PULLUP,        /* P0.25: BTN4           */
         PAL_MODE_UNCONNECTED,         /* P0.26:                */
