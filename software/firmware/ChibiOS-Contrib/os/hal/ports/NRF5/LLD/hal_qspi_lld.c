@@ -395,7 +395,7 @@ qspi_lld_send(QSPIDriver *qspip, const qspi_command_t *cmdp,
 	 * been overloaded to handle both commands _and_ raw data. I suspect
 	 * that this reflects the interface of the QSPI controller in the
 	 * ST Micro part that was originally used to prototype QSPI support
-	 *in ChibiOS.
+	 * in ChibiOS.
 	 *
 	 * Rather than requiring you to use raw command transactions to handle
 	 * plain flash reads and writes, the Nordic QSPI controller has a
