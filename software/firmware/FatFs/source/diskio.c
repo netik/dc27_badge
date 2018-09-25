@@ -14,6 +14,9 @@
 #ifdef DRV_MMC
 #include "mmc.h"	/* Header file of existing SD control module */
 #endif
+#ifdef DRV_QSPI
+#include "qspi.h"	/* Header file of existing QSPI control module */
+#endif
 
 
 /*-----------------------------------------------------------------------*/
@@ -32,6 +35,10 @@ DSTATUS disk_status (
 #ifdef DRV_MMC
 	case DRV_MMC :
 		return mmc_disk_status();
+#endif
+#ifdef DRV_QSPI
+	case DRV_QSPI :
+		return qspi_disk_status();
 #endif
 	}
 	return STA_NOINIT;
@@ -55,6 +62,10 @@ DSTATUS disk_initialize (
 #ifdef DRV_MMC
 	case DRV_MMC :
 		return mmc_disk_initialize();
+#endif
+#ifdef QSPI_MMC
+	case DRV_QSPI :
+		return qspi_disk_initialize();
 #endif
 	}
 	return STA_NOINIT;
@@ -81,6 +92,10 @@ DRESULT disk_read (
 #ifdef DRV_MMC
 	case DRV_MMC :
 		return mmc_disk_read(buff, sector, count);
+#endif
+#ifdef DRV_QSPI
+	case DRV_QSPI :
+		return qspi_disk_read(buff, sector, count);
 #endif
 	}
 	return RES_PARERR;
@@ -109,6 +124,10 @@ DRESULT disk_write (
 	case DRV_MMC :
 		return mmc_disk_write(buff, sector, count);
 #endif
+#ifdef DRV_QSPI
+	case DRV_QSPI :
+		return qspi_disk_write(buff, sector, count);
+#endif
 	}
 	return RES_PARERR;
 }
@@ -134,6 +153,10 @@ DRESULT disk_ioctl (
 #ifdef DRV_MMC
 	case DRV_MMC :
 		return mmc_disk_ioctl(cmd, buff);
+#endif
+#ifdef DRV_QSPI
+	case DRV_QSPI :
+		return qspi_disk_ioctl(cmd, buff);
 #endif
 	}
 	return RES_PARERR;

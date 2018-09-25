@@ -293,15 +293,22 @@ qspi_lld_stop(QSPIDriver *qspip)
 	/* If in ready state then disables QSPI.*/
 	if (qspip->state == QSPI_READY) {
 
-	/* QSPI disable.*/
+		/* QSPI disable.*/
 
-	port = qspip->port;
-	port->ENABLE = 0;
+		port = qspip->port;
 
-	/* Stopping involved clocks.*/
+		port->INTENCLR = QSPI_INTENCLR_READY_Msk;
+		(void)port->INTENSET;
+
+		port->TASKS_DEACTIVATE =
+		    QSPI_TASKS_DEACTIVATE_TASKS_DEACTIVATE_Msk;
+
+		port->ENABLE = 0;
+
+		/* Stopping involved clocks.*/
 #if NRF5_QSPI_USE_QSPI1
-	if (&QSPID1 == qspip)
-		nvicDisableVector (QSPI_IRQn);
+		if (&QSPID1 == qspip)
+			nvicDisableVector (QSPI_IRQn);
 #endif
 
 	}
