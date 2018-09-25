@@ -247,6 +247,12 @@ TOPT = -mthumb -DTHUMB
 # Define C warning options here
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes  -Wno-unused-parameter 
 
+# The NRF52832 doesn't support QSPI. We need to add this here to
+# turn FatFs QSPI options off otherwise we'll have some unsatisfied
+# linker symbols.
+
+CWARN += -UDRV_QSPI
+
 # Define C++ warning options here
 CPPWARN = -Wall -Wextra -Wundef
 

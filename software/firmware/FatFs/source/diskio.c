@@ -63,7 +63,7 @@ DSTATUS disk_initialize (
 	case DRV_MMC :
 		return mmc_disk_initialize();
 #endif
-#ifdef QSPI_MMC
+#ifdef DRV_QSPI
 	case DRV_QSPI :
 		return qspi_disk_initialize();
 #endif
