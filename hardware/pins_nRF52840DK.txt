@@ -1,0 +1,88 @@
+NRF52840 DK board pin connections
+
+This is the I/O pinout for the Nordic nRF52840 DK (development kit board).
+There is also a Rigado BMD-340 EVAL board which is basically the same,
+except it has the BMD-340 module mounted while the Nordic board just has
+a bare nRF52840 chip mounted. Functionally they are identical.
+
+Notes:
+
+- The nRF52840 has an extra bank of 16 GPIO pins, for a total of 48. These
+  pins are accessed via a separate register block at offset 0x50000300. In
+  ChibiOS these are referenced as IOPORT1 and IOPORT2. These are shown as two
+  separate tables below.
+
+- The connections shown below currently reflect only what's on the dev
+  board. No extra peripherals have been configured yet.
+
+- In order to allow peripherals to be able to select from all 48 pins for
+  their I/O configuration, the pin select registers now have an extra field.
+  The lowest 5 bits (0 to 4) select the pin number (0-31) and the 6th bit
+  (bit 5) selects which port to use.
+
+- Unlike the nRF52832 dev boards, the nRF52840 boards have a QSPI flash
+  part connected to 6 pins (CS, clock and 4 I/O lines). The user guide
+  document tays this is a 64MB part. However I've seen at least one document
+  where it says it's only 4MB. When properly configured, the nRF52840 allows
+  code to be executed from the QSPI flash device. It's not clear yet if
+  simple loads/stores also work, i.e. the device is just simply memory-mapped,
+  but if it is it may be desirable to use this for holding ancillary data
+  like fonts so that they can be drawn quickly.
+
+Port P0
+
+NRF52840 pin desgination		Function
+------------------------		--------
+P0.0					XTAL (32Mhz)
+P0.1					XTAL (32Mhz)
+P0.2					<unused>
+P0.3					<unused>
+P0.4					<unused>
+P0.5					UART_RTS
+P0.6					UART_TX
+P0.7					UART_CTS
+P0.8					UART_RX
+P0.9					NFC antenna
+P0.10					NFC antenna
+P0.11					BTN1
+P0.12					BTN2
+P0.13					LED1
+P0.14					LED2
+P0.15					LED3
+P0.16					LED4
+P0.17					QSPI CS
+P0.18					RESET
+P0.19					QSPI CLK
+P0.20					QSPI DIO0
+P0.21					QSPI DIO1
+P0.22					QSPI DIO2
+P0.23					QSPI DIO3
+P0.24					BTN3
+P0.25					BTN4
+P0.26					<unused>
+P0.27					<unused>
+P0.28					<unused>
+P0.29					<unused>
+P0.30					<unused>
+P0.31					<unused>
+
+Port P1
+
+NRF52840 pin desgination		Function
+------------------------		--------
+P1.00					<unused>
+P1.01					Touch CS
+P1.02					Screen C/D
+P1.03					SC Card CS
+P1.04					<unused>
+P1.05					SPI_SCK
+P1.06					SPI_MISO
+P1.07					SPI_MOSI
+P1.08					Screen CS
+P1.09					<unused>
+P1.10					<unused>
+P1.11					<unused>
+P1.12					<unused>
+P1.13					<unused>
+P1.14					<unused>
+P1.15					<unused>

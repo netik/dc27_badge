@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<export version="D">
+  <design>
+    <source>/Users/jna/Dropbox/Badge Stuff/badge files/badge-kicad/DC27-SAO/DC27-SAO.sch</source>
+    <date>Monday, September 03, 2018 at 06:52:54 PM</date>
+    <tool>Eeschema (5.0.0-3-g5ebb6b6)</tool>
+    <sheet number="1" name="/" tstamps="/">
+      <title_block>
+        <title/>
+        <company/>
+        <rev/>
+        <date/>
+        <source>DC27-SAO.sch</source>
+        <comment number="1" value=""/>
+        <comment number="2" value=""/>
+        <comment number="3" value=""/>
+        <comment number="4" value=""/>
+      </title_block>
+    </sheet>
+  </design>
+  <components>
+    <comp ref="X1">
+      <value>Badgelife_shitty_connector</value>
+      <libsource lib="dc27-sao-extras" part="Badgelife_shitty_connector" description=""/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9A94AA</tstamp>
+    </comp>
+    <comp ref="DS1">
+      <value>ER-OLED0.84-1</value>
+      <fields>
+        <field name="Family">OPTO</field>
+      </fields>
+      <libsource lib="OLED" part="ER-OLED0.84-1" description=""/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9AAF01</tstamp>
+    </comp>
+    <comp ref="C1">
+      <value>1uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9AAFAB</tstamp>
+    </comp>
+    <comp ref="C2">
+      <value>1uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9AB0CD</tstamp>
+    </comp>
+    <comp ref="R1">
+      <value>2k</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9ABE53</tstamp>
+    </comp>
+    <comp ref="R2">
+      <value>2k</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9ABE97</tstamp>
+    </comp>
+    <comp ref="JP2">
+      <value>SDA SOURCE</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Jumper" part="Jumper_3_Bridged12" description="Jumper, 3-pole, pins 1+2 closed/bridged"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9AE05D</tstamp>
+    </comp>
+    <comp ref="JP1">
+      <value>SCL SOURCE</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Jumper" part="Jumper_3_Bridged12" description="Jumper, 3-pole, pins 1+2 closed/bridged"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9AE199</tstamp>
+    </comp>
+    <comp ref="C5">
+      <value>1uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9B5BB8</tstamp>
+    </comp>
+    <comp ref="C6">
+      <value>22nF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9B80B2</tstamp>
+    </comp>
+    <comp ref="R3">
+      <value>820k</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9BAA71</tstamp>
+    </comp>
+    <comp ref="C4">
+      <value>2.2uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9BEF48</tstamp>
+    </comp>
+    <comp ref="C3">
+      <value>2.2uF</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9C3135</tstamp>
+    </comp>
+    <comp ref="U1">
+      <value>ATtiny85-20SU</value>
+      <footprint>Package_SO:SOIJ-8_5.3x5.3mm_P1.27mm</footprint>
+      <datasheet>http://ww1.microchip.com/downloads/en/DeviceDoc/atmel-2586-avr-8-bit-microcontroller-attiny25-attiny45-attiny85_datasheet.pdf</datasheet>
+      <libsource lib="MCU_Microchip_ATtiny" part="ATtiny85-20SU" description="20MHz, 8kB Flash, 512B SRAM, 512B EEPROM, debugWIRE, SOIJ-8"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9D0C9F</tstamp>
+    </comp>
+    <comp ref="J1">
+      <value>SELECT</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Connector" part="Conn_01x01_Female" description="Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9D6235</tstamp>
+    </comp>
+    <comp ref="J2">
+      <value>NEXT</value>
+      <datasheet>~</datasheet>
+      <libsource lib="Connector" part="Conn_01x01_Female" description="Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5B9D7E7A</tstamp>
+    </comp>
+  </components>
+  <libparts>
+    <libpart lib="Connector" part="Conn_01x01_Female">
+      <description>Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>Connector*:*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">J</field>
+        <field name="Value">Conn_01x01_Female</field>
+      </fields>
+      <pins>
+        <pin num="1" name="Pin_1" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="C">
+      <description>Unpolarized capacitor</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>C_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">C</field>
+        <field name="Value">C</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="R">
+      <description>Resistor</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>R_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">R</field>
+        <field name="Value">R</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Jumper" part="Jumper_3_Bridged12">
+      <description>Jumper, 3-pole, pins 1+2 closed/bridged</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>Jumper*Bridged12*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">JP</field>
+        <field name="Value">Jumper_3_Bridged12</field>
+      </fields>
+      <pins>
+        <pin num="1" name="A" type="passive"/>
+        <pin num="2" name="C" type="input"/>
+        <pin num="3" name="B" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="MCU_Microchip_ATtiny" part="ATtiny25V-10SU">
+      <aliases>
+        <alias>ATtiny25-20SU</alias>
+        <alias>ATtiny45V-10SU</alias>
+        <alias>ATtiny45-20SU</alias>
+        <alias>ATtiny85V-10SU</alias>
+        <alias>ATtiny85-20SU</alias>
+      </aliases>
+      <description>10MHz, 2kB Flash, 128B SRAM, 128B EEPROM, debugWIRE, SOIJ-8</description>
+      <docs>http://ww1.microchip.com/downloads/en/DeviceDoc/atmel-2586-avr-8-bit-microcontroller-attiny25-attiny45-attiny85_datasheet.pdf</docs>
+      <footprints>
+        <fp>SOIJ*5.3x5.3mm*P1.27mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">ATtiny25V-10SU</field>
+        <field name="Footprint">Package_SO:SOIJ-8_5.3x5.3mm_P1.27mm</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~RESET~/PB5" type="BiDi"/>
+        <pin num="2" name="XTAL1/PB3" type="BiDi"/>
+        <pin num="3" name="XTAL2/PB4" type="BiDi"/>
+        <pin num="4" name="GND" type="power_in"/>
+        <pin num="5" name="AREF/PB0" type="BiDi"/>
+        <pin num="6" name="PB1" type="BiDi"/>
+        <pin num="7" name="PB2" type="BiDi"/>
+        <pin num="8" name="VCC" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="OLED" part="ER-OLED0.84-1">
+      <fields>
+        <field name="Reference">DS</field>
+        <field name="Value">ER-OLED0.84-1</field>
+        <field name="Family">OPTO</field>
+      </fields>
+      <pins>
+        <pin num="1" name="C2P" type="input"/>
+        <pin num="2" name="C2N" type="input"/>
+        <pin num="3" name="C1P" type="input"/>
+        <pin num="4" name="C1N" type="input"/>
+        <pin num="5" name="VBAT" type="input"/>
+        <pin num="6" name="VBREF" type="input"/>
+        <pin num="7" name="VSS" type="power_in"/>
+        <pin num="8" name="VDDIO" type="power_in"/>
+        <pin num="9" name="RES#" type="input"/>
+        <pin num="10" name="SCL" type="input"/>
+        <pin num="11" name="SDA" type="BiDi"/>
+        <pin num="12" name="IREF" type="input"/>
+        <pin num="13" name="VCOMH" type="output"/>
+        <pin num="14" name="VCC" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="dc27-sao-extras" part="Badgelife_shitty_connector">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">Badgelife_shitty_connector</field>
+      </fields>
+      <pins>
+        <pin num="1" name="VDD" type="input"/>
+        <pin num="2" name="GND" type="input"/>
+        <pin num="3" name="SCL" type="input"/>
+        <pin num="4" name="SDA" type="input"/>
+      </pins>
+    </libpart>
+  </libparts>
+  <libraries>
+    <library logical="Connector">
+      <uri>/Library/Application Support/kicad/library/Connector.lib</uri>
+    </library>
+    <library logical="Device">
+      <uri>/Library/Application Support/kicad/library/Device.lib</uri>
+    </library>
+    <library logical="Jumper">
+      <uri>/Library/Application Support/kicad/library/Jumper.lib</uri>
+    </library>
+    <library logical="MCU_Microchip_ATtiny">
+      <uri>/Library/Application Support/kicad/library/MCU_Microchip_ATtiny.lib</uri>
+    </library>
+    <library logical="OLED">
+      <uri>/Users/jna/Dropbox/Badge Stuff/badge files/badge-kicad/DC27-SAO/OLED.lib</uri>
+    </library>
+    <library logical="dc27-sao-extras">
+      <uri>/Users/jna/Dropbox/Badge Stuff/badge files/badge-kicad/DC27-SAO/dc27-sao-extras.lib</uri>
+    </library>
+  </libraries>
+  <nets>
+    <net code="1" name="GND">
+      <node ref="C3" pin="2"/>
+      <node ref="X1" pin="2"/>
+      <node ref="U1" pin="4"/>
+      <node ref="C4" pin="2"/>
+      <node ref="C6" pin="2"/>
+      <node ref="C5" pin="2"/>
+      <node ref="R3" pin="2"/>
+      <node ref="DS1" pin="7"/>
+    </net>
+    <net code="3" name="I2C_SDA">
+      <node ref="JP2" pin="1"/>
+      <node ref="U1" pin="5"/>
+    </net>
+    <net code="4" name="I2C_SCL">
+      <node ref="U1" pin="7"/>
+      <node ref="JP1" pin="1"/>
+    </net>
+    <net code="5" name="Net-(C2-Pad1)">
+      <node ref="DS1" pin="1"/>
+      <node ref="C2" pin="1"/>
+    </net>
+    <net code="6" name="Net-(C4-Pad1)">
+      <node ref="DS1" pin="13"/>
+      <node ref="C4" pin="1"/>
+    </net>
+    <net code="7" name="Net-(C2-Pad2)">
+      <node ref="DS1" pin="2"/>
+      <node ref="C2" pin="2"/>
+    </net>
+    <net code="8" name="Net-(C1-Pad1)">
+      <node ref="DS1" pin="3"/>
+      <node ref="C1" pin="1"/>
+    </net>
+    <net code="9" name="Net-(C1-Pad2)">
+      <node ref="DS1" pin="4"/>
+      <node ref="C1" pin="2"/>
+    </net>
+    <net code="10" name="Net-(C6-Pad1)">
+      <node ref="DS1" pin="6"/>
+      <node ref="C6" pin="1"/>
+    </net>
+    <net code="11" name="SAO_SDA">
+      <node ref="X1" pin="4"/>
+      <node ref="JP2" pin="3"/>
+    </net>
+    <net code="12" name="Net-(DS1-Pad10)">
+      <node ref="DS1" pin="10"/>
+      <node ref="JP1" pin="2"/>
+      <node ref="R1" pin="2"/>
+    </net>
+    <net code="13" name="SAO_SCL">
+      <node ref="JP1" pin="3"/>
+      <node ref="X1" pin="3"/>
+    </net>
+    <net code="14" name="Net-(DS1-Pad11)">
+      <node ref="R2" pin="2"/>
+      <node ref="DS1" pin="11"/>
+      <node ref="JP2" pin="2"/>
+    </net>
+    <net code="15" name="~RESET">
+      <node ref="DS1" pin="9"/>
+    </net>
+    <net code="16" name="Net-(DS1-Pad12)">
+      <node ref="DS1" pin="12"/>
+      <node ref="R3" pin="1"/>
+    </net>
+    <net code="17" name="VCC">
+      <node ref="C5" pin="1"/>
+      <node ref="R2" pin="1"/>
+      <node ref="C3" pin="1"/>
+      <node ref="R1" pin="1"/>
+      <node ref="DS1" pin="8"/>
+      <node ref="DS1" pin="5"/>
+      <node ref="DS1" pin="14"/>
+      <node ref="X1" pin="1"/>
+      <node ref="U1" pin="8"/>
+    </net>
+    <net code="18" name="Net-(U1-Pad1)">
+      <node ref="U1" pin="1"/>
+    </net>
+    <net code="19" name="Net-(J2-Pad1)">
+      <node ref="U1" pin="2"/>
+      <node ref="J2" pin="1"/>
+    </net>
+    <net code="20" name="Net-(U1-Pad3)">
+      <node ref="U1" pin="3"/>
+    </net>
+    <net code="21" name="Net-(J1-Pad1)">
+      <node ref="U1" pin="6"/>
+      <node ref="J1" pin="1"/>
+    </net>
+  </nets>
+</export>

@@ -1,0 +1,705 @@
+EESchema Schematic File Version 4
+LIBS:DC27-peripheral-cache
+EELAYER 26 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 5
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+Text Notes 7350 7500 0    50   ~ 0
+DC27 Audio Circuit\n
+$Sheet
+S 700  1850 1750 600 
+U 5BA1B02E
+F0 "LEDs" 50
+F1 "DC27LEDs.sch" 50
+$EndSheet
+$Sheet
+S 700  2950 1450 650 
+U 5BD866AF
+F0 "LED Interface" 50
+F1 "DC27LED_INTERFACE.sch" 50
+$EndSheet
+$Sheet
+S 2700 900  1900 650 
+U 5BA3F217
+F0 "DC Power" 50
+F1 "DC27-DC Power.sch" 50
+$EndSheet
+$Sheet
+S 700  900  1750 650 
+U 5BA15261
+F0 "DC27Audio" 50
+F1 "DC27Audio.sch" 50
+$EndSheet
+$Comp
+L DC27-peripheral-cache:BMD-340-A-R U1
+U 1 1 5BB20AB5
+P 5000 3850
+F 0 "U1" H 5000 4000 50  0000 C CNN
+F 1 "BMD-340-A-R" H 5000 3850 50  0000 C CNN
+F 2 "RIGADO_BMD-340-A-R" H 4600 1800 50  0001 L BNN
+F 3 "Rigado" H 4750 5800 50  0001 L BNN
+F 4 "Bluetooth Low Energy 5.0 Module" H 4750 5650 50  0001 L BNN "Field4"
+F 5 "BMD-340-A-R" H 4750 5900 50  0001 L BNN "Field6"
+	1    5000 3850
+	1    0    0    -1  
+$EndComp
+Text GLabel 4050 3050 0    50   BiDi ~ 0
+USBDATA+
+Text GLabel 4050 3150 0    50   BiDi ~ 0
+USBDATA-
+$Comp
+L power:GND #PWR02
+U 1 1 5BB289BF
+P 4950 6400
+F 0 "#PWR02" H 4950 6150 50  0001 C CNN
+F 1 "GND" H 4955 6227 50  0000 C CNN
+F 2 "" H 4950 6400 50  0001 C CNN
+F 3 "" H 4950 6400 50  0001 C CNN
+	1    4950 6400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4500 6150 4600 6150
+Wire Wire Line
+	4500 5850 4500 6150
+Wire Wire Line
+	4600 5850 4600 6150
+Connection ~ 4600 6150
+Wire Wire Line
+	4600 6150 4700 6150
+Wire Wire Line
+	4700 5850 4700 6150
+Connection ~ 4700 6150
+Wire Wire Line
+	4700 6150 4800 6150
+Wire Wire Line
+	4800 5850 4800 6150
+Connection ~ 4800 6150
+Wire Wire Line
+	4800 6150 4900 6150
+Wire Wire Line
+	4950 6150 5000 6150
+Wire Wire Line
+	5500 6150 5500 5850
+Connection ~ 4950 6150
+Wire Wire Line
+	4900 5850 4900 6150
+Connection ~ 4900 6150
+Wire Wire Line
+	4900 6150 4950 6150
+Wire Wire Line
+	5000 5850 5000 6150
+Connection ~ 5000 6150
+Wire Wire Line
+	5000 6150 5100 6150
+Wire Wire Line
+	5100 5850 5100 6150
+Connection ~ 5100 6150
+Wire Wire Line
+	5100 6150 5200 6150
+Wire Wire Line
+	5200 5850 5200 6150
+Connection ~ 5200 6150
+Wire Wire Line
+	5200 6150 5300 6150
+Wire Wire Line
+	5300 5850 5300 6150
+Connection ~ 5300 6150
+Wire Wire Line
+	5300 6150 5400 6150
+Wire Wire Line
+	5400 5850 5400 6150
+Connection ~ 5400 6150
+Wire Wire Line
+	5400 6150 5500 6150
+$Comp
+L power:GND #PWR01
+U 1 1 5BB29000
+P 5950 5750
+F 0 "#PWR01" H 5950 5500 50  0001 C CNN
+F 1 "GND" H 5955 5577 50  0000 C CNN
+F 2 "" H 5950 5750 50  0001 C CNN
+F 3 "" H 5950 5750 50  0001 C CNN
+	1    5950 5750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5750 5450 5950 5450
+Wire Wire Line
+	5950 5450 5950 5550
+Wire Wire Line
+	5950 5550 5750 5550
+Connection ~ 5950 5550
+Wire Wire Line
+	5950 5550 5950 5750
+Wire Wire Line
+	4050 3050 4300 3050
+Wire Wire Line
+	4300 3150 4050 3150
+Wire Wire Line
+	4950 6150 4950 6400
+$Comp
+L MF_Switches:TACT_4.2MM SW1
+U 1 1 5BA99567
+P 8150 1450
+F 0 "SW1" H 8150 1183 45  0000 C CNN
+F 1 "UP" H 8150 1267 45  0000 C CNN
+F 2 "MF_Switches_TACT4.2MM" H 8180 1600 20  0001 C CNN
+F 3 "" H 8150 1450 50  0001 C CNN
+	1    8150 1450
+	-1   0    0    1   
+$EndComp
+$Comp
+L MF_Switches:TACT_4.2MM SW2
+U 1 1 5BA995D9
+P 8600 1450
+F 0 "SW2" H 8600 1183 45  0000 C CNN
+F 1 "DN" H 8600 1267 45  0000 C CNN
+F 2 "MF_Switches_TACT4.2MM" H 8630 1600 20  0001 C CNN
+F 3 "" H 8600 1450 50  0001 C CNN
+	1    8600 1450
+	-1   0    0    1   
+$EndComp
+$Comp
+L MF_Switches:TACT_4.2MM SW4
+U 1 1 5BA9965D
+P 9500 1450
+F 0 "SW4" H 9500 1183 45  0000 C CNN
+F 1 "RIGHT" H 9500 1267 45  0000 C CNN
+F 2 "MF_Switches_TACT4.2MM" H 9530 1600 20  0001 C CNN
+F 3 "" H 9500 1450 50  0001 C CNN
+	1    9500 1450
+	-1   0    0    1   
+$EndComp
+$Comp
+L MF_Switches:TACT_4.2MM SW5
+U 1 1 5BA99697
+P 9950 1450
+F 0 "SW5" H 9950 1183 45  0000 C CNN
+F 1 "A" H 9950 1267 45  0000 C CNN
+F 2 "MF_Switches_TACT4.2MM" H 9980 1600 20  0001 C CNN
+F 3 "" H 9950 1450 50  0001 C CNN
+	1    9950 1450
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR0101
+U 1 1 5BA99749
+P 9200 1800
+F 0 "#PWR0101" H 9200 1550 50  0001 C CNN
+F 1 "GND" H 9205 1627 50  0000 C CNN
+F 2 "" H 9200 1800 50  0001 C CNN
+F 3 "" H 9200 1800 50  0001 C CNN
+	1    9200 1800
+	1    0    0    -1  
+$EndComp
+$Comp
+L MF_Switches:TACT_4.2MM SW3
+U 1 1 5BA9B5C7
+P 9100 1450
+F 0 "SW3" H 9100 1183 45  0000 C CNN
+F 1 "LEFT" H 9100 1267 45  0000 C CNN
+F 2 "MF_Switches_TACT4.2MM" H 9130 1600 20  0001 C CNN
+F 3 "" H 9100 1450 50  0001 C CNN
+	1    9100 1450
+	-1   0    0    1   
+$EndComp
+$Comp
+L MF_Switches:TACT_4.2MM SW6
+U 1 1 5BA9B5F5
+P 10450 1450
+F 0 "SW6" H 10450 1183 45  0000 C CNN
+F 1 "B" H 10450 1267 45  0000 C CNN
+F 2 "MF_Switches_TACT4.2MM" H 10480 1600 20  0001 C CNN
+F 3 "" H 10450 1450 50  0001 C CNN
+	1    10450 1450
+	-1   0    0    1   
+$EndComp
+$Comp
+L Connector_Generic:Conn_02x02_Counter_Clockwise J6
+U 1 1 5BA9C522
+P 1300 4450
+F 0 "J6" H 1350 4600 50  0000 C CNN
+F 1 "Conn_02x02_Counter_Clockwise" H 1550 4250 50  0000 C CNN
+F 2 "" H 1300 4450 50  0001 C CNN
+F 3 "~" H 1300 4450 50  0001 C CNN
+	1    1300 4450
+	1    0    0    -1  
+$EndComp
+Text Notes 700  3950 0    50   ~ 10
+Shitty Add On!\n
+$Comp
+L DC27-peripheral-cache:+3.3V #PWR0102
+U 1 1 5BA9C6B3
+P 950 4200
+F 0 "#PWR0102" H 950 4050 50  0001 C CNN
+F 1 "+3.3V" H 965 4373 50  0000 C CNN
+F 2 "" H 950 4200 50  0001 C CNN
+F 3 "" H 950 4200 50  0001 C CNN
+	1    950  4200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	950  4200 950  4450
+Wire Wire Line
+	950  4450 1100 4450
+$Comp
+L power:GND #PWR0103
+U 1 1 5BA9CA51
+P 950 4650
+F 0 "#PWR0103" H 950 4400 50  0001 C CNN
+F 1 "GND" H 955 4477 50  0000 C CNN
+F 2 "" H 950 4650 50  0001 C CNN
+F 3 "" H 950 4650 50  0001 C CNN
+	1    950  4650
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	950  4650 950  4550
+Wire Wire Line
+	950  4550 1100 4550
+Text GLabel 1800 4450 2    50   Input ~ 0
+I2C1_SDA
+Wire Wire Line
+	1600 4450 1800 4450
+Text GLabel 1800 4550 2    50   Input ~ 0
+I2C1_SCL
+Wire Wire Line
+	1600 4550 1800 4550
+Wire Wire Line
+	10550 1550 10550 1700
+Wire Wire Line
+	10550 1700 10350 1700
+Wire Wire Line
+	8050 1700 8050 1550
+Wire Wire Line
+	8250 1550 8250 1700
+Connection ~ 8250 1700
+Wire Wire Line
+	8250 1700 8050 1700
+Wire Wire Line
+	8500 1550 8500 1700
+Connection ~ 8500 1700
+Wire Wire Line
+	8500 1700 8250 1700
+Wire Wire Line
+	8700 1550 8700 1700
+Connection ~ 8700 1700
+Wire Wire Line
+	8700 1700 8500 1700
+Wire Wire Line
+	9000 1550 9000 1700
+Connection ~ 9000 1700
+Wire Wire Line
+	9000 1700 8700 1700
+Wire Wire Line
+	9200 1550 9200 1700
+Connection ~ 9200 1700
+Wire Wire Line
+	9200 1700 9000 1700
+Wire Wire Line
+	9200 1700 9200 1800
+Wire Wire Line
+	9400 1550 9400 1700
+Connection ~ 9400 1700
+Wire Wire Line
+	9400 1700 9200 1700
+Wire Wire Line
+	9600 1550 9600 1700
+Connection ~ 9600 1700
+Wire Wire Line
+	9600 1700 9400 1700
+Wire Wire Line
+	9850 1550 9850 1700
+Connection ~ 9850 1700
+Wire Wire Line
+	9850 1700 9600 1700
+Wire Wire Line
+	10050 1550 10050 1700
+Connection ~ 10050 1700
+Wire Wire Line
+	10050 1700 9850 1700
+Wire Wire Line
+	10350 1550 10350 1700
+Connection ~ 10350 1700
+Wire Wire Line
+	10350 1700 10050 1700
+Wire Wire Line
+	8250 1350 8250 1100
+Wire Wire Line
+	8250 1100 8150 1100
+Wire Wire Line
+	8050 1100 8050 1350
+Wire Wire Line
+	8700 1350 8700 1100
+Wire Wire Line
+	8700 1100 8600 1100
+Wire Wire Line
+	8500 1100 8500 1350
+Wire Wire Line
+	9200 1350 9200 1100
+Wire Wire Line
+	9200 1100 9100 1100
+Wire Wire Line
+	9000 1100 9000 1350
+Wire Wire Line
+	9600 1350 9600 1100
+Wire Wire Line
+	9600 1100 9500 1100
+Wire Wire Line
+	9400 1100 9400 1350
+Wire Wire Line
+	10050 1350 10050 1100
+Wire Wire Line
+	10050 1100 9950 1100
+Wire Wire Line
+	9850 1100 9850 1350
+Wire Wire Line
+	10550 1350 10550 1100
+Wire Wire Line
+	10550 1100 10450 1100
+Wire Wire Line
+	10350 1100 10350 1350
+Text GLabel 8150 900  1    50   Output ~ 0
+~UP
+Wire Wire Line
+	8150 900  8150 1100
+Connection ~ 8150 1100
+Wire Wire Line
+	8150 1100 8050 1100
+Text GLabel 8600 900  1    50   Output ~ 0
+~DOWN
+Text GLabel 9100 900  1    50   Output ~ 0
+~LEFT
+Text GLabel 9500 900  1    50   Output ~ 0
+~RIGHT
+Text GLabel 9950 900  1    50   Output ~ 0
+~A
+Text GLabel 10450 900  1    50   Output ~ 0
+~B
+Wire Wire Line
+	8600 900  8600 1100
+Connection ~ 8600 1100
+Wire Wire Line
+	8600 1100 8500 1100
+Wire Wire Line
+	9100 900  9100 1100
+Connection ~ 9100 1100
+Wire Wire Line
+	9100 1100 9000 1100
+Wire Wire Line
+	9500 900  9500 1100
+Connection ~ 9500 1100
+Wire Wire Line
+	9500 1100 9400 1100
+Wire Wire Line
+	9950 900  9950 1100
+Connection ~ 9950 1100
+Wire Wire Line
+	9950 1100 9850 1100
+Wire Wire Line
+	10450 900  10450 1100
+Connection ~ 10450 1100
+Wire Wire Line
+	10450 1100 10350 1100
+Text Notes 7800 600  0    50   ~ 10
+Switches
+Text GLabel 4000 4450 0    50   Input ~ 0
+~UP
+Wire Wire Line
+	4000 4450 4300 4450
+Text GLabel 3800 4550 0    50   Input ~ 0
+~DOWN
+Wire Wire Line
+	3800 4550 4300 4550
+Text GLabel 6100 5150 2    50   Input ~ 0
+~LEFT
+Wire Wire Line
+	5750 5150 6100 5150
+Text GLabel 6350 5050 2    50   Input ~ 0
+~RIGHT
+Wire Wire Line
+	5750 5050 6350 5050
+Text GLabel 6200 4850 2    50   Input ~ 0
+~B
+Wire Wire Line
+	5750 4950 6100 4950
+Text GLabel 6100 4950 2    50   Input ~ 0
+~A
+Wire Wire Line
+	5750 4850 6200 4850
+$Comp
+L Connector_Generic:Conn_02x20_Odd_Even J5
+U 1 1 5BA9ABB2
+P 9350 3700
+F 0 "J5" H 9400 4817 50  0000 C CNN
+F 1 "Conn_02x20_Odd_Even" H 9400 4726 50  0000 C CNN
+F 2 "" H 9350 3700 50  0001 C CNN
+F 3 "~" H 9350 3700 50  0001 C CNN
+	1    9350 3700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0104
+U 1 1 5BA9AD47
+P 8400 2850
+F 0 "#PWR0104" H 8400 2600 50  0001 C CNN
+F 1 "GND" H 8405 2677 50  0000 C CNN
+F 2 "" H 8400 2850 50  0001 C CNN
+F 3 "" H 8400 2850 50  0001 C CNN
+	1    8400 2850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8400 2800 8400 2850
+Wire Wire Line
+	8400 2800 9150 2800
+$Comp
+L DC27-peripheral-cache:+3.3V #PWR0105
+U 1 1 5BA9D13E
+P 9950 2650
+F 0 "#PWR0105" H 9950 2500 50  0001 C CNN
+F 1 "+3.3V" H 9965 2823 50  0000 C CNN
+F 2 "" H 9950 2650 50  0001 C CNN
+F 3 "" H 9950 2650 50  0001 C CNN
+	1    9950 2650
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9950 2650 9950 2800
+Wire Wire Line
+	9950 2800 9650 2800
+Text GLabel 9800 3900 2    50   Input ~ 0
+DISP_SCLK
+Wire Wire Line
+	9650 3900 9800 3900
+Text GLabel 8850 3900 0    50   Input ~ 0
+DISP_CS
+Wire Wire Line
+	8850 3900 9150 3900
+Text GLabel 8850 4000 0    50   Input ~ 0
+DISP_DC
+Wire Wire Line
+	8850 4000 9150 4000
+Text GLabel 8850 4100 0    50   Input ~ 0
+DISP_SDI_MOSI
+Wire Wire Line
+	8850 4100 9150 4100
+Text GLabel 9800 4100 2    50   Output ~ 0
+DISP_SDO_MOSI
+Wire Wire Line
+	9650 4100 9800 4100
+NoConn ~ 9650 4000
+Text GLabel 9800 4200 2    50   Input ~ 0
+TOUCH_CS
+Wire Wire Line
+	9650 4200 9800 4200
+Text GLabel 9800 4300 2    50   Output ~ 0
+SD_MISO
+Text GLabel 9800 4400 2    50   Input ~ 0
+SD_MOSI
+Wire Wire Line
+	9650 4300 9800 4300
+Wire Wire Line
+	9800 4400 9650 4400
+Text GLabel 8850 4400 0    50   Input ~ 0
+SD_SCLK
+Wire Wire Line
+	8850 4400 9150 4400
+$Comp
+L power:GND #PWR0106
+U 1 1 5BAB8AC8
+P 9850 4800
+F 0 "#PWR0106" H 9850 4550 50  0001 C CNN
+F 1 "GND" H 9855 4627 50  0000 C CNN
+F 2 "" H 9850 4800 50  0001 C CNN
+F 3 "" H 9850 4800 50  0001 C CNN
+	1    9850 4800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9650 4700 9850 4700
+Wire Wire Line
+	9850 4700 9850 4800
+NoConn ~ 9150 4700
+NoConn ~ 9150 4600
+Text GLabel 8850 4500 0    50   Input ~ 0
+SD_CS
+Wire Wire Line
+	8850 4500 9150 4500
+NoConn ~ 9150 4300
+NoConn ~ 9150 4200
+NoConn ~ 9150 3800
+NoConn ~ 9150 3700
+NoConn ~ 9150 3600
+NoConn ~ 9150 3500
+NoConn ~ 9150 3400
+NoConn ~ 9150 3300
+NoConn ~ 9150 3200
+NoConn ~ 9150 3100
+NoConn ~ 9150 3000
+NoConn ~ 9150 2900
+NoConn ~ 9650 3800
+NoConn ~ 9650 3700
+NoConn ~ 9650 3600
+NoConn ~ 9650 3500
+NoConn ~ 9650 3400
+NoConn ~ 9650 3300
+NoConn ~ 9650 3200
+NoConn ~ 9650 3100
+NoConn ~ 9650 3000
+NoConn ~ 9650 2900
+Text Notes 7800 2450 0    50   ~ 10
+DISPLAY\n
+Wire Notes Line
+	11100 2200 7400 2200
+Wire Notes Line
+	7400 5200 11100 5200
+Wire Notes Line
+	7400 500  7400 5200
+NoConn ~ 9650 4600
+NoConn ~ 9650 4500
+$Comp
+L Connector:Conn_ARM_JTAG_SWD_10 J7
+U 1 1 5BB15372
+P 1350 6750
+F 0 "J7" H 910 6796 50  0000 R CNN
+F 1 "Conn_ARM_JTAG_SWD_10" H 2350 6150 50  0000 R CNN
+F 2 "Connector_PinHeader_1.27mm:PinHeader_2x05_P1.27mm_Vertical_SMD" H 1400 6200 50  0001 L TNN
+F 3 "http://infocenter.arm.com/help/topic/com.arm.doc.faqs/attached/13634/cortex_debug_connectors.pdf" V 1000 5500 50  0001 C CNN
+	1    1350 6750
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0107
+U 1 1 5BB155AB
+P 1350 7550
+F 0 "#PWR0107" H 1350 7300 50  0001 C CNN
+F 1 "GND" H 1355 7377 50  0000 C CNN
+F 2 "" H 1350 7550 50  0001 C CNN
+F 3 "" H 1350 7550 50  0001 C CNN
+	1    1350 7550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1250 7350 1250 7450
+Wire Wire Line
+	1250 7450 1350 7450
+Wire Wire Line
+	1350 7350 1350 7450
+Connection ~ 1350 7450
+Wire Wire Line
+	1350 7450 1350 7550
+$Comp
+L DC27-peripheral-cache:+3.3V #PWR0108
+U 1 1 5BB1B8C1
+P 1350 5850
+F 0 "#PWR0108" H 1350 5700 50  0001 C CNN
+F 1 "+3.3V" H 1365 6023 50  0000 C CNN
+F 2 "" H 1350 5850 50  0001 C CNN
+F 3 "" H 1350 5850 50  0001 C CNN
+	1    1350 5850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1350 5850 1350 5900
+Text GLabel 2050 6450 2    50   Output ~ 0
+~RESET_TGTMCU
+Wire Wire Line
+	1850 6450 2050 6450
+Text GLabel 2050 6650 2    50   Output ~ 0
+DEBUG_SWDCLK
+Wire Wire Line
+	1850 6650 2050 6650
+Text GLabel 2050 6750 2    50   BiDi ~ 0
+DEBUG_SWDIO
+Wire Wire Line
+	1850 6750 1950 6750
+NoConn ~ 1850 6950
+NoConn ~ 1850 6850
+$Comp
+L Device:R R16
+U 1 1 5BB2FF77
+P 1950 6150
+F 0 "R16" H 2020 6196 50  0000 L CNN
+F 1 "10K" H 2020 6105 50  0000 L CNN
+F 2 "" V 1880 6150 50  0001 C CNN
+F 3 "~" H 1950 6150 50  0001 C CNN
+	1    1950 6150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1950 6000 1950 5900
+Wire Wire Line
+	1950 5900 1350 5900
+Connection ~ 1350 5900
+Wire Wire Line
+	1350 5900 1350 6150
+Wire Wire Line
+	1950 6300 1950 6750
+Connection ~ 1950 6750
+Wire Wire Line
+	1950 6750 2050 6750
+Text Notes 750  5600 0    50   ~ 10
+PROGRAMMING HEADER
+$Comp
+L MF_Switches:TACT_4.2MM SW7
+U 1 1 5BB3B53E
+P 5300 7300
+F 0 "SW7" H 5550 7400 45  0000 C CNN
+F 1 "RESET" H 5550 7300 45  0000 C CNN
+F 2 "MF_Switches_TACT4.2MM" H 5330 7450 20  0001 C CNN
+F 3 "" H 5300 7300 50  0001 C CNN
+	1    5300 7300
+	1    0    0    -1  
+$EndComp
+Text GLabel 5800 7050 2    50   Output ~ 0
+~RESET_TGTMCU
+Wire Wire Line
+	5200 7200 5200 7050
+Wire Wire Line
+	5200 7050 5400 7050
+Wire Wire Line
+	5400 7200 5400 7050
+Connection ~ 5400 7050
+Wire Wire Line
+	5400 7050 5800 7050
+$Comp
+L power:GND #PWR0109
+U 1 1 5BB6B688
+P 4900 7550
+F 0 "#PWR0109" H 4900 7300 50  0001 C CNN
+F 1 "GND" H 4905 7377 50  0000 C CNN
+F 2 "" H 4900 7550 50  0001 C CNN
+F 3 "" H 4900 7550 50  0001 C CNN
+	1    4900 7550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4900 7550 4900 7400
+Wire Wire Line
+	4900 7400 5100 7400
+Wire Wire Line
+	5400 7400 5400 7550
+Wire Wire Line
+	5400 7550 5100 7550
+Wire Wire Line
+	5100 7550 5100 7400
+Connection ~ 5100 7400
+Wire Wire Line
+	5100 7400 5200 7400
+Text Notes 7800 5400 0    50   ~ 10
+TODO: FTDI
+Text Notes 8200 2550 0    50   Italic 0
+populate with\nsmd mount connector
+$EndSCHEMATC

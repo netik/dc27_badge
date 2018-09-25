@@ -1,0 +1,7 @@
+Attiny2313 needs to use a mod to get to i2c pins because it is
+incompatible with Wire.h, it needs stuff from here
+
+https://www.instructables.com/id/Using-an-I2C-LCD-on-Attiny85/
+
+
+
