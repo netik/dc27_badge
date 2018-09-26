@@ -56,6 +56,7 @@
 
 #define QSPI_CMD_PAGE_PROGRAM               0x02
 #define QSPI_CMD_READ                       0x03
+#define QSPI_CMD_FAST_READ                  0x0B
 #define QSPI_CMD_SUBSECTOR_ERASE            0x20
 #define QSPI_CMD_SECTOR_ERASE               0xD8
 #define QSPI_CMD_BULK_ERASE		    0xC7

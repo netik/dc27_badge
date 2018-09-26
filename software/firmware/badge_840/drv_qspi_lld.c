@@ -84,20 +84,15 @@ qspi_disk_read (
         UINT count		/* Sector count (1..128) */
 )
 {
-	uint8_t * p;
+	int r;
 
-	/*
-	 * For reads, we can take the shortcut of reading directly from
-	 * the XIP mapped area. This saves us having to do a function call.
-	 */
+	r = flashRead (&FLASHD1, sector * SECTOR_SIZE,
+	    count * SECTOR_SIZE, buff);
 
-	if (pMem == NULL)
-		return (RES_ERROR);
+	if (r == FLASH_NO_ERROR)
+		return (RES_OK);
 
-	p = pMem + (sector * SECTOR_SIZE);
-	memcpy (buff, p, count * SECTOR_SIZE);
-
-	return (RES_OK);
+	return (RES_ERROR);
 }
 
 DRESULT

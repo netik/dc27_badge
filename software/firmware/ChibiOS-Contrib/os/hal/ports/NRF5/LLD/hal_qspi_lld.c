@@ -475,6 +475,7 @@ qspi_lld_receive(QSPIDriver *qspip, const qspi_command_t *cmdp,
 	qspip->cmd = cmdp->cfg & QSPI_CFG_CMD_MASK;
 
 	if ((cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_READ ||
+	    (cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CMD_FAST_READ ||
 	    (cmdp->cfg & QSPI_CFG_CMD_MASK) == QSPI_CFG_CMD_MODE_NONE) {
 		port->READ.SRC = cmdp->addr;
 		port->READ.DST = (uint32_t)rxbuf;
