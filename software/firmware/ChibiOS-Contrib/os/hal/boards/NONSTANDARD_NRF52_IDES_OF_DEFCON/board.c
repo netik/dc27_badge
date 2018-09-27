@@ -59,6 +59,7 @@ const PALConfig pal_default_config =
         PAL_MODE_OUTPUT_PULLUP,       /* P0.30: screen D6      */
         PAL_MODE_OUTPUT_PULLUP,       /* P0.31: screen D7      */
   },
+  .port = IOPORT1
 };
 #endif
 
