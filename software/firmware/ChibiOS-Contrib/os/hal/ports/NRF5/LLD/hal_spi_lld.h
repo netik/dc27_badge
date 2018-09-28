@@ -138,7 +138,8 @@
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
-#if !NRF5_SPI_USE_SPI0 && !NRF5_SPI_USE_SPI1
+#if !NRF5_SPI_USE_SPI0 && !NRF5_SPI_USE_SPI1 &&				    \
+    !NRF5_SPI_USE_SPI2 && !NRF5_SPI_USE_SPI3
 #error "SPI driver activated but no SPI peripheral assigned"
 #endif
 
@@ -150,6 +151,16 @@
 #if NRF5_SPI_USE_SPI1 &&						    \
     !OSAL_IRQ_IS_VALID_PRIORITY(NRF5_SPI_SPI1_IRQ_PRIORITY)
 #error "Invalid IRQ priority assigned to SPI1"
+#endif
+
+#if NRF5_SPI_USE_SPI2 &&						    \
+    !OSAL_IRQ_IS_VALID_PRIORITY(NRF5_SPI_SPI2_IRQ_PRIORITY)
+#error "Invalid IRQ priority assigned to SPI2"
+#endif
+
+#if NRF5_SPI_USE_SPI3 &&						    \
+    !OSAL_IRQ_IS_VALID_PRIORITY(NRF5_SPI_SPI3_IRQ_PRIORITY)
+#error "Invalid IRQ priority assigned to SPI3"
 #endif
 
 /*===========================================================================*/
@@ -300,6 +311,12 @@ extern SPIDriver SPID1;
 #endif
 #if NRF5_SPI_USE_SPI1 && !defined(__DOXYGEN__)
 extern SPIDriver SPID2;
+#endif
+#if NRF5_SPI_USE_SPI2 && !defined(__DOXYGEN__)
+extern SPIDriver SPID3;
+#endif
+#if NRF5_SPI_USE_SPI3 && !defined(__DOXYGEN__)
+extern SPIDriver SPID4;
 #endif
 
 #ifdef __cplusplus
