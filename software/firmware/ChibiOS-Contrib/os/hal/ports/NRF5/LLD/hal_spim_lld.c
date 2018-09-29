@@ -392,11 +392,11 @@ void spi_lld_stop(SPIDriver *spip)
 		if (&SPID2 == spip)
 			nvicDisableVector (SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQn);
 #endif
-#if NRF5_SPI_USE_SPI1
+#if NRF5_SPI_USE_SPI2
 		if (&SPID3 == spip)
 			nvicDisableVector (SPIM2_SPIS2_SPI2_IRQn);
 #endif
-#if NRF5_SPI_USE_SPI1
+#if NRF5_SPI_USE_SPI3
 		if (&SPID4 == spip)
 			nvicDisableVector (SPIM3_IRQn);
 #endif
