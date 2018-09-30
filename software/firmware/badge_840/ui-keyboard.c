@@ -37,6 +37,7 @@
 
 #include "fontlist.h"
 #include "ides_gfx.h"
+#include "src/gdisp/gdisp_driver.h"
 
 /*
  * We need two widgets: a console and the keyboard.
@@ -77,6 +78,11 @@ static void backspace (KeyboardHandles * p)
 		cons->cx = gdispGetWidth() - (w * 2);
 	} else
 		cons->cx -= w;
+
+	/* Clear the clip variables otherwise gdispGFillArea() might fail. */
+
+	p->ghConsole->display->clipx0 = 0;
+	p->ghConsole->display->clipy0 = 0;
 
 	/*
 	 * Black out the character under the cursor. uGFX does not
