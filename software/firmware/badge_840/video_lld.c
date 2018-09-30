@@ -72,11 +72,25 @@ videoPlay (char * fname)
 	GDISP->p.cx = gdispGetWidth ();
 	GDISP->p.cy = gdispGetHeight ();
 
+	gdisp_lld_write_start (GDISP);
+	gdisp_lld_write_stop (GDISP);
+
+	/*
+	 * Now that we've programmed the viewport, we set the X/Y
+	 * coordinates to special values that tell the
+	 * gdisp_lld_write_start function to skip programming
+	 * the viewport area again. This saves us from calling
+	 * the set_viewport() function for every scanline, which
+	 * would be redundant: we're always just drawing data to
+	 * the same window until the video compltes.
+	 */
+
+	GDISP->p.x = -1;
+	GDISP->p.y = -1;
+
 	gs = ginputGetMouse (0);
 	geventListenerInit (&gl);
 	geventAttachSource (&gl, gs, GLISTEN_MOUSEMETA);
-
-	gdisp_lld_write_start (GDISP);
 
 	p1 = buf;
 	p2 = buf + VID_CHUNK_PIXELS;
@@ -101,6 +115,8 @@ videoPlay (char * fname)
 
 		asyncIoRead (&f, p2, VID_CHUNK_BYTES, &br);
 
+		gdisp_lld_write_start (GDISP);
+
 		/* Draw the current batch of lines to the screen */
 
 		for (j = 0; j < VID_CHUNK_LINES; j++) {
@@ -115,6 +131,8 @@ videoPlay (char * fname)
 				gdisp_lld_write_color(GDISP);
 			}
 		}
+      
+		gdisp_lld_write_stop (GDISP);
 
 		/* Switch to next waiting chunk */
 
@@ -142,7 +160,6 @@ videoPlay (char * fname)
 
 	geventDetachSource (&gl, NULL);
 
-        gdisp_lld_write_stop (GDISP);
 	f_close (&f);
 
 	/* Stop the timer */
