@@ -244,6 +244,8 @@ int main(void)
 #endif
     uint8_t * memp;
     const flash_descriptor_t * pFlash;
+    uint8_t reg;
+    qspi_command_t cmd;
 
     halInit();
     chSysInit();
@@ -297,6 +299,24 @@ int main(void)
     m25qStart (&FLASHD1, &m25qcfg1);
     m25qMemoryMap (&FLASHD1, &memp);
 
+    /*
+     * Macronix NOR flash parts default to single-I/O line out of the
+     * box. To switch them to quad-I/O operation, you have to set a
+     * bit in the status register. This is documented in application
+     * note AN0251V1. Note: this is a non-volatile bit, so we can check
+     * to see if it's already been set and if so we don't need to do
+     * anything.
+     */
+
+    cmd.cfg = QSPI_CMD_READ_STATUS_REGISTER;
+    cmd.addr = 0;
+    cmd.alt = 0;
+    qspiReceive (&QSPID1, &cmd, 1, &reg);
+    if ((reg & 0x40) == 0) {
+        reg |= 0x40; /* set the QE bit */
+        qspiSend (&QSPID1, &cmd, 1, &reg);
+    }
+ 
     pFlash = flashGetDescriptor (&FLASHD1);
 
     if (pFlash->sectors_count > 0) {

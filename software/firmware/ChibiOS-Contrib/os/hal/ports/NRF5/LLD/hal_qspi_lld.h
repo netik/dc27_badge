@@ -54,8 +54,10 @@
 #define QSPI_SUPPORTS_MEMMAP                TRUE
 /** @} */
 
+#define QSPI_CMD_WRITE_STATUS_REGISTER      0x01
 #define QSPI_CMD_PAGE_PROGRAM               0x02
 #define QSPI_CMD_READ                       0x03
+#define QSPI_CMD_READ_STATUS_REGISTER       0x05
 #define QSPI_CMD_FAST_READ                  0x0B
 #define QSPI_CMD_SUBSECTOR_ERASE            0x20
 #define QSPI_CMD_SECTOR_ERASE               0xD8
