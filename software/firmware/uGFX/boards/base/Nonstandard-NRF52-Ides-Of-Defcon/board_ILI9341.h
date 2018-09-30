@@ -17,6 +17,14 @@
 #include "hal.h"
 #include "hal_spi.h"
 
+#if (NRF5_SPI_USE_SPI0 == TRUE)
+#define SPI_BUS SPID1
+#endif
+
+#if (NRF5_SPI_USE_SPI3 == TRUE)
+#define SPI_BUS SPID4
+#endif
+
 static void init_board(GDisplay *g) {
 	(void) g;
 
@@ -44,7 +52,7 @@ static GFXINLINE void set_backlight(GDisplay *g, uint8_t percent) {
 
 static void acquire_bus(GDisplay *g) {
 	(void) g;
-	spiAcquireBus (&SPID4);
+	spiAcquireBus (&SPI_BUS);
 #ifdef IOPORT2
 	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
 #endif
@@ -56,14 +64,13 @@ static void release_bus(GDisplay *g) {
 #ifdef IOPORT2
 	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
 #endif
-	spiReleaseBus (&SPID4);
+	spiReleaseBus (&SPI_BUS);
 	return;
 }
 
 static void write_index(GDisplay *g, uint16_t index) {
+#ifdef NRF5_SPI_USE_SPI3
 	uint8_t b;
-
-	(void) g;
 
 	b = index & 0xFF;
 
@@ -71,35 +78,40 @@ static void write_index(GDisplay *g, uint16_t index) {
 	palClearPad (IOPORT2, IOPORT2_SCREEN_CD);
 #endif
 
-	SPID4.port->INTENCLR = SPIM_INTENSET_END_Msk;
-	(void)SPID4.port->INTENCLR;
-	spi_lld_send (&SPID4, 1, &b);
-	while (SPID4.port->TXD.MAXCNT != SPID4.port->TXD.AMOUNT)
+	SPI_BUS.port->INTENCLR = SPIM_INTENSET_END_Msk;
+	(void)SPI_BUS.port->INTENCLR;
+	spi_lld_send (&SPI_BUS, 1, &b);
+	while (SPI_BUS.port->TXD.MAXCNT != SPI_BUS.port->TXD.AMOUNT)
 		;
-	SPID4.port->INTENSET = SPIM_INTENSET_END_Msk;
-	(void)SPID4.port->INTENSET;
+	SPI_BUS.port->INTENSET = SPIM_INTENSET_END_Msk;
+	(void)SPI_BUS.port->INTENSET;
 
 #ifdef IOPORT2
 	palSetPad (IOPORT2, IOPORT2_SCREEN_CD);
 #endif
 
+#endif
+	(void) g;
+
 	return;
 }
 
 static void write_data(GDisplay *g, uint16_t data) {
+#ifdef NRF5_SPI_USE_SPI3
 	uint8_t b;
-
-	(void) g;
 
 	b = data & 0xFF;
 
-	SPID4.port->INTENCLR = SPIM_INTENSET_END_Msk;
-	(void)SPID4.port->INTENCLR;
-	spi_lld_send (&SPID4, 1, &b);
-	while (SPID4.port->TXD.MAXCNT != SPID4.port->TXD.AMOUNT)
+	SPI_BUS.port->INTENCLR = SPIM_INTENSET_END_Msk;
+	(void)SPI_BUS.port->INTENCLR;
+	spi_lld_send (&SPI_BUS, 1, &b);
+	while (SPI_BUS.port->TXD.MAXCNT != SPI_BUS.port->TXD.AMOUNT)
 		;
-	SPID4.port->INTENSET = SPIM_INTENSET_END_Msk;
-	(void)SPID4.port->INTENSET;
+	SPI_BUS.port->INTENSET = SPIM_INTENSET_END_Msk;
+	(void)SPI_BUS.port->INTENSET;
+#endif
+
+	(void) g;
 
 	return;
 }

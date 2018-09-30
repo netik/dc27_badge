@@ -82,7 +82,7 @@ static void set_viewport(GDisplay *g) {
 		write_index(g, 0x2A);
 		pixelbuf[0] = __builtin_bswap16 (g->p.x);
 		pixelbuf[1] = __builtin_bswap16 (g->p.x + g->p.cx - 1);
-		spiSend (&SPID4, 4, pixelbuf);
+		spiSend (&SPI_BUS, 4, pixelbuf);
 	}
 
 	if (saved_cy != g->p.cy || saved_y != g->p.y) {
@@ -91,7 +91,7 @@ static void set_viewport(GDisplay *g) {
 		write_index(g, 0x2B);
 		pixelbuf[0] = __builtin_bswap16 (g->p.y);
 		pixelbuf[1] = __builtin_bswap16 (g->p.y + g->p.cy - 1);
-		spiSend (&SPID4, 4, pixelbuf);
+		spiSend (&SPI_BUS, 4, pixelbuf);
 	}
 
 	return;
@@ -290,14 +290,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		pixelbuf[pixelpos] = __builtin_bswap16 (g->p.color);
 		pixelpos++;
 		if (pixelpos == DISPLAY_BUF) {
-			spiSend (&SPID4, pixelpos * 2 , pixelbuf);
+			spiSend (&SPI_BUS, pixelpos * 2 , pixelbuf);
 			pixelpos = 0;
 		}
 		return;
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		if (pixelpos != 0) {
-			spiSend (&SPID4, pixelpos * 2 , pixelbuf);
+			spiSend (&SPI_BUS, pixelpos * 2 , pixelbuf);
 			pixelpos = 0;
 		}
 		release_bus(g);
@@ -336,10 +336,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		gdisp_lld_write_start (g);
 		if (g->p.x2 == g->p.cx) {
-			spiSend (&SPID4, g->p.cx*g->p.cy * 2, buffer);
+			spiSend (&SPI_BUS, g->p.cx*g->p.cy * 2, buffer);
 		} else {
 			for (ycnt = g->p.cy; ycnt; ycnt--, buffer += g->p.x2)
-				spiSend (&SPID4, g->p.cy * 2, buffer);
+				spiSend (&SPI_BUS, g->p.cy * 2, buffer);
 		}
 		gdisp_lld_write_stop (g);
 
