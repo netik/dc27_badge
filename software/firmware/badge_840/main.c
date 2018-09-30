@@ -27,6 +27,8 @@
 
 #include "badge.h"
 
+FATFS qspi_fs;
+
 struct evt_table orchard_events;
 
 /* linker set for command objects */
@@ -38,13 +40,13 @@ orchard_command_end();
 
 bool watchdog_started = false;
 
-static const SPIConfig spi1_config = {
+static const SPIConfig spi4_config = {
 	NULL,			/* enc_cp */
-	NRF5_SPI_FREQ_8MBPS,	/* freq */
-	0x20|IOPORT2_SPI_SCK,	/* sckpad */
-	0x20|IOPORT2_SPI_MOSI,	/* mosipad */
-	0x20|IOPORT2_SPI_MISO,	/* misopad */
-	0x20|IOPORT2_SDCARD_CS,	/* sspad */
+	NRF5_SPI_FREQ_32MBPS,	/* freq */
+	IOPORT1_SPI_SCK,	/* sckpad */
+	IOPORT1_SPI_MOSI,	/* mosipad */
+	IOPORT1_SPI_MISO,	/* misopad */
+	IOPORT1_SDCARD_CS,	/* sspad */
 	FALSE,			/* lsbfirst */
 	2,			/* mode */
 	0xFF			/* dummy data for spiIgnore() */
@@ -177,6 +179,58 @@ SVC_Handler (void)
 	while (1) {}
 }
 
+#ifdef notyet
+static void
+setup_flash (void)
+{
+	int i;
+	FIL f;
+	UINT br;
+	uint8_t * buf;
+	uint8_t * orig;
+	uint32_t addr;
+	qspi_command_t cmd;
+
+	cmd.alt = 0;
+	cmd.addr = 0;
+
+	printf ("ERASING... ");
+	cmd.cfg = QSPI_CMD_SECTOR_ERASE;
+	for (i = 0; i < 128; i++) {
+		cmd.addr = i;
+		qspiCommand (&QSPID1, &cmd);
+		printf (".");
+	}
+	printf ("DONE!\r\n");
+
+
+	if (f_open (&f, "8MB.DMG", FA_READ) != FR_OK)
+		printf ("OPEN FAILED!!!\r\n");
+
+	orig = buf = chHeapAlloc (NULL, 65536 + 32);
+	addr = (uint32_t)buf;
+	addr &= ~0x1F;
+	addr += 32;
+	buf = (uint8_t *)addr;
+
+	printf ("PROGRAMMING... ");
+	cmd.cfg = QSPI_CMD_PAGE_PROGRAM;
+	for (i = 0; i < 8192; i++) {
+		cmd.addr = i * 65536;
+		f_read(&f, buf, 65536, &br);
+		if (br == 0)
+			break;
+		qspiSend (&QSPID1, &cmd, 65536, buf);
+		printf (".");
+	}
+	printf ("DONE!\r\n");
+	chHeapFree (orig);
+	f_close (&f);
+
+	return;
+}
+#endif
+
 /**@brief Function for application main entry.
  */
 int main(void)
@@ -187,9 +241,6 @@ int main(void)
     __disable_irq();
     SCB->VTOR = 0;
     __enable_irq();
-#endif
-#ifdef notyet
-    uint32_t msec;
 #endif
     uint8_t * memp;
     const flash_descriptor_t * pFlash;
@@ -233,13 +284,14 @@ int main(void)
     joyStart ();
     asyncIoStart ();
 
-    palSetPad (IOPORT2, IOPORT2_SPI_MOSI);
-    palSetPad (IOPORT2, IOPORT2_SPI_MISO);
-    palSetPad (IOPORT2, IOPORT2_SPI_SCK);
-    palSetPad (IOPORT2, IOPORT2_SDCARD_CS);
+    palSetPad (IOPORT1, IOPORT1_SPI_MOSI);
+    palSetPad (IOPORT1, IOPORT1_SPI_MISO);
+    palSetPad (IOPORT1, IOPORT1_SPI_SCK);
+    palSetPad (IOPORT1, IOPORT1_SDCARD_CS);
+    palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
     palSetPad (IOPORT2, IOPORT2_TOUCH_CS);
 
-    spiStart (&SPID1, &spi1_config);
+    spiStart (&SPID4, &spi4_config);
 
     m25qObjectInit (&FLASHD1);
     m25qStart (&FLASHD1, &m25qcfg1);
@@ -252,18 +304,20 @@ int main(void)
             (pFlash->sectors_count * pFlash->sectors_size) >> 20, memp);
     }
 
-#ifdef notyet
+#ifdef notdef
     flashStartEraseSector(&FLASHD1, 0);
 
-    while (flashQueryErase(&FLASHD1, &msec) != FLASH_NO_ERROR)
-        chThdSleepMilliseconds (msec);
+    flashWaitErase ((void *)&FLASHD1);
 
     flashProgram (&FLASHD1, 0, 1024, (uint8_t *)0x20008100);
+
 #endif
 
 #ifdef notyet
     i2cStart (&I2CD2, &i2c2_config);
 #endif
+
+    /* Main screen turn on. */
 
     gfxInit ();
 
@@ -271,6 +325,19 @@ int main(void)
         printf ("No SD card found.\r\n");
     else
         printf ("SD card detected.\r\n");
+
+#ifdef notyet
+    m25qMemoryUnmap (&FLASHD1);
+    setup_flash ();
+    m25qMemoryMap (&FLASHD1, &memp);
+#endif
+
+    if (f_mount (&qspi_fs, "1:", 1) != FR_OK) {
+        printf ("QSPI filesystem mount failed\r\n");
+    } else {
+        printf ("QSPI filesystem mounted\r\n");
+        /*f_chdrive ("1:");*/
+    }
 
     bleStart ();
 

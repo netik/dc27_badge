@@ -17,14 +17,13 @@
 #include "hal.h"
 #include "hal_spi.h"
 
-__attribute__ ((noinline))
 static void init_board(GDisplay *g) {
 	(void) g;
 
 	/* Set all pins to initial (high) state */
 #ifdef IOPORT2
 	palSetPad (IOPORT2, IOPORT2_SCREEN_CD);
-	palSetPad (IOPORT2, IOPORT2_SCREEN_CS);
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
 #endif
 	return;
 }
@@ -45,9 +44,9 @@ static GFXINLINE void set_backlight(GDisplay *g, uint8_t percent) {
 
 static void acquire_bus(GDisplay *g) {
 	(void) g;
-	spiAcquireBus (&SPID1);
+	spiAcquireBus (&SPID4);
 #ifdef IOPORT2
-	palClearPad (IOPORT2, IOPORT2_SCREEN_CS);
+	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
 #endif
 	return;
 }
@@ -55,13 +54,12 @@ static void acquire_bus(GDisplay *g) {
 static void release_bus(GDisplay *g) {
 	(void) g;
 #ifdef IOPORT2
-	palSetPad (IOPORT2, IOPORT2_SCREEN_CS);
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
 #endif
-	spiReleaseBus (&SPID1);
+	spiReleaseBus (&SPID4);
 	return;
 }
 
-__attribute__ ((noinline))
 static void write_index(GDisplay *g, uint16_t index) {
 	uint8_t b;
 
@@ -73,7 +71,13 @@ static void write_index(GDisplay *g, uint16_t index) {
 	palClearPad (IOPORT2, IOPORT2_SCREEN_CD);
 #endif
 
-	spiSend (&SPID1, 1, &b);
+	SPID4.port->INTENCLR = SPIM_INTENSET_END_Msk;
+	(void)SPID4.port->INTENCLR;
+	spi_lld_send (&SPID4, 1, &b);
+	while (SPID4.port->TXD.MAXCNT != SPID4.port->TXD.AMOUNT)
+		;
+	SPID4.port->INTENSET = SPIM_INTENSET_END_Msk;
+	(void)SPID4.port->INTENSET;
 
 #ifdef IOPORT2
 	palSetPad (IOPORT2, IOPORT2_SCREEN_CD);
@@ -82,14 +86,20 @@ static void write_index(GDisplay *g, uint16_t index) {
 	return;
 }
 
-__attribute__ ((noinline))
 static void write_data(GDisplay *g, uint16_t data) {
 	uint8_t b;
 
 	(void) g;
 
 	b = data & 0xFF;
-	spiSend (&SPID1, 1, &b);
+
+	SPID4.port->INTENCLR = SPIM_INTENSET_END_Msk;
+	(void)SPID4.port->INTENCLR;
+	spi_lld_send (&SPID4, 1, &b);
+	while (SPID4.port->TXD.MAXCNT != SPID4.port->TXD.AMOUNT)
+		;
+	SPID4.port->INTENSET = SPIM_INTENSET_END_Msk;
+	(void)SPID4.port->INTENSET;
 
 	return;
 }

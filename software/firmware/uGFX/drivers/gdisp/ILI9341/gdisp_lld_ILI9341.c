@@ -44,10 +44,15 @@
 
 #include "ILI9341.h"
 
-#define DISPLAY_BUF (GDISP_SCREEN_HEIGHT)
+#define DISPLAY_BUF GDISP_SCREEN_HEIGHT
 
-static uint8_t pixelbuf[DISPLAY_BUF];
+static uint16_t pixelbuf[DISPLAY_BUF];
 static int pixelpos;
+
+static int saved_x;
+static int saved_y;
+static int saved_cx;
+static int saved_cy;
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */
@@ -61,17 +66,35 @@ static int pixelpos;
 #define delayms(ms)					gfxSleepMilliseconds(ms)
 
 static void set_viewport(GDisplay *g) {
-	write_index(g, 0x2A);
-	write_data(g, (g->p.x >> 8));
-	write_data(g, (uint8_t) g->p.x);
-	write_data(g, (g->p.x + g->p.cx - 1) >> 8);
-	write_data(g, (uint8_t) (g->p.x + g->p.cx - 1));
 
-	write_index(g, 0x2B);
-	write_data(g, (g->p.y >> 8));
-	write_data(g, (uint8_t) g->p.y);
-	write_data(g, (g->p.y + g->p.cy - 1) >> 8);
-	write_data(g, (uint8_t) (g->p.y + g->p.cy - 1));
+	/*
+	 * The ILI9341 is very inefficient when it comes to drawing
+	 * single pixels: you need to constantly update the viewport.
+	 * We want to optimize this as much as possible. It turns out
+	 * that there are many cases where either the column address (0x2A)
+	 * or the page address (0x2B) stay the same. If we detect this,
+	 * we can avoid several DMA transfers.
+	 */
+
+	if (saved_cx != g->p.cx || saved_x != g->p.x) {
+		saved_x = g->p.x;
+		saved_cx = g->p.cx;
+		write_index(g, 0x2A);
+		pixelbuf[0] = __builtin_bswap16 (g->p.x);
+		pixelbuf[1] = __builtin_bswap16 (g->p.x + g->p.cx - 1);
+		spiSend (&SPID4, 4, pixelbuf);
+	}
+
+	if (saved_cy != g->p.cy || saved_y != g->p.y) {
+		saved_y = g->p.y;
+		saved_cy = g->p.cy;
+		write_index(g, 0x2B);
+		pixelbuf[0] = __builtin_bswap16 (g->p.y);
+		pixelbuf[1] = __builtin_bswap16 (g->p.y + g->p.cy - 1);
+		spiSend (&SPID4, 4, pixelbuf);
+	}
+
+	return;
 }
 
 /*===========================================================================*/
@@ -243,6 +266,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #if GDISP_HARDWARE_STREAM_WRITE
 	LLDSPEC	void gdisp_lld_write_start(GDisplay *g) {
 		acquire_bus(g);
+
 		/*
 		 * If the x and y coordinates are the special
 		 * values -1/-1, then leave the viewport settings
@@ -260,30 +284,22 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			set_viewport(g);
 			write_index(g, 0x2C);
 		}
+		return;
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		volatile SPIDriver * spip;
-		spip = &SPID1;
-		while (spip->state != SPI_READY)
-			;
-		pixelbuf[pixelpos] = g->p.color >> 8;
-		pixelpos++;
-		pixelbuf[pixelpos] = g->p.color;
+		pixelbuf[pixelpos] = __builtin_bswap16 (g->p.color);
 		pixelpos++;
 		if (pixelpos == DISPLAY_BUF) {
-			spiStartSend (&SPID1, pixelpos, pixelbuf);
+			spiSend (&SPID4, pixelpos * 2 , pixelbuf);
 			pixelpos = 0;
 		}
+		return;
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
-		volatile SPIDriver * spip;
-		spip = &SPID1;
 		if (pixelpos != 0) {
-			spiStartSend (&SPID1, pixelpos, pixelbuf);
+			spiSend (&SPID4, pixelpos * 2 , pixelbuf);
 			pixelpos = 0;
 		}
-		while (spip->state != SPI_READY)
-			;
 		release_bus(g);
 	}
 #endif
@@ -320,10 +336,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		gdisp_lld_write_start (g);
 		if (g->p.x2 == g->p.cx) {
-			spiSend (&SPID1, g->p.cx*g->p.cy * 2, buffer);
+			spiSend (&SPID4, g->p.cx*g->p.cy * 2, buffer);
 		} else {
 			for (ycnt = g->p.cy; ycnt; ycnt--, buffer += g->p.x2)
-				spiSend (&SPID1, g->p.cy * 2, buffer);
+				spiSend (&SPID4, g->p.cy * 2, buffer);
 		}
 		gdisp_lld_write_stop (g);
 

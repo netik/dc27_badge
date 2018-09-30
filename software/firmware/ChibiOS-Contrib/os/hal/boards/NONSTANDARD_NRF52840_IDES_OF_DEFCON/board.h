@@ -90,11 +90,12 @@
 #define IOPORT1_I2C_SCK         7U
 #define IOPORT1_I2C_SDA         8U
 
-#define IOPORT2_SPI_SCK         5U
-#define IOPORT2_SPI_MISO        6U
-#define IOPORT2_SPI_MOSI        7U
+#define IOPORT1_SPI_SCK        28U
+#define IOPORT1_SPI_MISO       29U
+#define IOPORT1_SPI_MOSI       30U
+#define IOPORT1_SCREEN_CS      31U
 
-#define IOPORT2_SDCARD_CS       3U
+#define IOPORT1_SDCARD_CS      13U
 #define IOPORT2_SCREEN_CD       2U
 #define IOPORT2_TOUCH_CS        1U
 
@@ -105,7 +106,6 @@
 #define IOPORT1_QSPI_DIO2      22U
 #define IOPORT1_QSPI_DIO3      23U
 
-#define IOPORT2_SCREEN_CS       8U
 
 #define IOPORT1_SCREEN_D0      24U
 #define IOPORT1_SCREEN_D1      26U

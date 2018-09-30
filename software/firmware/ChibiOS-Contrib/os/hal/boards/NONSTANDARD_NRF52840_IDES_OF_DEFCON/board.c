@@ -39,7 +39,7 @@ const PALConfig pal_default_config =
         PAL_MODE_UNCONNECTED,         /* P0.10: NFC antenna    */
         PAL_MODE_INPUT_PULLUP,        /* P0.11: BTN1           */
         PAL_MODE_INPUT_PULLUP,        /* P0.12: BTN2           */
-        PAL_MODE_OUTPUT_PUSHPULL,     /* P0.13: LED1           */
+        PAL_MODE_OUTPUT_PUSHPULL,     /* P0.13: SD card CS     */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.14: LED2           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.15: LED3           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.16: LED4           */
@@ -54,10 +54,10 @@ const PALConfig pal_default_config =
         PAL_MODE_INPUT_PULLUP,        /* P0.25: BTN4           */
         PAL_MODE_UNCONNECTED,         /* P0.26:                */
         PAL_MODE_UNCONNECTED,         /* P0.27:                */
-        PAL_MODE_UNCONNECTED,         /* P0.28:                */
-        PAL_MODE_UNCONNECTED,         /* P0.29:                */
-        PAL_MODE_UNCONNECTED,         /* P0.30:                */
-        PAL_MODE_UNCONNECTED,         /* P0.31:                */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.28: SPI_SCK        */
+        PAL_MODE_INPUT_PULLUP,        /* P0.29: SPI_MISO       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.30: SPI_MOSI       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.31: Screen CS      */
   },
   .port = IOPORT1
 };
@@ -74,12 +74,12 @@ const PALConfig pal_default_config_p1 =
         PAL_MODE_UNCONNECTED,         /* P1.0 :                */
         PAL_MODE_OUTPUT_PULLUP,       /* P1.1 : Touch CS       */
         PAL_MODE_OUTPUT_PULLUP,       /* P1.2 : Screen CD      */
-        PAL_MODE_OUTPUT_PULLUP,       /* P1.3 : SD card CS     */
+        PAL_MODE_UNCONNECTED,         /* P1.3 :                */
         PAL_MODE_UNCONNECTED,         /* P1.4 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.5 : SPI_SCK        */
-        PAL_MODE_UNCONNECTED,         /* P1.6 : SPI_MISO       */
-        PAL_MODE_UNCONNECTED,         /* P1.7 : SPI_MOSI       */
-        PAL_MODE_OUTPUT_PULLUP,       /* P1.8 : Screen CS      */
+        PAL_MODE_UNCONNECTED,         /* P1.5 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.6 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.7 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.8 :                */
         PAL_MODE_UNCONNECTED,         /* P1.9 :                */
         PAL_MODE_UNCONNECTED,         /* P1.10:                */
         PAL_MODE_UNCONNECTED,         /* P1.11:                */
