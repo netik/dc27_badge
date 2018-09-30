@@ -50,7 +50,7 @@ static UINT * saved_br;
 
 static thread_reference_t fsReference;
 
-static THD_WORKING_AREA(waAsyncIoThread, 128);
+static THD_WORKING_AREA(waAsyncIoThread, 256);
 static THD_FUNCTION(asyncIoThread, arg)
 {
 	UINT br;
