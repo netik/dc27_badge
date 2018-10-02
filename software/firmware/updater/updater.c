@@ -160,10 +160,10 @@ static const GPTConfig gpt2_config = {
 static const SPIConfig spi1_config = {
  	NULL,			/* enc_cp */
 	NRF5_SPI_FREQ_8MBPS,	/* freq */
-	0x20|IOPORT2_SPI_SCK,	/* sckpad */
-	0x20|IOPORT2_SPI_MOSI,	/* mosipad */
-	0x20|IOPORT2_SPI_MISO,	/* misopad */
-	0x20|IOPORT2_SDCARD_CS,	/* sspad */
+	IOPORT1_SPI_SCK,	/* sckpad */
+	IOPORT1_SPI_MOSI,	/* mosipad */
+	IOPORT1_SPI_MISO,	/* misopad */
+	IOPORT1_SDCARD_CS,	/* sspad */
 	FALSE,			/* lsbfirst */
 	2,			/* mode */
 	0xFF			/* dummy data for spiIgnore() */
@@ -224,7 +224,7 @@ updater (void)
 
 	/* Make sure the SD card chip select is in the right state */
 
-	IOPORT2->OUTSET = 1 << IOPORT2_SDCARD_CS;
+	IOPORT1->OUTSET = 1 << IOPORT1_SDCARD_CS;
 
 	/* Enable the PIT (for the fatfs timer) */
 
