@@ -35,8 +35,8 @@
  * @brief   Available number of EXT channels.
  */
 #define EXT_MAX_CHANNELS      8
-#define EXT_MODE_GPIO_MASK    0xF8        /**< @brief Pad field mask.        */
-#define EXT_MODE_GPIO_OFFSET  3           /**< @brief Pad field offset.      */
+#define EXT_MODE_GPIO_MASK    0x1F8       /**< @brief Port+pad field mask.   */
+#define EXT_MODE_GPIO_OFFSET  3           /**< @brief Port+pad field offset. */
 /** @} */
 
 /*===========================================================================*/
