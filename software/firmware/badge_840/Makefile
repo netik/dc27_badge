@@ -164,7 +164,7 @@ CSRC += main.c \
 	ble_lld.c \
 	ble_peer.c \
 	mmc_spi_lld.c \
-	drv_qspi_lld.c \
+	flash_qspi_lld.c \
 	joypad_lld.c \
 	xpt2046_lld.c \
 	video_lld.c \
