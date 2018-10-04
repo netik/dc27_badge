@@ -255,7 +255,7 @@ bleEnable (void)
 	r = sd_softdevice_enable (&clock_source, nordic_fault_handler);
 
 	if (r == NRF_SUCCESS)
-		printf ("SoftDevice version %d.%d.%d enabled.\r\n",
+		printf ("SoftDevice version %d.%d.%d enabled\r\n",
 		    SD_MAJOR_VERSION, SD_MINOR_VERSION, SD_BUGFIX_VERSION);
 	else {
 		printf ("Enabling softdevice failed (0x%x)\r\n", r);

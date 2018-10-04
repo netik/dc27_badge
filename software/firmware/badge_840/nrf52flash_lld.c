@@ -138,22 +138,19 @@ nrf52_query_erase (void *instance, uint32_t *msec)
 
 	osalMutexLock (&devp->mutex);
 
-	if (devp->state != FLASH_READY) {
+	if (devp->state != FLASH_ERASE) {
 		osalMutexUnlock (&devp->mutex);
 		return (FLASH_ERROR_PROGRAM);
 	}
 
-	if (devp->state == FLASH_ERASE) {
-		if (devp->port->READY == NVMC_READY_READY_Busy) {
-			if (msec != NULL)
-				*msec = 1U;
-			osalMutexUnlock (&devp->mutex);
-			return (FLASH_BUSY_ERASING);
-		}
+	if (devp->port->READY == NVMC_READY_READY_Busy) {
+		if (msec != NULL)
+			*msec = 1U;
+		osalMutexUnlock (&devp->mutex);
+		return (FLASH_BUSY_ERASING);
 	}
 
         devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
-
 	devp->state = FLASH_READY;
 
 	osalMutexUnlock (&devp->mutex);
@@ -184,8 +181,7 @@ nrf52_program (void *instance, flash_offset_t offset,
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
 	uint8_t * p;
 
-	if ((offset + (n * FLASH_PAGE_SIZE)) >
-	    (FLASH_PAGE_SIZE * nrf52_descriptor.sectors_count))
+	if ((offset + n) > (FLASH_PAGE_SIZE * nrf52_descriptor.sectors_count))
 		return (FLASH_ERROR_PROGRAM);
 
 	osalMutexLock (&devp->mutex);
@@ -195,6 +191,7 @@ nrf52_program (void *instance, flash_offset_t offset,
 		return (FLASH_ERROR_PROGRAM);
 	}
 
+	p = (uint8_t *)nrf52_descriptor.address;
 	devp->port->CONFIG = NVMC_CONFIG_WEN_Wen;
         memcpy (p + offset, pp, n);
 	while (devp->port->READY == NVMC_READY_READY_Busy)
@@ -227,6 +224,8 @@ nrf52FlashStart(NRF52FLASHDriver *devp, const NRF52FLASHConfig *config)
 
         while (devp->port->READY == NVMC_READY_READY_Busy)
                 ;
+
+	devp->state = FLASH_READY;
 
 	return;
 }

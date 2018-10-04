@@ -809,6 +809,9 @@ void m25qMemoryMap(M25QDriver *devp, uint8_t **addrp) {
 
   /* Bus release.*/
   jesd216_bus_release(devp->config->busp);
+
+  m25q_descriptor.address = (flash_offset_t)*addrp;
+
 }
 
 /**
@@ -829,6 +832,8 @@ void m25qMemoryUnmap(M25QDriver *devp) {
 
   /* Bus release.*/
   jesd216_bus_release(devp->config->busp);
+
+  m25q_descriptor.address = 0;
 }
 #endif /* QSPI_SUPPORTS_MEMMAP == TRUE */
 #endif /* JESD216_BUS_MODE != JESD216_BUS_MODE_SPI */

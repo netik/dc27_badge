@@ -23,6 +23,7 @@
 #include "orchard-app.h"
 
 #include "m25q.h"
+#include "nrf52flash_lld.h"
 #include "hal_flash.h"
 
 #include "badge.h"
@@ -69,12 +70,17 @@ static const QSPIConfig qspi1_config = {
 	0x18000000		/* membase */
 };
 
+static const NRF52FLASHConfig nrf52_config = {
+	256		/* NRF52840 has 1MB flash (256 * 4096) */
+};
+
 static const M25QConfig m25qcfg1 = {
   .busp             = &QSPID1,
   .buscfg           = &qspi1_config
 };
 
 M25QDriver FLASHD1;
+NRF52FLASHDriver FLASHD2;
 
 static void
 gpt_callback(GPTDriver *gptp)
@@ -283,8 +289,7 @@ int main(void)
 
     printf("Priority levels %d\r\n", CORTEX_PRIORITY_LEVELS);
 
-    joyStart ();
-    asyncIoStart ();
+    /* Set up I/O pins */
 
     palSetPad (IOPORT1, IOPORT1_SPI_MOSI);
     palSetPad (IOPORT1, IOPORT1_SPI_MISO);
@@ -293,7 +298,17 @@ int main(void)
     palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
     palSetPad (IOPORT2, IOPORT2_TOUCH_CS);
 
+    /* Enable joypad/button support */
+
+    joyStart ();
+
+    /* Start async I/O thread */
+
+    asyncIoStart ();
+
     spiStart (&SPID4, &spi4_config);
+
+    /* Enable QSPI flash */
 
     m25qObjectInit (&FLASHD1);
     m25qStart (&FLASHD1, &m25qcfg1);
@@ -321,30 +336,50 @@ int main(void)
 
     if (pFlash->sectors_count > 0) {
         printf ("On-board QSPI flash detected: %dMB mapped at 0x%x\r\n",
-            (pFlash->sectors_count * pFlash->sectors_size) >> 20, memp);
+            (pFlash->sectors_count * pFlash->sectors_size) >> 20,
+	    pFlash->address);
+    }
+
+    /* Enable on-board flash */
+
+    nrf52FlashObjectInit (&FLASHD2);
+    nrf52FlashStart (&FLASHD2, &nrf52_config);
+
+    pFlash = flashGetDescriptor (&FLASHD2);
+
+    if (pFlash->sectors_count > 0) {
+        printf ("On-board NRF52840 flash detected: %dMB mapped at 0x%x\r\n",
+            (pFlash->sectors_count * pFlash->sectors_size) >> 20,
+	    pFlash->address);
     }
 
 #ifdef notdef
-    flashStartEraseSector(&FLASHD1, 0);
+    if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR)
+      printf ("ERASE FAILED\r\n");
 
-    flashWaitErase ((void *)&FLASHD1);
+    flashWaitErase ((void *)&FLASHD2);
 
-    flashProgram (&FLASHD1, 0, 1024, (uint8_t *)0x20008100);
-
+    if (flashProgram (&FLASHD2, 0xFF000, 1024, (uint8_t *)0x20008100) !=
+      FLASH_NO_ERROR)
+      printf ("PROGRAM FAILED...\r\n");
 #endif
 
 #ifdef notyet
     i2cStart (&I2CD2, &i2c2_config);
 #endif
 
-    /* Main screen turn on. */
+    /* Enable display and touch panel */
+
+    printf ("Main screen turn on\r\n");
 
     gfxInit ();
 
+    /* Mount SD card */
+
     if (gfileMount ('F', "0:") == FALSE)
-        printf ("No SD card found.\r\n");
+        printf ("No SD card found\r\n");
     else
-        printf ("SD card detected.\r\n");
+        printf ("SD card detected\r\n");
 
 #ifdef notyet
     m25qMemoryUnmap (&FLASHD1);
@@ -352,12 +387,16 @@ int main(void)
     m25qMemoryMap (&FLASHD1, &memp);
 #endif
 
+    /* Mount QSPI flash as secondary filesystem */
+
     if (f_mount (&qspi_fs, "1:", 1) != FR_OK) {
         printf ("QSPI filesystem mount failed\r\n");
     } else {
         printf ("QSPI filesystem mounted\r\n");
         /*f_chdrive ("1:");*/
     }
+
+    /* Enable bluetooth radio */
 
     bleStart ();
 
