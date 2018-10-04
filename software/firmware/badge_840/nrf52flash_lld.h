@@ -58,7 +58,6 @@ extern NRF52FLASHDriver FLASHD2;
 extern void nrf52FlashObjectInit (NRF52FLASHDriver *devp);
 extern void nrf52FlashStart (NRF52FLASHDriver *devp,
     const NRF52FLASHConfig *config);
-extern void nrf52FlashStop (NRF52FLASHDriver *devp,
-    const NRF52FLASHConfig *config);
+extern void nrf52FlashStop (NRF52FLASHDriver *devp);
 
 #endif /* NRF52FLASH_LLD_H */

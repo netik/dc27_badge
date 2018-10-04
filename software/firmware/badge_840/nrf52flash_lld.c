@@ -231,7 +231,7 @@ nrf52FlashStart(NRF52FLASHDriver *devp, const NRF52FLASHConfig *config)
 }
 
 void
-nrf52FlashStop(NRF52FLASHDriver *devp, const NRF52FLASHConfig *config)
+nrf52FlashStop(NRF52FLASHDriver *devp)
 {
 	devp->config = NULL;
 
