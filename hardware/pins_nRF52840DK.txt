@@ -33,20 +33,20 @@ Port P0
 
 NRF52840 pin desgination		Function
 ------------------------		--------
-P0.0					XTAL (32Mhz)
-P0.1					XTAL (32Mhz)
-P0.2					<unused>
-P0.3					<unused>
-P0.4					<unused>
-P0.5					UART_RTS
-P0.6					UART_TX
-P0.7					UART_CTS
-P0.8					UART_RX
-P0.9					NFC antenna
+P0.00					XTAL (32Mhz)
+P0.01					XTAL (32Mhz)
+P0.02					<unused>
+P0.03					Touch CS
+P0.04					Screen C/D
+P0.05					UART_RTS
+P0.06					UART_TX
+P0.07					UART_CTS
+P0.08					UART_RX
+P0.09					NFC antenna
 P0.10					NFC antenna
 P0.11					BTN1
 P0.12					BTN2
-P0.13					LED1
+P0.13					LED1 / SC Card CS
 P0.14					LED2
 P0.15					LED3
 P0.16					LED4
@@ -61,24 +61,24 @@ P0.24					BTN3
 P0.25					BTN4
 P0.26					<unused>
 P0.27					<unused>
-P0.28					<unused>
-P0.29					<unused>
-P0.30					<unused>
-P0.31					<unused>
+P0.28					SPI_SCK
+P0.29					SPI_MISO
+P0.30					SPI_MOSI
+P0.31					Screen CS
 
 Port P1
 
 NRF52840 pin desgination		Function
 ------------------------		--------
 P1.00					<unused>
-P1.01					Touch CS
-P1.02					Screen C/D
-P1.03					SC Card CS
+P1.01					<unused>
+P1.02					<unused>
+P1.03					<unused>
 P1.04					<unused>
-P1.05					SPI_SCK
-P1.06					SPI_MISO
-P1.07					SPI_MOSI
-P1.08					Screen CS
+P1.05					<unused>
+P1.06					<unused>
+P1.07					<unused>
+P1.08					<unused>
 P1.09					<unused>
 P1.10					<unused>
 P1.11					<unused>

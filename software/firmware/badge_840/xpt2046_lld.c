@@ -89,7 +89,7 @@ uint16_t xptGet (uint8_t cmd)
 	freq = SPID4.port->FREQUENCY;
 	SPID4.port->FREQUENCY = NRF5_SPI_FREQ_4MBPS;
 
-	palClearPad (IOPORT2, IOPORT2_TOUCH_CS);
+	palClearPad (IOPORT1, IOPORT1_TOUCH_CS);
 
 	/* Send command byte */
 
@@ -103,7 +103,7 @@ uint16_t xptGet (uint8_t cmd)
 
 	spiReceive (&SPID4, 1, &v[1]);
 
-	palSetPad (IOPORT2, IOPORT2_TOUCH_CS);
+	palSetPad (IOPORT1, IOPORT1_TOUCH_CS);
 	SPID4.port->FREQUENCY = freq;
 	spiReleaseBus (&SPID4);
 

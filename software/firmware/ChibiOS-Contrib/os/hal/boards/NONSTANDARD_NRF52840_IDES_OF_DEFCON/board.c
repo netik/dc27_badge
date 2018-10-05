@@ -29,8 +29,8 @@ const PALConfig pal_default_config =
         PAL_MODE_UNCONNECTED,         /* P0.0 : XTAL (32MHz)   */
         PAL_MODE_UNCONNECTED,         /* P0.1 : XTAL (32MHz)   */
         PAL_MODE_UNCONNECTED,         /* P0.2 :                */
-        PAL_MODE_UNCONNECTED,         /* P0.3 :                */
-        PAL_MODE_UNCONNECTED,         /* P0.4 :                */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.3 : Touch CS       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.4 : Screen CD      */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.5 : UART_RTS       */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.6 : UART_TX        */
         PAL_MODE_UNCONNECTED,         /* P0.7 : UART_CTS       */
@@ -39,7 +39,7 @@ const PALConfig pal_default_config =
         PAL_MODE_UNCONNECTED,         /* P0.10: NFC antenna    */
         PAL_MODE_INPUT_PULLUP,        /* P0.11: BTN1           */
         PAL_MODE_INPUT_PULLUP,        /* P0.12: BTN2           */
-        PAL_MODE_OUTPUT_PUSHPULL,     /* P0.13: SD card CS     */
+        PAL_MODE_OUTPUT_PUSHPULL,     /* P0.13: LED1/SD card CS*/
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.14: LED2           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.15: LED3           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.16: LED4           */
@@ -72,8 +72,8 @@ const PALConfig pal_default_config_p1 =
 {
   .pads = {
         PAL_MODE_UNCONNECTED,         /* P1.0 :                */
-        PAL_MODE_OUTPUT_PULLUP,       /* P1.1 : Touch CS       */
-        PAL_MODE_OUTPUT_PULLUP,       /* P1.2 : Screen CD      */
+        PAL_MODE_UNCONNECTED,         /* P1.1 :                */
+        PAL_MODE_UNCONNECTED,         /* P1.2 :                */
         PAL_MODE_UNCONNECTED,         /* P1.3 :                */
         PAL_MODE_UNCONNECTED,         /* P1.4 :                */
         PAL_MODE_UNCONNECTED,         /* P1.5 :                */

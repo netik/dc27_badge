@@ -29,10 +29,10 @@ static void init_board(GDisplay *g) {
 	(void) g;
 
 	/* Set all pins to initial (high) state */
-#ifdef IOPORT2
-	palSetPad (IOPORT2, IOPORT2_SCREEN_CD);
+
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
 	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
-#endif
+
 	return;
 }
 
@@ -52,19 +52,19 @@ static GFXINLINE void set_backlight(GDisplay *g, uint8_t percent) {
 
 static void acquire_bus(GDisplay *g) {
 	(void) g;
+
 	spiAcquireBus (&SPI_BUS);
-#ifdef IOPORT2
 	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
-#endif
+
 	return;
 }
 
 static void release_bus(GDisplay *g) {
 	(void) g;
-#ifdef IOPORT2
+
 	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
-#endif
 	spiReleaseBus (&SPI_BUS);
+
 	return;
 }
 
@@ -74,9 +74,7 @@ static void write_index(GDisplay *g, uint16_t index) {
 
 	b = index & 0xFF;
 
-#ifdef IOPORT2
-	palClearPad (IOPORT2, IOPORT2_SCREEN_CD);
-#endif
+	palClearPad (IOPORT1, IOPORT1_SCREEN_CD);
 
 	SPI_BUS.port->INTENCLR = SPIM_INTENSET_END_Msk;
 	(void)SPI_BUS.port->INTENCLR;
@@ -86,9 +84,7 @@ static void write_index(GDisplay *g, uint16_t index) {
 	SPI_BUS.port->INTENSET = SPIM_INTENSET_END_Msk;
 	(void)SPI_BUS.port->INTENSET;
 
-#ifdef IOPORT2
-	palSetPad (IOPORT2, IOPORT2_SCREEN_CD);
-#endif
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
 
 #endif
 	(void) g;

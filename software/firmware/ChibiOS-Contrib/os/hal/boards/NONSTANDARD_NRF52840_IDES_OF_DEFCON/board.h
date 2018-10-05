@@ -96,8 +96,8 @@
 #define IOPORT1_SCREEN_CS      31U
 
 #define IOPORT1_SDCARD_CS      13U
-#define IOPORT2_SCREEN_CD       2U
-#define IOPORT2_TOUCH_CS        1U
+#define IOPORT1_SCREEN_CD       4U
+#define IOPORT1_TOUCH_CS        3U
 
 #define IOPORT1_QSPI_SCK       19U
 #define IOPORT1_QSPI_CS        17U
@@ -106,15 +106,6 @@
 #define IOPORT1_QSPI_DIO2      22U
 #define IOPORT1_QSPI_DIO3      23U
 
-
-#define IOPORT1_SCREEN_D0      24U
-#define IOPORT1_SCREEN_D1      26U
-#define IOPORT1_SCREEN_D2      26U
-#define IOPORT1_SCREEN_D3      27U
-#define IOPORT1_SCREEN_D4      28U
-#define IOPORT1_SCREEN_D5      29U
-#define IOPORT1_SCREEN_D6      30U
-#define IOPORT1_SCREEN_D7      31U
 
 /* Analog inpupt */
 #define IOPORT1_AIN0            2U

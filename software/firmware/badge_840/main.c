@@ -296,7 +296,8 @@ int main(void)
     palSetPad (IOPORT1, IOPORT1_SPI_SCK);
     palSetPad (IOPORT1, IOPORT1_SDCARD_CS);
     palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
-    palSetPad (IOPORT2, IOPORT2_TOUCH_CS);
+    palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
+    palSetPad (IOPORT1, IOPORT1_TOUCH_CS);
 
     /* Enable joypad/button support */
 
