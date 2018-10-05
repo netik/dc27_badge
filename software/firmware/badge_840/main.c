@@ -195,16 +195,11 @@ setup_flash (void)
 	uint8_t * buf;
 	uint8_t * orig;
 	uint32_t addr;
-	qspi_command_t cmd;
-
-	cmd.alt = 0;
-	cmd.addr = 0;
 
 	printf ("ERASING... ");
-	cmd.cfg = QSPI_CMD_SECTOR_ERASE;
 	for (i = 0; i < 128; i++) {
-		cmd.addr = i;
-		qspiCommand (&QSPID1, &cmd);
+    		flashStartEraseSector (&FLASHD1, i);
+    		flashWaitErase ((void *)&FLASHD1);
 		printf (".");
 	}
 	printf ("DONE!\r\n");
@@ -220,16 +215,15 @@ setup_flash (void)
 	buf = (uint8_t *)addr;
 
 	printf ("PROGRAMMING... ");
-	cmd.cfg = QSPI_CMD_PAGE_PROGRAM;
-	for (i = 0; i < 8192; i++) {
-		cmd.addr = i * 65536;
+	for (i = 0; i < 128; i++) {
 		f_read(&f, buf, 65536, &br);
 		if (br == 0)
 			break;
-		qspiSend (&QSPID1, &cmd, 65536, buf);
+    		flashProgram (&FLASHD1, i * 65536, 65536, buf);
 		printf (".");
 	}
 	printf ("DONE!\r\n");
+
 	chHeapFree (orig);
 	f_close (&f);
 
