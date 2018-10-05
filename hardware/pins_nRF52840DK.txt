@@ -46,7 +46,7 @@ P0.09					NFC antenna
 P0.10					NFC antenna
 P0.11					BTN1
 P0.12					BTN2
-P0.13					LED1 / SC Card CS
+P0.13					LED1 / SD Card CS
 P0.14					LED2
 P0.15					LED3
 P0.16					LED4
