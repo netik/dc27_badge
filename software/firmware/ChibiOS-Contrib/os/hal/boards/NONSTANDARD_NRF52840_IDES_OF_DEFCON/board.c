@@ -72,10 +72,10 @@ const PALConfig pal_default_config_p1 =
 {
   .pads = {
         PAL_MODE_UNCONNECTED,         /* P1.0 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.1 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.2 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.3 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.4 :                */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.1 : I2S SDOUT      */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.2 : I2S SCK        */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.3 : I2S LRCK       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.4 : I2S MCK        */
         PAL_MODE_UNCONNECTED,         /* P1.5 :                */
         PAL_MODE_UNCONNECTED,         /* P1.6 :                */
         PAL_MODE_UNCONNECTED,         /* P1.7 :                */
