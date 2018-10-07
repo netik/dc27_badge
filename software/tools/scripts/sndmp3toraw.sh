@@ -8,10 +8,10 @@
 #
 # sndmp3toraw.sh
 #
-# Convert mp3 to 16Khz audio
+# Convert mp3 to 12.5Khz audio
 #
 
 prefix="`echo $1 | cut -d . -f 1`"
 
 echo "$prefix"
-sox --encoding signed-integer $1 $prefix.raw channels 1 rate 15625 contrast 80
+sox --encoding signed-integer $1 $prefix.raw channels 1 rate 12500 contrast 80

@@ -30,15 +30,15 @@
 rm -f $2/video.bin
 
 # Convert video to raw rgb565 pixel frames at 8 frames/sec
-ffmpeg -i "$1" -r 16 -s 160x120 -f rawvideo -pix_fmt rgb565 $2/video.bin
+ffmpeg -i "$1" -r 16 -s 160x120 -f rawvideo -pix_fmt rgb565be $2/video.bin
 
 # Extract audio
-ffmpeg -i "$1" -ac 1 -ar 11520 $2/sample.wav
+ffmpeg -i "$1" -ac 1 -ar 12500 $2/sample.wav
 
-# Convert WAV to to raw unsigned 16 bit samples, boost gain a little
-sox $2/sample.wav $2/sample.u16
+# Convert WAV to 2's complement signed 16 bit samples, boost gain a little
+sox --encoding signed-integer $2/sample.wav $2/sample.raw channels 1 rate 12500 contrast 80
 
 # Now merge the video and audio into a single file
-./bin/videomerge $2/video.bin $2/sample.u16 $2/video.vid
+./bin/videomerge $2/video.bin $2/sample.raw $2/video.vid
 
 rm -f $2/video.bin $2/sample.wav $2/sample.u16 $2/sample.raw

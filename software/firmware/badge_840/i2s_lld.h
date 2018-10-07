@@ -33,7 +33,7 @@
 #ifndef _I2S_LLDH_
 #define _I2S_LLDH_
 
-#define I2S_THREAD_PRIO		3
+#define I2S_THREAD_PRIO		(NORMALPRIO + 1)
 #define I2S_SAMPLES		512
 #define I2S_BYTES		(I2S_SAMPLES * 2)
 
