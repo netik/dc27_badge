@@ -142,6 +142,7 @@ CSRC = $(STARTUPSRC) \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c
 
 CSRC += main.c \
+	cmd-audio.c \
 	cmd-radio.c \
 	cmd-reset.c \
 	cmd-random.c \
@@ -163,6 +164,7 @@ CSRC += main.c \
 	ble_l2cap_lld.c \
 	ble_lld.c \
 	ble_peer.c \
+	i2s_lld.c \
 	mmc_spi_lld.c \
 	nrf52flash_lld.c \
 	flash_qspi_lld.c \

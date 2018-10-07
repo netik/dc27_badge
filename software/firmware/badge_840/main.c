@@ -26,6 +26,8 @@
 #include "nrf52flash_lld.h"
 #include "hal_flash.h"
 
+#include "i2s_lld.h"
+
 #include "badge.h"
 
 FATFS qspi_fs;
@@ -172,7 +174,6 @@ static THD_FUNCTION(Thread1, arg) {
     
     chRegSetThreadName("blinker");
 
-    
     while (1) {
 	palTogglePad(IOPORT1, led);
 	chThdSleepMilliseconds(1000);
@@ -252,7 +253,9 @@ int main(void)
     shellInit();
  
     sdStart (&SD1, &serial_config);
+    chThdSleepMilliseconds (50);
     printf ("\r\n");
+    chThdSleepMilliseconds (50);
 
     palClearPad (IOPORT1, LED1);
     palClearPad (IOPORT1, LED2);
@@ -267,7 +270,6 @@ int main(void)
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO+1,
 		      Thread1, NULL);
 
-    chThdSleep(2);
     printf ("SYSTEM START\r\n");
     info = NRF_FICR->INFO.VARIANT;
     p = (uint8_t *)&info;
@@ -296,6 +298,8 @@ int main(void)
     /* Enable joypad/button support */
 
     joyStart ();
+
+    printf ("Joypad enabled\r\n");
 
     /* Start async I/O thread */
 
@@ -362,6 +366,12 @@ int main(void)
 #ifdef notyet
     i2cStart (&I2CD2, &i2c2_config);
 #endif
+
+    /* Enable I2S controller */
+
+    i2sStart ();
+
+    printf ("I2S interface enabled\r\n");
 
     /* Enable display and touch panel */
 
