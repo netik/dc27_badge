@@ -550,7 +550,7 @@
   )
 
   (module BMD-340-A-R:RIGADO_BMD-340-A-R (layer F.Cu) (tedit 0) (tstamp 5BC1F414)
-    (at 74.2 51)
+    (at 71 53.2)
     (path /5BB20AB5)
     (attr smd)
     (fp_text reference U1 (at -5.23628 -5.9147) (layer F.SilkS)
@@ -1577,7 +1577,7 @@
   )
 
   (module Connector:JWT_A3963_1x02_P3.96mm_Vertical (layer F.Cu) (tedit 5A2A57CE) (tstamp 5BA9E666)
-    (at 105 112.6)
+    (at 164.6 30.8)
     (descr "JWT A3963, 3.96mm pitch Pin head connector (http://www.jwt.com.tw/pro_pdf/A3963.pdf)")
     (tags "connector JWT A3963 pinhead")
     (path /5BA3F217/5BA77BCE)

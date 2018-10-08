@@ -410,10 +410,8 @@ Wire Wire Line
 	10050 1150 9950 1150
 Text Notes 7450 600  0    50   ~ 10
 Switches
-Text GLabel 4000 4450 0    50   Input ~ 0
+Text GLabel 3450 4450 0    50   Input ~ 0
 ~UP
-Wire Wire Line
-	4000 4450 4300 4450
 Text GLabel 3800 4550 0    50   Input ~ 0
 ~DOWN
 Wire Wire Line
@@ -437,134 +435,132 @@ Wire Wire Line
 $Comp
 L Connector_Generic:Conn_02x20_Odd_Even J5
 U 1 1 5BA9ABB2
-P 9350 3700
-F 0 "J5" H 9400 4817 50  0000 C CNN
-F 1 "Conn_02x20_Odd_Even" H 9400 4726 50  0000 C CNN
-F 2 "Connector_PinHeader_1.00mm:PinHeader_2x20_P1.00mm_Vertical_SMD" H 9350 3700 50  0001 C CNN
-F 3 "~" H 9350 3700 50  0001 C CNN
-	1    9350 3700
+P 10050 3700
+F 0 "J5" H 10100 4817 50  0000 C CNN
+F 1 "Conn_02x20_Odd_Even" H 10100 4726 50  0000 C CNN
+F 2 "Connector_PinHeader_1.00mm:PinHeader_2x20_P1.00mm_Vertical_SMD" H 10050 3700 50  0001 C CNN
+F 3 "~" H 10050 3700 50  0001 C CNN
+	1    10050 3700
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR0104
 U 1 1 5BA9AD47
-P 8400 2850
-F 0 "#PWR0104" H 8400 2600 50  0001 C CNN
-F 1 "GND" H 8405 2677 50  0000 C CNN
-F 2 "" H 8400 2850 50  0001 C CNN
-F 3 "" H 8400 2850 50  0001 C CNN
-	1    8400 2850
+P 9100 2850
+F 0 "#PWR0104" H 9100 2600 50  0001 C CNN
+F 1 "GND" H 9105 2677 50  0000 C CNN
+F 2 "" H 9100 2850 50  0001 C CNN
+F 3 "" H 9100 2850 50  0001 C CNN
+	1    9100 2850
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	8400 2800 8400 2850
+	9100 2800 9100 2850
 Wire Wire Line
-	8400 2800 9150 2800
+	9100 2800 9850 2800
 $Comp
 L DC27-peripheral-cache:+3.3V #PWR0105
 U 1 1 5BA9D13E
-P 9950 2650
-F 0 "#PWR0105" H 9950 2500 50  0001 C CNN
-F 1 "+3.3V" H 9965 2823 50  0000 C CNN
-F 2 "" H 9950 2650 50  0001 C CNN
-F 3 "" H 9950 2650 50  0001 C CNN
-	1    9950 2650
+P 10650 2650
+F 0 "#PWR0105" H 10650 2500 50  0001 C CNN
+F 1 "+3.3V" H 10665 2823 50  0000 C CNN
+F 2 "" H 10650 2650 50  0001 C CNN
+F 3 "" H 10650 2650 50  0001 C CNN
+	1    10650 2650
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	9950 2650 9950 2800
+	10650 2650 10650 2800
 Wire Wire Line
-	9950 2800 9650 2800
-Text GLabel 9800 3900 2    50   Input ~ 0
+	10650 2800 10350 2800
+Text GLabel 10500 3900 2    50   Input ~ 0
 DISP_SCLK
 Wire Wire Line
-	9650 3900 9800 3900
-Text GLabel 8850 3900 0    50   Input ~ 0
+	10350 3900 10500 3900
+Text GLabel 9550 3900 0    50   Input ~ 0
 DISP_CS
 Wire Wire Line
-	8850 3900 9150 3900
-Text GLabel 8850 4000 0    50   Input ~ 0
+	9550 3900 9850 3900
+Text GLabel 9550 4000 0    50   Input ~ 0
 DISP_DC
 Wire Wire Line
-	8850 4000 9150 4000
-Text GLabel 8850 4100 0    50   Input ~ 0
+	9550 4000 9850 4000
+Text GLabel 9550 4100 0    50   Input ~ 0
 DISP_SDI_MOSI
 Wire Wire Line
-	8850 4100 9150 4100
-Text GLabel 9800 4100 2    50   Output ~ 0
+	9550 4100 9850 4100
+Text GLabel 10500 4100 2    50   Output ~ 0
 DISP_SDO_MOSI
 Wire Wire Line
-	9650 4100 9800 4100
-NoConn ~ 9650 4000
-Text GLabel 9800 4200 2    50   Input ~ 0
+	10350 4100 10500 4100
+NoConn ~ 10350 4000
+Text GLabel 10500 4200 2    50   Input ~ 0
 TOUCH_CS
 Wire Wire Line
-	9650 4200 9800 4200
-Text GLabel 9800 4300 2    50   Output ~ 0
+	10350 4200 10500 4200
+Text GLabel 10500 4300 2    50   Output ~ 0
 SD_MISO
-Text GLabel 9800 4400 2    50   Input ~ 0
+Text GLabel 10500 4400 2    50   Input ~ 0
 SD_MOSI
 Wire Wire Line
-	9650 4300 9800 4300
+	10350 4300 10500 4300
 Wire Wire Line
-	9800 4400 9650 4400
-Text GLabel 8850 4400 0    50   Input ~ 0
+	10500 4400 10350 4400
+Text GLabel 9550 4400 0    50   Input ~ 0
 SD_SCLK
 Wire Wire Line
-	8850 4400 9150 4400
+	9550 4400 9850 4400
 $Comp
 L power:GND #PWR0106
 U 1 1 5BAB8AC8
-P 9850 4800
-F 0 "#PWR0106" H 9850 4550 50  0001 C CNN
-F 1 "GND" H 9855 4627 50  0000 C CNN
-F 2 "" H 9850 4800 50  0001 C CNN
-F 3 "" H 9850 4800 50  0001 C CNN
-	1    9850 4800
+P 10550 4800
+F 0 "#PWR0106" H 10550 4550 50  0001 C CNN
+F 1 "GND" H 10555 4627 50  0000 C CNN
+F 2 "" H 10550 4800 50  0001 C CNN
+F 3 "" H 10550 4800 50  0001 C CNN
+	1    10550 4800
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	9650 4700 9850 4700
+	10350 4700 10550 4700
 Wire Wire Line
-	9850 4700 9850 4800
-NoConn ~ 9150 4700
-NoConn ~ 9150 4600
-Text GLabel 8850 4500 0    50   Input ~ 0
+	10550 4700 10550 4800
+NoConn ~ 9850 4700
+NoConn ~ 9850 4600
+Text GLabel 9550 4500 0    50   Input ~ 0
 SD_CS
 Wire Wire Line
-	8850 4500 9150 4500
-NoConn ~ 9150 4300
-NoConn ~ 9150 4200
-NoConn ~ 9150 3800
-NoConn ~ 9150 3700
-NoConn ~ 9150 3600
-NoConn ~ 9150 3500
-NoConn ~ 9150 3400
-NoConn ~ 9150 3300
-NoConn ~ 9150 3200
-NoConn ~ 9150 3100
-NoConn ~ 9150 3000
-NoConn ~ 9150 2900
-NoConn ~ 9650 3800
-NoConn ~ 9650 3700
-NoConn ~ 9650 3600
-NoConn ~ 9650 3500
-NoConn ~ 9650 3400
-NoConn ~ 9650 3300
-NoConn ~ 9650 3200
-NoConn ~ 9650 3100
-NoConn ~ 9650 3000
-NoConn ~ 9650 2900
-Text Notes 7450 2350 0    50   ~ 10
+	9550 4500 9850 4500
+NoConn ~ 9850 4300
+NoConn ~ 9850 4200
+NoConn ~ 9850 3800
+NoConn ~ 9850 3700
+NoConn ~ 9850 3600
+NoConn ~ 9850 3500
+NoConn ~ 9850 3400
+NoConn ~ 9850 3300
+NoConn ~ 9850 3200
+NoConn ~ 9850 3100
+NoConn ~ 9850 3000
+NoConn ~ 9850 2900
+NoConn ~ 10350 3800
+NoConn ~ 10350 3700
+NoConn ~ 10350 3600
+NoConn ~ 10350 3500
+NoConn ~ 10350 3400
+NoConn ~ 10350 3300
+NoConn ~ 10350 3200
+NoConn ~ 10350 3100
+NoConn ~ 10350 3000
+NoConn ~ 10350 2900
+Text Notes 8850 2300 0    50   ~ 10
 DISPLAY\n
 Wire Notes Line
 	11100 2200 7400 2200
 Wire Notes Line
 	7400 5200 11100 5200
-Wire Notes Line
-	7400 500  7400 5200
-NoConn ~ 9650 4600
-NoConn ~ 9650 4500
+NoConn ~ 10350 4600
+NoConn ~ 10350 4500
 $Comp
 L Connector:Conn_ARM_JTAG_SWD_10 J7
 U 1 1 5BB15372
@@ -669,7 +665,7 @@ Wire Wire Line
 	10750 1400 10750 1250
 Text Notes 3550 700  0    50   ~ 10
 TODO: FTDI
-Text Notes 8450 4900 0    50   Italic 0
+Text Notes 9150 4900 0    50   Italic 0
 populate with\nsmd mount connector
 $Comp
 L Device:R R17
@@ -701,14 +697,10 @@ Wire Wire Line
 	3750 3150 4300 3150
 Wire Wire Line
 	3750 3050 4300 3050
-Text GLabel 3900 5150 0    50   Input ~ 0
+Text GLabel 4100 5150 0    50   Input ~ 0
 ~RESET_TGTMCU
-Wire Wire Line
-	3900 5150 4300 5150
-Text Notes 2300 5500 0    50   ~ 0
+Text Notes 1700 6350 0    50   ~ 0
 PSELRESET[0] and PSELRESET[1] must be\n0x7fffffd2 for ~RESET
-Text Notes 5800 4100 0    50   ~ 0
-13,14 are external XTAL\n
 Text GLabel 4050 2550 1    50   Input ~ 0
 DEBUG_SWDCLK
 Wire Wire Line
@@ -749,5 +741,250 @@ Wire Wire Line
 Connection ~ 10650 1250
 Wire Wire Line
 	10650 1250 10750 1250
-NoConn ~ 3200 4250
+$Comp
+L Device:Crystal Y1
+U 1 1 5BBB53E8
+P 9200 5600
+F 0 "Y1" H 9200 5868 50  0000 C CNN
+F 1 "32.768Khz XTAL" H 9200 5777 50  0000 C CNN
+F 2 "" H 9200 5600 50  0001 C CNN
+F 3 "~" H 9200 5600 50  0001 C CNN
+	1    9200 5600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C C26
+U 1 1 5BBBA96C
+P 9550 5950
+F 0 "C26" H 9665 5996 50  0000 L CNN
+F 1 "12pF" H 9665 5905 50  0000 L CNN
+F 2 "" H 9588 5800 50  0001 C CNN
+F 3 "~" H 9550 5950 50  0001 C CNN
+	1    9550 5950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C C25
+U 1 1 5BBBA9C0
+P 8800 5950
+F 0 "C25" H 8915 5996 50  0000 L CNN
+F 1 "12pF" H 8915 5905 50  0000 L CNN
+F 2 "" H 8838 5800 50  0001 C CNN
+F 3 "~" H 8800 5950 50  0001 C CNN
+	1    8800 5950
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR030
+U 1 1 5BBBAB67
+P 8800 6250
+F 0 "#PWR030" H 8800 6000 50  0001 C CNN
+F 1 "GND" H 8805 6077 50  0000 C CNN
+F 2 "" H 8800 6250 50  0001 C CNN
+F 3 "" H 8800 6250 50  0001 C CNN
+	1    8800 6250
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR034
+U 1 1 5BBBAB9B
+P 9550 6250
+F 0 "#PWR034" H 9550 6000 50  0001 C CNN
+F 1 "GND" H 9555 6077 50  0000 C CNN
+F 2 "" H 9550 6250 50  0001 C CNN
+F 3 "" H 9550 6250 50  0001 C CNN
+	1    9550 6250
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8800 6100 8800 6250
+Wire Wire Line
+	9550 6100 9550 6250
+Wire Wire Line
+	9050 5600 8800 5600
+Wire Wire Line
+	8800 5600 8800 5800
+Wire Wire Line
+	9350 5600 9550 5600
+Wire Wire Line
+	9550 5600 9550 5800
+Text GLabel 8550 5600 0    50   Output ~ 0
+XTAL0
+Wire Wire Line
+	8550 5600 8800 5600
+Connection ~ 8800 5600
+Text GLabel 9850 5600 2    50   Output ~ 0
+XTAL1
+Wire Wire Line
+	9550 5600 9850 5600
+Connection ~ 9550 5600
+Text GLabel 4100 3350 0    50   Input ~ 0
+XTAL0
+Text GLabel 4100 3450 0    50   Input ~ 0
+XTAL1
+Wire Wire Line
+	4100 3450 4300 3450
+Wire Wire Line
+	4300 3350 4100 3350
+Text Notes 7450 5350 0    50   ~ 10
+CLOCK\n
+NoConn ~ 4300 3550
+Text GLabel 4100 3750 0    50   Output ~ 0
+SCREEN_CD
+Wire Wire Line
+	4100 3650 4300 3650
+Text GLabel 4100 3650 0    50   Output ~ 0
+TOUCH_CS
+Wire Wire Line
+	4100 3750 4300 3750
+Text GLabel 4100 3850 0    50   Output ~ 0
+UART_RTS
+Wire Wire Line
+	4100 3850 4300 3850
+Text GLabel 4100 3950 0    50   Output ~ 0
+UART_TX
+Wire Wire Line
+	4100 3950 4300 3950
+Text GLabel 4100 4050 0    50   Output ~ 0
+UART_CTS
+Text GLabel 4100 4150 0    50   Output ~ 0
+UART_RX
+Wire Wire Line
+	4100 4050 4300 4050
+Wire Wire Line
+	4100 4150 4300 4150
+Text GLabel 4100 4250 0    50   Output ~ 0
+NFC_ANT0
+Text GLabel 4100 4350 0    50   Output ~ 0
+NFC_ANT1
+Wire Wire Line
+	4100 4350 4300 4350
+Wire Wire Line
+	4300 4250 4100 4250
+Wire Wire Line
+	3450 4450 4300 4450
+Text GLabel 3450 4650 0    50   Output ~ 0
+SD_CS
+Wire Wire Line
+	3450 4650 4300 4650
+Text GLabel 3800 4750 0    50   Output ~ 0
+LED_2
+Wire Wire Line
+	3800 4750 4300 4750
+Text GLabel 3450 4850 0    50   Output ~ 0
+LED_3
+Wire Wire Line
+	3450 4850 4300 4850
+Text GLabel 3800 4950 0    50   Output ~ 0
+LED_4
+Wire Wire Line
+	3800 4950 4300 4950
+Text GLabel 3450 5050 0    50   Output ~ 0
+QSPI_CS
+Wire Wire Line
+	3450 5050 4300 5050
+Wire Wire Line
+	4100 5150 4300 5150
+Text GLabel 3450 5250 0    50   Output ~ 0
+QSPI_CLK
+Wire Wire Line
+	4300 5250 3450 5250
+Text GLabel 3950 5350 0    50   BiDi ~ 0
+QSPI_DIO0
+Text GLabel 3950 5450 0    50   BiDi ~ 0
+QSPI_DIO1
+Wire Wire Line
+	3950 5350 4300 5350
+Wire Wire Line
+	3950 5450 4300 5450
+Text GLabel 6100 5350 2    50   BiDi ~ 0
+QSPI_DIO2
+Text GLabel 6100 5250 2    50   BiDi ~ 0
+QSPI_DIO3
+Wire Wire Line
+	6100 5250 5750 5250
+Wire Wire Line
+	5750 5350 6100 5350
+Text GLabel 6350 4750 2    50   Output ~ 0
+SPI_SCLK
+Wire Wire Line
+	5750 4750 6350 4750
+Text GLabel 6000 4650 2    50   Input ~ 0
+SPI_MISO
+Wire Wire Line
+	5750 4650 6000 4650
+Text GLabel 6350 4550 2    50   Output ~ 0
+SPI_MOSI
+Wire Wire Line
+	6350 4550 5750 4550
+Text GLabel 6000 4450 2    50   Output ~ 0
+DISP_CS
+Wire Wire Line
+	5750 4450 6000 4450
+NoConn ~ 5750 2750
+NoConn ~ 5750 4250
+NoConn ~ 5750 4150
+NoConn ~ 5750 4050
+NoConn ~ 5750 3950
+NoConn ~ 5750 3850
+NoConn ~ 5750 3750
+NoConn ~ 5750 3650
+NoConn ~ 5750 3550
+NoConn ~ 5750 3450
+NoConn ~ 5750 3350
+NoConn ~ 5750 3250
+Text GLabel 6000 2850 2    50   Output ~ 0
+I2S_SDOUT
+Wire Wire Line
+	5750 2850 6000 2850
+Text GLabel 6000 2950 2    50   Output ~ 0
+I2S_SCLK
+Wire Wire Line
+	5750 2950 6000 2950
+Text GLabel 6000 3050 2    50   Output ~ 0
+I2S_LRCK
+Wire Wire Line
+	5750 3050 6000 3050
+Text GLabel 6000 3150 2    50   Output ~ 0
+I2S_MCK
+Wire Wire Line
+	5750 3150 6000 3150
+$Comp
+L Connector:TestPoint TP6
+U 1 1 5BD7474F
+P 9550 5450
+F 0 "TP6" H 9608 5570 50  0000 L CNN
+F 1 "XTAL1" H 9608 5479 50  0000 L CNN
+F 2 "" H 9750 5450 50  0001 C CNN
+F 3 "~" H 9750 5450 50  0001 C CNN
+	1    9550 5450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9550 5450 9550 5600
+$Comp
+L Connector:TestPoint TP5
+U 1 1 5BD7D538
+P 8800 5450
+F 0 "TP5" H 8600 5550 50  0000 L CNN
+F 1 "XTAL0" H 8500 5450 50  0000 L CNN
+F 2 "" H 9000 5450 50  0001 C CNN
+F 3 "~" H 9000 5450 50  0001 C CNN
+	1    8800 5450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8800 5450 8800 5600
+Wire Notes Line
+	7400 500  7400 6550
+Text GLabel 7850 2700 0    50   Output ~ 0
+SPI_MISO
+Text GLabel 7850 4300 0    50   Input ~ 0
+SPI_SCLK
+Text GLabel 7850 3550 0    50   Input ~ 0
+SPI_MOSI
+Wire Notes Line
+	8800 2200 8800 5200
+Text Notes 7450 2300 0    50   ~ 10
+SPI\n
 $EndSCHEMATC
