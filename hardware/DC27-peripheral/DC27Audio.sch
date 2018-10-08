@@ -1,5 +1,5 @@
 EESchema Schematic File Version 4
-LIBS:DC27-peripheral-cache
+LIBS:DC27-badge-cache
 EELAYER 26 0
 EELAYER END
 $Descr A4 11693 8268
@@ -79,47 +79,6 @@ Wire Wire Line
 Wire Wire Line
 	6500 3500 6850 3500
 Wire Wire Line
-	4350 3850 4350 4450
-$Comp
-L power:GND #PWR?
-U 1 1 5BA1588E
-P 4350 4450
-AR Path="/5BA1588E" Ref="#PWR?"  Part="1" 
-AR Path="/5BA15261/5BA1588E" Ref="#PWR030"  Part="1" 
-F 0 "#PWR030" H 4350 4200 50  0001 C CNN
-F 1 "GND" H 4355 4277 50  0000 C CNN
-F 2 "" H 4350 4450 50  0001 C CNN
-F 3 "" H 4350 4450 50  0001 C CNN
-	1    4350 4450
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4250 3850 4350 3850
-Wire Wire Line
-	4650 3500 5100 3500
-Wire Wire Line
-	4650 3750 4650 3500
-Wire Wire Line
-	4250 3750 4650 3750
-Wire Wire Line
-	5000 3650 4250 3650
-Wire Wire Line
-	5000 3600 5000 3650
-Wire Wire Line
-	5100 3600 5000 3600
-Wire Wire Line
-	4900 3700 5100 3700
-Wire Wire Line
-	4900 3550 4900 3700
-Wire Wire Line
-	4250 3550 4900 3550
-Wire Wire Line
-	4750 3800 5100 3800
-Wire Wire Line
-	4750 3450 4750 3800
-Wire Wire Line
-	4250 3450 4750 3450
-Wire Wire Line
 	5000 4350 5000 4450
 Connection ~ 6600 4400
 Wire Wire Line
@@ -158,10 +117,6 @@ Wire Wire Line
 	6600 3900 6600 4050
 Wire Wire Line
 	6500 3900 6600 3900
-Wire Wire Line
-	4250 3950 4450 3950
-Text GLabel 4450 3950 2    50   Output ~ 0
-VCCIN
 Text GLabel 3000 2350 0    50   Input ~ 0
 VCC5V
 $Comp
@@ -172,7 +127,7 @@ AR Path="/5BA158B7" Ref="R?"  Part="1"
 AR Path="/5BA15261/5BA158B7" Ref="R13"  Part="1" 
 F 0 "R13" V 7495 3950 50  0000 C CNN
 F 1 "470" V 7586 3950 50  0000 C CNN
-F 2 "" V 7740 3940 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 7740 3940 50  0001 C CNN
 F 3 "~" H 7700 3950 50  0001 C CNN
 	1    7700 3950
 	0    1    1    0   
@@ -256,7 +211,7 @@ AR Path="/5BA158E3" Ref="R?"  Part="1"
 AR Path="/5BA15261/5BA158E3" Ref="R15"  Part="1" 
 F 0 "R15" H 7432 4504 50  0000 R CNN
 F 1 "10K" H 7432 4595 50  0000 R CNN
-F 2 "" V 7540 4540 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 7540 4540 50  0001 C CNN
 F 3 "~" H 7500 4550 50  0001 C CNN
 	1    7500 4550
 	-1   0    0    1   
@@ -269,7 +224,7 @@ AR Path="/5BA158EA" Ref="R?"  Part="1"
 AR Path="/5BA15261/5BA158EA" Ref="R14"  Part="1" 
 F 0 "R14" H 7450 4500 50  0000 L CNN
 F 1 "10K" H 7450 4600 50  0000 L CNN
-F 2 "" V 7390 4540 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 7390 4540 50  0001 C CNN
 F 3 "~" H 7350 4550 50  0001 C CNN
 	1    7350 4550
 	-1   0    0    1   
@@ -282,7 +237,7 @@ AR Path="/5BA158F1" Ref="R?"  Part="1"
 AR Path="/5BA15261/5BA158F1" Ref="R12"  Part="1" 
 F 0 "R12" V 7495 3500 50  0000 C CNN
 F 1 "470" V 7586 3500 50  0000 C CNN
-F 2 "" V 7740 3490 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 7740 3490 50  0001 C CNN
 F 3 "~" H 7700 3500 50  0001 C CNN
 	1    7700 3500
 	0    1    1    0   
@@ -295,7 +250,7 @@ AR Path="/5BA158F8" Ref="C?"  Part="1"
 AR Path="/5BA15261/5BA158F8" Ref="C21"  Part="1" 
 F 0 "C21" V 6848 3950 50  0000 C CNN
 F 1 "3.3uF" V 6939 3950 50  0000 C CNN
-F 2 "" H 7138 3800 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 7138 3800 50  0001 C CNN
 F 3 "~" H 7100 3950 50  0001 C CNN
 	1    7100 3950
 	0    1    1    0   
@@ -308,7 +263,7 @@ AR Path="/5BA158FF" Ref="C?"  Part="1"
 AR Path="/5BA15261/5BA158FF" Ref="C20"  Part="1" 
 F 0 "C20" V 6748 3500 50  0000 C CNN
 F 1 "3.3uF" V 6839 3500 50  0000 C CNN
-F 2 "" H 7038 3350 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 7038 3350 50  0001 C CNN
 F 3 "~" H 7000 3500 50  0001 C CNN
 	1    7000 3500
 	0    1    1    0   
@@ -321,7 +276,7 @@ AR Path="/5BA15906" Ref="J?"  Part="1"
 AR Path="/5BA15261/5BA15906" Ref="J3"  Part="1" 
 F 0 "J3" H 8417 3529 50  0000 R CNN
 F 1 "AudioJack3_Ground" H 8417 3620 50  0000 R CNN
-F 2 "" H 8650 3600 50  0001 C CNN
+F 2 "Connector_Audio:Jack_Horizontal" H 8650 3600 50  0001 C CNN
 F 3 "~" H 8650 3600 50  0001 C CNN
 	1    8650 3600
 	-1   0    0    1   
@@ -334,7 +289,7 @@ AR Path="/5BA1590D" Ref="C?"  Part="1"
 AR Path="/5BA15261/5BA1590D" Ref="C23"  Part="1" 
 F 0 "C23" H 6350 4250 50  0000 L CNN
 F 1 "10uF" H 6300 4150 50  0000 L CNN
-F 2 "" H 6638 4050 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 6638 4050 50  0001 C CNN
 F 3 "~" H 6600 4200 50  0001 C CNN
 	1    6600 4200
 	1    0    0    -1  
@@ -347,7 +302,7 @@ AR Path="/5BA15914" Ref="C?"  Part="1"
 AR Path="/5BA15261/5BA15914" Ref="C22"  Part="1" 
 F 0 "C22" H 5115 4246 50  0000 L CNN
 F 1 "3.3uF" H 5115 4155 50  0000 L CNN
-F 2 "" H 5038 4050 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 5038 4050 50  0001 C CNN
 F 3 "~" H 5000 4200 50  0001 C CNN
 	1    5000 4200
 	1    0    0    -1  
@@ -360,7 +315,7 @@ AR Path="/5BA1591B" Ref="L?"  Part="1"
 AR Path="/5BA15261/5BA1591B" Ref="L3"  Part="1" 
 F 0 "L3" V 4125 2350 50  0000 C CNN
 F 1 "L_Core_Ferrite" V 4034 2350 50  0000 C CNN
-F 2 "" H 3900 2350 50  0001 C CNN
+F 2 "Inductor_SMD:L_0603_1608Metric" H 3900 2350 50  0001 C CNN
 F 3 "~" H 3900 2350 50  0001 C CNN
 	1    3900 2350
 	0    -1   -1   0   
@@ -373,7 +328,7 @@ AR Path="/5BA15922" Ref="C?"  Part="1"
 AR Path="/5BA15261/5BA15922" Ref="C17"  Part="1" 
 F 0 "C17" H 3715 2696 50  0000 L CNN
 F 1 "0.1uF" H 3715 2605 50  0000 L CNN
-F 2 "" H 3638 2500 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 3638 2500 50  0001 C CNN
 F 3 "~" H 3600 2650 50  0001 C CNN
 	1    3600 2650
 	1    0    0    -1  
@@ -386,7 +341,7 @@ AR Path="/5BA15929" Ref="C?"  Part="1"
 AR Path="/5BA15261/5BA15929" Ref="C19"  Part="1" 
 F 0 "C19" H 4815 2696 50  0000 L CNN
 F 1 "0.1uF" H 4815 2605 50  0000 L CNN
-F 2 "" H 4738 2500 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 4738 2500 50  0001 C CNN
 F 3 "~" H 4700 2650 50  0001 C CNN
 	1    4700 2650
 	1    0    0    -1  
@@ -399,35 +354,10 @@ AR Path="/5BA15930" Ref="C?"  Part="1"
 AR Path="/5BA15261/5BA15930" Ref="C18"  Part="1" 
 F 0 "C18" H 4315 2696 50  0000 L CNN
 F 1 "0.1uF" H 4315 2605 50  0000 L CNN
-F 2 "" H 4238 2500 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 4238 2500 50  0001 C CNN
 F 3 "~" H 4200 2650 50  0001 C CNN
 	1    4200 2650
 	1    0    0    -1  
-$EndComp
-Text Notes 3800 4000 0    50   ~ 0
-VCC
-Text Notes 3800 3900 0    50   ~ 0
-GND
-Text Notes 3800 3800 0    50   ~ 0
-SDIN\n
-Text Notes 3800 3700 0    50   ~ 0
-SCLK
-Text Notes 3800 3700 0    50   ~ 0
-LRCK\n\n
-Text Notes 3800 3500 0    50   ~ 0
-MCLK\n
-$Comp
-L Connector:Conn_01x06_Female J?
-U 1 1 5BA1593D
-P 4050 3650
-AR Path="/5BA1593D" Ref="J?"  Part="1" 
-AR Path="/5BA15261/5BA1593D" Ref="J4"  Part="1" 
-F 0 "J4" H 3950 4100 50  0000 C CNN
-F 1 "Conn_01x06_Female" H 3950 4000 50  0000 C CNN
-F 2 "" H 4050 3650 50  0001 C CNN
-F 3 "~" H 4050 3650 50  0001 C CNN
-	1    4050 3650
-	-1   0    0    -1  
 $EndComp
 $Comp
 L CS4344-CZZ:CS4344-CZZ U?
@@ -437,7 +367,7 @@ AR Path="/5BA15949" Ref="U?"  Part="1"
 AR Path="/5BA15261/5BA15949" Ref="U7"  Part="1" 
 F 0 "U7" H 5800 3765 50  0000 C CNN
 F 1 "CS4344-CZZ" H 5800 3674 50  0000 C CNN
-F 2 "SOP50P490X110-10N" H 6350 3600 50  0001 L CNN
+F 2 "Housings_SSOP:TSSOP-10_3x3mm_Pitch0.5mm" H 6350 3600 50  0001 L CNN
 F 3 "http://uk.rs-online.com/web/p/products/4915754" H 6350 3500 50  0001 L CNN
 F 4 "Audio D/A Converter ICs Stereo DAC 24-Bit 192kHz" H 6350 3400 50  0001 L CNN "Description"
 F 5 "1.1" H 6350 3300 50  0001 L CNN "Height"
@@ -447,4 +377,20 @@ F 8 "CS4344-CZZ" H 6350 3000 50  0001 L CNN "Manufacturer_Part_Number"
 	1    5100 3500
 	1    0    0    -1  
 $EndComp
+Text GLabel 4750 3800 0    50   Input ~ 0
+SND_MCLK
+Text GLabel 4750 3700 0    50   Input ~ 0
+SND_LRCLK
+Text GLabel 4750 3600 0    50   Input ~ 0
+SND_SCLK
+Text GLabel 4750 3500 0    50   Input ~ 0
+SND_SDIN
+Wire Wire Line
+	4750 3500 5100 3500
+Wire Wire Line
+	5100 3600 4750 3600
+Wire Wire Line
+	4750 3700 5100 3700
+Wire Wire Line
+	5100 3800 4750 3800
 $EndSCHEMATC
