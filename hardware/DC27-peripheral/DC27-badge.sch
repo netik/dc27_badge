@@ -17,28 +17,33 @@ $EndDescr
 Text Notes 7350 7500 0    50   ~ 0
 DC27 Audio Circuit\n
 $Sheet
-S 550  1500 1450 650 
+S 550  1500 1200 650 
 U 5BA1B02E
 F0 "LEDs" 50
 F1 "DC27LEDs.sch" 50
 $EndSheet
 $Sheet
-S 550  2350 1450 650 
+S 550  2350 1200 650 
 U 5BD866AF
 F0 "LED Interface" 50
 F1 "DC27LED_INTERFACE.sch" 50
 $EndSheet
 $Sheet
-S 2100 650  1200 650 
+S 550  650  1200 650 
 U 5BA3F217
 F0 "DC Power" 50
 F1 "DC27-DC Power.sch" 50
 $EndSheet
 $Sheet
-S 550  650  1450 650 
+S 2700 650  900  650 
 U 5BA15261
 F0 "DC27Audio" 50
 F1 "DC27Audio.sch" 50
+F2 "SND_SDIN" I L 2700 750 50 
+F3 "SND_SCLK" I L 2700 900 50 
+F4 "SND_LRCK" I L 2700 1050 50 
+F5 "SND_MCLK" I L 2700 1200 50 
+F6 "VCC_5V" I R 3600 750 50 
 $EndSheet
 $Comp
 L DC27-peripheral-cache:BMD-340-A-R U1
@@ -553,7 +558,7 @@ NoConn ~ 10350 3200
 NoConn ~ 10350 3100
 NoConn ~ 10350 3000
 NoConn ~ 10350 2900
-Text Notes 8850 2300 0    50   ~ 10
+Text Notes 8900 2300 0    50   ~ 10
 DISPLAY\n
 Wire Notes Line
 	11100 2200 7400 2200
@@ -663,10 +668,10 @@ Wire Wire Line
 	10550 1250 10650 1250
 Wire Wire Line
 	10750 1400 10750 1250
-Text Notes 3550 700  0    50   ~ 10
+Text Notes 4100 600  0    50   ~ 10
 TODO: FTDI
-Text Notes 9150 4900 0    50   Italic 0
-populate with\nsmd mount connector
+Text Notes 8900 5100 0    50   Italic 0
+populate with\nsmd flat-mount connector
 $Comp
 L Device:R R17
 U 1 1 5BAA34C0
@@ -830,7 +835,7 @@ Text Notes 7450 5350 0    50   ~ 10
 CLOCK\n
 NoConn ~ 4300 3550
 Text GLabel 4100 3750 0    50   Output ~ 0
-SCREEN_CD
+DISP_DC
 Wire Wire Line
 	4100 3650 4300 3650
 Text GLabel 4100 3650 0    50   Output ~ 0
@@ -933,22 +938,14 @@ NoConn ~ 5750 3550
 NoConn ~ 5750 3450
 NoConn ~ 5750 3350
 NoConn ~ 5750 3250
-Text GLabel 6000 2850 2    50   Output ~ 0
+Text GLabel 6150 2850 2    50   Output ~ 0
 I2S_SDOUT
-Wire Wire Line
-	5750 2850 6000 2850
-Text GLabel 6000 2950 2    50   Output ~ 0
+Text GLabel 6150 2950 2    50   Output ~ 0
 I2S_SCLK
-Wire Wire Line
-	5750 2950 6000 2950
-Text GLabel 6000 3050 2    50   Output ~ 0
+Text GLabel 6150 3050 2    50   Output ~ 0
 I2S_LRCK
-Wire Wire Line
-	5750 3050 6000 3050
-Text GLabel 6000 3150 2    50   Output ~ 0
+Text GLabel 6150 3150 2    50   Output ~ 0
 I2S_MCK
-Wire Wire Line
-	5750 3150 6000 3150
 $Comp
 L Connector:TestPoint TP6
 U 1 1 5BD7474F
@@ -977,14 +974,118 @@ Wire Wire Line
 	8800 5450 8800 5600
 Wire Notes Line
 	7400 500  7400 6550
-Text GLabel 7850 2700 0    50   Output ~ 0
+Text GLabel 7850 3550 0    50   Output ~ 0
 SPI_MISO
 Text GLabel 7850 4300 0    50   Input ~ 0
 SPI_SCLK
-Text GLabel 7850 3550 0    50   Input ~ 0
+Text GLabel 7850 2900 0    50   Input ~ 0
 SPI_MOSI
 Wire Notes Line
-	8800 2200 8800 5200
+	8850 2200 8850 5200
 Text Notes 7450 2300 0    50   ~ 10
 SPI\n
+Text GLabel 8150 2900 2    50   Input ~ 0
+DISP_SDI_MOSI
+Text GLabel 8150 3050 2    50   Input ~ 0
+SD_MOSI
+Wire Wire Line
+	7850 2900 8000 2900
+Wire Wire Line
+	8150 3050 8000 3050
+Wire Wire Line
+	8000 3050 8000 2900
+Connection ~ 8000 2900
+Text GLabel 8150 3550 2    50   Input ~ 0
+DISP_SDO_MOSI
+Wire Wire Line
+	7850 3550 8000 3550
+Text GLabel 8150 3700 2    50   Input ~ 0
+SD_MISO
+Wire Wire Line
+	8150 3700 8000 3700
+Wire Wire Line
+	8000 3700 8000 3550
+Connection ~ 8000 3550
+Wire Wire Line
+	8000 3550 8150 3550
+$Comp
+L Connector:TestPoint TP7
+U 1 1 5BE594F0
+P 8000 2700
+F 0 "TP7" H 8058 2820 50  0000 L CNN
+F 1 "SPI_MOSI" H 8058 2729 50  0000 L CNN
+F 2 "" H 8200 2700 50  0001 C CNN
+F 3 "~" H 8200 2700 50  0001 C CNN
+	1    8000 2700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8000 2900 8000 2700
+Wire Wire Line
+	8000 2900 8150 2900
+$Comp
+L Connector:TestPoint TP8
+U 1 1 5BE6D4D8
+P 8000 3350
+F 0 "TP8" H 8058 3470 50  0000 L CNN
+F 1 "SPI_MISO" H 8058 3379 50  0000 L CNN
+F 2 "" H 8200 3350 50  0001 C CNN
+F 3 "~" H 8200 3350 50  0001 C CNN
+	1    8000 3350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8000 3350 8000 3550
+Text GLabel 8150 4300 2    50   Output ~ 0
+SD_SCLK
+Text GLabel 8150 4500 2    50   Output ~ 0
+DISP_SCLK
+Wire Wire Line
+	7850 4300 8000 4300
+Wire Wire Line
+	8150 4500 8000 4500
+Wire Wire Line
+	8000 4500 8000 4300
+Connection ~ 8000 4300
+Wire Wire Line
+	8000 4300 8150 4300
+$Comp
+L Connector:TestPoint TP9
+U 1 1 5BE8BAC1
+P 8000 4150
+F 0 "TP9" H 8058 4270 50  0000 L CNN
+F 1 "SPI_SCK" H 8058 4179 50  0000 L CNN
+F 2 "" H 8200 4150 50  0001 C CNN
+F 3 "~" H 8200 4150 50  0001 C CNN
+	1    8000 4150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8000 4150 8000 4300
+Text Notes 4100 1150 0    50   ~ 0
+Things to get from Bill:\nQSPI usage / pinout / where does it go\nWhere is I2C? Is it enabled?\nWhere do I2S Pins go?\nDo we need NFC pins?\nWhich SPI Bus is display on?
+Wire Wire Line
+	5750 3150 6150 3150
+Wire Wire Line
+	5750 3050 6150 3050
+Wire Wire Line
+	5750 2950 6150 2950
+Wire Wire Line
+	5750 2850 6150 2850
+Text GLabel 2500 750  0    50   Input ~ 0
+I2S_SDOUT
+Text GLabel 2450 900  0    50   Input ~ 0
+I2S_SCLK
+Text GLabel 2450 1050 0    50   Input ~ 0
+I2S_LRCK
+Text GLabel 2450 1200 0    50   Input ~ 0
+I2S_MCK
+Wire Wire Line
+	2450 1200 2700 1200
+Wire Wire Line
+	2450 1050 2700 1050
+Wire Wire Line
+	2700 900  2450 900 
+Wire Wire Line
+	2500 750  2700 750 
 $EndSCHEMATC

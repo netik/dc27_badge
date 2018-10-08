@@ -117,8 +117,6 @@ Wire Wire Line
 	6600 3900 6600 4050
 Wire Wire Line
 	6500 3900 6600 3900
-Text GLabel 3000 2350 0    50   Input ~ 0
-VCC5V
 $Comp
 L Device:R_US R?
 U 1 1 5BA158B7
@@ -152,8 +150,6 @@ $EndComp
 Wire Wire Line
 	6600 3600 6500 3600
 Text GLabel 6600 3600 2    50   Input ~ 0
-VA
-Text GLabel 5200 2350 2    50   Output ~ 0
 VA
 Wire Wire Line
 	4700 2350 5200 2350
@@ -377,14 +373,6 @@ F 8 "CS4344-CZZ" H 6350 3000 50  0001 L CNN "Manufacturer_Part_Number"
 	1    5100 3500
 	1    0    0    -1  
 $EndComp
-Text GLabel 4750 3800 0    50   Input ~ 0
-SND_MCLK
-Text GLabel 4750 3700 0    50   Input ~ 0
-SND_LRCLK
-Text GLabel 4750 3600 0    50   Input ~ 0
-SND_SCLK
-Text GLabel 4750 3500 0    50   Input ~ 0
-SND_SDIN
 Wire Wire Line
 	4750 3500 5100 3500
 Wire Wire Line
@@ -393,4 +381,18 @@ Wire Wire Line
 	4750 3700 5100 3700
 Wire Wire Line
 	5100 3800 4750 3800
+Text HLabel 4750 3500 0    50   Input ~ 0
+SND_SDIN
+Text HLabel 4750 3600 0    50   Input ~ 0
+SND_SCLK
+Text HLabel 4750 3700 0    50   Input ~ 0
+SND_LRCK
+Text HLabel 4750 3800 0    50   Input ~ 0
+SND_MCLK
+Text HLabel 3000 2350 0    50   Input ~ 0
+VCC_5V
+Text GLabel 5200 2350 2    50   Output ~ 0
+VA
+Text Notes 7350 7500 0    50   ~ 0
+DC 27 Badge - Team Ides - John Adams / Bill Paul
 $EndSCHEMATC

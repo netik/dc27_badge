@@ -1230,4 +1230,6 @@ Wire Wire Line
 	8350 4450 8350 5750
 Text Notes 9600 800  0    50   ~ 10
 LEDs:\n1616 0603 RGB common anode\n
+Text Notes 7400 7500 0    50   ~ 0
+DC 27 Badge - Team Ides - John Adams / Bill Paul
 $EndSCHEMATC

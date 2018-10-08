@@ -664,4 +664,6 @@ Wire Wire Line
 Connection ~ 2100 5200
 Wire Wire Line
 	2100 5200 2700 5200
+Text Notes 7350 7500 0    50   ~ 0
+DC 27 Badge - Team Ides - John Adams / Bill Paul
 $EndSCHEMATC
