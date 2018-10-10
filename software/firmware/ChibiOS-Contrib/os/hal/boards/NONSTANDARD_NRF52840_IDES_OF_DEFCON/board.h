@@ -23,7 +23,21 @@
 
 /* Board oscillators-related settings. */
 #define NRF5_XTAL_VALUE        32000000
-#define NRF5_LFCLK_SOURCE      1
+
+/*
+ * The NRF52840 uses two clocks: a high speed clock and a low speed one.
+ * A 32MHz crystal is required for the high speed clock. The low speed
+ * clock source can be one of three things:
+ *
+ * NRF_CLOCK_LF_SRC_RC (0)              Internal 32.768KHz RC oscillator
+ * NRF_CLOCK_LF_SRC_XTAL (1)            External 32.768KHz crystal (P0.0/P0.1)
+ * NRF_CLOCK_LF_SRC_SYNTH (2)           Synthesized from 32MHz high speed clock
+ *
+ * Using the SYNTH option gives us the best results with the smallest parts
+ * count. (The BMD-340 module already has a 32MHz crystal inside.)
+ */
+
+#define NRF5_LFCLK_SOURCE      2
 
 /*
  * GPIO pins. 
