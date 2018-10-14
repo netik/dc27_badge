@@ -32,10 +32,12 @@
 VPATH= ../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52840 			\
 	../ChibiOS-Contrib/os/hal/ports/NRF5/LLD			\
 	../ChibiOS/os/hal/ports/common/ARMCMx				\
-	../ChibiOS/os/hal/src ../FatFs/source ../badge_840
+	../ChibiOS/os/hal/src ../FatFs/source ../badge_840		\
+	../ChibiOS-Contrib/os/hal/boards/NONSTANDARD_NRF52840_IDES_OF_DEFCON			\
 
 OBJS=	entry.o updater.o nvic.o ff.o diskio.o mmc_spi_lld.o	\
-	flash.o hal_gpt_lld.o hal_spi_lld.o hal_gpt.o hal_spi.o
+	flash.o hal_gpt_lld.o hal_spi_lld.o hal_gpt.o hal_spi.o \
+	hal_pal_lld.o board.o
 
 CC=	arm-none-eabi-gcc
 LD=	arm-none-eabi-ld
@@ -63,7 +65,7 @@ CFLAGS+=  -mcpu=cortex-m4 -Os -ggdb -fomit-frame-pointer		\
 	-I../ChibiOS/os/common/oslib/include  				\
 	-I../ChibiOS/os/hal/include 					\
 	-I../ChibiOS-Contrib/os/hal/boards/NONSTANDARD_NRF52840_IDES_OF_DEFCON \
-	-I../FatFs/source -DDRV_MMC=0 -UDRV_CFC -flto
+	-I../FatFs/source -DDRV_MMC=0 -UDRV_CFC -UDRV_QSPI -flto
 
 ASFLAGS= $(CFLAGS)
 

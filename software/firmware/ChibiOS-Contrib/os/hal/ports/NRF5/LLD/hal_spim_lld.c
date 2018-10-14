@@ -382,8 +382,11 @@ void spi_lld_stop(SPIDriver *spip)
 {
 	if (spip->state != SPI_STOP) {
 		spip->port->TASKS_STOP = 1;
-		spip->port->ENABLE  = SPIM_ENABLE_ENABLE_Msk;
 		spip->port->INTENCLR = 0xFFFFFFFF; 
+		spip->port->PSEL.SCK = 0xFFFFFFFF;
+		spip->port->PSEL.MOSI = 0xFFFFFFFF;
+		spip->port->PSEL.MISO = 0xFFFFFFFF;
+		spip->port->ENABLE = 0;
 #if NRF5_SPI_USE_SPI0
 		if (&SPID1 == spip)
 			nvicDisableVector (SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn);

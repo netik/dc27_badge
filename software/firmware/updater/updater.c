@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2017
+ * Copyright (c) 2016-2018
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 
 /*
  * This module implements a firmware update utility for the Nordic Semi
- * NRF52832 board with SD card connected via SPI channel 0.
+ * NRF52840 board with SD card connected via SPI channel 0.
  *
  * The firmware update process works in conjunction with a firmware update
  * app in the firmware already present in NRF52's flash. The updater utility
@@ -47,11 +47,11 @@
  * Freescale flash library to write to the NRF52's flash. The FatFs code
  * is set up to use SPI channel 1 using the mmc_kinetis_spi.c module. The
  * one complication is that the mmc_kinetis_spi.c code requires a timer.
- * Normally this is provided using the NRF52's periodic interval timer (PIT).
+ * Normally this is provided using one of the NRF52's internal timers.
  * The trouble is that it that the way the code is written, it depends on
- * the timer triggering periodic interrupts. On the Cortex-M0 processor,
+ * the timer triggering periodic interrupts. On the Cortex-M4 processor,
  * interrupts are routed via the vector table which is stored at page 0
- * in flash, which connects the PIT interrupt to a handler in the firmware.
+ * in flash, which connects the timer interrupt to a handler in the firmware.
  * We need to override this somehow so that we can get the timer interrupts
  * to call an interrupt handler in the updater instead.
  *
@@ -142,6 +142,8 @@ __attribute__ ((alias ("_port_irq_epilogue")))
 void chMtxLock (mutex_t *mp);
 __attribute__ ((alias ("_port_irq_epilogue")))
 void chMtxUnlock (mutex_t *mp);
+__attribute__ ((alias ("_port_irq_epilogue")))
+msg_t chThdSuspendTimeoutS(thread_reference_t *trp, sysinterval_t timeout);
 
 void
 _port_irq_epilogue (void)
@@ -217,14 +219,20 @@ updater (void)
 
 	__enable_irq();
 
+	/* Initialize the GPIO subsystem */
+
+        palInit (&pal_default_config);
+
 	/* Enable the SPI driver */
 
 	spiInit ();
 	spiStart (&SPID1, &spi1_config);
 
-	/* Make sure the SD card chip select is in the right state */
+	/* Make sure all the SPI bus chip selects are in the right state */
 
 	IOPORT1->OUTSET = 1 << IOPORT1_SDCARD_CS;
+	IOPORT1->OUTSET = 1 << IOPORT1_SCREEN_CS;
+	IOPORT1->OUTSET = 1 << IOPORT1_TOUCH_CS;
 
 	/* Enable the PIT (for the fatfs timer) */
 

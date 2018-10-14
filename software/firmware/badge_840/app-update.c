@@ -115,6 +115,17 @@ update (VHandles * p)
 	f_close (&f);
 
 	/*
+	 * Now that we've loaded the updater, turn off the SPI
+	 * controller. This is required in order to release control
+	 * of the SPI pins. The updater will use the SPI0 controller
+	 * since it does PIO instead of DMA, and we can't have two
+	 * SPIx instances configured to use the same GPIO pins at
+	 * the same time.
+	 */
+
+	spiStop (&SPID4);
+
+	/*
 	 * If we reached this point, we've loaded an updater image into
 	 * RAM and we're about to run it. Once it starts, it will
 	 * completely take over the system, and either the firmware

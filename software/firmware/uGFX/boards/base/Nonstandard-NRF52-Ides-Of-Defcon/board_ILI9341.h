@@ -69,7 +69,7 @@ static void release_bus(GDisplay *g) {
 }
 
 static void write_index(GDisplay *g, uint16_t index) {
-#ifdef NRF5_SPI_USE_SPI3
+#if NRF5_SPI_USE_SPI3 == TRUE
 	uint8_t b;
 
 	b = index & 0xFF;
@@ -93,7 +93,7 @@ static void write_index(GDisplay *g, uint16_t index) {
 }
 
 static void write_data(GDisplay *g, uint16_t data) {
-#ifdef NRF5_SPI_USE_SPI3
+#if NRF5_SPI_USE_SPI3 == TRUE
 	uint8_t b;
 
 	b = data & 0xFF;
