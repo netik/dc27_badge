@@ -46,7 +46,7 @@ static thread_t * pThread = NULL;
 static uint8_t play;
 static uint8_t i2sloop;
 
-static THD_WORKING_AREA(waI2sThread, 512);
+static THD_WORKING_AREA(waI2sThread, 768);
 
 static
 THD_FUNCTION(i2sThread, arg)
