@@ -62,6 +62,7 @@ static uint32_t bleGapAdvBlockFinish (uint8_t *, uint8_t);
 static int bleGapScanStart (void);
 static int bleGapAdvStart (void);
 
+static uint8_t ble_adv_block[BLE_GAP_ADV_MAX_SIZE];
 static uint8_t ble_scan_buffer[BLE_GAP_SCAN_BUFFER_EXTENDED_MAX];
 static uint8_t ble_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 
@@ -205,11 +206,16 @@ bleGapDispatch (ble_evt_t * evt)
 			ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 			orchardAppRadioCallback (disconnectEvent, evt,
 			    NULL, 0);
+			r = sd_ble_gap_adv_stop (ble_adv_handle);
+			if (r != NRF_SUCCESS) {
+				printf ("GAP stop advertisement after "
+				    "disconnect failed! 0x%x\r\n", r);
+			}
 			r = sd_ble_gap_adv_start (ble_adv_handle,
 			    BLE_IDES_APP_TAG);
 			if (r != NRF_SUCCESS) {
 				printf ("GAP restart advertisement after "
-				    "disconnect failed! 0x%x\n", r);
+				    "disconnect failed! 0x%x\r\n", r);
 			}
 			break;
 
@@ -268,8 +274,11 @@ bleGapDispatch (ble_evt_t * evt)
 			}
 			blePeerAdd (addr->addr, name, len,
 			    evt->evt.gap_evt.params.adv_report.rssi);
+			len = evt->evt.gap_evt.params.adv_report.data.len;
+			name = evt->evt.gap_evt.params.adv_report.data.p_data;
 			orchardAppRadioCallback (advertisementEvent, evt,
-			    NULL, 0);
+			    name, len);
+			memset (ble_scan_buffer, 0, sizeof(ble_scan_buffer));
 			break;
 		case BLE_GAP_EVT_TIMEOUT:
 			timeout = &evt->evt.gap_evt.params.timeout;
@@ -314,12 +323,7 @@ bleGapAdvBlockStart (uint8_t * size)
 {
 	uint8_t * pkt;
 
-	pkt = chHeapAlloc (NULL, BLE_GAP_ADV_MAX_SIZE);
-
-	if (pkt == NULL) {
-		*size = 0;
-		return (NULL);
-	}
+	pkt = ble_adv_block;
 	*size = BLE_GAP_ADV_MAX_SIZE;
 	memset (pkt, 0, BLE_GAP_ADV_MAX_SIZE);
 
@@ -366,6 +370,7 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_params.duration = MSEC_TO_UNITS(2000, UNIT_10_MS);
 	adv_params.filter_policy = BLE_GAP_ADV_FP_ANY;
 	adv_params.primary_phy = BLE_GAP_PHY_1MBPS;
+	adv_params.set_id = 1;
 
 	r = sd_ble_gap_adv_set_configure (&ble_adv_handle,
 	    &adv_data, &adv_params);
@@ -376,8 +381,6 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	r = sd_ble_gap_adv_start (ble_adv_handle, BLE_IDES_APP_TAG);
 
 	sd_ble_gap_tx_power_set (BLE_GAP_TX_POWER_ROLE_ADV, ble_adv_handle, 8);
-
-	chHeapFree (pkt);
 
 	return (r);
 }

@@ -63,7 +63,8 @@ typedef struct _ChatHandles {
 extern orchard_app_instance instance;
 
 static int
-insert_peer (OrchardAppContext * context, ble_evt_t * evt)
+insert_peer (OrchardAppContext * context, ble_evt_t * evt,
+    OrchardAppRadioEvent * radio)
 {
 	ChatHandles *	p;
 	int		i;
@@ -79,16 +80,16 @@ insert_peer (OrchardAppContext * context, ble_evt_t * evt)
 	if (p->peers == (MAX_PEERS + 2))
 		return (-1);
 
-	len = evt->evt.gap_evt.params.adv_report.data.len;
-	name = evt->evt.gap_evt.params.adv_report.data.p_data;
+	name = radio->pkt;
+        len = radio->pktlen;
+	addr = &evt->evt.gap_evt.params.adv_report.peer_addr;
+
 	if (bleGapAdvBlockFind (&name, &len,
 	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME) != NRF_SUCCESS) {
 		name = (uint8_t *)"";
 		len = 0;
 	} else
 		name[len] = 0x00;
-
-	addr = &evt->evt.gap_evt.params.adv_report.peer_addr;
 
 	chsnprintf (peerid, sizeof(peerid), "%02x:%02x:%02x:%02x:%02x:%02x",
 	    addr->addr[5], addr->addr[4], addr->addr[3],
@@ -234,7 +235,7 @@ chat_event (OrchardAppContext *context,
 
 		if (radio->type == advertisementEvent) {
 			if (ui == getUiByName ("list") &&
-			    insert_peer (context, evt) != -1) {
+			    insert_peer (context, evt, radio) != -1) {
 				uiContext->selected = p->peers - 1;
 				e->type = uiEvent;
 				e->ui.flags = uiOK;
@@ -245,7 +246,31 @@ chat_event (OrchardAppContext *context,
 
 		if (radio->type == connectEvent) {
 			screen_alert_draw (FALSE, "Connected to peer...");
-			bleL2CapConnect (BLE_IDES_CHAT_PSM);
+
+			/*
+			 * There are two cases where we can get a GAP
+			 * connect event:
+			 * 1) we're trying to connect to a peer
+		 	 * 2) we're the peer and we accept a connection
+			 * In the first case, our role is "central"
+			 * and in the second our role is "peripheral."
+			 * Once the GAP connection is made, only one
+			 * side needs to establish an L2CAP connection,
+			 * so we only do that if we're the central.
+			 */
+
+			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
+				if (bleL2CapConnect (BLE_IDES_CHAT_PSM) !=
+				    NRF_SUCCESS) {
+					screen_alert_draw (FALSE,
+					    "L2CAP Connection refused!");
+					chThdSleepMilliseconds (1000);
+					ui = context->instance->ui;
+					if (ui != NULL)
+						ui->exit (context);
+					orchardAppExit ();
+				}
+			}
 			return;
 		}
 
@@ -256,6 +281,12 @@ chat_event (OrchardAppContext *context,
 			p->listitems[0] = "Type @ or press button to exit";
 			memset (p->txbuf, 0, sizeof(p->txbuf));
 			p->listitems[1] = p->txbuf;
+
+			/* Terminate the list UI. */
+
+			ui = context->instance->ui;
+			if (ui != NULL)
+				ui->exit (context);
 
 			/* Load the keyboard UI. */
 

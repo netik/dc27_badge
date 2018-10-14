@@ -9,6 +9,8 @@
 #include "orchard-events.h"
 #include "orchard-ui.h"
 
+#include "badge.h"
+
 orchard_app_start();
 orchard_app_end();
 
@@ -31,8 +33,15 @@ event_source_t orchard_app_key;
 
 static uint8_t ui_override = 0;
 static uint8_t orchard_pkt_busy;
-static OrchardAppRadioEvent radio_evt;
-static uint8_t radio_pkt[BLE_IDES_L2CAP_LEN];
+
+#define RADIO_QUEUE_LEN	8
+
+static uint8_t prod_idx = 0;
+static uint8_t cons_idx = 0;
+static uint8_t queue_cnt = 0;
+
+static OrchardAppRadioEvent * radio_evt[RADIO_QUEUE_LEN];
+static uint8_t * radio_pkt[RADIO_QUEUE_LEN];
 
 void orchardAppUgfxCallback (void * arg, GEvent * pe)
 {
@@ -65,7 +74,9 @@ static void ugfx_event(eventid_t id) {
 
 void orchardAppRadioCallback (OrchardAppRadioEventType type,
   ble_evt_t * evt, void * pkt, uint8_t len) {
-
+ 
+  OrchardAppRadioEvent * r_evt;
+ 
   if (instance.context == NULL)
     return;
 
@@ -75,17 +86,28 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
    * expand this to permit buffering of more frames, but for now
    * this seems sufficient.
    */
-  if (orchard_pkt_busy == 0) {
 
-    radio_evt.type = type;
-    radio_evt.pkt = radio_pkt;
+  if (queue_cnt < RADIO_QUEUE_LEN) {
+    r_evt = chHeapAlloc (NULL, sizeof(OrchardAppRadioEvent));
+    radio_evt[prod_idx] = r_evt;
+
+    r_evt->type = type;
+
     if (pkt != NULL)
-      memcpy (radio_evt.pkt, pkt, len);
-    if (evt != NULL)
-      memcpy (&radio_evt.evt, evt, sizeof(ble_evt_t));
+      {
+      radio_pkt[prod_idx] = chHeapAlloc (NULL, len);
+      r_evt->pkt = radio_pkt[prod_idx];
+      memcpy (r_evt->pkt, pkt, len);
+      r_evt->pktlen = len;
+      }
 
-    orchard_pkt_busy++;
-  } else
+    if (evt != NULL)
+      memcpy (&r_evt->evt, evt, sizeof(ble_evt_t));
+    queue_cnt++;
+    prod_idx++;
+    if (prod_idx == RADIO_QUEUE_LEN)
+        prod_idx = 0;
+ } else
     return;
 
   chEvtBroadcast (&orchard_app_radio);
@@ -95,14 +117,30 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
 
 static void radio_event(eventid_t id) {
   OrchardAppEvent evt;
+  OrchardAppRadioEvent * r_evt;
 
   (void) id;
 
   if (instance.context != NULL) {
     evt.type = radioEvent;
-    memcpy (&evt.radio, &radio_evt, sizeof(radio_evt));
-    instance.app->event (instance.context, &evt);
-    orchard_pkt_busy--;
+    while (queue_cnt) {
+
+        r_evt = radio_evt[cons_idx];
+        memcpy (&evt.radio, r_evt, sizeof(OrchardAppRadioEvent));
+        instance.app->event (instance.context, &evt);
+
+        chHeapFree (radio_evt[cons_idx]);
+        if (radio_pkt[cons_idx] != NULL)
+            chHeapFree (radio_pkt[cons_idx]);
+        radio_evt[cons_idx] = NULL;
+        radio_pkt[cons_idx] = NULL;
+
+        queue_cnt--;
+
+        cons_idx++;
+        if (cons_idx == RADIO_QUEUE_LEN)
+            cons_idx = 0;
+    }
   }
 
   return;

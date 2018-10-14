@@ -129,7 +129,7 @@ bleEventDispatch (ble_evt_t * evt)
 * RETURNS: N/A
 */
 
-static THD_WORKING_AREA(waSdThread, 384);
+static THD_WORKING_AREA(waSdThread, 512);
 static THD_FUNCTION(sdThread, arg)
 {
 	uint8_t * p_dest;
@@ -206,7 +206,7 @@ bleStart (void)
 	/* Create SoftDevice event thread */
 
 	chThdCreateStatic (waSdThread, sizeof(waSdThread),
-	    NORMALPRIO + 10, sdThread, NULL);
+	    HIGHPRIO, sdThread, NULL);
 
 	/* Set up SoftDevice ISR */
 
