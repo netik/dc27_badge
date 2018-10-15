@@ -7,6 +7,12 @@ a bare nRF52840 chip mounted. Functionally they are identical.
 
 Notes:
 
+- Rigado and Nordic both have their own development boards. The Nordic
+  one has the nRF52840 chip mounted directly on it. The Rigado board
+  has the Rigado BMD-340 module on it instead. But both use the same
+  headers and peripherals, so from a software perspective they should
+  be identical.
+
 - The nRF52840 has an extra bank of 16 GPIO pins, for a total of 48. These
   pins are accessed via a separate register block at offset 0x50000300. In
   ChibiOS these are referenced as IOPORT1 and IOPORT2. These are shown as two
@@ -29,12 +35,36 @@ Notes:
   but if it is it may be desirable to use this for holding ancillary data
   like fonts so that they can be drawn quickly.
 
+- The NRF52 chip has two places where you can connect crystals:
+
+  1) Two dedicated pins for a 32MHz crystal
+  2) The pins for P0.00 and P0.01, which can be used with a 32.768KHz
+     crystal
+
+  The chip has both a high speed clock and low speed clock. The 32MHz
+  crystal is always required for the high speed clock. This same clock
+  is used for the ARM CPU core and bus clocks. The low speed clock
+  has three possible sources:
+
+  1) Internal RC oscillator
+  2) External 32.768KHz crystal
+  3) Synthesized from 32MHz clock
+
+  For certain applications, like if you use the ANT stack, you are
+  required to use a 32.768KHz crystal for the low speed clock. The Nordic
+  and Rigado reference boards come with this crystal too. However for
+  our application (just using plain BLE), we technically don't need
+  this extra crystal: we can make do with just the 32MHz crystal for
+  the high speed clock. Note that the Rigado BMD-340 has the 32MHz
+  crystal inside the module while the Nordic reference design has
+  it on the main board instead.
+
 Port P0
 
 NRF52840 pin desgination		Function
 ------------------------		--------
-P0.00					XTAL (32Mhz)
-P0.01					XTAL (32Mhz)
+P0.00					XTAL (32.768KHz)
+P0.01					XTAL (32.768KHz)
 P0.02					<unused>
 P0.03					Touch CS
 P0.04					Screen C/D
@@ -86,3 +116,17 @@ P1.12					<unused>
 P1.13					<unused>
 P1.14					<unused>
 P1.15					<unused>
+
+For the ER-TFTM028-4 screen module
+
+NRF52840 GPIO pin       ER-TFTM028-4 display/touch/SD module pin
+-----------------       -----------------------------------------
+P0.31                   pin 23                  (Screen chip select)
+P0.30                   pins 27 and 34          (SPI bus out)
+P0.29                   pins 28 and 32          (SPI bus in)
+P0.28                   pins 24 and 33          (SPI bus clock)
+GND (header P1)         pin 1 and 40            (Ground)
+VDD (header P1)         pin 2                   (3.3v VCC)
+P0.04                   pin 25                  (Screen data/command select)
+P0.03                   pin 30                  (Touch chip select)
+P0.13                   pin 35                  (SD card chip select)
