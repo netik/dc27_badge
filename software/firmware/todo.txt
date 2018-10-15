@@ -1,0 +1,32 @@
+Things currently completed:
+
+- OS bootstrap
+- uGFX porting
+- FatFs porting
+- Nordic SoftDevice (BLE stack) porting
+- Application framework from DC25 badge porting
+- Bus master SPI controller driver
+- QSPI controller driver
+- I2S controller driver
+- 320x240 display support
+- SD card support
+- Resistive touch controller support
+- BLE radio GAP + L2CAP support
+- QSPI flash support (for 8MB MXIC flash chip on dev board)
+- audio playback API
+- Chat app 
+- Firmware update app
+- Firmware updater support
+- Support for extra GPIO bank on 52840 chip
+- joypad/button framework
+
+Things still to do:
+
+- BLE GATTC/GATTS support (?)
+- I2C support (ChibiOS has driver, have to enable+test it)
+- Put SD card/touch on a separate SPI bus (leave screen on SPIM4)
+- Extend button support to handle extra buttons requested by John
+- Setup app
+- Video app
+- Music player app
+- Game app
