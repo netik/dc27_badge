@@ -28,12 +28,15 @@ Notes:
 
 - Unlike the nRF52832 dev boards, the nRF52840 boards have a QSPI flash
   part connected to 6 pins (CS, clock and 4 I/O lines). The user guide
-  document tays this is a 64MB part. However I've seen at least one document
-  where it says it's only 4MB. When properly configured, the nRF52840 allows
-  code to be executed from the QSPI flash device. It's not clear yet if
-  simple loads/stores also work, i.e. the device is just simply memory-mapped,
-  but if it is it may be desirable to use this for holding ancillary data
-  like fonts so that they can be drawn quickly.
+  document tays this is a 64Mb part. This actually means 64 megabits.
+  That translates to 8MB. When properly configured, the nRF52840 allows
+  code to be executed from the QSPI flash device. The QSPI is can also be
+  memory-mapped. however the Nordic chip only allows a limited amount of
+  address space to be used for this purpose which restricts the mapped
+  range to about 128MB. This does not preculude the use of QSPI parts
+  larger than that, since read access can still be performed via the
+  QSPI controller inteface -- it just means that only 128MB may be
+  visible via the memory-mapped method.
 
 - The NRF52 chip has two places where you can connect crystals:
 
