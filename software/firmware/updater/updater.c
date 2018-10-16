@@ -230,9 +230,9 @@ updater (void)
 
 	/* Make sure all the SPI bus chip selects are in the right state */
 
-	IOPORT1->OUTSET = 1 << IOPORT1_SDCARD_CS;
-	IOPORT1->OUTSET = 1 << IOPORT1_SCREEN_CS;
-	IOPORT1->OUTSET = 1 << IOPORT1_TOUCH_CS;
+	palSetPad (IOPORT1, IOPORT1_SDCARD_CS);
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
 
 	/* Enable the PIT (for the fatfs timer) */
 
