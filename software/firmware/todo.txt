@@ -13,11 +13,12 @@ Things currently completed:
 - Resistive touch controller support
 - BLE radio GAP + L2CAP support
 - QSPI flash support (for 8MB MXIC flash chip on dev board)
+- NRF52840 on-board flash support
 - audio playback API
 - Chat app 
 - Firmware update app
 - Firmware updater support
-- Support for extra GPIO bank on 52840 chip
+- Support for extra GPIO bank on NRF52840 chip
 - joypad/button framework
 
 Things still to do:
