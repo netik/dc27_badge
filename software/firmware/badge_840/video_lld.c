@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2017-2018
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,12 +52,15 @@ videoPlay (char * fname)
 	pixel_t * buf;
 	pixel_t * p1;
 	pixel_t * p2;
+	pixel_t * p;
+	pixel_t * linebuf;
 	UINT br;
 	GListener gl;
 	GSourceHandle gs;
 	GEventMouse * me = NULL;
 
 	buf = chHeapAlloc (NULL, VID_CHUNK_BYTES * 2);
+	linebuf = chHeapAlloc (NULL, 640 * 2);
 
 	if (buf == NULL)
  		return (-1);
@@ -73,20 +76,6 @@ videoPlay (char * fname)
 	GDISP->p.cy = gdispGetHeight ();
 
 	gdisp_lld_write_start (GDISP);
-	gdisp_lld_write_stop (GDISP);
-
-	/*
-	 * Now that we've programmed the viewport, we set the X/Y
-	 * coordinates to special values that tell the
-	 * gdisp_lld_write_start function to skip programming
-	 * the viewport area again. This saves us from calling
-	 * the set_viewport() function for every scanline, which
-	 * would be redundant: we're always just drawing data to
-	 * the same window until the video compltes.
-	 */
-
-	GDISP->p.x = -1;
-	GDISP->p.y = -1;
 
 	gs = ginputGetMouse (0);
 	geventListenerInit (&gl);
@@ -115,24 +104,20 @@ videoPlay (char * fname)
 
 		asyncIoRead (&f, p2, VID_CHUNK_BYTES, &br);
 
-		gdisp_lld_write_start (GDISP);
-
 		/* Draw the current batch of lines to the screen */
 
-		for (j = 0; j < VID_CHUNK_LINES; j++) {
-			for (i = 0; i < 160; i++) {
-				GDISP->p.color = p1[i + (160 * j)];
-				gdisp_lld_write_color(GDISP);
-				gdisp_lld_write_color(GDISP);
-			}
-			for (i = 0; i < 160; i++) {
-				GDISP->p.color = p1[i + (160 * j)];
-				gdisp_lld_write_color(GDISP);
-				gdisp_lld_write_color(GDISP);
-			}
-		}
-      
-		gdisp_lld_write_stop (GDISP);
+                for (j = 0; j < VID_CHUNK_LINES; j++) {
+                        p = linebuf;
+                        for (i = 0; i < 160; i++) {
+                                *p = p1[i + (160 * j)];
+                                *(p + 320) = p1[i + (160 * j)];
+                                p++;
+                                *p = p1[i + (160 * j)];
+                                *(p + 320) = p1[i + (160 * j)];
+                                p++;
+                        }
+                        spiSend (&SPID4, 320*4, linebuf);
+                }
 
 		/* Switch to next waiting chunk */
 
@@ -155,8 +140,11 @@ videoPlay (char * fname)
 		/* Wait for sync timer to expire. */
 
 		while (gptGetCounterX (&GPTD2) < VID_TIMER_INTERVAL)
-			;
+			chThdSleep (1);
+		gptStopTimer (&GPTD2);
 	}
+
+	gdisp_lld_write_stop (GDISP);
 
 	geventDetachSource (&gl, NULL);
 
@@ -169,6 +157,7 @@ videoPlay (char * fname)
 	/* Release memory */
 
 	chHeapFree (buf);
+	chHeapFree (linebuf);
 
 	if (me != NULL && me->buttons & GMETA_MOUSE_DOWN)
 		return (-1);
