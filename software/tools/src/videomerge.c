@@ -8,21 +8,21 @@
  * for playback on the Nordic NRF52 using our video player. The video stream
  * is a file containing sequential 160x120 resolution frames in 16-bit RGB565
  * pixel format. The audio stream is a file containing a stream of 16-bit
- * audio samples encoded at a rate of 11520Hz, stored 16 bits per sample.
+ * audio samples encoded at a rate of 12500Hz, stored 16 bits per sample.
  */
 
-#define VID_FRAMES_PER_SEC		16
+#define VID_FRAMES_PER_SEC		12
 
 #define VID_PIXELS_PER_LINE		160
 #define VID_LINES_PER_FRAME		120
 
-#define VID_CHUNK_LINES			16
+#define VID_CHUNK_LINES			8
 
-#define VID_AUDIO_SAMPLES_PER_SCANLINE	6
+#define VID_AUDIO_SAMPLES_PER_SCANLINE	8
 
 #define VID_AUDIO_CHANNELS		1
 
-#define VID_AUDIO_SAMPLE_RATE		11520
+#define VID_AUDIO_SAMPLE_RATE		12500
 
 #define VID_AUDIO_SAMPLES_PER_CHUNK		\
 	(VID_AUDIO_SAMPLES_PER_SCANLINE * VID_CHUNK_LINES)

@@ -30,7 +30,7 @@
 rm -f $2/video.bin
 
 # Convert video to raw rgb565 pixel frames at 8 frames/sec
-ffmpeg -i "$1" -r 16 -s 160x120 -f rawvideo -pix_fmt rgb565be $2/video.bin
+ffmpeg -i "$1" -r 12 -s 160x120 -f rawvideo -pix_fmt rgb565be $2/video.bin
 
 # Extract audio
 ffmpeg -i "$1" -ac 1 -ar 12500 $2/sample.wav

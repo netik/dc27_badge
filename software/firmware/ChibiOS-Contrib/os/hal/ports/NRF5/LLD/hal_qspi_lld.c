@@ -270,10 +270,8 @@ qspi_lld_start(QSPIDriver *qspip)
 	port->INTENSET = QSPI_INTENSET_READY_Msk;
 	(void)port->INTENSET;
 
-	osalSysLock ();
 	port->TASKS_ACTIVATE = QSPI_TASKS_ACTIVATE_TASKS_ACTIVATE_Msk;
 	(void) osalThreadSuspendS(&qspip->thread);
-	osalSysUnlock ();
 
 	return;
 }
@@ -519,14 +517,25 @@ qspi_lld_map_flash(QSPIDriver *qspip,
 {
 	NRF_QSPI_Type * port;
 
-	/* We don't need to send any commands to enable XIP mode. */
-
-	(void)cmdp;
-
 	port = qspip->port;
 
 	qspi_lld_cmd (qspip, cmdp->cfg & QSPI_CFG_CMD_MASK,
 	    QSPI_CINSTRCONF_LENGTH_1B);
+
+	/*
+	 * For us, sending a command will trigger an interrupt
+	 * for when the command completes. However the hal_qspi.c
+	 * module doesn't account for this. We need to wait until
+	 * the interrupt triggers before we proceed though. The
+	 * map method in hal_qspi.c expects to set the device
+	 * state to QSPI_MEMMAP, but if the interrupt handler
+	 * runs after that, it will reset the state back to
+	 * QSPI_READY. Waiting for the interrupt here avoids
+	 * that. Note that the map method has already called
+	 * osalSysLock() so we don't need to do it again here.
+	 */
+
+	(void) osalThreadSuspendS(&qspip->thread);
 
 	port->XIPOFFSET = qspip->config->membase;
 
