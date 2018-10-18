@@ -84,8 +84,7 @@ THD_FUNCTION(i2sThread, arg)
 			continue;
 		}
 
-		i2sBuf = chHeapAlloc (NULL,
-		    (I2S_SAMPLES * sizeof(uint16_t)) * 2);
+		i2sBuf = chHeapAlloc (NULL, I2S_BYTES * 2);
 
 		/* Load the first block of samples. */
 
