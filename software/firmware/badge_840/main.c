@@ -382,6 +382,8 @@ int main(void)
 
     i2cStart (&I2CD2, &i2c2_config);
 
+    printf ("I2C interface enabled\r\n");
+
     /* Enable I2S controller */
 
     i2sStart ();
