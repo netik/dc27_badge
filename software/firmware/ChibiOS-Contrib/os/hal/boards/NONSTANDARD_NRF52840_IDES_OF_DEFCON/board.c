@@ -52,11 +52,11 @@ const PALConfig pal_default_config =
         PAL_MODE_OUTPUT_PULLUP,       /* P0.23: QSPI_DIO3      */
         PAL_MODE_INPUT_PULLUP,        /* P0.24: BTN3           */
         PAL_MODE_INPUT_PULLUP,        /* P0.25: BTN4           */
-        PAL_MODE_UNCONNECTED,         /* P0.26:                */
-        PAL_MODE_UNCONNECTED,         /* P0.27:                */
-        PAL_MODE_OUTPUT_PULLUP,       /* P0.28: SPI_SCK        */
-        PAL_MODE_INPUT_PULLUP,        /* P0.29: SPI_MISO       */
-        PAL_MODE_OUTPUT_PULLUP,       /* P0.30: SPI_MOSI       */
+        PAL_MODE_OUTPUT_OPENDRAIN,    /* P0.26: I2C SCK        */
+        PAL_MODE_OUTPUT_OPENDRAIN,    /* P0.27: I2C SDA        */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.28: SPI SCK        */
+        PAL_MODE_INPUT_PULLUP,        /* P0.29: SPI MISO       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.30: SPI MOSI       */
         PAL_MODE_OUTPUT_PULLUP,       /* P0.31: Screen CS      */
   },
   .port = IOPORT1
@@ -77,9 +77,9 @@ const PALConfig pal_default_config_p1 =
         PAL_MODE_OUTPUT_PULLUP,       /* P1.3 : I2S LRCK       */
         PAL_MODE_OUTPUT_PULLUP,       /* P1.4 : I2S MCK        */
         PAL_MODE_UNCONNECTED,         /* P1.5 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.6 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.7 :                */
-        PAL_MODE_UNCONNECTED,         /* P1.8 :                */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.6 : SPI SCK        */
+        PAL_MODE_INPUT_PULLUP,        /* P1.7 : SPI MISO       */
+        PAL_MODE_OUTPUT_PULLUP,       /* P1.8 : SPI MOSI       */
         PAL_MODE_UNCONNECTED,         /* P1.9 :                */
         PAL_MODE_UNCONNECTED,         /* P1.10:                */
         PAL_MODE_UNCONNECTED,         /* P1.11:                */

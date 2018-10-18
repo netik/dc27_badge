@@ -101,8 +101,8 @@
 
 /* Our definitions */
 
-#define IOPORT1_I2C_SCK         7U
-#define IOPORT1_I2C_SDA         8U
+#define IOPORT1_I2C_SCK        26U
+#define IOPORT1_I2C_SDA        27U
 
 #define IOPORT1_SPI_SCK        28U
 #define IOPORT1_SPI_MISO       29U
@@ -124,6 +124,10 @@
 #define IOPORT2_I2S_SCK         2U
 #define IOPORT2_I2S_LRCK        3U
 #define IOPORT2_I2S_MCK         4U
+
+#define IOPORT2_SPI_SCK         6U
+#define IOPORT2_SPI_MISO        7U
+#define IOPORT2_SPI_MOSI        8U
 
 /* Analog inpupt */
 #define IOPORT1_AIN0            2U

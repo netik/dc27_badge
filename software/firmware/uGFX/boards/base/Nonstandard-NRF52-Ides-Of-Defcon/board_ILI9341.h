@@ -17,12 +17,10 @@
 #include "hal.h"
 #include "hal_spi.h"
 
-#if (NRF5_SPI_USE_SPI0 == TRUE)
-#define SPI_BUS SPID1
-#endif
-
 #if (NRF5_SPI_USE_SPI3 == TRUE)
 #define SPI_BUS SPID4
+#else
+#define SPI_BUS SPID1
 #endif
 
 static void init_board(GDisplay *g) {

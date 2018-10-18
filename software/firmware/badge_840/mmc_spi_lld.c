@@ -126,7 +126,7 @@ BYTE xchg_spi (		/* Returns received data */
 	(void)SPID1.port->EVENTS_READY;
 	dat = SPID1.port->RXD;
 #else
-	spiExchange (&SPID4, 1, &dat, &dat);
+	spiExchange (&SPID1, 1, &dat, &dat);
 #endif
 	return (dat);
 }
@@ -150,7 +150,7 @@ void rcvr_spi_multi (
 		p[i] = SPID1.port->RXD;
 	}
 #else
-	spiReceive (&SPID4, cnt, p);
+	spiReceive (&SPID1, cnt, p);
 #endif
 	return;
 }
@@ -174,7 +174,7 @@ void xmit_spi_multi (
 		(void)SPID1.port->EVENTS_READY;
 	}
 #else
-	spiSend (&SPID4, cnt, p);
+	spiSend (&SPID1, cnt, p);
 #endif
 	return;
 }
@@ -334,7 +334,7 @@ BYTE send_cmd (		/* Returns R1 resp (bit7==1:Send failed) */
 	for (i = 0; i < 6; i++)
 		xchg_spi (cmdbuf[i]);
 #else
-	spiSend (&SPID4, 6, cmdbuf);
+	spiSend (&SPID1, 6, cmdbuf);
 #endif
 	/* Receive command response */
 	if (cmd == CMD12) xchg_spi(0xFF);		/* Skip a stuff byte when stop reading */
@@ -369,7 +369,7 @@ DSTATUS mmc_disk_initialize (void)
 	gptStopTimer (&GPTD3);
 	if (Stat & STA_NODISK) return Stat;	/* No card in the socket? */
 
-	spiAcquireBus (&SPID4);
+	spiAcquireBus (&SPID1);
 	gptStartContinuous (&GPTD3, NRF5_GPT_FREQ_62500HZ / 100);
 	power_on();							/* Turn on the socket power */
 	FCLK_SLOW();
@@ -410,7 +410,7 @@ DSTATUS mmc_disk_initialize (void)
 	}
 
 	gptStopTimer (&GPTD3);
-	spiReleaseBus (&SPID4);
+	spiReleaseBus (&SPID1);
 
 	return Stat;
 }
@@ -456,7 +456,7 @@ DRESULT mmc_disk_read (
 #else
 	cmd = count > 1 ? CMD18 : CMD17;			/*  READ_MULTIPLE_BLOCK : READ_SINGLE_BLOCK */
 #endif
-	spiAcquireBus (&SPID4);
+	spiAcquireBus (&SPID1);
 	gptStartContinuous (&GPTD3, NRF5_GPT_FREQ_62500HZ / 100);
 	if (send_cmd(cmd, sector) == 0) {
 		do {
@@ -470,7 +470,7 @@ DRESULT mmc_disk_read (
 	}
 	deselect();
 	gptStopTimer (&GPTD3);
-	spiReleaseBus (&SPID4);
+	spiReleaseBus (&SPID1);
 
 	return count ? RES_ERROR : RES_OK;
 }
@@ -494,7 +494,7 @@ DRESULT mmc_disk_write (
 
 	if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert to byte address if needed */
 
-	spiAcquireBus (&SPID4);
+	spiAcquireBus (&SPID1);
 	gptStartContinuous (&GPTD3, NRF5_GPT_FREQ_62500HZ / 100);
 	if (count == 1) {	/* Single block write */
 		if ((send_cmd(CMD24, sector) == 0)	/* WRITE_BLOCK */
@@ -514,7 +514,7 @@ DRESULT mmc_disk_write (
 	}
 	deselect();
 	gptStopTimer (&GPTD3);
-	spiReleaseBus (&SPID4);
+	spiReleaseBus (&SPID1);
 
 	return count ? RES_ERROR : RES_OK;
 }
@@ -542,7 +542,7 @@ DRESULT mmc_disk_ioctl (
 
 	if (Stat & STA_NOINIT) return RES_NOTRDY;
 
-	spiAcquireBus (&SPID4);
+	spiAcquireBus (&SPID1);
 	gptStartContinuous (&GPTD3, NRF5_GPT_FREQ_62500HZ / 100);
 	res = RES_ERROR;
 	switch (cmd) {
@@ -683,7 +683,7 @@ DRESULT mmc_disk_ioctl (
 	}
 
 	gptStopTimer (&GPTD3);
-	spiReleaseBus (&SPID4);
+	spiReleaseBus (&SPID1);
 	return res;
 }
 #endif

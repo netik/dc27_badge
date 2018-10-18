@@ -43,13 +43,25 @@ orchard_command_end();
 
 bool watchdog_started = false;
 
+static const SPIConfig spi1_config = {
+	NULL,			/* enc_cp */
+	NRF5_SPI_FREQ_8MBPS,	/* freq */
+	0x20|IOPORT2_SPI_SCK,	/* sckpad */
+	0x20|IOPORT2_SPI_MOSI,	/* mosipad */
+	0x20|IOPORT2_SPI_MISO,	/* misopad */
+	IOPORT1_SDCARD_CS,	/* sspad */
+	FALSE,			/* lsbfirst */
+	2,			/* mode */
+	0xFF			/* dummy data for spiIgnore() */
+};
+
 static const SPIConfig spi4_config = {
 	NULL,			/* enc_cp */
 	NRF5_SPI_FREQ_32MBPS,	/* freq */
 	IOPORT1_SPI_SCK,	/* sckpad */
 	IOPORT1_SPI_MOSI,	/* mosipad */
 	IOPORT1_SPI_MISO,	/* misopad */
-	IOPORT1_SDCARD_CS,	/* sspad */
+	IOPORT1_SCREEN_CS,	/* sspad */
 	FALSE,			/* lsbfirst */
 	2,			/* mode */
 	0xFF			/* dummy data for spiIgnore() */
@@ -305,6 +317,9 @@ int main(void)
 
     asyncIoStart ();
 
+    /* Start SPI buses */
+
+    spiStart (&SPID1, &spi1_config);
     spiStart (&SPID4, &spi4_config);
 
     /* Enable QSPI flash */
@@ -363,9 +378,7 @@ int main(void)
       printf ("PROGRAM FAILED...\r\n");
 #endif
 
-#ifdef notyet
     i2cStart (&I2CD2, &i2c2_config);
-#endif
 
     /* Enable I2S controller */
 
