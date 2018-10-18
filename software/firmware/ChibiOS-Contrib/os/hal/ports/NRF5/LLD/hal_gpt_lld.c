@@ -69,7 +69,7 @@ GPTDriver GPTD3;
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
-static uint8_t prescaler(uint16_t freq)
+static uint8_t prescaler(gptfreq_t freq)
 {
   uint8_t i;
   static const gptfreq_t frequencies[] = {
