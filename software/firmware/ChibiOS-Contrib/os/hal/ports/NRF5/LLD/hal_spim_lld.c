@@ -89,13 +89,13 @@ static void port_fifo_preload(SPIDriver *spip)
 	port->TXD.PTR = (uint32_t)spip->txptr;
 	port->RXD.PTR = (uint32_t)spip->rxptr;
 
-	if (spip->txcnt > NRF5_SPIM_DMA_CHUNK)
-		port->TXD.MAXCNT = NRF5_SPIM_DMA_CHUNK;
+	if (spip->txcnt > spip->chunk)
+		port->TXD.MAXCNT = spip->chunk;
 	else
 		port->TXD.MAXCNT = spip->txcnt;
 
-	if (spip->rxcnt > NRF5_SPIM_DMA_CHUNK)
-		port->RXD.MAXCNT = NRF5_SPIM_DMA_CHUNK;
+	if (spip->rxcnt > spip->chunk)
+		port->RXD.MAXCNT = spip->chunk;
 	else
 		port->RXD.MAXCNT = spip->rxcnt;
 
@@ -139,9 +139,9 @@ static void serve_interrupt(SPIDriver *spip)
 		 */
 
 		if (spip->txcnt != 0 || spip->rxcnt != 0) {
-			if (spip->txcnt < NRF5_SPIM_DMA_CHUNK)
+			if (spip->txcnt < spip->chunk)
 				port->TXD.MAXCNT = spip->txcnt;
-			if (spip->rxcnt < NRF5_SPIM_DMA_CHUNK)
+			if (spip->rxcnt < spip->chunk)
 				port->RXD.MAXCNT = spip->rxcnt;
 			spip->port->TASKS_START = 1;
 		} else
@@ -229,18 +229,22 @@ void spi_lld_init(void)
 #if NRF5_SPI_USE_SPI0
 	spiObjectInit(&SPID1);
 	SPID1.port = NRF_SPIM0;
+	SPID1.chunk = NRF5_SPIM_SLOW_DMA_CHUNK;
 #endif
 #if NRF5_SPI_USE_SPI1
 	spiObjectInit(&SPID2);
 	SPID2.port = NRF_SPIM1;
+	SPID2.chunk = NRF5_SPIM_SLOW_DMA_CHUNK;
 #endif
 #if NRF5_SPI_USE_SPI2
 	spiObjectInit(&SPID3);
 	SPID3.port = NRF_SPIM2;
+	SPID3.chunk = NRF5_SPIM_SLOW_DMA_CHUNK;
 #endif
 #if NRF5_SPI_USE_SPI3
 	spiObjectInit(&SPID4);
 	SPID4.port = NRF_SPIM3;
+	SPID4.chunk = NRF5_SPIM_FAST_DMA_CHUNK;
 #endif
 }
 

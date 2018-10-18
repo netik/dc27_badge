@@ -92,11 +92,11 @@ P0.22					QSPI DIO2
 P0.23					QSPI DIO3
 P0.24					BTN3
 P0.25					BTN4
-P0.26					<unused>
-P0.27					<unused>
-P0.28					SPI_SCK
-P0.29					SPI_MISO
-P0.30					SPI_MOSI
+P0.26					I2C SCK
+P0.27					I2C SDA
+P0.28					SPI SCK (Screen)
+P0.29					SPI MISO (Screen)
+P0.30					SPI MOSI (Screen)
 P0.31					Screen CS
 
 Port P1
@@ -109,9 +109,9 @@ P1.02					I2S SCK
 P1.03					I2S LRCK
 P1.04					I2S MCK
 P1.05					<unused>
-P1.06					<unused>
-P1.07					<unused>
-P1.08					<unused>
+P1.06					SPI SCK (SD/touch)
+P1.07					SPI MISO (SD/touch)
+P1.08					SPI MOSI (SD/touch)
 P1.09					<unused>
 P1.10					<unused>
 P1.11					<unused>
@@ -123,11 +123,14 @@ P1.15					<unused>
 For the ER-TFTM028-4 screen module
 
 NRF52840 GPIO pin       ER-TFTM028-4 display/touch/SD module pin
------------------       -----------------------------------------
+-----------------       -----------------------------------------------------
 P0.31                   pin 23                  (Screen chip select)
-P0.30                   pins 27 and 34          (SPI bus out)
-P0.29                   pins 28 and 32          (SPI bus in)
-P0.28                   pins 24 and 33          (SPI bus clock)
+P0.30                   pin 27                  (SPI bus out -- screen)
+P0.29                   pin 28                  (SPI bus in -- screen)
+P0.28                   pin 24                  (SPI bus clock -- screen)
+P1.08                   pin 34                  (SPI bus out -- SD/touch)
+P1.07                   pin 32                  (SPI bus in -- SD/touch)
+P1.06                   pin 33                  (SPI bus clock -- SD/touch)
 GND (header P1)         pin 1 and 40            (Ground)
 VDD (header P1)         pin 2                   (3.3v VCC)
 P0.04                   pin 25                  (Screen data/command select)

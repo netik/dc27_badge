@@ -94,8 +94,15 @@
 /**
  * @brief   Set NRF52832 DMA chunk size
  */
-#if !defined(NRF5_SPIM_DMA_CHUNK) || defined(__DOXYGEN__)
-#define NRF5_SPIM_DMA_CHUNK              128
+#if !defined(NRF5_SPIM_SLOW_DMA_CHUNK) || defined(__DOXYGEN__)
+#define NRF5_SPIM_SLOW_DMA_CHUNK              128
+#endif
+
+/**
+ * @brief   Set NRF52840 DMA chunk size
+ */
+#if !defined(NRF5_SPIM_FAST_DMA_CHUNK) || defined(__DOXYGEN__)
+#define NRF5_SPIM_FAST_DMA_CHUNK              128
 #endif
 
 /**
@@ -296,6 +303,10 @@ struct SPIDriver {
    * @brief Transmit pointer or @p NULL.
    */
   const void            *txptr;
+  /**
+   * @brief Maximum DMA chunk size
+   */
+  uint32_t		chunk;
 };
 
 /*===========================================================================*/
