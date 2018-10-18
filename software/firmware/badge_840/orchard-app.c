@@ -107,7 +107,7 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
     prod_idx++;
     if (prod_idx == RADIO_QUEUE_LEN)
         prod_idx = 0;
- } else
+  } else
     return;
 
   chEvtBroadcast (&orchard_app_radio);
@@ -275,7 +275,7 @@ void orchardAppTimer(const OrchardAppContext *context,
 // Please don't modify this unless absolutely necessary. I will figure
 // out how to reduce stack usage in app-fight.c 
 
-static THD_WORKING_AREA(waOrchardAppThread, 0x400);
+static THD_WORKING_AREA(waOrchardAppThread, 1280);
 static THD_FUNCTION(orchard_app_thread, arg) {
 
   struct orchard_app_instance *instance = arg;
