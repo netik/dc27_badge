@@ -155,8 +155,8 @@ static void shellRestart(void)
 	if (shell_tp && chThdTerminatedX(shell_tp))
 		chThdRelease(shell_tp);
 
-    	shell_tp = chThdCreateStatic (shell_wa, sizeof(shell_wa), NORMALPRIO + 5,
-	    shellThread, (void *)&shellConfig);
+    	shell_tp = chThdCreateStatic (shell_wa, sizeof(shell_wa),
+	    NORMALPRIO + 5, shellThread, (void *)&shellConfig);
 
 	return;
 }
@@ -184,7 +184,7 @@ static THD_FUNCTION(Thread1, arg) {
     (void)arg;
     uint8_t led = LED4;
     
-    chRegSetThreadName("blinker");
+    chRegSetThreadName ("blinker");
 
     while (1) {
 	palTogglePad(IOPORT1, led);
@@ -326,7 +326,6 @@ int main(void)
 
     m25qObjectInit (&FLASHD1);
     m25qStart (&FLASHD1, &m25qcfg1);
-    m25qMemoryMap (&FLASHD1, &memp);
 
     /*
      * Macronix NOR flash parts default to single-I/O line out of the
@@ -337,7 +336,7 @@ int main(void)
      * anything.
      */
 
-    cmd.cfg = QSPI_CMD_READ_STATUS_REGISTER;
+    cmd.cfg = QSPI_CMD_READ_STATUS_REGISTER | QSPI_CFG_DATA_MODE_FOUR_LINES;
     cmd.addr = 0;
     cmd.alt = 0;
     qspiReceive (&QSPID1, &cmd, 1, &reg);
@@ -346,6 +345,7 @@ int main(void)
         qspiSend (&QSPID1, &cmd, 1, &reg);
     }
  
+    m25qMemoryMap (&FLASHD1, &memp);
     pFlash = flashGetDescriptor (&FLASHD1);
 
     if (pFlash->sectors_count > 0) {
@@ -353,6 +353,8 @@ int main(void)
             (pFlash->sectors_count * pFlash->sectors_size) >> 20,
 	    pFlash->address);
     }
+
+    m25qMemoryUnmap (&FLASHD1);
 
     /* Enable on-board flash */
 
