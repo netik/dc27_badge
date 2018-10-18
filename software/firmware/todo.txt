@@ -20,12 +20,12 @@ Things currently completed:
 - Firmware updater support
 - Support for extra GPIO bank on NRF52840 chip
 - joypad/button framework
+- Put SD card/touch on a separate SPI bus (leave screen on SPIM4)
+- I2C support (need to test
 
 Things still to do:
 
 - BLE GATTC/GATTS support (?)
-- I2C support (ChibiOS has driver, have to enable+test it)
-- Put SD card/touch on a separate SPI bus (leave screen on SPIM4)
 - Extend button support to handle extra buttons requested by John
 - Setup app
 - Video app
