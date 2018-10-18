@@ -44,7 +44,6 @@
 
 extern M25QDriver FLASHD1;
 
-static uint8_t * pMem;
 static uint32_t disk_size;
 
 DSTATUS
@@ -60,11 +59,6 @@ qspi_disk_initialize (void)
 	/* Get the disk size */
 
 	disk_size = pFlash->sectors_count * pFlash->sectors_size;
-
-	/* Get the pointer for the XIP mapped region. */
-
-	m25qMemoryUnmap (&FLASHD1);
-	m25qMemoryMap (&FLASHD1, &pMem);
 
 	return (RES_OK);
 }
@@ -104,12 +98,8 @@ qspi_disk_write (
 {
 	int r;
 
-	m25qMemoryUnmap (&FLASHD1);
-
 	r = flashProgram (&FLASHD1, sector * SECTOR_SIZE,
 	    count * SECTOR_SIZE, buff);
-
-	m25qMemoryMap (&FLASHD1, &pMem);
 
 	if (r == FLASH_NO_ERROR)
 		return (RES_OK);
