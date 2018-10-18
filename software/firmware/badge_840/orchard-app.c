@@ -36,9 +36,9 @@ static uint8_t orchard_pkt_busy;
 
 #define RADIO_QUEUE_LEN	8
 
-static uint8_t prod_idx = 0;
-static uint8_t cons_idx = 0;
-static uint8_t queue_cnt = 0;
+static uint8_t prod_idx;
+static uint8_t cons_idx;
+static uint8_t queue_cnt;
 
 static OrchardAppRadioEvent * radio_evt[RADIO_QUEUE_LEN];
 static uint8_t * radio_pkt[RADIO_QUEUE_LEN];
@@ -320,6 +320,16 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   } else {
     app_context.priv = NULL;
   }
+
+  /*
+   * Initialize the radio event queue.
+   * Note: Any events left unserviced by previous app
+   * are discarded.
+   */
+
+  prod_idx = 0;
+  cons_idx = 0;
+  queue_cnt = 0;
 
   if (instance->app->start)
     instance->app->start(&app_context);
