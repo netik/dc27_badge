@@ -115,6 +115,7 @@ static const qspi_command_t m25q_cmd_read_id = {
 };
 
 /* Initial M25Q_CMD_WRITE_ENHANCED_V_CONF_REGISTER command.*/
+#if M25Q_SWITCH_WIDTH == TRUE
 static const qspi_command_t m25q_cmd_write_evconf = {
   .cfg              = QSPI_CFG_CMD(M25Q_CMD_WRITE_ENHANCED_V_CONF_REGISTER) |
 #if M25Q_SWITCH_WIDTH == TRUE
@@ -135,7 +136,9 @@ static const qspi_command_t m25q_cmd_write_evconf = {
   .addr             = 0,
   .alt              = 0
 };
+#endif
 
+#if M25Q_SWITCH_WIDTH == TRUE
 /* Initial M25Q_CMD_WRITE_ENABLE command.*/
 static const qspi_command_t m25q_cmd_write_enable = {
   .cfg              = QSPI_CFG_CMD(M25Q_CMD_WRITE_ENABLE) |
@@ -153,8 +156,10 @@ static const qspi_command_t m25q_cmd_write_enable = {
   .addr             = 0,
   .alt              = 0
 };
+#endif
 
 /* Bus width initialization.*/
+#if M25Q_SWITCH_WIDTH == TRUE
 #if JESD216_BUS_MODE == JESD216_BUS_MODE_QSPI1L
 static const uint8_t m25q_evconf_value[1] = {0xCF};
 #elif JESD216_BUS_MODE == JESD216_BUS_MODE_QSPI2L
@@ -163,6 +168,7 @@ static const uint8_t m25q_evconf_value[1] = {0x8F};
 static const uint8_t m25q_evconf_value[1] = {0x4F};
 #endif
 #endif /* JESD216_BUS_MODE != JESD216_BUS_MODE_SPI */
+#endif /* M25Q_SWITCH_WIDTH */
 
 static const uint8_t m25q_manufacturer_ids[] = M25Q_SUPPORTED_MANUFACTURE_IDS;
 static const uint8_t m25q_memory_type_ids[] = M25Q_SUPPORTED_MEMORY_TYPE_IDS;
