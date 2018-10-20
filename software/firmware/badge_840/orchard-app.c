@@ -32,7 +32,6 @@ event_source_t orchard_app_radio;
 event_source_t orchard_app_key;
 
 static uint8_t ui_override = 0;
-static uint8_t orchard_pkt_busy;
 
 #define RADIO_QUEUE_LEN	8
 
@@ -72,6 +71,24 @@ static void ugfx_event(eventid_t id) {
   return;
 }
 
+static void flush_radio_queue (void) {
+  int i;
+
+  for (i = 0; i < RADIO_QUEUE_LEN; i++) {
+    if (radio_evt[i] != NULL)
+        chHeapFree (radio_evt[i]);
+    radio_evt[i] = NULL;
+    if (radio_pkt[i] != NULL)
+        chHeapFree (radio_pkt[i]);
+    radio_pkt[i] = NULL;
+  }
+
+  prod_idx = 0;
+  cons_idx = 0;
+  queue_cnt = 0;
+
+  return;
+}
 void orchardAppRadioCallback (OrchardAppRadioEventType type,
   ble_evt_t * evt, void * pkt, uint8_t len) {
  
@@ -171,7 +188,7 @@ static void terminate(eventid_t id) {
   evt.app.event = appTerminate;
   instance.app->event(instance.context, &evt);
 
-  orchard_pkt_busy = 0;
+  flush_radio_queue ();
 
   chThdTerminate(instance.thr);
 }
@@ -327,9 +344,7 @@ static THD_FUNCTION(orchard_app_thread, arg) {
    * are discarded.
    */
 
-  prod_idx = 0;
-  cons_idx = 0;
-  queue_cnt = 0;
+  flush_radio_queue ();
 
   if (instance->app->start)
     instance->app->start(&app_context);
@@ -366,8 +381,6 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   evtTableUnhook(orchard_app_events, orchard_app_radio, radio_event);
   /*evtTableUnhook(orchard_app_events, orchard_app_key, key_event);*/
  
-  orchard_pkt_busy = 0;
-
   /* Atomically broadcasting the event source and terminating the thread,
      there is not a chSysUnlock() because the thread terminates upon return.*/
 
