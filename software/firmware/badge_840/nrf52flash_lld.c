@@ -98,6 +98,7 @@ nrf52_read (void *instance, flash_offset_t offset, size_t n, uint8_t *rp)
 		return (FLASH_ERROR_PROGRAM);
 	}
 
+	p = (uint8_t *)nrf52_descriptor.address;
 	memcpy (rp, p + offset, n);
 
 	osalMutexUnlock (&devp->mutex);
