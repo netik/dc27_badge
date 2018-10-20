@@ -51,7 +51,7 @@
 /*===========================================================================*/
 
 /** @brief QSPID1 driver identifier.*/
-#if (NRF5_QSPI_USE_QSPI1 == TRUE) || defined(__DOXYGEN__)
+#if (NRF5_QSPI_USE_QSPI0 == TRUE) || defined(__DOXYGEN__)
 QSPIDriver QSPID1;
 #endif
 
@@ -172,7 +172,7 @@ qspi_lld_cmd(QSPIDriver *qspip, uint8_t opcode, uint8_t len)
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
 
-#if NRF5_QSPI_USE_QSPI1 || defined(__DOXYGEN__)
+#if NRF5_QSPI_USE_QSPI0 || defined(__DOXYGEN__)
 /**
  * @brief   QSPI0 interrupt handler.
  *
@@ -201,7 +201,7 @@ void
 qspi_lld_init(void)
 {
 
-#if NRF5_QSPI_USE_QSPI1
+#if NRF5_QSPI_USE_QSPI0
 	QSPID1.port = NRF_QSPI;
 	qspiObjectInit(&QSPID1);
 #endif
@@ -222,10 +222,10 @@ qspi_lld_start(QSPIDriver *qspip)
 
 	/* If in stopped state then full initialization.*/
 	if (qspip->state == QSPI_STOP) {
-#if NRF5_QSPI_USE_QSPI1
+#if NRF5_QSPI_USE_QSPI0
 		if (&QSPID1 == qspip) {
 			nvicEnableVector (QSPI_IRQn,
-			    NRF5_QSPI_QSPI3_IRQ_PRIORITY);
+			    NRF5_QSPI_QSPI0_IRQ_PRIORITY);
 		}
 #endif
 
@@ -304,7 +304,7 @@ qspi_lld_stop(QSPIDriver *qspip)
 		port->ENABLE = 0;
 
 		/* Stopping involved clocks.*/
-#if NRF5_QSPI_USE_QSPI1
+#if NRF5_QSPI_USE_QSPI0
 		if (&QSPID1 == qspip)
 			nvicDisableVector (QSPI_IRQn);
 #endif

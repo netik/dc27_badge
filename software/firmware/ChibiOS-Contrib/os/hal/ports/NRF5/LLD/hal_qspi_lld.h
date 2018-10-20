@@ -92,8 +92,8 @@
  * @details If set to @p TRUE the support for QSPID1 is included.
  * @note    The default is @p FALSE.
  */
-#if !defined(NRF5_QSPI_USE_QSPI1) || defined(__DOXYGEN__)
-#define NRF5_QSPI_USE_QSPI1             FALSE
+#if !defined(NRF5_QSPI_USE_QSPI0) || defined(__DOXYGEN__)
+#define NRF5_QSPI_USE_QSPI0             FALSE
 #endif
 /** @} */
 
@@ -101,7 +101,7 @@
  * @brief   QSPI0 interrupt priority level setting.
  */
 #if !defined(NRF5_QSPI_QSPI0_IRQ_PRIORITY) || defined(__DOXYGEN__)
-#define NRF5_QSPI_QSPI3_IRQ_PRIORITY    3
+#define NRF5_QSPI_QSPI0_IRQ_PRIORITY    3
 #endif
 
 /*===========================================================================*/
@@ -192,7 +192,7 @@ struct QSPIDriver {
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-#if (NRF5_QSPI_USE_QSPI1 == TRUE) && !defined(__DOXYGEN__)
+#if (NRF5_QSPI_USE_QSPI0 == TRUE) && !defined(__DOXYGEN__)
 extern QSPIDriver QSPID1;
 #endif
 
