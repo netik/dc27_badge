@@ -28,6 +28,7 @@
 #define HAL_ST_LLD_H
 
 #include "halconf.h"
+#include "halconf_community.h"
 
 /*===========================================================================*/
 /* Driver constants.                                                         */
@@ -67,7 +68,7 @@
  * @brief   ST interrupt priority level setting.
  */
 #if !defined(NRF5_ST_PRIORITY) || defined(__DOXYGEN__)
-#if !defined(SOFTDEVICE_PRESENT)
+#if HAL_USE_SOFTDEVICE == FALSE
 #define NRF5_ST_PRIORITY        CORTEX_MAX_KERNEL_PRIORITY
 #else
 #define NRF5_ST_PRIORITY        1
@@ -95,7 +96,7 @@
 #error "Only one clock source can be used (RTC0, RTC1, or TIMER0)"
 #endif
 
-#if defined(SOFTDEVICE_PRESENT)
+#if HAL_USE_SOFTDEVICE == TRUE
 #if NRF5_ST_USE_RTC0 == TRUE
 #error "RTC0 cannot be used for system ticks when SOFTDEVICE present"
 #endif
@@ -104,11 +105,20 @@
 #error "TIMER0 cannot be used for system ticks when SOFTDEVICE present"
 #endif
 
+/*
+ * Using priority of 1 for the systick timer results in ChibiOS
+ * complaining about "priority order violations" when the SoftDevice
+ * is enabled, so we need to be able to override it from the BSP.
+ * So for now this restriction is turned off.
+ */
+
+#ifdef notdef
 #if NRF5_ST_PRIORITY != 1
 #error "ST priority must be 1 when SOFTDEVICE present"
 #endif
+#endif
 
-#endif /* defined(SOFTDEVICE_PRESENT) */
+#endif /* defined(HAL_USE_SOFTDEVICE) */
 #endif /* OSAL_ST_MODE != OSAL_ST_MODE_NONE */
 
 #if OSAL_ST_MODE == OSAL_ST_MODE_FREERUNNING

@@ -18,6 +18,10 @@
 #ifndef _HALCONF_COMMUNITY_H_
 #define _HALCONF_COMMUNITY_H_
 
+#if !defined(HAL_USE_SOFTDEVICE) || defined(__DOXYGEN__)
+#define HAL_USE_SOFTDEVICE TRUE
+#endif
+
 
 /**
  * @brief   Enables the community overlay.
@@ -31,7 +35,7 @@
  * @brief   Enables the community subsystem.
  */
 #if !defined(HAL_USE_RNG) || defined(__DOXYGEN__)
-#ifdef NRF5_RAND_SOFTDEVICE
+#if HAL_USE_SOFTDEVICE == TRUE
 #define HAL_USE_RNG                 FALSE
 #else
 #define HAL_USE_RNG                 TRUE
@@ -61,9 +65,6 @@
 
 
 
-
-
-#define HAL_USE_SOFTDEVICE TRUE
 
 #define HAL_USE_CAPSENSE TRUE
 #define CAPSENSE_USE_WAIT TRUE

@@ -191,7 +191,7 @@ i2sStart (void)
 	NRF_I2S->PSEL.LRCK = 0x20 | IOPORT2_I2S_LRCK;
 	NRF_I2S->PSEL.MCK = 0x20 | IOPORT2_I2S_MCK;
 
-	nvicEnableVector (I2S_IRQn, 5);
+	nvicEnableVector (I2S_IRQn, NRF5_I2S_IRQ_PRIORITY);
 
 	NRF_I2S->ENABLE = 1;
 
