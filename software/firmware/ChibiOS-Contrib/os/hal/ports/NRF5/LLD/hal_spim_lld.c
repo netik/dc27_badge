@@ -278,7 +278,7 @@ void spi_lld_start(SPIDriver *spip)
 #if NRF5_SPI_USE_SPI3
 	if (&SPID4 == spip)
 		nvicEnableVector(SPIM3_IRQn,
-		    NRF5_SPI_SPI2_IRQ_PRIORITY);
+		    NRF5_SPI_SPI3_IRQ_PRIORITY);
 #endif
 	}
 
