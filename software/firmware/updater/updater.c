@@ -162,9 +162,9 @@ static const GPTConfig gpt2_config = {
 static const SPIConfig spi1_config = {
  	NULL,			/* enc_cp */
 	NRF5_SPI_FREQ_8MBPS,	/* freq */
-	IOPORT1_SPI_SCK,	/* sckpad */
-	IOPORT1_SPI_MOSI,	/* mosipad */
-	IOPORT1_SPI_MISO,	/* misopad */
+	0x20|IOPORT2_SPI_SCK,	/* sckpad */
+	0x20|IOPORT2_SPI_MOSI,	/* mosipad */
+	0x20|IOPORT2_SPI_MISO,	/* misopad */
 	IOPORT1_SDCARD_CS,	/* sspad */
 	FALSE,			/* lsbfirst */
 	2,			/* mode */
