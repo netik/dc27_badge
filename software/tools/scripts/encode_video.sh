@@ -22,8 +22,8 @@
 # The destination directory must already exist
 #
 # The video will have an absolute resolution of 160x120 pixels and
-# a frame rate of 16 frames per second. These values have been chosen
-# to coincide with the audio sample rate of 11520Hz. The video
+# a frame rate of 13 frames per second. These values have been chosen
+# to coincide with the audio sample rate of 15625Hz. The video
 # and audio will be synchronized during playback.
 #
 
