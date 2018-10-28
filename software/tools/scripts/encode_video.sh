@@ -44,4 +44,4 @@ sox --encoding signed-integer $2/sample.wav $2/sample.raw channels 2
 # Now merge the video and audio into a single file
 ./bin/videomerge $2/video.bin $2/sample.skip $2/video.vid
 
-rm -f $2/video.bin $2/sample.wav $2/sample.u16 $2/sample.raw
+rm -f $2/video.bin $2/sample.wav $2/sample.u16 $2/sample.raw $2/sample.skip
