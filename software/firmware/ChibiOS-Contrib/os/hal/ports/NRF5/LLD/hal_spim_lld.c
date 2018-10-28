@@ -461,7 +461,6 @@ void spi_lld_ignore(SPIDriver *spip, size_t n)
 		NRF_PPI->CHENSET = 1 << NRF5_ANOM58_PPI;
 #endif
 	spip->port->TASKS_START = 1;
-	__DSB();
 	return;
 }
 
@@ -492,7 +491,6 @@ void spi_lld_exchange(SPIDriver *spip, size_t n,
 		NRF_PPI->CHENSET = 1 << NRF5_ANOM58_PPI;
 #endif
 	spip->port->TASKS_START = 1;
-	__DSB();
 	return;
 }
 

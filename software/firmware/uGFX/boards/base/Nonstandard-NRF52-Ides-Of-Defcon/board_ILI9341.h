@@ -73,16 +73,19 @@ static void write_index(GDisplay *g, uint16_t index) {
 	b = index & 0xFF;
 
 	palClearPad (IOPORT1, IOPORT1_SCREEN_CD);
+	__DSB();
 
 	SPI_BUS.port->INTENCLR = SPIM_INTENSET_END_Msk;
 	(void)SPI_BUS.port->INTENCLR;
 	spi_lld_send (&SPI_BUS, 1, &b);
 	while (SPI_BUS.port->TXD.MAXCNT != SPI_BUS.port->TXD.AMOUNT)
 		;
+	__DSB();
 	SPI_BUS.port->INTENSET = SPIM_INTENSET_END_Msk;
 	(void)SPI_BUS.port->INTENSET;
 
 	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
+	__DSB();
 
 #endif
 	(void) g;
@@ -101,6 +104,7 @@ static void write_data(GDisplay *g, uint16_t data) {
 	spi_lld_send (&SPI_BUS, 1, &b);
 	while (SPI_BUS.port->TXD.MAXCNT != SPI_BUS.port->TXD.AMOUNT)
 		;
+	__DSB();
 	SPI_BUS.port->INTENSET = SPIM_INTENSET_END_Msk;
 	(void)SPI_BUS.port->INTENSET;
 #endif
