@@ -103,10 +103,10 @@ THD_FUNCTION(i2sThread, arg)
 			/* Start the samples playing */
 
 			if (start == 0) {
-				i2sSamplesSend (p, I2S_SAMPLES / 2);
+				i2sSamplesSend (p, I2S_SAMPLES);
 				start = 1;
 			} else
-				i2sSamplesNext (p, I2S_SAMPLES / 2);
+				i2sSamplesNext (p, I2S_SAMPLES);
 
 			/* Swap buffers and load the next block of samples */
 
@@ -157,10 +157,24 @@ i2sStart (void)
 {
 	NRF_I2S->CONFIG.TXEN = I2S_CONFIG_TXEN_TXEN_Msk;
 
-	NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV10 <<
+	/*
+	 * Select master clock and Left/Right clock frequencies.
+	 * The I2S peripheral is fed with a 32MHz bus clock. We can
+	 * choose various divisors for it. From that, we can then
+	 * derive the Left/Right clock by selecting a further divisor
+	 * ratio.
+	 *
+	 * We want a sample rate of approximately 16KHz. Using the 32MDIV8
+	 * gives us a master clock of 4MHz. And a L/R divisor of 256
+	 * gives us 15.625MHz. This is close enough.
+	 */
+
+	NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV8 <<
 	    I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
 	NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_256X <<
 	    I2S_CONFIG_RATIO_RATIO_Pos;
+
+	/* Select master mode. */
 
 	NRF_I2S->CONFIG.MODE = 0;
 
@@ -179,9 +193,9 @@ i2sStart (void)
 	NRF_I2S->CONFIG.FORMAT = I2S_CONFIG_FORMAT_FORMAT_I2S <<
 	    I2S_CONFIG_FORMAT_FORMAT_Pos;
 
-	/* Use stereo */
+	/* John wants stero so we do stereo. :) */
 
-	NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Left <<
+	NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Stereo <<
 	    I2S_CONFIG_CHANNELS_CHANNELS_Pos;
 
 	/* Configure pins */
@@ -191,9 +205,15 @@ i2sStart (void)
 	NRF_I2S->PSEL.LRCK = 0x20 | IOPORT2_I2S_LRCK;
 	NRF_I2S->PSEL.MCK = 0x20 | IOPORT2_I2S_MCK;
 
+	/* Configure NVIC to enable the I2S interrupt vector. */
+
 	nvicEnableVector (I2S_IRQn, NRF5_I2S_IRQ_PRIORITY);
 
+	/* Turn on the peripheral. */
+
 	NRF_I2S->ENABLE = 1;
+
+	/* Launch the player thread. */
 
 	pThread = chThdCreateStatic (waI2sThread, sizeof(waI2sThread),
 	    I2S_THREAD_PRIO, i2sThread, NULL);
@@ -237,7 +257,7 @@ i2sSamplesSend (void * buf, int cnt)
 {
 	NRF_I2S->PSEL.SCK = 0x20 | IOPORT2_I2S_SCK;
 	NRF_I2S->TXD.PTR = (uint32_t)buf;
-	NRF_I2S->RXTXD.MAXCNT = cnt;
+	NRF_I2S->RXTXD.MAXCNT = cnt >> 1;
 	NRF_I2S->EVENTS_TXPTRUPD = 0;
 	NRF_I2S->INTENSET = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
 
@@ -248,7 +268,7 @@ void
 i2sSamplesNext (void * buf, int cnt)
 {
 	NRF_I2S->TXD.PTR = (uint32_t)buf;
-	NRF_I2S->RXTXD.MAXCNT = cnt;
+	NRF_I2S->RXTXD.MAXCNT = cnt >> 1;
 	NRF_I2S->INTENSET = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
 
 	return;

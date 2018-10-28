@@ -49,4 +49,6 @@ extern void i2sSamplesWait (void);
 
 extern void i2sPlay (char *);
 
+extern uint16_t * i2sBuf;
+
 #endif /* _I2S_LLDH_ */

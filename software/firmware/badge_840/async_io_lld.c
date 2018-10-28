@@ -66,7 +66,7 @@ static THD_FUNCTION(asyncIoThread, arg)
 		osalSysUnlock ();
 		if (async_br == ASYNC_THD_EXIT)
 			break;
-		f_read(async_f, async_buf, async_btr, &br);
+		f_read (async_f, async_buf, async_btr, &br);
 	}
 
 	chThdExit (MSG_OK);

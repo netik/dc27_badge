@@ -42,6 +42,26 @@
 
 #include "video_lld.h"
 #include "async_io_lld.h"
+#include "i2s_lld.h"
+
+#include "badge.h"
+
+static int audio_start;
+
+static void
+audioPlay (void * p, int cnt)
+{
+	if (audio_start == 0) {
+		audio_start++;
+		i2sSamplesSend (p, cnt);
+	} else {
+		/* Wait for audio to finish playing. */
+		i2sSamplesWait ();
+		i2sSamplesNext (p, cnt);
+	}
+
+	return;
+}
 
 int
 videoPlay (char * fname)
@@ -54,13 +74,22 @@ videoPlay (char * fname)
 	pixel_t * p2;
 	pixel_t * p;
 	pixel_t * linebuf;
+	uint16_t * cur;
+	uint16_t * ps;
+	int scnt;
 	UINT br;
 	GListener gl;
 	GSourceHandle gs;
 	GEventMouse * me = NULL;
 
+	/* If someone's playing audio, cut them off */
+
+	i2sPlay (NULL);
+
 	buf = chHeapAlloc (NULL, VID_CHUNK_BYTES * 2);
-	linebuf = chHeapAlloc (NULL, 640 * 2);
+	linebuf = chHeapAlloc (NULL, 320 * 2 * VID_CHUNK_LINES * 2);
+	i2sBuf = chHeapAlloc (NULL,
+	    VID_AUDIO_BYTES_PER_CHUNK * VID_AUDIO_BUFCNT * 2);
 
 	if (buf == NULL)
  		return (-1);
@@ -69,6 +98,8 @@ videoPlay (char * fname)
 		chHeapFree (buf);
 		return (-1);
 	}
+
+	/* Set the display window */
 
 	GDISP->p.x = 0;
 	GDISP->p.y = 0;
@@ -83,41 +114,70 @@ videoPlay (char * fname)
 
 	p1 = buf;
 	p2 = buf + VID_CHUNK_PIXELS;
+	cur = i2sBuf;
+	ps = cur;
+	scnt = 0;
 
 	/* Pre-load initial chunk */
 
 	f_read(&f, p1, VID_CHUNK_BYTES, &br);
+
+	audio_start = 0;
 
 	while (1) {
 
 		if (br == 0)
 			break;
 
-		/*
-		 * Note: this resets the timer to 0 and starts it
-		 * counting.
-		 */
-
-		gptStartContinuous (&GPTD2, VID_TIMER_RESOLUTION);
-
 		/* Start next async read */
 
 		asyncIoRead (&f, p2, VID_CHUNK_BYTES, &br);
 
+		/* Accumulate audio sample data */
+
+		p = p1 + VID_PIXELS_PER_CHUNK;
+
+		for (i = 0; i < VID_AUDIO_SAMPLES_PER_CHUNK; i++)
+			ps[i] = p[i];
+		ps += VID_AUDIO_SAMPLES_PER_CHUNK;
+		scnt++;
+
+		/* If we have enough, then start it playing */
+
+		if (scnt == VID_AUDIO_BUFCNT) {
+			audioPlay (cur, VID_AUDIO_SAMPLES_PER_CHUNK *
+			    VID_AUDIO_BUFCNT);
+			if (cur == i2sBuf)
+				cur = i2sBuf +
+				    VID_AUDIO_SAMPLES_PER_CHUNK *
+				    VID_AUDIO_BUFCNT;
+			else
+				cur = i2sBuf;
+			ps = cur;
+			scnt = 0;
+		}
+
+		/* Wait for display bus to come ready */
+
+		while (SPID4.state != SPI_READY)
+			chThdSleep (1);
+
 		/* Draw the current batch of lines to the screen */
 
-                for (j = 0; j < VID_CHUNK_LINES; j++) {
-                        p = linebuf;
-                        for (i = 0; i < 160; i++) {
-                                *p = p1[i + (160 * j)];
-                                *(p + 320) = p1[i + (160 * j)];
-                                p++;
-                                *p = p1[i + (160 * j)];
-                                *(p + 320) = p1[i + (160 * j)];
-                                p++;
-                        }
-                        spiSend (&SPID4, 320*4, linebuf);
-                }
+		for (j = 0; j < VID_CHUNK_LINES; j++) {
+			pixel_t pix;
+			p = linebuf + (320 * j * 2);
+
+			/* Expand one 160 pixel line to two 320 pixel lines */
+
+			for (i = 0; i < 160; i++) {
+				pix =  p1[i + (160 * j)];;
+				p[0] = p[1] = p[320] = p[321] = pix;
+				p += 2;
+			}
+		}
+
+		spiStartSend (&SPID4, 320 * 2 * VID_CHUNK_LINES * 2, linebuf);
 
 		/* Switch to next waiting chunk */
 
@@ -136,13 +196,13 @@ videoPlay (char * fname)
 		me = (GEventMouse *)geventEventWait (&gl, 0);
 		if (me != NULL && me->buttons & GMETA_MOUSE_DOWN)
 			break;
-
-		/* Wait for sync timer to expire. */
-
-		while (gptGetCounterX (&GPTD2) < VID_TIMER_INTERVAL)
-			chThdSleep (1);
-		gptStopTimer (&GPTD2);
 	}
+
+	/* Drain any pending I/O */
+
+	i2sSamplesWait ();
+	while (SPID4.state != SPI_READY)
+		chThdSleep (1);
 
 	gdisp_lld_write_stop (GDISP);
 
@@ -150,14 +210,12 @@ videoPlay (char * fname)
 
 	f_close (&f);
 
-	/* Stop the timer */
-
-	gptStopTimer (&GPTD2);
-
 	/* Release memory */
 
 	chHeapFree (buf);
 	chHeapFree (linebuf);
+	chHeapFree (i2sBuf);
+	i2sBuf = NULL;
 
 	if (me != NULL && me->buttons & GMETA_MOUSE_DOWN)
 		return (-1);

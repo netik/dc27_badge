@@ -22,12 +22,12 @@ Things currently completed:
 - joypad/button framework
 - Put SD card/touch on a separate SPI bus (leave screen on SPIM4)
 - I2C support (need to test
+- Video app
 
 Things still to do:
 
 - BLE GATTC/GATTS support (?)
 - Extend button support to handle extra buttons requested by John
 - Setup app
-- Video app
 - Music player app
 - Game app
