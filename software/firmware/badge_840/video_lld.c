@@ -44,8 +44,6 @@
 #include "async_io_lld.h"
 #include "i2s_lld.h"
 
-#include "badge.h"
-
 static int audio_start;
 
 static void
@@ -86,16 +84,33 @@ videoPlay (char * fname)
 
 	i2sPlay (NULL);
 
+	/* Allocate memory */
+
 	buf = chHeapAlloc (NULL, VID_CHUNK_BYTES * 2);
-	linebuf = chHeapAlloc (NULL, 320 * 2 * VID_CHUNK_LINES * 2);
-	i2sBuf = chHeapAlloc (NULL,
-	    VID_AUDIO_BYTES_PER_CHUNK * VID_AUDIO_BUFCNT * 2);
 
 	if (buf == NULL)
  		return (-1);
 
+	linebuf = chHeapAlloc (NULL, 320 * 2 * VID_CHUNK_LINES * 2);
+
+	if (linebuf == NULL) {
+		chHeapFree (buf);
+ 		return (-1);
+	}
+
+	i2sBuf = chHeapAlloc (NULL,
+	    VID_AUDIO_BYTES_PER_CHUNK * VID_AUDIO_BUFCNT * 2);
+
+	if (i2sBuf == NULL) {
+		chHeapFree (linebuf);
+		chHeapFree (buf);
+ 		return (-1);
+	}
+
 	if (f_open(&f, fname, FA_READ) != FR_OK) {
 		chHeapFree (buf);
+		chHeapFree (linebuf);
+		chHeapFree (i2sBuf);
 		return (-1);
 	}
 
@@ -107,6 +122,8 @@ videoPlay (char * fname)
 	GDISP->p.cy = gdispGetHeight ();
 
 	gdisp_lld_write_start (GDISP);
+
+	/* Capture mouse/touch events */
 
 	gs = ginputGetMouse (0);
 	geventListenerInit (&gl);
