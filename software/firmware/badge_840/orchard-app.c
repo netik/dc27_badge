@@ -110,7 +110,7 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
 
     r_evt->type = type;
 
-    if (pkt != NULL)
+    if (pkt != NULL && len != 0)
       {
       radio_pkt[prod_idx] = chHeapAlloc (NULL, len);
       r_evt->pkt = radio_pkt[prod_idx];
