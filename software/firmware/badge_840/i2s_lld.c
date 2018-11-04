@@ -47,6 +47,9 @@ static uint8_t play;
 static uint8_t i2sloop;
 
 static THD_WORKING_AREA(waI2sThread, 768);
+static thread_reference_t i2sThreadReference;
+static int i2sState;
+static int i2sRunning;
 
 static
 THD_FUNCTION(i2sThread, arg)
@@ -56,7 +59,6 @@ THD_FUNCTION(i2sThread, arg)
         uint16_t * p;
         thread_t * th;
         char * file = NULL;
-	int start;
 
 	chRegSetThreadName ("I2S");
 
@@ -89,7 +91,6 @@ THD_FUNCTION(i2sThread, arg)
 		/* Load the first block of samples. */
 
 		p = i2sBuf;
-		start = 0;
 		if (f_read (&f, p, I2S_BYTES, &br) != FR_OK) {
 			f_close (&f);
 			chHeapFree (i2sBuf);
@@ -102,11 +103,7 @@ THD_FUNCTION(i2sThread, arg)
 
 			/* Start the samples playing */
 
-			if (start == 0) {
-				i2sSamplesSend (p, I2S_SAMPLES);
-				start = 1;
-			} else
-				i2sSamplesNext (p, I2S_SAMPLES);
+			i2sSamplesPlay (p, I2S_SAMPLES);
 
 			/* Swap buffers and load the next block of samples */
 
@@ -138,7 +135,7 @@ THD_FUNCTION(i2sThread, arg)
 
                 /* We're done, close the file. */
 
-		i2sStop ();
+		i2sSamplesStop ();
                 if (br == 0 && i2sloop == I2S_PLAY_ONCE) {
 			file = NULL;
 			play = 0;
@@ -209,9 +206,52 @@ i2sStart (void)
 
 	nvicEnableVector (I2S_IRQn, NRF5_I2S_IRQ_PRIORITY);
 
-	/* Turn on the peripheral. */
+	/* Also enable one of the software interrupts */
+
+	nvicEnableVector (SWI0_EGU0_IRQn, NRF5_I2S_IRQ_PRIORITY);
+
+	/*
+	 * We would like to be able to have the i2sSamplesWait()
+	 * routine put the thread to sleep and only wake up when
+	 * the current batch of samples finishes playing. For that
+	 * we need to have an interrupt triggered when the I2S
+	 * controller sends the last sample out onto the wire to
+	 * the codec. Unfortunately it doesn't do that. The
+	 * EVENTS_TXPTRUPD register does change state when the
+	 * transmission of samples is done, but the I2S interrupt
+	 * occurs before that.
+	 *
+	 * We could just poll the EVENTS_TXPTRUPD register in a
+	 * loop, but we'd need to sleep between checks in order not
+	 * to hog the CPU, and we are limited by the system tick
+	 * granularity in how long we can sleep. If the system tick
+	 * frequency is too low, we'll sleep too long, and if it's
+	 * too high, we'll generate too many extra interrupts.
+	 *
+	 * To get around this problem, we take advantage of the
+	 * Nordic PPI block and the software event generator unit.
+	 * We program one of the PPI blocks to tie the
+	 * EVENTS_TXPTRUPD event to one of the software interrupt
+	 * channels. When the EVENTS_TXPTRUPD register changes state,
+	 * the PPI will trigger a software interrupt. We can then
+	 * use that to wake the thread.
+	 */
+
+	/* Enable one of the event generator channels */
+
+	NRF_EGU0->INTENSET = 1 << I2S_EGU_TASK;
+
+	/* Enable one of the PPI channels */
+
+	NRF_PPI->CH[I2S_PPI_CHAN].EEP =
+	    (uint32_t)&NRF_I2S->EVENTS_TXPTRUPD;
+	NRF_PPI->CH[I2S_PPI_CHAN].TEP =
+	    (uint32_t)&NRF_EGU0->TASKS_TRIGGER[I2S_EGU_TASK];
+
+	/* Turn on the I2S peripheral and start the clocks . */
 
 	NRF_I2S->ENABLE = 1;
+	NRF_I2S->TASKS_START = 1;
 
 	/* Launch the player thread. */
 
@@ -231,12 +271,10 @@ i2sStart (void)
 	 * playing.
 	 */
 
-	NRF_I2S->INTENSET = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
-	NRF_I2S->EVENTS_TXPTRUPD = 0;
-	NRF_I2S->TXD.PTR = 0x0;
-	NRF_I2S->RXTXD.MAXCNT = 32768;
-	NRF_I2S->TASKS_START = 1;
+	i2sRunning = 1;
+	i2sSamplesPlay (NULL, 32768);
 	i2sSamplesWait ();
+	i2sSamplesStop ();
 
 	return;
 }
@@ -253,39 +291,73 @@ OSAL_IRQ_HANDLER(VectorD4)
 }
 
 void
-i2sSamplesSend (void * buf, int cnt)
+i2sSamplesPlay (void * buf, int cnt)
 {
-	NRF_I2S->PSEL.SCK = 0x20 | IOPORT2_I2S_SCK;
+	osalSysLock ();
+	i2sState = I2S_STATE_BUSY;
+
+	if (i2sRunning == 0) {
+		NRF_I2S->PSEL.SCK = 0x20 | IOPORT2_I2S_SCK;
+		i2sRunning = 1;
+	}
+
 	NRF_I2S->TXD.PTR = (uint32_t)buf;
 	NRF_I2S->RXTXD.MAXCNT = cnt >> 1;
-	NRF_I2S->EVENTS_TXPTRUPD = 0;
 	NRF_I2S->INTENSET = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
+	osalSysUnlock ();
 
 	return;
 }
 
-void
-i2sSamplesNext (void * buf, int cnt)
+OSAL_IRQ_HANDLER(Vector90)
 {
-	NRF_I2S->TXD.PTR = (uint32_t)buf;
-	NRF_I2S->RXTXD.MAXCNT = cnt >> 1;
-	NRF_I2S->INTENSET = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
+	OSAL_IRQ_PROLOGUE();
+	if (NRF_EGU0->EVENTS_TRIGGERED[I2S_EGU_TASK]) {
+		osalSysLockFromISR ();
 
-	return;
+		/* Turn off the PPI channel and ack the interrupt */
+
+		NRF_PPI->CHENCLR = 1 << I2S_PPI_CHAN;
+		NRF_EGU0->EVENTS_TRIGGERED[I2S_EGU_TASK] = 0;
+		(void)NRF_EGU0->EVENTS_TRIGGERED[I2S_EGU_TASK];
+
+		/* Wait the sleeping thread */
+
+		i2sState = I2S_STATE_IDLE;
+		osalThreadResumeI (&i2sThreadReference, MSG_OK);
+		osalSysUnlockFromISR (); 
+	}
+	OSAL_IRQ_EPILOGUE();
 }
 
 void
 i2sSamplesWait (void)
 {
-	while (NRF_I2S->EVENTS_TXPTRUPD == 0)
-		chThdSleep (1);
+	osalSysLock ();
+
+	/* If the samples already finished playing, just return. */
+
+	if (i2sState == I2S_STATE_IDLE) {
+		osalSysUnlock ();
+		return;
+	}
+
+	/* Sleep until the current batch of samples has been sent. */
+
+	NRF_PPI->CHENSET = 1 << I2S_PPI_CHAN;
+	osalThreadSuspendS (&i2sThreadReference);
+	osalSysUnlock ();
+
 	return;
 }
 
 void
-i2sStop (void)
+i2sSamplesStop (void)
 {
+	osalSysLock ();
+	i2sRunning = 0;
 	NRF_I2S->PSEL.SCK = 0xFFFFFFFF;
+	osalSysUnlock ();
 	return;
 }
 
@@ -333,7 +405,7 @@ i2sTest (void)
 		i2sSamplesNext (p, 64);
 	}
 
-	i2sStop ();
+	i2sSamplesStop ();
 	f_close (&f);
 }
 #endif

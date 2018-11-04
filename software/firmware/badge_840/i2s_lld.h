@@ -40,12 +40,17 @@
 #define I2S_PLAY_ONCE		0
 #define I2S_PLAY_LOOP		1
 
-extern void i2sStart (void);
-extern void i2sStop (void);
+#define I2S_STATE_IDLE		0
+#define I2S_STATE_BUSY		1
 
-extern void i2sSamplesSend (void *, int);
-extern void i2sSamplesNext (void *, int);
+#define I2S_PPI_CHAN		1
+#define I2S_EGU_TASK		1
+
+extern void i2sStart (void);
+
+extern void i2sSamplesPlay (void *, int);
 extern void i2sSamplesWait (void);
+extern void i2sSamplesStop (void);
 
 extern void i2sPlay (char *);
 

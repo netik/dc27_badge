@@ -44,25 +44,6 @@
 #include "async_io_lld.h"
 #include "i2s_lld.h"
 
-#include "badge.h"
-
-static int audio_start;
-
-static void
-audioPlay (void * p, int cnt)
-{
-	if (audio_start == 0) {
-		audio_start++;
-		i2sSamplesSend (p, cnt);
-	} else {
-		/* Wait for audio to finish playing. */
-		i2sSamplesWait ();
-		i2sSamplesNext (p, cnt);
-	}
-
-	return;
-}
-
 int
 videoPlay (char * fname)
 {
@@ -122,8 +103,6 @@ videoPlay (char * fname)
 
 	f_read(&f, p1, VID_CHUNK_BYTES, &br);
 
-	audio_start = 0;
-
 	while (1) {
 
 		if (br == 0)
@@ -145,7 +124,8 @@ videoPlay (char * fname)
 		/* If we have enough, then start it playing */
 
 		if (scnt == VID_AUDIO_BUFCNT) {
-			audioPlay (cur, VID_AUDIO_SAMPLES_PER_CHUNK *
+			i2sSamplesWait ();
+			i2sSamplesPlay (cur, VID_AUDIO_SAMPLES_PER_CHUNK *
 			    VID_AUDIO_BUFCNT);
 			if (cur == i2sBuf)
 				cur = i2sBuf +
@@ -201,6 +181,7 @@ videoPlay (char * fname)
 	/* Drain any pending I/O */
 
 	i2sSamplesWait ();
+	i2sSamplesStop ();
 	while (SPID4.state != SPI_READY)
 		chThdSleep (1);
 
