@@ -123,7 +123,7 @@ static void serve_interrupt(SPIDriver *spip)
 		spip->txcnt -= port->TXD.AMOUNT;
 		spip->rxcnt -= port->RXD.AMOUNT;
 
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 		/* Turn off PPI event. */
 		NRF_PPI->CHENCLR = 1 << NRF5_ANOM58_PPI;
 #endif
@@ -337,7 +337,7 @@ void spi_lld_start(SPIDriver *spip)
 	spip->port->INTENSET = SPIM_INTENSET_END_Msk;
 	(void)spip->port->INTENSET;
 
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 
 	/*
 	 * Workaround for NRF52832 anomaly 58. The SPIM controller
@@ -456,7 +456,7 @@ void spi_lld_ignore(SPIDriver *spip, size_t n)
 	spip->rxcnt = 0;
 	spip->txcnt = n;
 	port_fifo_preload(spip);
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 	if (n == 1)
 		NRF_PPI->CHENSET = 1 << NRF5_ANOM58_PPI;
 #endif
@@ -486,7 +486,7 @@ void spi_lld_exchange(SPIDriver *spip, size_t n,
 	spip->txptr = txbuf;
 	spip->rxcnt = spip->txcnt = n;
 	port_fifo_preload(spip);
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 	if (n == 1)
 		NRF_PPI->CHENSET = 1 << NRF5_ANOM58_PPI;
 #endif
@@ -515,7 +515,7 @@ void spi_lld_send(SPIDriver *spip, size_t n, const void *txbuf)
 	spip->rxcnt = 0;
 	spip->txcnt = n;
 	port_fifo_preload(spip);
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 	if (n == 1)
 		NRF_PPI->CHENSET = 1 << NRF5_ANOM58_PPI;
 #endif
@@ -544,7 +544,7 @@ void spi_lld_receive(SPIDriver *spip, size_t n, void *rxbuf)
 	spip->rxcnt = n;
 	spip->txcnt = 0;
 	port_fifo_preload(spip);
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 	if (n == 1)
 		NRF_PPI->CHENSET = 1 << NRF5_ANOM58_PPI;
 #endif
@@ -571,7 +571,7 @@ uint16_t spi_lld_polled_exchange(SPIDriver *spip, uint16_t frame)
 	spip->txptr = &frame;
 	spip->rxcnt = 1;
 	port_fifo_preload(spip);
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 	NRF_PPI->CHENSET = 1 << NRF5_ANOM58_PPI;
 #endif
 	spip->port->INTENCLR = SPIM_INTENSET_END_Msk;
@@ -581,7 +581,7 @@ uint16_t spi_lld_polled_exchange(SPIDriver *spip, uint16_t frame)
 		;
 	spip->port->EVENTS_END = 0;
 	(void)spip->port->EVENTS_END;
-#ifdef NRF5_SPIM_USE_ANOM58_WAR
+#if NRF5_SPIM_USE_ANOM58_WAR == TRUE
 	NRF_PPI->CHENCLR = 1 << NRF5_ANOM58_PPI;
 #endif
 	spip->port->INTENSET = SPIM_INTENSET_END_Msk;
