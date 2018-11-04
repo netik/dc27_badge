@@ -72,8 +72,8 @@ THD_FUNCTION(i2sThread, arg)
 
 		/*
 		 * If the video app is running, then it's already using
-		 * the DAC, and we shouldn't try to use it again here
-		 * because can't play from two sources at once.
+		 * the I2S channel, and we shouldn't try to use it again
+		 * here because can't play from two sources at once.
 		 */
         
 		if (i2sBuf != NULL) {
@@ -279,36 +279,6 @@ i2sStart (void)
 	return;
 }
 
-OSAL_IRQ_HANDLER(VectorD4)
-{
-	OSAL_IRQ_PROLOGUE();
-	NRF_I2S->INTENCLR = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
-	NRF_I2S->EVENTS_TXPTRUPD = 0;
-	NRF_I2S->RXTXD.MAXCNT = 0;
-	NRF_I2S->TXD.PTR = 0;
-	OSAL_IRQ_EPILOGUE();
-	return;
-}
-
-void
-i2sSamplesPlay (void * buf, int cnt)
-{
-	osalSysLock ();
-	i2sState = I2S_STATE_BUSY;
-
-	if (i2sRunning == 0) {
-		NRF_I2S->PSEL.SCK = 0x20 | IOPORT2_I2S_SCK;
-		i2sRunning = 1;
-	}
-
-	NRF_I2S->TXD.PTR = (uint32_t)buf;
-	NRF_I2S->RXTXD.MAXCNT = cnt >> 1;
-	NRF_I2S->INTENSET = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
-	osalSysUnlock ();
-
-	return;
-}
-
 OSAL_IRQ_HANDLER(Vector90)
 {
 	OSAL_IRQ_PROLOGUE();
@@ -330,12 +300,72 @@ OSAL_IRQ_HANDLER(Vector90)
 	OSAL_IRQ_EPILOGUE();
 }
 
+OSAL_IRQ_HANDLER(VectorD4)
+{
+	OSAL_IRQ_PROLOGUE();
+	NRF_I2S->INTENCLR = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
+	NRF_I2S->RXTXD.MAXCNT = 0;
+	/*
+	 * Enable PPI channel -- should trigger when TXPTRUPD
+	 * event changes state.
+	 */
+	NRF_PPI->CHENSET = 1 << I2S_PPI_CHAN;
+	OSAL_IRQ_EPILOGUE();
+	return;
+}
+
+/******************************************************************************
+*
+* i2sSamplesPlay - play specific sample buffer
+*
+* This function can be used to play an arbitrary buffer of samples provided
+* by the saller via the pointer argument <p>. The <cnt> argument indicates
+* the number of samples (which should be equal to the total number of bytes
+* in the buffer divided by 2, since samples are stored as 16-bit quantities).
+*
+* This function is used primarily by the video player module.
+*
+* RETURNS: N/A
+*/
+
+void
+i2sSamplesPlay (void * buf, int cnt)
+{
+	osalSysLock ();
+	i2sState = I2S_STATE_BUSY;
+
+	if (i2sRunning == 0) {
+		NRF_I2S->PSEL.SCK = 0x20 | IOPORT2_I2S_SCK;
+		i2sRunning = 1;
+	}
+
+	NRF_I2S->TXD.PTR = (uint32_t)buf;
+	NRF_I2S->RXTXD.MAXCNT = cnt >> 1;
+	NRF_I2S->INTENSET = I2S_EVENTS_TXPTRUPD_EVENTS_TXPTRUPD_Msk;
+	osalSysUnlock ();
+
+	return;
+}
+
+/******************************************************************************
+*
+* i2sSamplesWait - wait for audio sample buffer to finish playing
+*
+* This function can be used to test when the current block of samples has
+* finished playing. It is used primarily by callers of i2sSamplesPlay() to
+* keep pace with the audio playback. The function sleeps until an interrupt
+* occurs indicating that the current batch of samples has been sent to
+* the codec chip.
+*
+* RETURNS: N/A
+*/
+
 void
 i2sSamplesWait (void)
 {
 	osalSysLock ();
 
-	/* If the samples already finished playing, just return. */
+	/* If we've finished playing samples already, just return. */
 
 	if (i2sState == I2S_STATE_IDLE) {
 		osalSysUnlock ();
@@ -344,12 +374,25 @@ i2sSamplesWait (void)
 
 	/* Sleep until the current batch of samples has been sent. */
 
-	NRF_PPI->CHENSET = 1 << I2S_PPI_CHAN;
 	osalThreadSuspendS (&i2sThreadReference);
 	osalSysUnlock ();
 
 	return;
 }
+
+/******************************************************************************
+*
+* i2sSamplesStop - stop sample playback
+*
+* This function must be called after samples are sent to the codec using
+* i2sSamplesPlay() and there are no more samples left to send. The nature
+* of the CS4344 codec is such that we can't just stop the I2S controller
+* because that cuts off the clock signals to it, and it will take time for
+* it to re-synchronize when the clocks are started again. Instead we gate
+* the SCK signal which stops it from trying to decode any audio data.
+*
+* RETURNS: N/A
+*/
 
 void
 i2sSamplesStop (void)
@@ -361,12 +404,74 @@ i2sSamplesStop (void)
 	return;
 }
 
+/******************************************************************************
+*
+* i2sWait - wait for current audio file to finish playing
+*
+* This function can be used to test when the current audio sample file has
+* finished playing. It can be used to pause the current thread until a
+* sound effect finishes playing.
+*
+* RETURNS: The number of ticks we had to wait until the playback finished.
+*/
+
+int
+i2sWait (void)
+{
+	int waits = 0;
+
+	while (play != 0) {
+		chThdSleep (1);
+		waits++;
+	}
+
+	return (waits);
+}
+
+/******************************************************************************
+*
+* i2sPlay - play an audio file
+*
+* This is a shortcut version of i2sLoopPlay() that always plays a file just
+* once. As with i2sLoopPlay(), playback can be halted by calling i2sPlay()
+* with <file> set to NULL.
+*
+* RETURNS: N/A
+*/
+
 void
 i2sPlay (char * filename)
 {
 	play = 0;
 	i2sloop = I2S_PLAY_ONCE;
 	fname = filename;
+	chMsgSend (pThread, MSG_OK);
+
+	return;
+}
+
+/******************************************************************************
+*
+* i2sLoopPlay - play an audio file
+*
+* This function cues up an audio file to be played by the background I2S
+* thread. The file name is specified by <file>. If <loop> is I2S_PLAY_ONCE,
+* the sample file is played once and then the player thread will go idle
+* again. If <loop> is I2S_PLAY_LOOP, the same file will be played over and
+* over again.
+*
+* Playback of any sample file (including one that is looping) can be halted
+* at any time by calling i2sLoopPlay() with <file> set to NULL.
+*
+* RETURNS: N/A
+*/
+
+void
+i2sLoopPlay (char * file, uint8_t loop)
+{
+	play = 0;
+	i2sloop = loop;
+	fname = file;
 	chMsgSend (pThread, MSG_OK);
 
 	return;

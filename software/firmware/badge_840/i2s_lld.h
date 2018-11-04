@@ -52,7 +52,9 @@ extern void i2sSamplesPlay (void *, int);
 extern void i2sSamplesWait (void);
 extern void i2sSamplesStop (void);
 
+extern int i2sWait (void);
 extern void i2sPlay (char *);
+extern void i2sLoopPlay (char *, uint8_t);
 
 extern uint16_t * i2sBuf;
 
