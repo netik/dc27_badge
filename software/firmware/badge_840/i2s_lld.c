@@ -35,8 +35,6 @@
 #include "i2s_lld.h"
 #include "ff.h"
 
-volatile int i2sCnt;
-
 uint16_t * i2sBuf;
 
 static char * fname;
