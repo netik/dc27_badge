@@ -35,8 +35,6 @@
 #include "i2s_lld.h"
 #include "ff.h"
 
-#include "badge.h"
-
 volatile int i2sCnt;
 
 uint16_t * i2sBuf;
@@ -198,7 +196,6 @@ i2sStart (void)
 	/* Configure pins */
 
 	NRF_I2S->PSEL.SDOUT = 0x20 | IOPORT2_I2S_SDOUT;
-	NRF_I2S->PSEL.SCK = 0x20 | IOPORT2_I2S_SCK;
 	NRF_I2S->PSEL.LRCK = 0x20 | IOPORT2_I2S_LRCK;
 	NRF_I2S->PSEL.MCK = 0x20 | IOPORT2_I2S_MCK;
 
@@ -291,7 +288,7 @@ OSAL_IRQ_HANDLER(Vector90)
 		NRF_EGU0->EVENTS_TRIGGERED[I2S_EGU_TASK] = 0;
 		(void)NRF_EGU0->EVENTS_TRIGGERED[I2S_EGU_TASK];
 
-		/* Wait the sleeping thread */
+		/* Wake the sleeping thread */
 
 		i2sState = I2S_STATE_IDLE;
 		osalThreadResumeI (&i2sThreadReference, MSG_OK);
