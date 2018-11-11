@@ -31,7 +31,9 @@
 /**
  * @brief	The Event Type for a Button Event
  */
-#define GEVENT_GWIN_BUTTON		(GEVENT_GWIN_CTRL_FIRST+0)
+#define GEVENT_GWIN_BUTTON_DOWN		(GEVENT_GWIN_CTRL_FIRST+0)
+#define GEVENT_GWIN_BUTTON_UP		(GEVENT_GWIN_CTRL_FIRST+1)
+#define GEVENT_GWIN_BUTTON		 GEVENT_GWIN_BUTTON_DOWN
 
 /**
  * @brief	A Button Event
