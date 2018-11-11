@@ -9,7 +9,10 @@
 #include "orchard-events.h"
 #include "orchard-ui.h"
 
-#include "badge.h"
+#include "i2s_lld.h"
+#include "joypad_lld.h"
+
+extern OrchardAppEvent joyEvent;
 
 orchard_app_start();
 orchard_app_end();
@@ -61,9 +64,9 @@ static void ugfx_event(eventid_t id) {
 
   (void) id;
 
-  if (ugfx_evt.ugfx.pEvent->type != GEVENT_GWIN_BUTTON) {
-    /*dacPlay ("click.raw");
-    dacWait ();*/
+  if (ugfx_evt.ugfx.pEvent->type != GEVENT_GWIN_BUTTON_UP) {
+    i2sPlay ("click.raw");
+    i2sWait ();
   }
   instance.app->event (instance.context, &ugfx_evt);
   geventEventComplete (ugfx_evt.ugfx.pListener);
@@ -159,6 +162,16 @@ static void radio_event(eventid_t id) {
             cons_idx = 0;
     }
   }
+
+  return;
+}
+
+static void key_event(eventid_t id) {
+
+  (void) id;
+
+  if (instance.context != NULL)
+      instance.app->event(instance.context, &joyEvent);
 
   return;
 }
@@ -317,7 +330,7 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   evtTableHook(orchard_app_events, orchard_app_terminate, terminate);
   evtTableHook(orchard_app_events, orchard_app_gfx, ugfx_event);
   evtTableHook(orchard_app_events, orchard_app_radio, radio_event);
-  /*evtTableHook(orchard_app_events, orchard_app_key, key_event);*/
+  evtTableHook(orchard_app_events, orchard_app_key, key_event);
   evtTableHook(orchard_app_events, timer_expired, timer_event);
 
   // if APP is null, the system will crash here. 
@@ -379,7 +392,7 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   evtTableUnhook(orchard_app_events, ui_completed, ui_complete_cleanup);
   evtTableUnhook(orchard_app_events, orchard_app_gfx, ugfx_event);
   evtTableUnhook(orchard_app_events, orchard_app_radio, radio_event);
-  /*evtTableUnhook(orchard_app_events, orchard_app_key, key_event);*/
+  evtTableUnhook(orchard_app_events, orchard_app_key, key_event);
  
   /* Atomically broadcasting the event source and terminating the thread,
      there is not a chSysUnlock() because the thread terminates upon return.*/

@@ -6,6 +6,7 @@
 #include "orchard-app.h"
 #include "fontlist.h"
 #include "ides_gfx.h"
+#include "src/gdisp/gdisp_driver.h"
 
 #include "ble_lld.h"
 
@@ -206,7 +207,15 @@ redraw_list (struct launcher_list * list)
 					    j * 90, 30 + (110 * i));
 				gwinSetText (label, item->name, FALSE);
 			} else {
-				gwinSetText (label, "", TRUE);
+				gwinSetText (label, "", FALSE);
+
+	/* Clear the clip variables otherwise gdispGFillArea() might fail. */
+
+				GDISP->clipx0 = 0;
+				GDISP->clipy0 = 0;
+				GDISP->clipx1 = 320;
+				GDISP->clipy1 = 240;
+
 				gdispFillArea (j * 90, 30 + (110 * i),
 				    81, 81, Black);
 			}
@@ -337,7 +346,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		return;
 
 	if (event->type == keyEvent) {
-		draw_box (list, Black);
+		/*draw_box (list, Black);*/
 
 		if (event->key.code == keyUp)
 			list->selected -= LAUNCHER_COLS;
@@ -365,6 +374,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 			list->selected = list->total;
 
 		if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
+			draw_box (list, Black);
 			list->page++;
 			redraw_list (list);
 			return;
@@ -372,6 +382,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 
 		if (list->page > 0) {
 			if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
+				draw_box (list, Black);
 				list->page--;
 				redraw_list (list);
 				return;

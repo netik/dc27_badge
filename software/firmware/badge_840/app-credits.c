@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017-2018
+ * Copyright (c) 2016
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,67 +30,64 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _JOYPAD_LLD_H_
-#define _JOYPAD_LLD_H_
+#include "orchard-app.h"
+#include "orchard-ui.h"
 
-#define BUTTON_UP_PORT		IOPORT1
-#define BUTTON_DOWN_PORT	IOPORT1
-#define BUTTON_LEFT_PORT	IOPORT1
-#define BUTTON_RIGHT_PORT	IOPORT1
-#define BUTTON_ENTER_PORT	IOPORT2
-#define BUTTON_A_PORT		IOPORT2
-#define BUTTON_B_PORT		IOPORT2
+#include "scroll_lld.h"
+#include "i2s_lld.h"
 
-#define BUTTON_UP_PIN		IOPORT1_BTN1
-#define BUTTON_DOWN_PIN		IOPORT1_BTN2
-#define BUTTON_LEFT_PIN		IOPORT1_BTN3
-#define BUTTON_RIGHT_PIN	IOPORT1_BTN4
-#define BUTTON_ENTER_PIN	IOPORT2_BTN5
-#define BUTTON_A_PIN		IOPORT2_BTN6
-#define BUTTON_B_PIN		IOPORT2_BTN7
+static uint32_t
+credits_init(OrchardAppContext *context)
+{
+	(void)context;
 
-/* Joypad event codes */
+	return (0);
+}
 
-typedef enum _OrchardAppEventKeyFlag {
-	keyPress = 0,
-	keyRelease = 1,
-} OrchardAppEventKeyFlag;
+static void
+credits_start(OrchardAppContext *context)
+{
+	int r;
 
-typedef enum _OrchardAppEventKeyCode {
-	keyUp = 0x80,
-	keyDown = 0x81,
-	keyLeft = 0x82,
-	keyRight = 0x83,
-	keySelect = 0x84,
-	keyA = 0x85,
-	keyB = 0x86,
-} OrchardAppEventKeyCode;
+	(void)context;
 
-/* Joypad events */
+	i2sPlay ("mario.raw");
 
-typedef struct _joyInfo {
-	ioportid_t port;
-	uint8_t pin;
-	uint8_t bit;
-	OrchardAppEventKeyCode code;
-} joyInfo;
+	gdispClear (Black);
+	scrollAreaSet (0, 0);
+	r = scrollImage ("credits.rgb", 15);
 
+	chThdSleepMilliseconds (800);
 
-#define JOY_ENTER	0x01
-#define JOY_UP		0x02
-#define JOY_DOWN	0x04
-#define JOY_LEFT	0x08
-#define JOY_RIGHT	0x10
-#define JOY_A		0x20
-#define JOY_B		0x40
+	gdispClear (Black);
+	scrollCount (0);
 
-#define JOY_ENTER_SHIFT	0
-#define JOY_UP_SHIFT	1
-#define JOY_DOWN_SHIFT	2
-#define JOY_LEFT_SHIFT	3
-#define JOY_RIGHT_SHIFT	4
-#define JOY_A_SHIFT	5
-#define JOY_B_SHIFT	6
+	if (r == 0)
+		i2sPlay (NULL);
+	else
+		i2sPlay ("click.raw");
 
-extern void joyStart (void);
-#endif /* _JOYPAD_LLD_H_ */
+	orchardAppExit ();
+
+	return;
+}
+
+static void
+credits_event(OrchardAppContext *context, const OrchardAppEvent *event)
+{
+	(void)context;
+	(void)event;
+
+	return;
+}
+
+static void
+credits_exit(OrchardAppContext *context)
+{
+	i2sPlay (NULL);
+	(void)context;
+	return;
+}
+
+orchard_app("Credits", "about.rgb", 0, credits_init, credits_start,
+    credits_event, credits_exit, 3);

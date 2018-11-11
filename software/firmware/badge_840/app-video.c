@@ -34,12 +34,12 @@
 #include "orchard-ui.h"
 #include "video_lld.h"
 
+#include "i2s_lld.h"
+
 #include "ff.h"
 #include "ffconf.h"
 
 #include <string.h>
-
-#include "badge.h"
 
 typedef struct _VideoHandles {
 	char **			listitems;
@@ -138,13 +138,12 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			ui->event (context, event);
 
 	if (event->type == uiEvent && event->ui.code == uiComplete &&
-	    event->ui.flags == uiOK) {
+	    event->ui.flags == uiOK && ui != NULL) {
 		/*
 		 * If this is the list ui exiting, it means we chose a
 		 * video to play, or else the user selected exit.
 		 */
-                if (ui != NULL)
-			ui->exit (context);
+		ui->exit (context);
 		context->instance->ui = NULL;
 
 		/* User chose the "EXIT" selection, bail out. */
@@ -153,11 +152,10 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			orchardAppExit ();
 			return;
 		}
-#ifdef notdef
+
 		if (videoPlay (p->listitems[uiContext->selected + 1]) != 0)
-			dacPlay ("click.raw");
-#endif
-		videoPlay (p->listitems[uiContext->selected + 1]);
+			i2sPlay ("click.raw");
+
 		orchardAppExit ();
 	}
 

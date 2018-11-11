@@ -46,24 +46,25 @@
 #include "osal.h"
 
 #include "joypad_lld.h"
+#include "i2s_lld.h"
 
 #include "orchard-app.h"
 #include "orchard-events.h"
 
 #include "badge.h"
 
-extern orchard_app_instance instance;
+extern event_source_t orchard_app_key;
 
 static void joyInterrupt (EXTDriver *, expchannel_t);
 
 static thread_reference_t joyThreadReference;
-static THD_WORKING_AREA(waJoyThread, 384);
+static THD_WORKING_AREA(waJoyThread, 128);
 
 /* Default state is all buttons pressed. */
 
 static uint8_t joyState = 0xFF;
 
-static OrchardAppKeyEvent joyEvent;
+OrchardAppEvent joyEvent;
 
 static const joyInfo joyTbl[7] = {
 	{ BUTTON_ENTER_PORT, BUTTON_ENTER_PIN, JOY_ENTER, keySelect },
@@ -130,7 +131,6 @@ joyInterrupt (EXTDriver *extp, expchannel_t chan)
 static uint8_t
 joyHandle (uint8_t s)
 {
-	OrchardAppEvent evt;
 	uint8_t pad;
 
 	pad = palReadPad (joyTbl[s].port, joyTbl[s].pin);
@@ -146,22 +146,20 @@ joyHandle (uint8_t s)
 		else
 			printf ("button %x pressed\r\n", joyTbl[s].code);
 
-		joyEvent.code = joyTbl[s].code;
+		joyEvent.key.code = joyTbl[s].code;
 		if (pad)
-			joyEvent.flags = keyRelease;
+			joyEvent.key.flags = keyRelease;
 		else
-			joyEvent.flags = keyPress;
+			joyEvent.key.flags = keyPress;
 
-		if (instance.context != NULL) {
-			evt.type = keyEvent;
- 			evt.key = joyEvent;
-			if (joyEvent.flags == keyPress) {
-				/*dacPlay("click.raw");
-				dacWait ();*/
-			}
-			instance.app->event (instance.context, &evt);
+		joyEvent.type = keyEvent;
+
+		if (joyEvent.key.flags == keyPress) {
+			i2sPlay("click.raw");
+			i2sWait ();
 		}
 
+		chEvtBroadcast (&orchard_app_key);
 		return (1);
 	}
 

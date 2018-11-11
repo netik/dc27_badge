@@ -155,6 +155,7 @@ CSRC += main.c \
 	app-test.c \
 	app-video.c \
 	app-chat.c \
+	app-credits.c \
 	app-update.c \
 	app-email.c \
 	app-ledsign.c \

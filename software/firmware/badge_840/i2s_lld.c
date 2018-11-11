@@ -39,10 +39,10 @@ uint16_t * i2sBuf;
 
 static char * fname;
 static thread_t * pThread = NULL;
-static uint8_t play;
+static volatile uint8_t play;
 static uint8_t i2sloop;
 
-static THD_WORKING_AREA(waI2sThread, 768);
+static THD_WORKING_AREA(waI2sThread, 1024);
 static thread_reference_t i2sThreadReference;
 static int i2sState;
 static int i2sRunning;
@@ -99,7 +99,7 @@ THD_FUNCTION(i2sThread, arg)
 
 			/* Start the samples playing */
 
-			i2sSamplesPlay (p, I2S_SAMPLES);
+			i2sSamplesPlay (p, br >> 1);
 
 			/* Swap buffers and load the next block of samples */
 
@@ -127,18 +127,18 @@ THD_FUNCTION(i2sThread, arg)
 
 			if (play == 0)
         			break;
-                }
+		}
 
-                /* We're done, close the file. */
+		/* We're done, close the file. */
 
 		i2sSamplesStop ();
-                if (br == 0 && i2sloop == I2S_PLAY_ONCE) {
+		if (br == 0 && i2sloop == I2S_PLAY_ONCE) {
 			file = NULL;
 			play = 0;
-                }
-                chHeapFree (i2sBuf);
-                i2sBuf = NULL;
-                f_close (&f);
+		}
+		chHeapFree (i2sBuf);
+               	i2sBuf = NULL;
+		f_close (&f);
 	}
 
 	/* NOTREACHED */
@@ -435,13 +435,9 @@ i2sWait (void)
 */
 
 void
-i2sPlay (char * filename)
+i2sPlay (char * file)
 {
-	play = 0;
-	i2sloop = I2S_PLAY_ONCE;
-	fname = filename;
-	chMsgSend (pThread, MSG_OK);
-
+	i2sLoopPlay (file, I2S_PLAY_ONCE);
 	return;
 }
 
@@ -464,6 +460,7 @@ i2sPlay (char * filename)
 void
 i2sLoopPlay (char * file, uint8_t loop)
 {
+	chSysLock ();
 	play = 0;
 	i2sloop = loop;
 	fname = file;
