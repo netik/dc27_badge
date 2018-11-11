@@ -33,17 +33,21 @@
 #ifndef _JOYPAD_LLD_H_
 #define _JOYPAD_LLD_H_
 
-#define BUTTON_ENTER_PORT	IOPORT1
 #define BUTTON_UP_PORT		IOPORT1
 #define BUTTON_DOWN_PORT	IOPORT1
 #define BUTTON_LEFT_PORT	IOPORT1
 #define BUTTON_RIGHT_PORT	IOPORT1
+#define BUTTON_ENTER_PORT	IOPORT2
+#define BUTTON_A_PORT		IOPORT2
+#define BUTTON_B_PORT		IOPORT2
 
-#define BUTTON_UP_PIN		BTN1
-#define BUTTON_DOWN_PIN		BTN2
-#define BUTTON_LEFT_PIN		BTN3
-#define BUTTON_RIGHT_PIN	BTN4
-#define BUTTON_ENTER_PIN	BTN5
+#define BUTTON_UP_PIN		IOPORT1_BTN1
+#define BUTTON_DOWN_PIN		IOPORT1_BTN2
+#define BUTTON_LEFT_PIN		IOPORT1_BTN3
+#define BUTTON_RIGHT_PIN	IOPORT1_BTN4
+#define BUTTON_ENTER_PIN	IOPORT2_BTN5
+#define BUTTON_A_PIN		IOPORT2_BTN6
+#define BUTTON_B_PIN		IOPORT2_BTN7
 
 /* Joypad event codes */
 
@@ -58,6 +62,8 @@ typedef enum _OrchardAppEventKeyCode {
 	keyLeft = 0x82,
 	keyRight = 0x83,
 	keySelect = 0x84,
+	keyA = 0x85,
+	keyB = 0x86,
 } OrchardAppEventKeyCode;
 
 /* Joypad events */
@@ -75,12 +81,16 @@ typedef struct _joyInfo {
 #define JOY_DOWN	0x04
 #define JOY_LEFT	0x08
 #define JOY_RIGHT	0x10
+#define JOY_A		0x20
+#define JOY_B		0x40
 
 #define JOY_ENTER_SHIFT	0
 #define JOY_UP_SHIFT	1
 #define JOY_DOWN_SHIFT	2
 #define JOY_LEFT_SHIFT	3
 #define JOY_RIGHT_SHIFT	4
+#define JOY_A_SHIFT	5
+#define JOY_B_SHIFT	6
 
 extern void joyStart (void);
 #endif /* _JOYPAD_LLD_H_ */

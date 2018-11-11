@@ -65,28 +65,32 @@ static uint8_t joyState = 0xFF;
 
 static OrchardAppKeyEvent joyEvent;
 
-static const joyInfo joyTbl[6] = {
+static const joyInfo joyTbl[7] = {
 	{ BUTTON_ENTER_PORT, BUTTON_ENTER_PIN, JOY_ENTER, keySelect },
 	{ BUTTON_UP_PORT, BUTTON_UP_PIN, JOY_UP, keyUp },
 	{ BUTTON_DOWN_PORT, BUTTON_DOWN_PIN, JOY_DOWN, keyDown },
 	{ BUTTON_LEFT_PORT, BUTTON_LEFT_PIN, JOY_LEFT, keyLeft },
 	{ BUTTON_RIGHT_PORT, BUTTON_RIGHT_PIN, JOY_RIGHT, keyRight },
+	{ BUTTON_A_PORT, BUTTON_A_PIN, JOY_A, keyA },
+	{ BUTTON_B_PORT, BUTTON_B_PIN, JOY_B, keyB },
 };
 
 static const EXTConfig ext_config = {
 	{
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  BTN1 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		  IOPORT1_BTN1 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  BTN2 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		  IOPORT1_BTN2 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  BTN3 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		  IOPORT1_BTN3 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  BTN4 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		  IOPORT1_BTN4 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  BTN5 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
-		{ 0 , NULL },
-		{ 0 , NULL },
+		  (0x20|IOPORT2_BTN5) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
+		  (0x20|IOPORT2_BTN6) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
+		  (0x20|IOPORT2_BTN7) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ 0 , NULL }
 	}
 };
@@ -200,6 +204,12 @@ static THD_FUNCTION(joyThread, arg)
 
 		if (joyHandle (JOY_RIGHT_SHIFT))
 			continue;
+
+		if (joyHandle (JOY_A_SHIFT))
+			continue;
+
+		if (joyHandle (JOY_B_SHIFT))
+			continue;
 	}
 
 	/* NOTREACHED */
@@ -229,6 +239,8 @@ joyStart (void)
 	palSetPad (BUTTON_DOWN_PORT, BUTTON_DOWN_PIN);
 	palSetPad (BUTTON_LEFT_PORT, BUTTON_LEFT_PIN);
 	palSetPad (BUTTON_RIGHT_PORT, BUTTON_RIGHT_PIN);
+	palSetPad (BUTTON_A_PORT, BUTTON_A_PIN);
+	palSetPad (BUTTON_B_PORT, BUTTON_B_PIN);
 
 	extStart (&EXTD1, &ext_config);
 	return;

@@ -112,9 +112,9 @@ P1.05					<unused>
 P1.06					SPI SCK (SD/touch)
 P1.07					SPI MISO (SD/touch)
 P1.08					SPI MOSI (SD/touch)
-P1.09					<unused>
-P1.10					<unused>
-P1.11					<unused>
+P1.09					BTN5
+P1.10					BTN6
+P1.11					BTN7
 P1.12					<unused>
 P1.13					<unused>
 P1.14					<unused>
