@@ -21,7 +21,7 @@ Things currently completed:
 - Support for extra GPIO bank on NRF52840 chip
 - joypad/button framework
 - Put SD card/touch on a separate SPI bus (leave screen on SPIM4)
-- I2C support (need to test
+- I2C support (tested good)
 - Video app
 
 Things still to do:
