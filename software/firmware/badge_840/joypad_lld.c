@@ -57,7 +57,7 @@ extern orchard_app_instance instance;
 static void joyInterrupt (EXTDriver *, expchannel_t);
 
 static thread_reference_t joyThreadReference;
-static THD_WORKING_AREA(waJoyThread, 256);
+static THD_WORKING_AREA(waJoyThread, 384);
 
 /* Default state is all buttons pressed. */
 
