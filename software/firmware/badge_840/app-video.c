@@ -143,7 +143,8 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		 * If this is the list ui exiting, it means we chose a
 		 * video to play, or else the user selected exit.
 		 */
- 		ui->exit (context);
+                if (ui != NULL)
+			ui->exit (context);
 		context->instance->ui = NULL;
 
 		/* User chose the "EXIT" selection, bail out. */
