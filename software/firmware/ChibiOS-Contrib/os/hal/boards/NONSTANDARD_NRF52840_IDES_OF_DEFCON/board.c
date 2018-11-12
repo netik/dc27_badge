@@ -39,7 +39,7 @@ const PALConfig pal_default_config =
         PAL_MODE_UNCONNECTED,         /* P0.10: NFC antenna    */
         PAL_MODE_INPUT_PULLUP,        /* P0.11: BTN1           */
         PAL_MODE_INPUT_PULLUP,        /* P0.12: BTN2           */
-        PAL_MODE_OUTPUT_PUSHPULL,     /* P0.13: LED1/SD card CS*/
+        PAL_MODE_OUTPUT_PULLUP,       /* P0.13: LED1/SD card CS*/
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.14: LED2           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.15: LED3           */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.16: LED4           */
