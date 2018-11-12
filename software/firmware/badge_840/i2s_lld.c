@@ -460,7 +460,6 @@ i2sPlay (char * file)
 void
 i2sLoopPlay (char * file, uint8_t loop)
 {
-	chSysLock ();
 	play = 0;
 	i2sloop = loop;
 	fname = file;
