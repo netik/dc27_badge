@@ -565,8 +565,8 @@ Wire Wire Line
 Wire Wire Line
 	2750 6200 2750 6100
 Connection ~ 2400 6200
-Text Notes 750  4900 0    50   ~ 10
-Fuel Gauge Circuit\n
+Text Notes 600  4350 0    50   ~ 10
+OPTIONAL Fuel Gauge Circuit\n
 Wire Wire Line
 	1700 4650 1700 4750
 $Comp
