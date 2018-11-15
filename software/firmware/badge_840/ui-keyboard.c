@@ -38,6 +38,7 @@
 #include "fontlist.h"
 #include "ides_gfx.h"
 #include "src/gdisp/gdisp_driver.h"
+#include "src/gwin/gwin_class.h"
 
 /*
  * We need two widgets: a console and the keyboard.
@@ -79,10 +80,16 @@ static void backspace (KeyboardHandles * p)
 	} else
 		cons->cx -= w;
 
+	_gwinDrawStart (p->ghConsole);
+
 	/* Clear the clip variables otherwise gdispGFillArea() might fail. */
 
 	p->ghConsole->display->clipx0 = 0;
 	p->ghConsole->display->clipy0 = 0;
+	p->ghConsole->display->clipx1 = gdispGetWidth ();
+	p->ghConsole->display->clipy1 = gdispGetHeight ();
+
+	_gwinDrawEnd (p->ghConsole);
 
 	/*
 	 * Black out the character under the cursor. uGFX does not
