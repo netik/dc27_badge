@@ -89,8 +89,6 @@ static void backspace (KeyboardHandles * p)
 	p->ghConsole->display->clipx1 = gdispGetWidth ();
 	p->ghConsole->display->clipy1 = gdispGetHeight ();
 
-	_gwinDrawEnd (p->ghConsole);
-
 	/*
 	 * Black out the character under the cursor. uGFX does not
 	 * actually draw anything when you ask it to render a space,
@@ -99,6 +97,8 @@ static void backspace (KeyboardHandles * p)
 
 	gdispGFillArea (p->ghConsole->display, cons->cx, cons->cy,
            w, h, cons->g.bgcolor);
+
+	_gwinDrawEnd (p->ghConsole);
 
 	return;
 }
@@ -211,10 +211,12 @@ static void keyboard_event(OrchardAppContext *context,
 
 	if (event->type == uiEvent) {
 		cons = (GConsoleObject *)p->ghConsole;
+		_gwinDrawStart (p->ghConsole);
 		gdispGFillArea (p->ghConsole->display, 0, 0,
 		    gdispGetWidth (), gdispGetHeight () / 2, cons->g.bgcolor);
 		cons->cx = 0;
 		cons->cy = 0;
+		_gwinDrawEnd (p->ghConsole);
 		gwinPrintf (p->ghConsole, "%s\n\n",
 	    		context->instance->uicontext->itemlist[0]);
 		if (event->ui.flags == uiCancel)
