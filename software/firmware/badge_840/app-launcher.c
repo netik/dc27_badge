@@ -112,7 +112,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	for (i = 0; i < LAUNCHER_ROWS; i++) {
 		for (j = 0; j < LAUNCHER_COLS; j++) {
 			wi.g.show = TRUE;
-			wi.g.x = j * 90 + 1;
+			wi.g.x = (j * 90) + 2;
 			wi.g.y = 31 + (110 * i);
 			wi.g.width = 80;
 			wi.g.height = 80;
@@ -125,7 +125,7 @@ draw_launcher_buttons(struct launcher_list * list)
         
 			/* Create label widget: ghLabel1 */
 
-			wi.g.x = j * 90;
+			wi.g.x = (j * 90) + 2;
 			wi.g.y = 110 * (i+1);
 			wi.g.height = 20;
 			wi.text = "---";
@@ -167,6 +167,7 @@ static void
 draw_box (struct launcher_list * list, color_t color)
 {
 	unsigned int i,j;
+        unsigned int x, y;
 
 	/* row y */
 
@@ -185,7 +186,13 @@ draw_box (struct launcher_list * list, color_t color)
 	GDISP->clipx1 = gdispGetWidth ();
 	GDISP->clipy1 = gdispGetHeight ();
 
-	gdispDrawBox (j * 90, 30 + (110 * i), 81, 81, color);
+	x = (j * 90) + 2;
+	y = 30 + (110 * i);
+
+	x -= 1;
+	y -= 1;
+
+	gdispDrawBox (x, y, 82, 82, color);
 
 	_gwinDrawEnd (list->ghButtonDn);
 
@@ -228,11 +235,11 @@ redraw_list (struct launcher_list * list)
 				gwinSetText (label, item->name, FALSE);
 				if (item->entry->icon != NULL) {
 					putImageFile (item->entry->icon,
-					    j * 90, 30 + (110 * i));
+					    (j * 90) + 2, 30 + (110 * i));
 				}
 			} else {
 				gwinSetText (label, "", FALSE);
-				gdispFillArea (j * 90, 30 + (110 * i),
+				gdispFillArea ((j * 90) + 2, 30 + (110 * i),
 				    81, 81, Black);
 			}
 
