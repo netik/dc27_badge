@@ -134,8 +134,12 @@ static void
 joyHandle (uint8_t s)
 {
 	uint8_t pad;
+	int i;
 
-	pad = palReadPad (joyTbl[s].port, joyTbl[s].pin);
+	for (i = 0; i < 3; i++) {
+		chThdSleep (1);
+		pad = palReadPad (joyTbl[s].port, joyTbl[s].pin);
+	}
 
 	pad <<= s;
 
