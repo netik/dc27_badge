@@ -46,7 +46,7 @@
 typedef systime_t	delaytime_t;
 typedef systime_t	systemticks_t;
 typedef cnt_t		semcount_t;
-typedef msg_t		threadreturn_t;
+typedef void		threadreturn_t;
 typedef tprio_t		threadpriority_t;
 
 #define MAX_SEMAPHORE_COUNT			((semcount_t)(((unsigned long)((semcount_t)(-1))) >> 1))
@@ -56,7 +56,7 @@ typedef tprio_t		threadpriority_t;
 
 #define DECLARE_THREAD_STACK(name, sz)			WORKING_AREA(name, sz)
 #define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
-#define THREAD_RETURN(retval)					return retval
+#define THREAD_RETURN(retval)
 
 #if CH_KERNEL_MAJOR == 2
 	typedef struct {
