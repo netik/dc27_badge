@@ -6,31 +6,47 @@
 # handler in the SoftDevice module. This address was obtained by
 # doing a hex dump of the first few bytes of the object file.
 #
-# Note: Softdevice S140 version 6.1.1 (released Novemvber 2018) was
-# found to fail bootstrap on an nRF52840 board. It's not exactly clear
-# why. Version 6.1.0 seemed to examine the UICR (at address 0x10001000)
-# in order to determine part of the bootstrap path. Version 6.1.1
-# seems to look at values stored in the flash at offset 0xffc and
-# 0xff8 instead. These locations contain 0 by default. The end result
-# is that the bootstrap code gets stuck in an endless loop, constantly
-# branching back to the entry point (0xA81). Since the code
-# always seems to examine these locations in flash and they can
-# never change, it's not clear exactly how this is ever supposed to
-# work. It's possible that the proprietary Nordic flashing tool
-# modifies these locations when flashing the SoftDevice.
+# Note: The s140_nrf52_6.1.1_softdevice.hex file actually contains
+# two things: the master boot record at address 0x0 and the SoftDevice
+# code at address 0x1000. There is a gap between the two. When we
+# convert the .hex file to a binary image, we need to fill the gap
+# with 0xFF instead of the default of 0x00. Here's why:
 #
-# To get around this, we patch the binary image at address 0xff8
-# so that it contains the value 0xFFFFFFFF instead of 0. This seems
-# to allow the SoftDevice to boot into the application code at
-# 0x26000 as expected. We go to some trouble to do this using only
-# standard UNIX utilities so that this script remains relatively
-# portable.
+# The MBR allows for a bootloader to be installed in the flash which
+# can be used for firmware updates. Nordic uses two special locations
+# in the UICR region of flash to specify the bootloader address and
+# MBR parameter page:
+#
+# #define MBR_UICR_BOOTLOADER_ADDR (&(NRF_UICR->NRFFW[0]))
+# #define MBR_UICR_PARAM_PAGE_ADDR (&(NRF_UICR->NRFFW[1]))
+#
+# The expectation is that by default these locations will be set
+# to 0xFFFFFFFF, which is the factory default. This also happens to
+# be the default value of flash locations which have been erased
+# and not yet programmed.
+#
+# Version 2.4.1 of the MBR introduces two new locations:
+#
+# #define MBR_BOOTLOADER_ADDR (0xFF8)
+# #define MBR_PARAM_PAGE_ADDR (0xFFC)
+#
+# These are located within the MBR region itself. The start-up code
+# checks these new locations first to see if they too are 0xFFFFFFFF.
+# If so, it then checks the UICR locations as well. If those are
+# also 0xFFFFFFFF, then the MBR launches the user application code
+# (which for this release is at 0x26000). The locations from the
+# end of the MBR code (0xb00) to the start of the SoftDevice (0x1000)
+# would end up being 0xFFFFFFFF because normally a programmer reading
+# directly from the .hex file would leave that location unset, so it
+# would retain the default erase value of 0xffffffff.
+#
+# Here's the problem: when objcopy converts from hex to bin, it will
+# fill the gap from 0xB00 to 0xFFF with 0 instead of 0xFF. When the MBR
+# code sees this, it will get stuck in an infinite loop and never
+# launch the application code. So we must use the --gap-fill option
+# to preserve the expected default behavior.
 
-arm-none-eabi-objcopy -I ihex -O binary s140_nrf52_6.1.1_softdevice.hex softdevice.bin
-awk 'BEGIN{ printf "%c%c%c%c",  255, 255, 255, 255 }' > patch.txt
-dd if=patch.txt of=softdevice.bin conv=notrunc obs=1 seek=4088
-dd if=patch.txt of=softdevice.bin conv=notrunc obs=1 seek=4092
-rm patch.txt
+arm-none-eabi-objcopy -I ihex -O binary --gap-fill 0xFF s140_nrf52_6.1.1_softdevice.hex softdevice.bin
 arm-none-eabi-objcopy -I binary -O elf32-littlearm -B arm softdevice.bin softdevice.o
 rm -f softdevice.bin
 arm-none-eabi-objcopy -I elf32-littlearm --rename-section .data=.softdevice softdevice.o
