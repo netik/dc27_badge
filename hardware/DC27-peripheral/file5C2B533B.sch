@@ -1,0 +1,220 @@
+EESchema Schematic File Version 4
+LIBS:DC27-badge-cache
+EELAYER 26 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 6 6
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+Text GLabel 4800 4450 0    50   BiDi ~ 0
+USBDATA+
+Text GLabel 4800 4550 0    50   BiDi ~ 0
+USBDATA-
+Wire Wire Line
+	4800 4450 4950 4450
+Wire Wire Line
+	4950 4550 4800 4550
+Text GLabel 6850 3600 2    50   Input ~ 0
+UART_CTS
+Wire Wire Line
+	6650 3600 6850 3600
+Text GLabel 6850 4100 2    50   Input ~ 0
+UART_RX
+Wire Wire Line
+	6650 3300 6850 3300
+Text GLabel 6850 3300 2    50   Output ~ 0
+UART_RTS
+Wire Wire Line
+	6650 4100 6850 4100
+Text GLabel 6850 3950 2    50   Input ~ 0
+UART_TX
+Wire Wire Line
+	6650 3950 6850 3950
+$Comp
+L Interface_USB:CP2102N-A01-GQFN24 U2
+U 1 1 5C2B55CC
+P 5750 3850
+F 0 "U2" H 5800 5028 50  0000 C CNN
+F 1 "CP2102N-A01-GQFN28" H 5800 4937 50  0000 C CNN
+F 2 "Package_DFN_QFN:QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm" H 6550 3050 50  0001 L CNN
+F 3 "http://www.silabs.com/support%20documents/technicaldocs/cp2102n-datasheet.pdf" H 5500 2450 50  0001 C CNN
+	1    5750 3850
+	1    0    0    -1  
+$EndComp
+Text GLabel 6850 3150 2    50   Output ~ 0
+UART_DTR
+Wire Wire Line
+	6650 3150 6850 3150
+NoConn ~ 6650 3800
+NoConn ~ 4950 4200
+NoConn ~ 2850 1300
+$Comp
+L power:GND #PWR0103
+U 1 1 5C2B5D39
+P 5850 5450
+F 0 "#PWR0103" H 5850 5200 50  0001 C CNN
+F 1 "GND" H 5855 5277 50  0000 C CNN
+F 2 "" H 5850 5450 50  0001 C CNN
+F 3 "" H 5850 5450 50  0001 C CNN
+	1    5850 5450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5750 5150 5750 5350
+Wire Wire Line
+	5950 5150 5950 5350
+Wire Wire Line
+	5950 5350 5850 5350
+Connection ~ 5850 5350
+Wire Wire Line
+	5850 5350 5850 5450
+Wire Wire Line
+	5750 5350 5850 5350
+$Comp
+L Device:C_Small C2
+U 1 1 5C2B5FB8
+P 3900 3650
+F 0 "C2" H 3992 3696 50  0000 L CNN
+F 1 "0.1uF" H 3992 3605 50  0000 L CNN
+F 2 "" H 3900 3650 50  0001 C CNN
+F 3 "~" H 3900 3650 50  0001 C CNN
+	1    3900 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C1
+U 1 1 5C2B5FFD
+P 3450 3650
+F 0 "C1" H 3542 3696 50  0000 L CNN
+F 1 "10uF" H 3542 3605 50  0000 L CNN
+F 2 "" H 3450 3650 50  0001 C CNN
+F 3 "~" H 3450 3650 50  0001 C CNN
+	1    3450 3650
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3450 3850 3450 3750
+Wire Wire Line
+	3450 3850 3900 3850
+Wire Wire Line
+	3900 3750 3900 3850
+Connection ~ 3900 3850
+Wire Wire Line
+	3900 3850 4950 3850
+$Comp
+L DC27-badge-cache:+3.3V #PWR0104
+U 1 1 5C2B62F3
+P 3650 3300
+F 0 "#PWR0104" H 3650 3150 50  0001 C CNN
+F 1 "+3.3V" H 3665 3473 50  0000 C CNN
+F 2 "" H 3650 3300 50  0001 C CNN
+F 3 "" H 3650 3300 50  0001 C CNN
+	1    3650 3300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3450 3550 3450 3400
+Wire Wire Line
+	3450 3400 3650 3400
+Wire Wire Line
+	3650 3400 3650 3300
+Wire Wire Line
+	3650 3400 3900 3400
+Wire Wire Line
+	3900 3400 3900 3550
+Connection ~ 3650 3400
+$Comp
+L Device:R R21
+U 1 1 5C2B6733
+P 3150 4050
+F 0 "R21" H 3220 4096 50  0000 L CNN
+F 1 "47.5K" H 3220 4005 50  0000 L CNN
+F 2 "" V 3080 4050 50  0001 C CNN
+F 3 "~" H 3150 4050 50  0001 C CNN
+	1    3150 4050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R22
+U 1 1 5C2B6757
+P 3150 4550
+F 0 "R22" H 3220 4596 50  0000 L CNN
+F 1 "22.1k" H 3220 4505 50  0000 L CNN
+F 2 "" V 3080 4550 50  0001 C CNN
+F 3 "~" H 3150 4550 50  0001 C CNN
+	1    3150 4550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4950 4350 3150 4350
+Wire Wire Line
+	3150 4350 3150 4200
+Wire Wire Line
+	3150 4400 3150 4350
+Connection ~ 3150 4350
+$Comp
+L power:GND #PWR0105
+U 1 1 5C2B725A
+P 3150 4850
+F 0 "#PWR0105" H 3150 4600 50  0001 C CNN
+F 1 "GND" H 3155 4677 50  0000 C CNN
+F 2 "" H 3150 4850 50  0001 C CNN
+F 3 "" H 3150 4850 50  0001 C CNN
+	1    3150 4850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3150 4850 3150 4700
+$Comp
+L DC27-badge-cache:+3.3V #PWR0106
+U 1 1 5C2B75D7
+P 3150 3750
+F 0 "#PWR0106" H 3150 3600 50  0001 C CNN
+F 1 "+3.3V" H 3165 3923 50  0000 C CNN
+F 2 "" H 3150 3750 50  0001 C CNN
+F 3 "" H 3150 3750 50  0001 C CNN
+	1    3150 3750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3150 3750 3150 3900
+$Comp
+L Device:R R20
+U 1 1 5C2B9016
+P 4650 2850
+F 0 "R20" H 4720 2896 50  0000 L CNN
+F 1 "1k" H 4720 2805 50  0000 L CNN
+F 2 "" V 4580 2850 50  0001 C CNN
+F 3 "~" H 4650 2850 50  0001 C CNN
+	1    4650 2850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4950 3100 4650 3100
+Wire Wire Line
+	4650 3100 4650 3000
+$Comp
+L DC27-badge-cache:+3.3V #PWR0107
+U 1 1 5C2B945C
+P 4650 2550
+F 0 "#PWR0107" H 4650 2400 50  0001 C CNN
+F 1 "+3.3V" H 4665 2723 50  0000 C CNN
+F 2 "" H 4650 2550 50  0001 C CNN
+F 3 "" H 4650 2550 50  0001 C CNN
+	1    4650 2550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4650 2550 4650 2700
+NoConn ~ 4950 3200
+Text Notes 2150 2800 0    50   ~ 0
+VREGIN is USB voltage, typically.\nVDD is an output line if the interal regulator is in use.\nHow much current can this chip source?\n
+$EndSCHEMATC
