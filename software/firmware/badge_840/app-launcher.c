@@ -7,6 +7,7 @@
 #include "fontlist.h"
 #include "ides_gfx.h"
 #include "src/gdisp/gdisp_driver.h"
+#include "src/gwin/gwin_class.h"
 
 #include "ble_lld.h"
 
@@ -51,7 +52,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	GWidgetInit wi;
 	unsigned int i,j;
 	char tmp[20];
-  
+
 	gwinWidgetClearInit (&wi);
    
 	/* Create label widget: ghTitleL */
@@ -107,11 +108,11 @@ draw_launcher_buttons(struct launcher_list * list)
 	 */
 
 	gwinSetDefaultFont(list->fontXS);
-  
-	  for (i = 0; i < LAUNCHER_ROWS; i++) {
+
+	for (i = 0; i < LAUNCHER_ROWS; i++) {
 		for (j = 0; j < LAUNCHER_COLS; j++) {
 			wi.g.show = TRUE;
-			wi.g.x = j * 90 + 1;
+			wi.g.x = (j * 90) + 2;
 			wi.g.y = 31 + (110 * i);
 			wi.g.width = 80;
 			wi.g.height = 80;
@@ -124,7 +125,7 @@ draw_launcher_buttons(struct launcher_list * list)
         
 			/* Create label widget: ghLabel1 */
 
-			wi.g.x = j * 90;
+			wi.g.x = (j * 90) + 2;
 			wi.g.y = 110 * (i+1);
 			wi.g.height = 20;
 			wi.text = "---";
@@ -166,17 +167,34 @@ static void
 draw_box (struct launcher_list * list, color_t color)
 {
 	unsigned int i,j;
+        unsigned int x, y;
 
 	/* row y */
 
-	i = (list->selected - (list->page * LAUNCHER_PERPAGE)) /
-	    LAUNCHER_COLS;
+	i = (list->selected % LAUNCHER_PERPAGE) / LAUNCHER_COLS;
     
 	/* col x */
 
 	j = list->selected % LAUNCHER_COLS;
 
-	gdispDrawBox (j * 90, 30 + (110 * i), 81, 81, color);
+	_gwinDrawStart (list->ghButtonDn);
+
+	/* Clear the clip variables otherwise gdispGFillArea() might fail. */
+
+	GDISP->clipx0 = 0;
+	GDISP->clipy0 = 0;
+	GDISP->clipx1 = gdispGetWidth ();
+	GDISP->clipy1 = gdispGetHeight ();
+
+	x = (j * 90) + 2;
+	y = 30 + (110 * i);
+
+	x -= 1;
+	y -= 1;
+
+	gdispDrawBox (x, y, 82, 82, color);
+
+	_gwinDrawEnd (list->ghButtonDn);
 
 	return;
 }
@@ -188,7 +206,7 @@ redraw_list (struct launcher_list * list)
 	unsigned int actualid;
 	struct launcher_list_item * item;
 	GHandle label;
- 
+
 	/*
 	 * given a page number, put down an image for each of the buttons
 	 * and set the label.
@@ -201,24 +219,31 @@ redraw_list (struct launcher_list * list)
 	 		label = list->ghLabels[(i * LAUNCHER_COLS) + j];
 			item = &list->items[actualid];
 
+			_gwinDrawStart (list->ghButtonDn);
+
+			/*
+			 * Clear the clip variables otherwise
+			 * gdispGFillArea() might fail.
+			 */
+
+			GDISP->clipx0 = 0;
+			GDISP->clipy0 = 0;
+			GDISP->clipx1 = 320;
+			GDISP->clipy1 = 240;
+
 			if (actualid < list->total) {
-				if (item->entry->icon != NULL)
-					putImageFile (item->entry->icon,
-					    j * 90, 30 + (110 * i));
 				gwinSetText (label, item->name, FALSE);
+				if (item->entry->icon != NULL) {
+					putImageFile (item->entry->icon,
+					    (j * 90) + 2, 30 + (110 * i));
+				}
 			} else {
 				gwinSetText (label, "", FALSE);
-
-	/* Clear the clip variables otherwise gdispGFillArea() might fail. */
-
-				GDISP->clipx0 = 0;
-				GDISP->clipy0 = 0;
-				GDISP->clipx1 = 320;
-				GDISP->clipy1 = 240;
-
-				gdispFillArea (j * 90, 30 + (110 * i),
+				gdispFillArea ((j * 90) + 2, 30 + (110 * i),
 				    81, 81, Black);
 			}
+
+			_gwinDrawEnd (list->ghButtonDn);
 		}
 	}
 
@@ -277,7 +302,6 @@ launcher_start (OrchardAppContext *context)
 	list->selected = 0;
 
 	draw_launcher_buttons (list);
-	redraw_list (list);
   
 	/* set up our local listener */
 	geventListenerInit (&list->gl);
@@ -346,7 +370,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		return;
 
 	if (event->type == keyEvent) {
-		/*draw_box (list, Black);*/
+		draw_box (list, Black);
 
 		if (event->key.code == keyUp)
 			list->selected -= LAUNCHER_COLS;
@@ -374,7 +398,6 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 			list->selected = list->total;
 
 		if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
-			draw_box (list, Black);
 			list->page++;
 			redraw_list (list);
 			return;
@@ -382,7 +405,6 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 
 		if (list->page > 0) {
 			if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
-				draw_box (list, Black);
 				list->page--;
 				redraw_list (list);
 				return;
@@ -403,6 +425,8 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 	if (event->type == ugfxEvent && pe->type == GEVENT_GWIN_BUTTON) {
 		w = ((GEventGWinButton*)pe)->gwin;
 
+		draw_box (list, Black);
+
 		for (i = 0; i < 6; i++) {
 			currapp = (list->page * LAUNCHER_PERPAGE) + i;
 			if (w == list->ghButtons[i] &&
@@ -421,20 +445,25 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 			if (((list->page + 1) * LAUNCHER_PERPAGE) <
 			    list->total) {
 				/* remove the box before update  */
-				draw_box (list, Black);
+				list->selected += LAUNCHER_PERPAGE;
+				if (list->selected > (list->total - 1))
+					list->selected = (list->total - 1);
 				list->page++;
 				redraw_list (list);
+				return;
 			}
 		}
 
 		if (w == list->ghButtonUp) {
 			if (list->page > 0) {
 				/* remove the box before update  */
-				draw_box (list, Black);
 				list->page--;
+				list->selected -= LAUNCHER_PERPAGE;
 				redraw_list (list);
+				return;
 			}
 		}
+		draw_box (list, Red);
 	}
  
 	/* wraparound */

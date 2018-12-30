@@ -38,6 +38,7 @@
 #include "fontlist.h"
 #include "ides_gfx.h"
 #include "src/gdisp/gdisp_driver.h"
+#include "src/gwin/gwin_class.h"
 
 /*
  * We need two widgets: a console and the keyboard.
@@ -79,10 +80,14 @@ static void backspace (KeyboardHandles * p)
 	} else
 		cons->cx -= w;
 
+	_gwinDrawStart (p->ghConsole);
+
 	/* Clear the clip variables otherwise gdispGFillArea() might fail. */
 
 	p->ghConsole->display->clipx0 = 0;
 	p->ghConsole->display->clipy0 = 0;
+	p->ghConsole->display->clipx1 = gdispGetWidth ();
+	p->ghConsole->display->clipy1 = gdispGetHeight ();
 
 	/*
 	 * Black out the character under the cursor. uGFX does not
@@ -92,6 +97,8 @@ static void backspace (KeyboardHandles * p)
 
 	gdispGFillArea (p->ghConsole->display, cons->cx, cons->cy,
            w, h, cons->g.bgcolor);
+
+	_gwinDrawEnd (p->ghConsole);
 
 	return;
 }
@@ -204,10 +211,12 @@ static void keyboard_event(OrchardAppContext *context,
 
 	if (event->type == uiEvent) {
 		cons = (GConsoleObject *)p->ghConsole;
+		_gwinDrawStart (p->ghConsole);
 		gdispGFillArea (p->ghConsole->display, 0, 0,
 		    gdispGetWidth (), gdispGetHeight () / 2, cons->g.bgcolor);
 		cons->cx = 0;
 		cons->cy = 0;
+		_gwinDrawEnd (p->ghConsole);
 		gwinPrintf (p->ghConsole, "%s\n\n",
 	    		context->instance->uicontext->itemlist[0]);
 		if (event->ui.flags == uiCancel)

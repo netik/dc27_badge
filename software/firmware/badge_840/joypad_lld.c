@@ -63,6 +63,7 @@ static THD_WORKING_AREA(waJoyThread, 128);
 /* Default state is all buttons pressed. */
 
 static uint8_t joyState = 0xFF;
+static uint8_t joyService = 0x0;
 
 OrchardAppEvent joyEvent;
 
@@ -79,6 +80,8 @@ static const joyInfo joyTbl[7] = {
 static const EXTConfig ext_config = {
 	{
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
+		  (0x20|IOPORT2_BTN5) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
 		  IOPORT1_BTN1 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
 		  IOPORT1_BTN2 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
@@ -86,8 +89,6 @@ static const EXTConfig ext_config = {
 		  IOPORT1_BTN3 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
 		  IOPORT1_BTN4 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
-		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  (0x20|IOPORT2_BTN5) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
 		  (0x20|IOPORT2_BTN6) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
@@ -111,6 +112,7 @@ static void
 joyInterrupt (EXTDriver *extp, expchannel_t chan)
 {
 	osalSysLockFromISR ();
+	joyService |= 1 << chan;
 	osalThreadResumeI (&joyThreadReference, MSG_OK);
 	osalSysUnlockFromISR ();
 	return;
@@ -128,12 +130,16 @@ joyInterrupt (EXTDriver *extp, expchannel_t chan)
 * RETURNS: N/A
 */
 
-static uint8_t
+static void
 joyHandle (uint8_t s)
 {
 	uint8_t pad;
+	int i;
 
-	pad = palReadPad (joyTbl[s].port, joyTbl[s].pin);
+	for (i = 0; i < 3; i++) {
+		chThdSleep (1);
+		pad = palReadPad (joyTbl[s].port, joyTbl[s].pin);
+	}
 
 	pad <<= s;
 
@@ -160,10 +166,9 @@ joyHandle (uint8_t s)
 		}
 
 		chEvtBroadcast (&orchard_app_key);
-		return (1);
 	}
 
-	return (0);
+	return;
 }
 
 /******************************************************************************
@@ -179,6 +184,10 @@ joyHandle (uint8_t s)
 
 static THD_FUNCTION(joyThread, arg)
 {
+	uint8_t service;
+	uint8_t busy;
+	int i;
+
 	(void)arg;
     
 	chRegSetThreadName ("JoyEvent");
@@ -188,26 +197,23 @@ static THD_FUNCTION(joyThread, arg)
 		osalThreadSuspendS (&joyThreadReference);
 		osalSysUnlock ();
 
-		if (joyHandle (JOY_ENTER_SHIFT))
-			continue;
+again:
+		busy = 0;
+		for (i = 0; i < 7; i++) {
+			osalSysLock ();
+			service = joyService & (1 << i);
+			joyService &= (uint8_t)~(1 << i);
+			osalSysUnlock ();
 
-		if (joyHandle (JOY_UP_SHIFT))
-			continue;
+			if (service) {
+				joyHandle (i);
+				busy++;
+			}
+		}
+		/* Keep checking for events until we're completely idle. */
+		if (busy != 0)
+			goto again;
 
-		if (joyHandle (JOY_DOWN_SHIFT))
-			continue;
-
-		if (joyHandle (JOY_LEFT_SHIFT))
-			continue;
-
-		if (joyHandle (JOY_RIGHT_SHIFT))
-			continue;
-
-		if (joyHandle (JOY_A_SHIFT))
-			continue;
-
-		if (joyHandle (JOY_B_SHIFT))
-			continue;
 	}
 
 	/* NOTREACHED */
