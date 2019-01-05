@@ -255,7 +255,7 @@ nrf52_program (void *instance, flash_offset_t offset,
 		return (FLASH_ERROR_PROGRAM);
 	}
 	while (flash_evt == 0)
-		chThdSleep (1);
+		__WFE();
 	evt = flash_evt;
 	flash_evt = 0;
 #else
