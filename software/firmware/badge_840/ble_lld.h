@@ -40,6 +40,8 @@
 #define BLE_IDES_APP_TAG	1
 
 extern uint8_t ble_station_addr[];
+extern volatile enum NRF_SOC_EVTS soc_evt;
+extern volatile enum NRF_SOC_EVTS flash_evt;
 
 extern void bleStart (void);
 extern void bleEnable (void);

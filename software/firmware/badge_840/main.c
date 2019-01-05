@@ -369,17 +369,6 @@ int main(void)
 	    pFlash->address);
     }
 
-#ifdef notdef
-    if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR)
-      printf ("ERASE FAILED\r\n");
-
-    flashWaitErase ((void *)&FLASHD2);
-
-    if (flashProgram (&FLASHD2, 0xFF000, 1024, (uint8_t *)0x20008100) !=
-      FLASH_NO_ERROR)
-      printf ("PROGRAM FAILED...\r\n");
-#endif
-
     i2cStart (&I2CD2, &i2c2_config);
 
     printf ("I2C interface enabled\r\n");
@@ -421,6 +410,25 @@ int main(void)
     /* Enable bluetooth radio */
 
     bleStart ();
+
+#ifdef flash_test
+
+    /*
+     * Note: we're compiled to use the SoftDevice for flash access,
+     * which means we can only actually perform erase and program
+     * operations on the internal flash after the SoftDevice has
+     * been enabled.
+     */
+
+    if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR)
+      printf ("ERASE FAILED\r\n");
+
+    flashWaitErase ((void *)&FLASHD2);
+
+    if (flashProgram (&FLASHD2, 0xFF000, 1024, (uint8_t *)0x20002000) !=
+      FLASH_NO_ERROR)
+      printf ("PROGRAM FAILED...\r\n");
+#endif
 
     NRF_P0->DETECTMODE = 0;
 

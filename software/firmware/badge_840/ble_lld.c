@@ -32,7 +32,7 @@
 
 /*
  * This module implements the top-level support for the BLE radio in the
- * NRF52832 chip using the s132 SoftDevice stack. While it's possible to
+ * NRF52840 chip using the s140 SoftDevice stack. While it's possible to
  * access the radio directly, this only allows you to send and receive
  * raw packets. The SoftDevice includes Nordic's BLE stack. It's provided
  * as a binary blob which is linked with the rest of the badge code.
@@ -66,6 +66,8 @@ uint8_t ble_station_addr[6];
 
 static thread_reference_t sdThreadReference;
 static ble_evt_t ble_evt;
+volatile enum NRF_SOC_EVTS soc_evt;
+volatile enum NRF_SOC_EVTS flash_evt;
 
 /*
  * This symbol is created by the linker script. Its address is
@@ -152,6 +154,12 @@ static THD_FUNCTION(sdThread, arg)
 			if (r != NRF_SUCCESS)
 				break;
 			bleEventDispatch (&ble_evt);
+			r = sd_evt_get ((uint32_t *)&soc_evt);
+			if (r != NRF_SUCCESS)
+				break;
+			if (soc_evt == NRF_EVT_FLASH_OPERATION_SUCCESS ||
+			    soc_evt == NRF_EVT_FLASH_OPERATION_ERROR)
+				flash_evt = soc_evt;
 		}
     	}
 

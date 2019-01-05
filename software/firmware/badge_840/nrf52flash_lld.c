@@ -30,11 +30,22 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This module provides support for accessing the NRF52840's internal flash
+ * using the ChibiOS flash API. We support two access modes: direct NVMC
+ * access and SoftDevice access. Since we use the SoftDevice for BLE
+ * connectivity, SoftDevice mode is typically used by default (the user
+ * is required to use SoftDevice mode whenever it's enabled.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "hal.h"
 #include "nrf52flash_lld.h"
+
+#include "nrf_soc.h"
+#include "ble_lld.h"
 
 static const flash_descriptor_t *nrf52_get_descriptor(void *instance);
 static flash_error_t nrf52_read(void *instance, flash_offset_t offset,
@@ -110,7 +121,11 @@ static flash_error_t
 nrf52_start_erase_sector (void *instance, flash_sector_t sector)
 {
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
+#if (HAL_USE_SOFTDEVICE == TRUE)
+	int r;
+#else
 	flash_offset_t offset = (flash_offset_t)(sector * FLASH_PAGE_SIZE);
+#endif
 
 	if (sector > (nrf52_descriptor.sectors_count - 1))
 		return (FLASH_ERROR_ERASE);
@@ -124,18 +139,26 @@ nrf52_start_erase_sector (void *instance, flash_sector_t sector)
 
 	devp->state = FLASH_ERASE;
 
+#if (HAL_USE_SOFTDEVICE == TRUE)
+	flash_evt = 0;
+	r = sd_flash_page_erase (sector);
+#else
 	devp->port->CONFIG = NVMC_CONFIG_WEN_Een;
         devp->port->ERASEPAGE = offset;
+#endif
 
 	osalMutexUnlock (&devp->mutex);
 
-	return (FLASH_NO_ERROR);
+	if (r == NRF_SUCCESS)
+		return (FLASH_NO_ERROR);
+	return (FLASH_ERROR_ERASE);
 }
 
 static flash_error_t
 nrf52_query_erase (void *instance, uint32_t *msec)
 {
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
+	enum NRF_SOC_EVTS evt;
 
 	osalMutexLock (&devp->mutex);
 
@@ -144,6 +167,18 @@ nrf52_query_erase (void *instance, uint32_t *msec)
 		return (FLASH_ERROR_PROGRAM);
 	}
 
+#if (HAL_USE_SOFTDEVICE == TRUE)
+	if (flash_evt == 0) {
+		if (msec != NULL)
+			*msec = 1U;
+		osalMutexUnlock (&devp->mutex);
+		return (FLASH_BUSY_ERASING);
+	}
+	evt = flash_evt;
+	flash_evt = 0;
+	if (NRF_EVT_FLASH_OPERATION_SUCCESS)
+		devp->state = FLASH_READY;
+#else
 	if (devp->port->READY == NVMC_READY_READY_Busy) {
 		if (msec != NULL)
 			*msec = 1U;
@@ -153,10 +188,12 @@ nrf52_query_erase (void *instance, uint32_t *msec)
 
         devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
 	devp->state = FLASH_READY;
-
+#endif
 	osalMutexUnlock (&devp->mutex);
 
-	return (FLASH_NO_ERROR);
+	if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
+		return (FLASH_NO_ERROR);
+	return (FLASH_ERROR_ERASE);
 }
 
 static flash_error_t
@@ -181,7 +218,22 @@ nrf52_program (void *instance, flash_offset_t offset,
 {
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
 	uint8_t * p;
+#if (HAL_USE_SOFTDEVICE == TRUE)
+	enum NRF_SOC_EVTS evt;
+	int r;
 
+	/*
+	 * Note: the sd_flash_write() API expects the flash write size
+	 * to be expressed as a number of 32-bit words, whereas the
+	 * ChibiOS flash API expects the size to be expressed in bytes.
+	 * This means we need to divide the size by 4 here. It also means
+	 * the size supplied by the caller must always be a multiple of 4
+	 * in order for things to work right.
+	 */
+
+	if (n & 0x3)
+		return (FLASH_ERROR_PROGRAM);
+#endif
 	if ((offset + n) > (FLASH_PAGE_SIZE * nrf52_descriptor.sectors_count))
 		return (FLASH_ERROR_PROGRAM);
 
@@ -193,15 +245,32 @@ nrf52_program (void *instance, flash_offset_t offset,
 	}
 
 	p = (uint8_t *)nrf52_descriptor.address;
+
+#if (HAL_USE_SOFTDEVICE == TRUE)
+	flash_evt = 0;
+	r = sd_flash_write ((uint32_t *)(p + offset),
+	    (const uint32_t *)pp, n / sizeof(uint32_t));
+	if (r != NRF_SUCCESS) {
+		osalMutexUnlock (&devp->mutex);
+		return (FLASH_ERROR_PROGRAM);
+	}
+	while (flash_evt == 0)
+		chThdSleep (1);
+	evt = flash_evt;
+	flash_evt = 0;
+#else
 	devp->port->CONFIG = NVMC_CONFIG_WEN_Wen;
         memcpy (p + offset, pp, n);
 	while (devp->port->READY == NVMC_READY_READY_Busy)
                 ;
 	devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
+#endif
 
 	osalMutexUnlock (&devp->mutex);
 
-	return (FLASH_NO_ERROR);
+	if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
+		return (FLASH_NO_ERROR);
+	return (FLASH_ERROR_PROGRAM);
 }
 
 void
