@@ -79,6 +79,12 @@ extern uint32_t __ram0_start__;
 void
 nordic_fault_handler (uint32_t id, uint32_t pc, uint32_t info)
 {
+	uint32_t * p;
+	p = (uint32_t *)NRF_FAULT_INFO_ADDR;
+	p[0] = NRF_FAULT_INFO_MAGIC;
+	p[1] = id;
+	p[2] = pc;
+	p[3] = info;
 	return;
 }
 
