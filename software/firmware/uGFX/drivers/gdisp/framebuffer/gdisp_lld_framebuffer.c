@@ -28,7 +28,7 @@ typedef struct fbPriv {
 /* Driver local routines    .                                                */
 /*===========================================================================*/
 
-#define PIXIL_POS(g, x, y)		((y) * ((fbPriv *)(g)->priv)->fbi.linelen + (x) * sizeof(LLDCOLOR_TYPE))
+#define PIXEL_POS(g, x, y)		((y) * ((fbPriv *)(g)->priv)->fbi.linelen + (x) * sizeof(LLDCOLOR_TYPE))
 #define PIXEL_ADDR(g, pos)		((LLDCOLOR_TYPE *)(((char *)((fbPriv *)(g)->priv)->fbi.pixels)+pos))
 
 /*===========================================================================*/
@@ -65,20 +65,20 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		switch(g->g.Orientation) {
 		case GDISP_ROTATE_0:
 		default:
-			pos = PIXIL_POS(g, g->p.x, g->p.y);
+			pos = PIXEL_POS(g, g->p.x, g->p.y);
 			break;
 		case GDISP_ROTATE_90:
-			pos = PIXIL_POS(g, g->p.y, g->g.Width-g->p.x-1);
+			pos = PIXEL_POS(g, g->p.y, g->g.Width-g->p.x-1);
 			break;
 		case GDISP_ROTATE_180:
-			pos = PIXIL_POS(g, g->g.Width-g->p.x-1, g->g.Height-g->p.y-1);
+			pos = PIXEL_POS(g, g->g.Width-g->p.x-1, g->g.Height-g->p.y-1);
 			break;
 		case GDISP_ROTATE_270:
-			pos = PIXIL_POS(g, g->g.Height-g->p.y-1, g->p.x);
+			pos = PIXEL_POS(g, g->g.Height-g->p.y-1, g->p.x);
 			break;
 		}
 	#else
-		pos = PIXIL_POS(g, g->p.x, g->p.y);
+		pos = PIXEL_POS(g, g->p.x, g->p.y);
 	#endif
 
 		PIXEL_ADDR(g, pos)[0] = gdispColor2Native(g->p.color);
@@ -92,20 +92,20 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
 		switch(g->g.Orientation) {
 		case GDISP_ROTATE_0:
 		default:
-			pos = PIXIL_POS(g, g->p.x, g->p.y);
+			pos = PIXEL_POS(g, g->p.x, g->p.y);
 			break;
 		case GDISP_ROTATE_90:
-			pos = PIXIL_POS(g, g->p.y, g->g.Width-g->p.x-1);
+			pos = PIXEL_POS(g, g->p.y, g->g.Width-g->p.x-1);
 			break;
 		case GDISP_ROTATE_180:
-			pos = PIXIL_POS(g, g->g.Width-g->p.x-1, g->g.Height-g->p.y-1);
+			pos = PIXEL_POS(g, g->g.Width-g->p.x-1, g->g.Height-g->p.y-1);
 			break;
 		case GDISP_ROTATE_270:
-			pos = PIXIL_POS(g, g->g.Height-g->p.y-1, g->p.x);
+			pos = PIXEL_POS(g, g->g.Height-g->p.y-1, g->p.x);
 			break;
 		}
 	#else
-		pos = PIXIL_POS(g, g->p.x, g->p.y);
+		pos = PIXEL_POS(g, g->p.x, g->p.y);
 	#endif
 
 	color = PIXEL_ADDR(g, pos)[0];
