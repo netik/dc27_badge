@@ -259,6 +259,7 @@ int main(void)
     const flash_descriptor_t * pFlash;
     uint8_t reg;
     qspi_command_t cmd;
+    uint32_t * faultPtr;
 
     halInit();
     chSysInit();
@@ -283,6 +284,48 @@ int main(void)
 		      Thread1, NULL);
 
     printf ("SYSTEM START\r\n");
+
+    /* Display reset reason */
+
+    if (NRF_POWER->RESETREAS) {
+        info = NRF_POWER->RESETREAS;
+        /* Clear accumulated reasons. */
+        NRF_POWER->RESETREAS = 0xFFFFFFFF;
+
+        printf ("Reset event (0x%X):", info);
+        if (info & POWER_RESETREAS_VBUS_Msk)
+            printf (" Wake up due to VBUS level");
+        if (info & POWER_RESETREAS_NFC_Msk)
+            printf (" Wake up due to NFC detect");
+        if (info & POWER_RESETREAS_DIF_Msk)
+            printf (" Wake up due to entering debug IF mode");
+        if (info & POWER_RESETREAS_LPCOMP_Msk)
+            printf (" Wake up due to reaching LPCOMP power threshold");
+        if (info & POWER_RESETREAS_OFF_Msk)
+            printf (" Wake up due to GPIO detect");
+        if (info & POWER_RESETREAS_LOCKUP_Msk)
+            printf (" Reset due to CPU lockup");
+        if (info & POWER_RESETREAS_SREQ_Msk)
+            printf (" Soft reset");
+        if (info & POWER_RESETREAS_DOG_Msk)
+            printf (" Watchdog reset");
+        if (info & POWER_RESETREAS_RESETPIN_Msk)
+            printf (" Reset pin asserted");
+        printf ("\r\n");
+    } else {
+        printf ("Power on\r\n");
+    }
+
+    /* Check if we rebooted due to a SoftDevice crash. */
+
+    faultPtr = (uint32_t *)NRF_FAULT_INFO_ADDR;
+    if (*faultPtr == NRF_FAULT_INFO_MAGIC) {
+        printf ("Reset after SoftDevice fault, "
+            "Id: 0x%X PC: 0x%X INFO: 0x%X\r\n",
+            faultPtr[1], faultPtr[2], faultPtr[3]);
+        faultPtr[0] = 0;
+    }
+
     info = NRF_FICR->INFO.VARIANT;
     p = (uint8_t *)&info;
     printf ("Nordic Semiconductor nRF%x Variant: %c%c%c%c ",
@@ -320,7 +363,9 @@ int main(void)
     /* Start SPI buses */
 
     spiStart (&SPID1, &spi1_config);
+    printf ("SPI bus 1 enabled\r\n");
     spiStart (&SPID4, &spi4_config);
+    printf ("SPI bus 4 enabled\r\n");
 
     /* Enable QSPI flash */
 

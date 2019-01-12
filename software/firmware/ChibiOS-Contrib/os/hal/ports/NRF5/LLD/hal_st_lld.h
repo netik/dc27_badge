@@ -79,6 +79,8 @@
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
+#ifndef CH_H
+
 #if OSAL_ST_MODE != OSAL_ST_MODE_NONE
 #if (NRF5_ST_USE_TIMER0 == TRUE) && (NRF5_GPT_USE_TIMER0 == TRUE)
 #error "TIMER0 already used by GPT driver"
@@ -134,6 +136,7 @@
 #error "Invalid IRQ priority assigned to ST driver"
 #endif
 
+#endif
 
 /*===========================================================================*/
 /* Driver data structures and types.                                         */
