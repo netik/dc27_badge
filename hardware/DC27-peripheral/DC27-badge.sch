@@ -531,7 +531,7 @@ L Connector:Conn_ARM_JTAG_SWD_10 J101
 U 1 1 5BB15372
 P 1150 4500
 F 0 "J101" H 710 4546 50  0000 R CNN
-F 1 "Conn_ARM_JTAG_SWD_10" H 2150 3900 50  0000 R CNN
+F 1 "Conn_ARM_JTAG_SWD_10" V 850 4950 50  0000 R CNN
 F 2 "Connector_PinHeader_1.27mm:PinHeader_2x05_P1.27mm_Vertical_SMD" H 1200 3950 50  0001 L TNN
 F 3 "http://infocenter.arm.com/help/topic/com.arm.doc.faqs/attached/13634/cortex_debug_connectors.pdf" V 800 3250 50  0001 C CNN
 	1    1150 4500
@@ -570,26 +570,19 @@ F 3 "" H 1150 3600 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	1150 3600 1150 3650
-Text GLabel 1850 4200 2    50   Output ~ 0
+Text GLabel 2300 4200 2    50   Output ~ 0
 ~RESET_TGTMCU
-Wire Wire Line
-	1650 4200 1850 4200
-Text GLabel 1850 4400 2    50   Output ~ 0
+Text GLabel 2300 4400 2    50   Output ~ 0
 DEBUG_SWDCLK
-Wire Wire Line
-	1650 4400 1850 4400
-Text GLabel 1850 4500 2    50   BiDi ~ 0
+Text GLabel 2300 4500 2    50   BiDi ~ 0
 DEBUG_SWDIO
-Wire Wire Line
-	1650 4500 1750 4500
 NoConn ~ 1650 4700
-NoConn ~ 1650 4600
 $Comp
 L Device:R R101
 U 1 1 5BB2FF77
 P 1750 3900
-F 0 "R101" H 1820 3946 50  0000 L CNN
-F 1 "10K" H 1820 3855 50  0000 L CNN
+F 0 "R101" H 1450 4000 50  0000 L CNN
+F 1 "10K" H 1500 3900 50  0000 L CNN
 F 2 "Resistor_SMD:R_0603_1608Metric" V 1680 3900 50  0001 C CNN
 F 3 "~" H 1750 3900 50  0001 C CNN
 	1    1750 3900
@@ -602,11 +595,6 @@ Wire Wire Line
 Connection ~ 1150 3650
 Wire Wire Line
 	1150 3650 1150 3900
-Wire Wire Line
-	1750 4050 1750 4500
-Connection ~ 1750 4500
-Wire Wire Line
-	1750 4500 1850 4500
 Text Notes 550  3350 0    50   ~ 10
 PROGRAMMING HEADER
 $Comp
@@ -801,7 +789,6 @@ Text GLabel 6000 4450 2    50   Output ~ 0
 DISP_CS
 Wire Wire Line
 	5750 4450 6000 4450
-NoConn ~ 5750 2750
 NoConn ~ 5750 4250
 NoConn ~ 5750 4150
 NoConn ~ 5750 4050
@@ -1244,4 +1231,65 @@ Wire Wire Line
 Wire Wire Line
 	7200 1150 7200 1700
 Connection ~ 7200 1700
+Text GLabel 2300 4600 2    50   BiDi ~ 0
+DEBUG_SWO
+Wire Wire Line
+	1650 4200 2300 4200
+$Comp
+L Device:R R102
+U 1 1 5C3E5A2E
+P 1900 3900
+F 0 "R102" H 1970 3946 50  0000 L CNN
+F 1 "10K" H 1970 3855 50  0000 L CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 1830 3900 50  0001 C CNN
+F 3 "~" H 1900 3900 50  0001 C CNN
+	1    1900 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R103
+U 1 1 5C3E5A7B
+P 2200 3900
+F 0 "R103" H 2270 3946 50  0000 L CNN
+F 1 "10K" H 2270 3855 50  0000 L CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 2130 3900 50  0001 C CNN
+F 3 "~" H 2200 3900 50  0001 C CNN
+	1    2200 3900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1650 4600 2200 4600
+Wire Wire Line
+	1650 4400 1750 4400
+Wire Wire Line
+	1750 3650 1900 3650
+Wire Wire Line
+	1900 3650 1900 3750
+Connection ~ 1750 3650
+Wire Wire Line
+	1900 3650 2200 3650
+Wire Wire Line
+	2200 3650 2200 3750
+Connection ~ 1900 3650
+Wire Wire Line
+	2200 4050 2200 4600
+Connection ~ 2200 4600
+Wire Wire Line
+	2200 4600 2300 4600
+Wire Wire Line
+	1650 4500 1900 4500
+Wire Wire Line
+	1750 4050 1750 4400
+Connection ~ 1750 4400
+Wire Wire Line
+	1750 4400 2300 4400
+Wire Wire Line
+	1900 4050 1900 4500
+Connection ~ 1900 4500
+Wire Wire Line
+	1900 4500 2300 4500
+Text GLabel 6150 2750 2    50   BiDi ~ 0
+DEBUG_SWO
+Wire Wire Line
+	5750 2750 6150 2750
 $EndSCHEMATC
