@@ -1,0 +1,34 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#(c) SnapEDA 2016 (snapeda.com)
+#This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA) with Design Exception 1.0
+#
+# LM4880
+#
+DEF LM4880 U 0 40 Y Y 1 L N
+F0 "U" 0 1002 50 H V L BNN
+F1 "LM4880" 400 -100 50 H V L BNN
+F2 "SO08" 0 0 50 H I L BNN
+F3 "None" 0 0 50 H I L BNN
+F4 "Unavailable" 0 0 50 H I L BNN
+F5 "None" 0 0 50 H I L BNN
+F6 "LM4880" 0 0 50 H I L BNN
+F7 "" 0 0 50 H I L BNN
+F8 "Texas Instruments" 0 0 50 H I L BNN
+DRAW
+P 2 0 0 10 0 900 0 0 N
+P 2 0 0 10 0 0 800 0 N
+P 2 0 0 10 800 0 800 900 N
+P 2 0 0 10 800 900 0 900 N
+X OUTA 1 1000 800 200 L 40 40 0 0 O 
+X INA 2 -200 800 200 R 40 40 0 0 I 
+X BYP 3 -200 300 200 R 40 40 0 0 B 
+X GND 4 -200 500 200 R 40 40 0 0 W 
+X SD 5 1000 600 200 L 40 40 0 0 B 
+X INB 6 -200 100 200 R 40 40 0 0 I 
+X OUTB 7 1000 100 200 L 40 40 0 0 O 
+X VDD 8 -200 600 200 R 40 40 0 0 W 
+ENDDRAW
+ENDDEF
+#
+# End Library
