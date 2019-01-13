@@ -39,7 +39,7 @@ then
     CODEC=tiff
 fi
 
-${FFMPEG} -loglevel panic -vcodec ${CODEC} -i $filename -vcodec rawvideo -f rawvideo -pix_fmt rgb565 /tmp/out$$.raw 
+${FFMPEG} -loglevel panic -vcodec ${CODEC} -i $filename -vcodec rawvideo -f rawvideo -pix_fmt rgb565be /tmp/out$$.raw 
 
 cat /tmp/hdr$$.rgb /tmp/out$$.raw > ${newfilename}
 

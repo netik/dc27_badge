@@ -26,10 +26,16 @@
 static void init_board(GDisplay *g) {
 	(void) g;
 
-	/* Set all pins to initial (high) state */
+	/*
+	 * Set initial pin state.
+	 * Note: since the display is the only slave on the SPI bus
+	 * in our current design, we can set the chip select pin
+	 * to low and just leave it there so that the screen is always
+	 * selected.
+	 */
 
 	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
-	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
+	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
 
 	return;
 }
@@ -52,7 +58,6 @@ static void acquire_bus(GDisplay *g) {
 	(void) g;
 
 	spiAcquireBus (&SPI_BUS);
-	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
 
 	return;
 }
@@ -60,7 +65,6 @@ static void acquire_bus(GDisplay *g) {
 static void release_bus(GDisplay *g) {
 	(void) g;
 
-	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
 	spiReleaseBus (&SPI_BUS);
 
 	return;
