@@ -210,7 +210,7 @@ bleStart (void)
 
 	/* Set up SoftDevice ISR */
 
-	nvicEnableVector (SD_EVT_IRQn, 5);
+	nvicEnableVector (SD_EVT_IRQn, NRF5_SD_IRQ_PRIORITY);
 
 	/* Initialize peer list handling */
 
