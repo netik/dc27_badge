@@ -1,0 +1,223 @@
+
+The DC27 IDES badge is based on the Nordic NRF52840 chip. The badge software
+runs on two platforms: the nRF52840 DK reference board, and the production
+badge hardware.
+
+Both environments are debugged using ARM Serial Wire Debug (SWD). SWD is
+basically a simplified version of JTAG with fewer pins, and is common to
+pretty much all ARM Cortex-M devices. The nRF52840 DK board includes an
+on-board Segger J-Link debugger, which means you can debug and flash the
+reference board without needing to buy any separate hardware. The production
+badge board does not include an on-board debugger. Instead there is only
+a 10-pin mini header, which must be connected to an separate debugger.
+
+Our off-board debugger of choice is the Olimex ARM-USB-OCD-H. This is
+a pretty standard debugger based on an FTDI chipset. It supports both
+standard ARM JTAG and SWD. Note that if you use SDW you must also
+purchase the ARM-JTAG-SWD adapter and the ARM-JTAG-20-10 adapter. You
+can use any other debugger that supports SWD. We just happen to like
+this one.
+
+For debugging we use a combination of OpenOCD and GDB. Recent versions of
+OpenOCD support the nRF52832 and nRF52840 devices out of the box. You
+should be able to just check out the git repo and build. (Don't forget
+to run the bootstrap script first.) I personally use GDB 8.2 but any
+recent version will work.
+
+This directory contains some sample scripts for running OpenOCD to debug
+the nRF528xx and production badge boards. Exaples are provided for the
+on-board Segger J-Link om the Nordic DK boards as well as for standalone
+debuggers.
+
+Here's a few debugging FAQs:
+
+Q: I have this really cheap ST-LINK v2 USB dongle debugger that I got for
+   from some Chinese vendor for $5. Can I debug/reflash my badge with it?
+
+A: Yes, you can. See the openocd-nrf52-stlink.sh script. There are a
+   couple of caveats though:
+
+   1) That $5 adapter you got is probably a cheap clone, not a genuine
+      device from ST-Micro.
+
+   2) The ST-LINK v2 is what OpenOCD calls a high-level adapter. It
+      contains an ARM MCU on it which talks USB on one side and SWD
+      on the other. The firmware in it only knows how to talk to the
+      Debug Access Port (DAP) in an ARM processor. It can't talk to
+      any other ports. Some vendors implement custom APs which handle
+      vendor-specific commands.
+
+      With the nRF52 parts, there is also a CTRL-AP which, among other
+      things, provides a way to issue a mass erase command, which blanks
+      the flash. This is different from issuing a mass erase using the
+      NVMC peripheral block. The one time you will need to use the CTRL-AP
+      to issue a mass erase is if you set the APPPROTECT bit in the
+      NVMC to disable DAP access. (You would only do this to lock the
+      chip so that nobody can copy/pirate your firmware from deployed
+      devices.) When the APPROTECT bit is set, the DAP is disabled,
+      and at that point the ST-LINK v2 can't talk to the chip anymore.
+
+      This means you must be careful not to set the APPROTECT bit in a
+      production badge when all you have is an ST-LINK v2 debugger,
+      because if you do, you won't be able to debug or flash it again.
+
+Q: Does that mean I can permanently brick my badge?
+
+A: No. It just means you'll have to buy/borrow a low-level debugger from
+   somewhere in order to recover it.
+
+Q: I see that OpenOCD lets me issue an "nrf52 mass_erase" command. Is
+   that how I recover the badge?
+
+A: No. That performs a mass erase via the NVMC block, not through the
+   CTRL-AP port.
+
+Q: So how do I do it then?
+
+A: For some background, get a copy of the nRF52840 Product Specification
+   from the Nordic website and look at the Debug and Trace section. You'll
+   notice that it documents the CTRL-AP and mentions the following registers:
+
+	Register	Offset	Description
+	RESET		0x000	Soft reset triggered through CTRL-AP
+	ERASEALL	0x004	Erase all
+	ERASEALLSTATUS	0x008	Status register for the ERASEALL operation
+	APPROTECTSTATUS	0x00C	Status register for access port protection
+	IDR		0x0FC	CTRL-AP identification register
+
+   OpenOCD doesn't have a built-in method for using the nRF52 CTRL-AP (yet?)
+   but you can manipulate it anyway using the command shell:
+
+	% telnet localhost 4444
+	Trying 127.0.0.1...
+	Connected to localhost.
+	Escape character is '^]'.
+	Open On-Chip Debugger
+	> nrf52.dap apreg 1 0xfc	# read AP ID
+	0x02880000
+	> nrf52.dap apreg 1 0x0c	# read APPROTETCSTATUS
+	0x00000001			# 0 = enabled    1 = disabled
+	> nrf52.dap apreg 1 0x08	# read ERASEALLSTATUS
+	0x00000000			# 0 = idle       1 = in progress
+	> nrf42 dap apreg 1 0x04 0x1	# issue erase all command
+	nrf52.cpu -- clearing lockup after double fault
+	Polling target nrf52.cpu failed, trying to reexamine
+	nrf52.cpu: hardware has 6 breakpoints, 4 watchpoints
+	> nrf52.dap apreg 1 0x08	# check that erase is done
+	0x00000000
+	>
+
+   At this point you should be able to update the flash again. (Note: in the
+   above example, the chip was already unlocked.)
+
+Q: What the heck is OS-awareness and can I use it make debugging easier?
+
+A: OS-awareness means that your debugging software knows not only how your
+   CPU works, but also how the OS running on it works. That means it can
+   not only show you CPU state, it can show you things like the state of
+   all the threads or tasks in your OS. The DC27 badge runs the ChibiOS
+   RTOS and OpenOCD has OS-awareness support for it. (It also handles
+   FreeRTOS and some others.) This can be used in conjunction with GDB
+   to inspect individual thread state so that you don't have to work it
+   all out in your head.
+
+Q: How do I use it with OpenOCD and GDB?
+
+A: When running OpenOCD, add the following option:
+
+   -c "nrf52.cpu configure -rtos ChibiOS"
+
+   Once you've done this, connect to OpenOCD using GDB and use the "info
+   threads" to see the available thread contexts:
+
+arm-none-eabi-gdb build/badge.elf -ex "target remote localhost:3333" -q
+Reading symbols from build/badge.elf...done.
+Remote debugging using localhost:3333
+_idle_thread (p=0x0 <_binary_softdevice_bin_start>)
+    at ../ChibiOS/os/common/ports/ARMCMx/chcore_v7m.h:699
+699     }
+(gdb) monitor reset init
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x00000a80 msp: 0x20000400
+(gdb) c
+Continuing.
+^C
+Thread 2 received signal SIGINT, Interrupt.
+_idle_thread (p=0x0 <_binary_softdevice_bin_start>)
+    at ../ChibiOS/os/common/ports/ARMCMx/chcore_v7m.h:699
+699     }
+(gdb) info threads
+  Id   Target Id                                           Frame 
+  1    Thread 536885232 (Name: main, State: WTOREVT)       chEvtWaitOne (
+    events=events@entry=4294967295) at ../ChibiOS/os/rt/src/chevents.c:408
+* 2    Thread 536885112 (Name: idle, State: CURRENT)       _idle_thread (
+    p=0x0 <_binary_softdevice_bin_start>)
+    at ../ChibiOS/os/common/ports/ARMCMx/chcore_v7m.h:699
+  3    Thread 536888200 (Name: blinker, State: SLEEPING)   chSchGoSleepTimeoutS
+    (newstate=newstate@entry=8 '\b', timeout=timeout@entry=1000)
+    at ../ChibiOS/os/rt/include/chvt.h:245
+  4    Thread 536897368 (Name: JoyEvent, State: SUSPENDED) 0x00028212 in chSchGoSleepTimeoutS (newstate=newstate@entry=3 '\003', 
+    timeout=timeout@entry=4294967295) at ../ChibiOS/os/rt/src/chschd.c:389
+  5    Thread 536890904 (Name: AsyncIo, State: SUSPENDED)  0x00028212 in chSchGoSleepTimeoutS (newstate=newstate@entry=3 '\003', 
+    timeout=timeout@entry=4294967295) at ../ChibiOS/os/rt/src/chschd.c:389
+  6    Thread 536896824 (Name: I2S, State: WTMSG)          chMsgWait ()
+    at ../ChibiOS/os/rt/src/chmsg.c:126
+  7    Thread 536898528 (Name: gtimer, State: WTSEM)       chSchGoSleepTimeoutS
+    (newstate=<optimized out>, timeout=<optimized out>)
+    at ../ChibiOS/os/rt/include/chvt.h:245
+  8    Thread 536893768 (Name: SDEvent, State: SUSPENDED)  0x00028212 in chSchGoSleepTimeoutS (newstate=newstate@entry=3 '\003', 
+    timeout=timeout@entry=4294967295) at ../ChibiOS/os/rt/src/chschd.c:389
+  9    Thread 536895432 (Name: PeerEvent, State: SLEEPING) chSchGoSleepTimeoutS
+    (newstate=newstate@entry=8 '\b', timeout=timeout@entry=1000)
+    at ../ChibiOS/os/rt/include/chvt.h:245
+  10   Thread 536887800 (Name: noname, State: QUEUED)      0x00028212 in chSchGoSleepTimeoutS (newstate=newstate@entry=4 '\004', 
+    timeout=timeout@entry=4294967295) at ../ChibiOS/os/rt/src/chschd.c:389
+  11   Thread 536890208 (Name: Launcher, State: WTOREVT)   chEvtWaitOne (
+    events=events@entry=4294967295) at ../ChibiOS/os/rt/src/chevents.c:408
+(gdb)
+
+You can use the "thread X" command to select a thread context:
+
+(gdb) thread 6
+[Switching to thread 6 (Thread 536896824)]
+#0  chMsgWait () at ../ChibiOS/os/rt/src/chmsg.c:126
+126       tp = queue_fifo_remove(&currp->msgqueue);
+(gdb) where
+#0  chMsgWait () at ../ChibiOS/os/rt/src/chmsg.c:126
+#1  0x0002ecda in i2sThread (arg=<optimized out>) at i2s_lld.c:64
+#2  0x00026256 in _port_thread_start ()
+    at ../ChibiOS/os/common/ports/ARMCMx/compilers/GCC/chcoreasm_v7m.S:119
+Backtrace stopped: previous frame identical to this frame (corrupt stack?)
+(gdb) up
+#1  0x0002ecda in i2sThread (arg=<optimized out>) at i2s_lld.c:64
+64                              th = chMsgWait ();
+(gdb)
+
+Q: Sometimes when I halt the badge with GDB and then resume it, it will
+   run for a few seconds and then reset. Why is that?
+
+A: In order to implement Bluetooth support with the nRF52, we use the
+   Nordic BLE SoftDevice (S140). The SoftDevice is basically a binary
+   blob which implements a BLE5 stack, and when it's enabled it takes
+   over the BLE radio and handles BLE events. When you halt the target
+   with GDB, this stops all code on the CPU from excecuting, including
+   the SoftDevice.
+
+   Keeping the SoftDevice suspended too long causes it to fall out of
+   sync with peer devices, so if it detects that this has happened, it
+   considers it a fatal error and resets the system. If this happens,
+   you should see the following on the serial console:
+
+	Reset event (0x4): Soft reset
+	Reset after SoftDevice fault, Id: 0x1 PC: 0x14AA6 INFO: 0x0
+
+Q: Is there some way I can prevent this?
+
+A: Not if you need to have the radio enabled while debugging, no. If you
+   don't need the radio, then you can disable it from the shell before you
+   halt the CPU:
+
+	ChibiOS/RT Shell
+	ch> radio disable
+	Bluetooth LE disabled
+	ch> 
