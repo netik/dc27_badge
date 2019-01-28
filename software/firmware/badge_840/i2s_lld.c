@@ -69,7 +69,7 @@ THD_FUNCTION(i2sThread, arg)
 		/*
 		 * If the video app is running, then it's already using
 		 * the I2S channel, and we shouldn't try to use it again
-		 * here because can't play from two sources at once.
+		 * here because we can't play from two sources at once.
 		 */
         
 		if (i2sBuf != NULL) {
@@ -186,7 +186,7 @@ i2sStart (void)
 	NRF_I2S->CONFIG.FORMAT = I2S_CONFIG_FORMAT_FORMAT_I2S <<
 	    I2S_CONFIG_FORMAT_FORMAT_Pos;
 
-	/* John wants stero so we do stereo. :) */
+	/* John wants stereo so we do stereo. :) */
 
 	NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Stereo <<
 	    I2S_CONFIG_CHANNELS_CHANNELS_Pos;
@@ -255,9 +255,9 @@ i2sStart (void)
 
 	/*
 	 * According to the CS4344 manual, we need to have MCK
-	 * running for a certain period of time before the
-	 * chip will start decoding audio samples. We want samples
-	 * to play right away, so we need to keep the MCK and
+	 * running for a certain period of time before the chip
+	 * will start decoding audio samples. We want samples to
+	 * play right away though, so we need to keep the MCK and
 	 * LRCK going and gate the SCK to start/stop the playing
 	 * of audio. When we first start the I2S controller, we
 	 * start the MCK and LRCK up and keep the SCK pin isolated
@@ -314,7 +314,7 @@ OSAL_IRQ_HANDLER(VectorD4)
 * i2sSamplesPlay - play specific sample buffer
 *
 * This function can be used to play an arbitrary buffer of samples provided
-* by the saller via the pointer argument <p>. The <cnt> argument indicates
+* by the caller via the pointer argument <p>. The <cnt> argument indicates
 * the number of samples (which should be equal to the total number of bytes
 * in the buffer divided by 2, since samples are stored as 16-bit quantities).
 *
