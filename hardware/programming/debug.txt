@@ -110,6 +110,20 @@ A: For some background, get a copy of the nRF52840 Product Specification
    At this point you should be able to update the flash again. (Note: in the
    above example, the chip was already unlocked.)
 
+Q: What are the odds I might accidentally set the APPROTECT bit in the
+   first place?
+
+A: Fairly slim. The APPROTECT register is in the UICR region, not in the 1MB
+   flash region. OpenOCD treats these regions as separate banks. So it's
+   unlikely you will inadvertently set the APPROTECT bit while updating the
+   firmware. You may find that some vendors ship nRF52-based modules with the
+   APPROTECT bit already set though, and you'll need to use this procedure
+   before you can reflash the firmware on them.
+
+Q: Can't I do all this with the Nordic proprietary nrfjprog utility?
+
+A: Yes. But it's proprietary.
+
 Q: What the heck is OS-awareness and can I use it make debugging easier?
 
 A: OS-awareness means that your debugging software knows not only how your
@@ -130,7 +144,7 @@ A: When running OpenOCD, add the following option:
    Once you've done this, connect to OpenOCD using GDB and use the "info
    threads" to see the available thread contexts:
 
-arm-none-eabi-gdb build/badge.elf -ex "target remote localhost:3333" -q
+% arm-none-eabi-gdb build/badge.elf -ex "target remote localhost:3333" -q
 Reading symbols from build/badge.elf...done.
 Remote debugging using localhost:3333
 _idle_thread (p=0x0 <_binary_softdevice_bin_start>)
