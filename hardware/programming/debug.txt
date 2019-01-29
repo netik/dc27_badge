@@ -95,7 +95,7 @@ A: For some background, get a copy of the nRF52840 Product Specification
 	Open On-Chip Debugger
 	> nrf52.dap apreg 1 0xfc	# read AP ID
 	0x02880000
-	> nrf52.dap apreg 1 0x0c	# read APPROTETCSTATUS
+	> nrf52.dap apreg 1 0x0c	# read APPROTECTSTATUS
 	0x00000001			# 0 = enabled    1 = disabled
 	> nrf52.dap apreg 1 0x08	# read ERASEALLSTATUS
 	0x00000000			# 0 = idle       1 = in progress
