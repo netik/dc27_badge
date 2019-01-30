@@ -235,3 +235,58 @@ A: Not if you need to have the radio enabled while debugging, no. If you
 	ch> radio disable
 	Bluetooth LE disabled
 	ch> 
+
+Q: Can I flash the badge firmware using the Nordic tools?
+
+A: I think the Nordic nrfjprog utility may only work in conjunction
+   with a Segger J-Link debugger. This means it will only work in the
+   following scenarios:
+
+   1) You want to flash the nRF52840 DK reference board, which has a
+      Segger J-Link debugger built in.
+   2) You have your own Segger J-Link standalone JTAG/SWD debugger.
+   3) You have an nRF52840 DK board, and you want to use its on-board
+      Segger J-Link to debug another target via the Debug Out port.
+
+   The production badge board has no integrated debugger, so you would
+   only be able to flash it with the Nordic nrfjprog tool in the latter
+   two cases. If you have a different standalone debugger (Olimex,
+   ST-LINK v2), then you'd have to use OpenOCD/GDB instead.
+
+Q: Okay, so I do fall into one of the above three cases where it's ok
+   to use nrfjprog. How do I do it?
+
+A: Compiling the badge firmware should yield a badge.hex file. You can
+   use that with the nrfjprog tool using the following commands:
+
+   Erase the board:
+
+        nrfjprog -f nrf52 --eraseall
+
+   Flash the badge firmware to the board:
+
+        nrfjprog -f nrf52 --program build/badge.hex --sectorerase
+
+   Perform a soft reset:
+
+        nrfjprog -f nrf52 --reset
+
+Q: I've seen where programming an nrf52 device sometimes requires
+   flashing more than one image, but you only flash one. How does
+   that work?
+
+A: In order to provide BLE support, we use the Nordic S140 SoftDevice.
+   This is essentially a binary blob which provides a BLE protocol stack
+   and driver support for the nrf52 radio. The SoftDevice is provided
+   in a separate .hex file which actually includes two things: a 'master
+   boot record' (MBR) and the SoftDevice itself. The MBR and SoftDevice
+   must be written to address 0x0 in the flash and user application code
+   must be written after it. (For version 6.1.x of the S140 SoftDevice,
+   the application base address is 0x26000.)
+
+   The SoftDevice and user application code are compiled and linked
+   separately and can be flashed as separate files. For the DC27 badge
+   firmware, we decided to combine them into a single image to simplify
+   the setup process. This also ensures that the badge firmware will
+   always be used with a compatible version of the SoftDevice.
+
