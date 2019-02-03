@@ -169,6 +169,7 @@ bleGapDispatch (ble_evt_t * evt)
 	ble_gap_sec_keyset_t sec_keyset;
 	ble_gap_sec_params_t sec_params;
 	ble_gap_evt_timeout_t * timeout;
+	ble_gap_evt_conn_param_update_request_t * update;
 #ifdef BLE_GAP_VERBOSE
 	ble_gap_evt_conn_sec_update_t * sec;
 	ble_gap_conn_sec_mode_t * secmode;
@@ -311,9 +312,37 @@ bleGapDispatch (ble_evt_t * evt)
 			}
 			break;
 
+		case BLE_GAP_EVT_CONN_PARAM_UPDATE:
+#ifdef BLE_GAP_VERBOSE
+			printf ("GAP connection parameter update\r\n");
+#endif
+			break;
+
+		case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
+#ifdef BLE_GAP_VERBOSE
+			printf ("GAP connection parameter update request\r\n");
+#endif
+			update =
+			    &evt->evt.gap_evt.params.conn_param_update_request;
+
+			sd_ble_gap_conn_param_update (ble_conn_handle,
+			    &update->conn_params);
+			break;
+
+		case BLE_GAP_EVT_PHY_UPDATE:
+#ifdef BLE_GAP_VERBOSE
+			printf ("GAP PHY update completed, ");
+			printf ("RX PHY: %d TX PHY: %d status: %d\r\n",
+			    evt->evt.gap_evt.params.phy_update.rx_phy,
+			    evt->evt.gap_evt.params.phy_update.tx_phy,
+			    evt->evt.gap_evt.params.phy_update.status);
+#endif
+			break;
+
 		default:
-			printf ("invalid GAP event %d\r\n",
-			   evt->header.evt_id);
+			printf ("invalid GAP event %d (%d)\r\n",
+			    evt->header.evt_id - BLE_GAP_EVT_BASE,
+			    evt->header.evt_id);
 			break;
 	}
 
