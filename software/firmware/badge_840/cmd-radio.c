@@ -88,6 +88,13 @@ radio_connect (BaseSequentialStream *chp, int argc, char *argv[])
 }
 
 static void
+radio_connectcancel (BaseSequentialStream *chp, int argc, char *argv[])
+{
+	sd_ble_gap_connect_cancel ();
+	return;
+}
+
+static void
 radio_l2capconnect (BaseSequentialStream *chp, int argc, char *argv[])
 {
 	bleL2CapConnect (BLE_IDES_PSM);
@@ -120,6 +127,7 @@ cmd_radio (BaseSequentialStream *chp, int argc, char *argv[])
 	if (argc == 0) {
 		chprintf(chp, "Radio commands:\r\n");
 		chprintf(chp, "connect [addr]       Connect to peer\r\n");
+		chprintf(chp, "cancel               Connect cancel\r\n");
 		chprintf(chp, "disconnect           Disconnect from peer\r\n");
 		chprintf(chp, "l2capconnect         Create L2CAP channel\r\n");
 		chprintf(chp, "send [msg]           Transmit to peer\r\n");
@@ -131,6 +139,8 @@ cmd_radio (BaseSequentialStream *chp, int argc, char *argv[])
 
 	if (strcmp (argv[0], "connect") == 0)
 		radio_connect (chp, argc, argv);
+	else if (strcmp (argv[0], "cancel") == 0)
+		radio_connectcancel (chp, argc, argv);
 	else if (strcmp (argv[0], "disconnect") == 0)
 		radio_disconnect (chp, argc, argv);
 	else if (strcmp (argv[0], "l2capconnect") == 0)
