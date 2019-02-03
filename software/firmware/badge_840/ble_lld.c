@@ -32,7 +32,7 @@
 
 /*
  * This module implements the top-level support for the BLE radio in the
- * NRF52840 chip using the s140 SoftDevice stack. While it's possible to
+ * NRF52840 chip using the S140 SoftDevice stack. While it's possible to
  * access the radio directly, this only allows you to send and receive
  * raw packets. The SoftDevice includes Nordic's BLE stack. It's provided
  * as a binary blob which is linked with the rest of the badge code.
@@ -66,8 +66,9 @@ uint8_t ble_station_addr[6];
 
 static thread_reference_t sdThreadReference;
 static ble_evt_t ble_evt;
-volatile enum NRF_SOC_EVTS soc_evt;
+static volatile enum NRF_SOC_EVTS soc_evt;
 volatile enum NRF_SOC_EVTS flash_evt;
+static volatile uint8_t radio_evt;
 
 /*
  * This symbol is created by the linker script. Its address is
@@ -127,6 +128,35 @@ bleEventDispatch (ble_evt_t * evt)
 
 /******************************************************************************
 *
+* socEventDispatch - main SOC event dispatcher
+*
+* This function is a helper routine that decodes SOC events. Notifications
+* for these events are also delivered via the same interrupt as BLE events,
+* but are recovered via the sd_evt_get() API. SOC events are triggered
+* by certain SoftDevice APIs that allow access to peripherals which are
+* taken over by the SoftDevice when it's enabled. Right now we only handle
+* events related to writing/erasing the on-board flash.
+*
+* RETURNS: N/A
+*/
+
+static void
+socEventDispatch (enum NRF_SOC_EVTS evt)
+{
+	switch (evt) {
+		case NRF_EVT_FLASH_OPERATION_SUCCESS:
+		case NRF_EVT_FLASH_OPERATION_ERROR:
+			flash_evt = soc_evt;
+			break;
+		default:
+			break;
+	}		
+
+	return;
+}
+
+/******************************************************************************
+*
 * bleSdThread - SoftDevice event dispatch thread
 *
 * This function implements the SoftDevice event thread loop. It's woken
@@ -142,7 +172,8 @@ static THD_FUNCTION(sdThread, arg)
 {
 	uint8_t * p_dest;
 	uint16_t p_len;
-	int r;
+	int r1;
+	int r2;
 
 	(void)arg;
     
@@ -150,22 +181,35 @@ static THD_FUNCTION(sdThread, arg)
 
 	while (1) {
 		osalSysLock ();
-		osalThreadSuspendS (&sdThreadReference);
+		if (radio_evt == 0)
+			osalThreadSuspendS (&sdThreadReference);
+		radio_evt = 0;
 		osalSysUnlock ();
 
 		while (1) {
 			p_dest = (uint8_t *)&ble_evt;
 			p_len = sizeof (ble_evt);
-			r = sd_ble_evt_get (p_dest, &p_len);
-			if (r != NRF_SUCCESS)
+
+
+			/* Check for any pending events */
+
+			r1 = sd_ble_evt_get (p_dest, &p_len);
+			r2 = sd_evt_get ((uint32_t *)&soc_evt);
+
+			/* If nothing's in the queue, go back to sleep. */
+
+			if (r1 != NRF_SUCCESS && r2 != NRF_SUCCESS)
 				break;
-			bleEventDispatch (&ble_evt);
-			r = sd_evt_get ((uint32_t *)&soc_evt);
-			if (r != NRF_SUCCESS)
-				break;
-			if (soc_evt == NRF_EVT_FLASH_OPERATION_SUCCESS ||
-			    soc_evt == NRF_EVT_FLASH_OPERATION_ERROR)
-				flash_evt = soc_evt;
+
+			/* Dispatch BLE events */
+
+			if (r1 == NRF_SUCCESS)
+				bleEventDispatch (&ble_evt);
+
+			/* Dispatch SOC events */
+
+			if (r2 == NRF_SUCCESS)
+				socEventDispatch (soc_evt);
 		}
     	}
 
@@ -186,6 +230,7 @@ OSAL_IRQ_HANDLER(Vector98)
 {
 	OSAL_IRQ_PROLOGUE();
 	osalSysLockFromISR ();
+	radio_evt = 1;
 	osalThreadResumeI (&sdThreadReference, MSG_OK);
 	osalSysUnlockFromISR (); 
 	OSAL_IRQ_EPILOGUE();
@@ -281,7 +326,12 @@ bleEnable (void)
 	 * L2CAP connections.
 	 */
 
-	/* Set GAP options */
+	/*
+	 * Set GAP options
+	 * Note: connection count is 2 because we set ourselves up
+	 * as both central and peripheral roles, and if you ask to
+	 * support connections, you need one per role.
+	 */
 
 	memset (&cfg, 0, sizeof(cfg));
 
@@ -315,14 +365,21 @@ bleEnable (void)
 	memset (&cfg, 0, sizeof(cfg));
 
 	cfg.conn_cfg.conn_cfg_tag = BLE_IDES_APP_TAG;
-	cfg.conn_cfg.params.l2cap_conn_cfg.rx_mps = BLE_IDES_L2CAP_LEN;
-	cfg.conn_cfg.params.l2cap_conn_cfg.tx_mps = BLE_IDES_L2CAP_LEN;
+	cfg.conn_cfg.params.l2cap_conn_cfg.rx_mps = BLE_IDES_L2CAP_MPS;
+	cfg.conn_cfg.params.l2cap_conn_cfg.tx_mps = BLE_IDES_L2CAP_MPS;
 	cfg.conn_cfg.params.l2cap_conn_cfg.rx_queue_size = 1;
 	cfg.conn_cfg.params.l2cap_conn_cfg.tx_queue_size = 1;
 	cfg.conn_cfg.params.l2cap_conn_cfg.ch_count = 1;
 
 	r = sd_ble_cfg_set (BLE_CONN_CFG_L2CAP, &cfg, ram_start);
 
+	/* Set ATT table size */
+
+	memset (&cfg, 0, sizeof(cfg));
+
+	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 256;
+	r = sd_ble_cfg_set (BLE_GATTS_CFG_ATTR_TAB_SIZE, &cfg, ram_start);
+	
 	/* Enable BLE support in SoftDevice */
 
 	r = sd_ble_enable (&ram_start);

@@ -52,8 +52,8 @@
 typedef struct _ChatHandles {
 	char *			listitems[MAX_PEERS + 2];
 	OrchardUiContext	uiCtx;
-	char			txbuf[MAX_PEERMEM + BLE_IDES_L2CAP_LEN + 3];
-	char			rxbuf[BLE_IDES_L2CAP_LEN];
+	char			txbuf[MAX_PEERMEM + BLE_IDES_L2CAP_MTU + 3];
+	char			rxbuf[BLE_IDES_L2CAP_MTU];
 	uint8_t 		peers;
 	int			peer;
 	ble_gap_addr_t		netid;
@@ -176,6 +176,8 @@ chat_event (OrchardAppContext *context,
 			context->instance->uicontext = &p->uiCtx;
        			context->instance->ui->start (context);
 
+			p->cid = BLE_L2CAP_CID_INVALID;
+
 			context->priv = p;
 		}
 		if (event->app.event == appTerminate) {
@@ -187,7 +189,8 @@ chat_event (OrchardAppContext *context,
 				if (p->listitems[i] != NULL)
 					chHeapFree (p->listitems[i]);
 			}
-			bleL2CapDisconnect (p->cid);
+			if (p->cid != BLE_L2CAP_CID_INVALID)
+				bleL2CapDisconnect (p->cid);
 			bleGapDisconnect ();
 			chHeapFree (p);
 			context->priv = NULL;
@@ -291,7 +294,7 @@ chat_event (OrchardAppContext *context,
 			/* Load the keyboard UI. */
 
 			p->uiCtx.itemlist = (const char **)p->listitems;
-			p->uiCtx.total = BLE_IDES_L2CAP_LEN - 1;
+			p->uiCtx.total = BLE_IDES_L2CAP_MTU - 1;
 			context->instance->ui = getUiByName ("keyboard");
 			context->instance->uicontext = &p->uiCtx;
        			context->instance->ui->start (context);
@@ -396,7 +399,7 @@ chat_event (OrchardAppContext *context,
 					return;
 				}
 				memset (p->txbuf, 0, sizeof(p->txbuf));
-				p->uiCtx.total = BLE_IDES_L2CAP_LEN - 1;
+				p->uiCtx.total = BLE_IDES_L2CAP_MTU - 1;
 				/* Tell the keyboard UI to redraw */
 				e->type = uiEvent;
 				e->ui.flags = uiCancel;

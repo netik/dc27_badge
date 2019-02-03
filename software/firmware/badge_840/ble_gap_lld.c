@@ -81,7 +81,7 @@ bleGapScanStart (void)
 	memset(&scan, 0, sizeof(scan));
 
 	scan.extended = 0;
-	scan.scan_phys = BLE_GAP_PHY_1MBPS;
+	scan.scan_phys = BLE_GAP_PHY_AUTO;
 	scan.timeout = BLE_IDES_SCAN_TIMEOUT;
 	scan.window = MSEC_TO_UNITS(100, UNIT_0_625_MS);
 	scan.interval = MSEC_TO_UNITS(200, UNIT_0_625_MS);
@@ -207,10 +207,12 @@ bleGapDispatch (ble_evt_t * evt)
 			orchardAppRadioCallback (disconnectEvent, evt,
 			    NULL, 0);
 			r = sd_ble_gap_adv_stop (ble_adv_handle);
+#ifdef notdef
 			if (r != NRF_SUCCESS) {
 				printf ("GAP stop advertisement after "
 				    "disconnect failed! 0x%x\r\n", r);
 			}
+#endif
 			r = sd_ble_gap_adv_start (ble_adv_handle,
 			    BLE_IDES_APP_TAG);
 			if (r != NRF_SUCCESS) {
@@ -369,7 +371,7 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_params.interval = MSEC_TO_UNITS(33, UNIT_0_625_MS);
 	adv_params.duration = MSEC_TO_UNITS(2000, UNIT_10_MS);
 	adv_params.filter_policy = BLE_GAP_ADV_FP_ANY;
-	adv_params.primary_phy = BLE_GAP_PHY_1MBPS;
+	adv_params.primary_phy = BLE_GAP_PHY_AUTO;
 	adv_params.set_id = 1;
 
 	r = sd_ble_gap_adv_set_configure (&ble_adv_handle,
@@ -457,7 +459,7 @@ bleGapConnect (ble_gap_addr_t * peer)
 	memset (&cparams, 0, sizeof(cparams));
 
 	sparams.extended = 0;
-	sparams.scan_phys = BLE_GAP_PHY_1MBPS;
+	sparams.scan_phys = BLE_GAP_PHY_AUTO;
 	sparams.timeout = BLE_IDES_SCAN_TIMEOUT;
 	sparams.window = MSEC_TO_UNITS(100, UNIT_0_625_MS);
 	sparams.interval = MSEC_TO_UNITS(200, UNIT_0_625_MS);

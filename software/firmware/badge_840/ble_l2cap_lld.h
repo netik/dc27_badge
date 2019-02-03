@@ -38,7 +38,8 @@
 #define BLE_IDES_SHOUT_PSM	0x0002
 #define BLE_IDES_BATTLE_PSM	0x0003
 
-#define BLE_IDES_L2CAP_LEN	128
+#define BLE_IDES_L2CAP_MTU	128
+#define BLE_IDES_L2CAP_MPS	128
 
 extern uint16_t ble_local_cid;
 

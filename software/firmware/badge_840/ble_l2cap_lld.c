@@ -50,7 +50,7 @@
 
 #include "badge.h"
 
-static uint8_t ble_rx_buf[BLE_IDES_L2CAP_LEN];
+static uint8_t ble_rx_buf[BLE_IDES_L2CAP_MTU];
 uint16_t ble_local_cid;
 
 static void bleL2CapSetupReply (ble_l2cap_evt_ch_setup_request_t *);
@@ -140,7 +140,7 @@ bleL2CapDispatch (ble_evt_t * evt)
 			orchardAppRadioCallback (l2capRxEvent, evt,
 			    rx->sdu_buf.p_data, rx->sdu_buf.len);
 			rx_data.p_data = ble_rx_buf;
-			rx_data.len = BLE_IDES_L2CAP_LEN;
+			rx_data.len = BLE_IDES_L2CAP_MTU;
 			sd_ble_l2cap_ch_rx (ble_conn_handle,
 			    evt->evt.l2cap_evt.local_cid, &rx_data);
 			break;
@@ -169,10 +169,10 @@ bleL2CapConnect (uint16_t psm)
 	uint16_t cid;
 	int r;
 
-	params.rx_params.rx_mtu = BLE_IDES_L2CAP_LEN;
-	params.rx_params.rx_mps = BLE_IDES_L2CAP_LEN;
-	params.rx_params.sdu_buf.p_data = ble_rx_buf;
-	params.rx_params.sdu_buf.len = BLE_IDES_L2CAP_LEN;
+	params.rx_params.rx_mtu = BLE_IDES_L2CAP_MTU;
+	params.rx_params.rx_mps = BLE_IDES_L2CAP_MPS;
+	params.rx_params.sdu_buf.p_data = NULL;
+	params.rx_params.sdu_buf.len = 0;
 
 	params.le_psm = psm;
 	params.status = 0;
@@ -206,10 +206,10 @@ bleL2CapSetupReply (ble_l2cap_evt_ch_setup_request_t * request)
 	ble_l2cap_ch_setup_params_t params;
 	int r;
 
-	params.rx_params.rx_mtu = BLE_IDES_L2CAP_LEN;
-	params.rx_params.rx_mps = BLE_IDES_L2CAP_LEN;
+	params.rx_params.rx_mtu = BLE_IDES_L2CAP_MTU;
+	params.rx_params.rx_mps = BLE_IDES_L2CAP_MPS;
 	params.rx_params.sdu_buf.p_data = ble_rx_buf;
-	params.rx_params.sdu_buf.len = BLE_IDES_L2CAP_LEN;
+	params.rx_params.sdu_buf.len = BLE_IDES_L2CAP_MTU;
 
 	params.le_psm = request->le_psm;
 	params.status = 0;
