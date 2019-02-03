@@ -171,8 +171,8 @@ bleL2CapConnect (uint16_t psm)
 
 	params.rx_params.rx_mtu = BLE_IDES_L2CAP_MTU;
 	params.rx_params.rx_mps = BLE_IDES_L2CAP_MPS;
-	params.rx_params.sdu_buf.p_data = NULL;
-	params.rx_params.sdu_buf.len = 0;
+	params.rx_params.sdu_buf.p_data = ble_rx_buf;
+	params.rx_params.sdu_buf.len = BLE_IDES_L2CAP_MTU;
 
 	params.le_psm = psm;
 	params.status = 0;
