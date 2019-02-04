@@ -209,17 +209,6 @@ F 3 "" H 10100 1600 50  0001 C CNN
 $EndComp
 Text Notes 5750 650  0    50   ~ 10
 Dual Shitty Add On’s!
-$Comp
-L DC27-peripheral-cache:+3.3V #PWR0101
-U 1 1 5BA9C6B3
-P 7200 800
-F 0 "#PWR0101" H 7200 650 50  0001 C CNN
-F 1 "+3.3V" H 7215 973 50  0000 C CNN
-F 2 "" H 7200 800 50  0001 C CNN
-F 3 "" H 7200 800 50  0001 C CNN
-	1    7200 800 
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	7200 800  7200 1050
 $Comp
@@ -423,17 +412,6 @@ Wire Wire Line
 	9100 2800 9100 2850
 Wire Wire Line
 	9100 2800 9850 2800
-$Comp
-L DC27-peripheral-cache:+3.3V #PWR0105
-U 1 1 5BA9D13E
-P 10650 2650
-F 0 "#PWR0105" H 10650 2500 50  0001 C CNN
-F 1 "+3.3V" H 10665 2823 50  0000 C CNN
-F 2 "" H 10650 2650 50  0001 C CNN
-F 3 "" H 10650 2650 50  0001 C CNN
-	1    10650 2650
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	10650 2650 10650 2800
 Wire Wire Line
@@ -557,19 +535,6 @@ Wire Wire Line
 Connection ~ 1150 5200
 Wire Wire Line
 	1150 5200 1150 5300
-$Comp
-L DC27-peripheral-cache:+3.3V #PWR0107
-U 1 1 5BB1B8C1
-P 1150 3600
-F 0 "#PWR0107" H 1150 3450 50  0001 C CNN
-F 1 "+3.3V" H 1165 3773 50  0000 C CNN
-F 2 "" H 1150 3600 50  0001 C CNN
-F 3 "" H 1150 3600 50  0001 C CNN
-	1    1150 3600
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1150 3600 1150 3650
 Text GLabel 2300 4200 2    50   Output ~ 0
 ~RESET_TGTMCU
 Text GLabel 2300 4400 2    50   Output ~ 0
@@ -592,9 +557,6 @@ Wire Wire Line
 	1750 3750 1750 3650
 Wire Wire Line
 	1750 3650 1150 3650
-Connection ~ 1150 3650
-Wire Wire Line
-	1150 3650 1150 3900
 Text Notes 550  3350 0    50   ~ 10
 PROGRAMMING HEADER
 $Comp
@@ -936,19 +898,6 @@ NoConn ~ 4300 3050
 NoConn ~ 4300 3150
 Text GLabel 6150 3350 2    50   Output ~ 0
 SDT_SPI_SCK
-$Comp
-L DC27-peripheral-cache:BMD-340-A-R U101
-U 1 1 5BB20AB5
-P 5000 3850
-F 0 "U101" H 5000 4000 50  0000 C CNN
-F 1 "BMD-340-A-R" H 5000 3850 50  0000 C CNN
-F 2 "BMD-340-A-R:RIGADO_BMD-340-A-R" H 4600 1800 50  0001 L BNN
-F 3 "Rigado" H 4750 5800 50  0001 L BNN
-F 4 "Bluetooth Low Energy 5.0 Module" H 4750 5650 50  0001 L BNN "Field4"
-F 5 "BMD-340-A-R" H 4750 5900 50  0001 L BNN "Field6"
-	1    5000 3850
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	5750 3350 6150 3350
 Text GLabel 6150 3450 2    50   Input ~ 0
@@ -1292,4 +1241,55 @@ Text GLabel 6150 2750 2    50   BiDi ~ 0
 DEBUG_SWO
 Wire Wire Line
 	5750 2750 6150 2750
+$Comp
+L power:+3.3V #PWR0105
+U 1 1 5C58C1FA
+P 7200 800
+F 0 "#PWR0105" H 7200 650 50  0001 C CNN
+F 1 "+3.3V" H 7215 973 50  0000 C CNN
+F 2 "" H 7200 800 50  0001 C CNN
+F 3 "" H 7200 800 50  0001 C CNN
+	1    7200 800 
+	1    0    0    -1  
+$EndComp
+$Comp
+L DC27-badge-rescue:BMD-340-A-R-DC27-peripheral-cache U100
+U 1 1 5C59EA27
+P 5000 3850
+F 0 "U100" H 5025 5565 50  0000 C CNN
+F 1 "BMD-340-A-R-DC27-peripheral-cache" H 5025 5474 50  0000 C CNN
+F 2 "RIGADO_BMD-340-A-R" H 5600 1750 50  0001 L BNN
+F 3 "Rigado" H 4550 5700 50  0001 L BNN
+F 4 "Bluetooth Low Energy 5.0 Module" H 4550 5550 50  0001 L BNN "Field4"
+F 5 "BMD-340-A-R" H 4550 5800 50  0001 L BNN "Field6"
+	1    5000 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1150 3600 1150 3650
+Connection ~ 1150 3650
+Wire Wire Line
+	1150 3650 1150 3900
+$Comp
+L power:+3.3V #PWR0107
+U 1 1 5C5B1B5F
+P 1150 3600
+F 0 "#PWR0107" H 1150 3450 50  0001 C CNN
+F 1 "+3.3V" H 1165 3773 50  0000 C CNN
+F 2 "" H 1150 3600 50  0001 C CNN
+F 3 "" H 1150 3600 50  0001 C CNN
+	1    1150 3600
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR0101
+U 1 1 5C5B1CAA
+P 10650 2650
+F 0 "#PWR0101" H 10650 2500 50  0001 C CNN
+F 1 "+3.3V" H 10665 2823 50  0000 C CNN
+F 2 "" H 10650 2650 50  0001 C CNN
+F 3 "" H 10650 2650 50  0001 C CNN
+	1    10650 2650
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

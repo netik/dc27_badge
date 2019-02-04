@@ -312,11 +312,26 @@ X SW8 9 -1000 -50 200 R 50 50 1 1 O
 ENDDRAW
 ENDDEF
 #
-# DC27-badge-rescue:BMD-340-A-R-DC27-peripheral-cache
+# DC27-peripheral-cache:+3.3V
 #
-DEF DC27-badge-rescue:BMD-340-A-R-DC27-peripheral-cache U 0 40 Y Y 1 L N
+DEF DC27-peripheral-cache:+3.3V #PWR 0 0 Y Y 1 F P
+F0 "#PWR" 0 -150 50 H I C CNN
+F1 "DC27-peripheral-cache:+3.3V" 0 140 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 0 1 0 -30 50 0 100 N
+P 2 0 1 0 0 0 0 100 N
+P 2 0 1 0 0 100 30 50 N
+X +3V3 1 0 0 0 U 50 50 1 1 W N
+ENDDRAW
+ENDDEF
+#
+# DC27-peripheral-cache:BMD-340-A-R
+#
+DEF DC27-peripheral-cache:BMD-340-A-R U 0 40 Y Y 1 L N
 F0 "U" -602 1610 50 H V L BNN
-F1 "DC27-badge-rescue:BMD-340-A-R-DC27-peripheral-cache" 600 -2200 50 H V L BNN
+F1 "DC27-peripheral-cache:BMD-340-A-R" 600 -2200 50 H V L BNN
 F2 "RIGADO_BMD-340-A-R" 600 -2100 50 H I L BNN
 F3 "Rigado" -450 1850 50 H I L BNN
 F4 "Bluetooth Low Energy 5.0 Module" -450 1700 50 H I L BNN

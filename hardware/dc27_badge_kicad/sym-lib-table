@@ -1,7 +1,9 @@
 (sym_lib_table
-  (lib (name CS4344-CZZ)(type Legacy)(uri "/Users/jna/Dropbox/Badge Stuff/dc27_badge/hardware/DC27-peripheral/lp_fp.pretty/CS4344-CZZ.lib")(options "")(descr ""))
-  (lib (name mic2288)(type Legacy)(uri "/Users/jna/Dropbox/Badge Stuff/dc27_badge/hardware/DC27-peripheral/lp_fp.pretty/mic2288.lib")(options "")(descr ""))
-  (lib (name max17043)(type Legacy)(uri "/Users/jna/Dropbox/Badge Stuff/dc27_badge/hardware/DC27-peripheral/lp_fp.pretty/max17043.lib")(options "")(descr ""))
-  (lib (name DC27-peripheral-cache)(type Legacy)(uri "/Users/jna/Dropbox/Badge Stuff/dc27_badge/hardware/DC27-peripheral/DC27-peripheral-cache.lib")(options "")(descr ""))
+  (lib (name CS4344-CZZ)(type Legacy)(uri ${KIPRJMOD}/lib_fp.pretty/CS4344-CZZ.lib)(options "")(descr ""))
+  (lib (name mic2288)(type Legacy)(uri ${KIPRJMOD}/lib_fp.pretty/mic2288.lib)(options "")(descr ""))
+  (lib (name max17043)(type Legacy)(uri ${KIPRJMOD}/lib_fp.pretty/max17043.lib)(options "")(descr ""))
+  (lib (name DC27-badge-cache)(type Legacy)(uri ${KIPRJMOD}/DC27-badge-cache.lib)(options "")(descr ""))
   (lib (name DC27-badge-rescue)(type Legacy)(uri ${KIPRJMOD}/DC27-badge-rescue.lib)(options "")(descr ""))
+  (lib (name BMD-340-A-R)(type Legacy)(uri ${KIPRJMOD}/lib_fp.pretty/BMD-340-A-R.lib)(options "")(descr ""))
+  (lib (name LM4880)(type Legacy)(uri ${KIPRJMOD}/lib_fp.pretty/LM4880.lib)(options "")(descr ""))
 )
