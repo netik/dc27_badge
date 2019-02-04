@@ -119,10 +119,6 @@ include $(GFXLIB)/drivers/ginput/touch/MCU/driver.mk
 FATFS = $(CHIBIOS)/../FatFs
 include $(FATFS)/build.mk
 
-# Atari 2600 emulator
-V2600 = $(CHIBIOS)/../v2600
-include $(V2600)/build.mk
-
 # Define linker script file here
 LDSCRIPT= NRF52840_softdecvice.ld
 
@@ -179,8 +175,7 @@ CSRC += main.c \
 	strtoq.c \
 	strtouq.c \
         $(GFXSRC) \
-	$(FATFSSRC) \
-	$(V2600SRC)
+	$(FATFSSRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
