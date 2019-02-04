@@ -156,6 +156,15 @@ bleGapAdvStart (void)
 	if (r != NRF_SUCCESS)
 		return (r);
 
+	/* Advertise device info UUID */
+
+	val = BLE_UUID_DEVICE_INFORMATION_SERVICE;
+	r = bleGapAdvBlockAdd (&val, 2,
+	    BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE, pkt, &size);
+
+	if (r != NRF_SUCCESS)
+		return (r);
+
 	/* Begin advertisement */
 
 	r = bleGapAdvBlockFinish (pkt, BLE_GAP_ADV_MAX_SIZE - size);

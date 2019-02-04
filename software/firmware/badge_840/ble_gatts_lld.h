@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,43 +30,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BLE_LLD_H_
-#define _BLE_LLD_H_
+#ifndef _BLE_GATTS_LLD_H_
+#define _BLE_GATTS_LLD_H_
 
-#define BLE_APPEARANCE_DC26	0xDC1B
-#define BLE_COMPANY_ID_IDES	0x1D35
-#define BLE_NAME_IDES		"DC27 IDES"
-#define BLE_MANUFACTUTER_STRING	"IDES of DEF CON Ltd."
-#define BLE_MODEL_NUMBER_STRING	"Revision 1"
-#define BLE_SYSTEM_ID_STRING	"DC27 Badge"
-#define BLE_SW_VERSION_STRING	"Beta 0.0"
+extern void bleGattsStart (void);
+extern void bleGattsDispatch (ble_evt_t *);
 
-#define BLE_IDES_APP_TAG	1
-
-/*
- * These are some GATT service UUIDs defined by tbe BLE spec for common
- * types of devices. The complete list can be found here:
- * https://www.bluetooth.com/specifications/gatt/services
- */
-
-#define BLE_UUID_DEVICE_INFORMATION_SERVICE	0x180A
-
-/*
- * These are some GATT characteristic UUIDs defined by the BLE spec for
- * different types of services. The complete list can be found here:
- * https://www.bluetooth.com/specifications/gatt/characteristics
- */
-
-#define BLE_UUID_SYSTEM_ID_CHAR			0x2A23
-#define BLE_UUID_MODEL_NUMBER_STRING_CHAR	0x2A24
-#define BLE_UUID_SOFTWARE_REVISION_STRING_CHAR	0x2A28
-#define BLE_UUID_MANUFACTURER_NAME_STRING_CHAR	0x2A29
-
-extern uint8_t ble_station_addr[];
-extern volatile enum NRF_SOC_EVTS flash_evt;
-
-extern void bleStart (void);
-extern void bleEnable (void);
-extern void bleDisable (void);
-
-#endif /* _BLE_LLD_H_ */
+#endif /* __BLE_GATTS_LLD_H */

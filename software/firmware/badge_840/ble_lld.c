@@ -58,6 +58,7 @@
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
 #include "ble_l2cap_lld.h"
+#include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
 #include "badge.h"
@@ -117,7 +118,7 @@ bleEventDispatch (ble_evt_t * evt)
 
 	if (evt->header.evt_id >= BLE_GATTS_EVT_BASE &&
 	    evt->header.evt_id <= BLE_GATTS_EVT_LAST)
-		printf ("GATT server event\r\n");
+		bleGattsDispatch (evt);
 
 	if (evt->header.evt_id >= BLE_L2CAP_EVT_BASE &&
 	    evt->header.evt_id <= BLE_L2CAP_EVT_LAST)
@@ -352,7 +353,7 @@ bleEnable (void)
 
 	r = sd_ble_cfg_set (BLE_GAP_CFG_ROLE_COUNT, &cfg, ram_start);
 
-	/* Set UUID count */
+	/* Set vendor-specific UUID count (not currently used) */
 
 	memset (&cfg, 0, sizeof(cfg));
 
@@ -377,7 +378,7 @@ bleEnable (void)
 
 	memset (&cfg, 0, sizeof(cfg));
 
-	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 256;
+	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 512;
 	r = sd_ble_cfg_set (BLE_GATTS_CFG_ATTR_TAB_SIZE, &cfg, ram_start);
 	
 	/* Enable BLE support in SoftDevice */
@@ -392,10 +393,11 @@ bleEnable (void)
 		return;
 	}
 
-	/* Initiallize GAP and L2CAP submodules */
+	/* Initiallize GAP, L2CAP and GATTS submodules */
 
 	bleGapStart ();
 	bleL2CapStart ();
+	bleGattsStart ();
 
 	return;
 }

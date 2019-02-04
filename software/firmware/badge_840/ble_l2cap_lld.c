@@ -154,7 +154,8 @@ bleL2CapDispatch (ble_evt_t * evt)
 			break;
 
 		default:
-			printf ("unknown L2CAP event: %x\r\n",
+			printf ("unknown L2CAP event: %d (%d)\r\n",
+			    evt->header.evt_id - BLE_L2CAP_EVT_BASE,
 			    evt->header.evt_id);
 			break;
 	}
