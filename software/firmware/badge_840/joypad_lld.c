@@ -185,7 +185,6 @@ joyHandle (uint8_t s)
 static THD_FUNCTION(joyThread, arg)
 {
 	uint8_t service;
-	uint8_t busy;
 	int i;
 
 	(void)arg;
@@ -194,26 +193,20 @@ static THD_FUNCTION(joyThread, arg)
     
 	while (1) {
 		osalSysLock ();
-		osalThreadSuspendS (&joyThreadReference);
+		/* Keep checking for events until we're completely idle. */
+		if (joyService == 0)
+			osalThreadSuspendS (&joyThreadReference);
 		osalSysUnlock ();
 
-again:
-		busy = 0;
 		for (i = 0; i < 7; i++) {
 			osalSysLock ();
 			service = joyService & (1 << i);
 			joyService &= (uint8_t)~(1 << i);
 			osalSysUnlock ();
 
-			if (service) {
+			if (service)
 				joyHandle (i);
-				busy++;
-			}
 		}
-		/* Keep checking for events until we're completely idle. */
-		if (busy != 0)
-			goto again;
-
 	}
 
 	/* NOTREACHED */
