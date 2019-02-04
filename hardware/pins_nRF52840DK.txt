@@ -68,7 +68,7 @@ NRF52840 pin desgination		Function
 ------------------------		--------
 P0.00					XTAL (32.768KHz)
 P0.01					XTAL (32.768KHz)
-P0.02					Audio amp shutdown
+P0.02					<unused>
 P0.03					Touch CS
 P0.04					Screen C/D
 P0.05					UART_RTS

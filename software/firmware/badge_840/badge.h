@@ -23,13 +23,4 @@
 	__attribute__((used, aligned(4),				\
 	    section(".chibi_list_cmd_3_end"))) = { NULL, NULL }
 
-/*
- * The fault info address is chosen to be inside the reserved
- * SoftDevice RAM region. This is so that we know it won't be
- * overwritten during ChibiOS bootstrap.
- */
-
-#define NRF_FAULT_INFO_MAGIC	0xFEEDFACE
-#define NRF_FAULT_INFO_ADDR	0x20002000
-
 #endif /* _BADGE_H_ */
