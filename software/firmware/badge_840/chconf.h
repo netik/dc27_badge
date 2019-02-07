@@ -36,7 +36,59 @@
  * SVC vector. This is used to make API calls to the SoftDevice.
  */
 
+/*
+ * ChibiOS supports two context switching mode on Cortex-M4: 'compact' mode
+ * and 'advanced' mode. In compact mode, thread context switches are
+ * requested using a PendSV trap. In advanced mode, the SVCall trap is
+ * used instead.
+ *
+ * One major difference between the two approaches is that issuing a PendSV
+ * can only be done by accessing a register in the System Control Block
+ * (SCB), which is a privileged operation. That is, you can only access
+ * the SCB (along with the NVIC and generic timer) in the following
+ * conditions:
+ *
+ * - The CPU is executing in an exception handler
+ * - The CPU is executing in a thread, and bit 0 of the CONTROL
+ *   register is cleared
+ *
+ * Setting bit 0 of the CONTROL register is useful in cases where we want
+ * to limit the access rights of threads for security purposes. Whether
+ * this is useful or not in an RTOS context where there is only one shared
+ * address space depends on the circumstances.
+ *
+ * Ideally we should be able to use either mode, and for the most part we
+ * _except_ when the Nordic SoftDevice is enabled.
+ *
+ * In order to use the SVCall handler, the rule is that the current CPU
+ * priority (as specified in the basepri register) must be less than the
+ * SVC handler priority as specified in System Handler Priority Register 2
+ * (SHPR2). If the current thread's priority is higher than the SVC handler
+ * priority, execiting the 'svc' instruction triggers a hard fault.
+ *
+ * Normally ChibiOS makes sure to ensure this condition is met by itself:
+ * during boot it will initialize SHPR2 to a value of 0x20, and the basepri
+ * register will be loaded with a value of 0x40.
+ *
+ * The problem is, when sd_softdevice_enable() is called, the SoftDevice
+ * code changes the SHPR2 value to 0x80. The SoftDevice also makes use of
+ * system calls, however it allows application code to use them as well, 
+ * with certain restrictions (the system call number must be between 0x0
+ * and 0xF). But with the higher SHPR2 value, ChibiOS thread contexts will
+ * now have a higher priority than the SVCall handler, and now we will get
+ * a trap when we try to execute an svc instruction.
+ *
+ * Fortunately, we can adjust the ChibiOS SVCall priority value to
+ * compensate for this. If advanced mode is enabled, we change the SVCall
+ * priority to 4 (normally it's 2), so that the rule is once again
+ * obeyed.
+ */
+
+#ifdef notdef
 #define CORTEX_SIMPLIFIED_PRIORITY TRUE
+#endif
+
+#define CORTEX_PRIORITY_SVCALL 4
 
 /*
  * Don't remap the interrupt vector table. The SoftDevice greedily wants

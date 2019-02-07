@@ -192,12 +192,6 @@ static THD_FUNCTION(Thread1, arg) {
     }
 }
 
-void
-SVC_Handler (void)
-{
-	while (1) {}
-}
-
 #ifdef notyet
 static void
 setup_flash (void)
