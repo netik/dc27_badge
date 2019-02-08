@@ -66,8 +66,8 @@ CommonFault_Handler:
 	and	r2, r1, #4
 	cmp	r2, #4
 	bne	L1
-	mrs	r1, psp
-	msr	msp, r1
+	mrs	r2, psp
+	msr	msp, r2
 L1:
 	mov	r2, sp
 	bl	trapHandle
