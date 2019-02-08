@@ -182,19 +182,19 @@ trapHandle (int type, uint32_t exc_lr, EXC_FRAME * exc_sp)
 	switch (type) {
 		case HARD_FAULT:
 			_puts ("********** HARD FAULT **********");
-			dumpFrame (type, exc_lr, (EXC_FRAME *)exc_sp);
+			dumpFrame (type, exc_lr, exc_sp);
 			break;
 		case BUS_FAULT:
 			_puts ("********** BUS FAULT **********");
-			dumpFrame (type, exc_lr, (EXC_FRAME *)exc_sp);
+			dumpFrame (type, exc_lr, exc_sp);
 			break;
 		case USAGE_FAULT:
 			_puts ("********** USAGE FAULT **********");
-			dumpFrame (type, exc_lr, (EXC_FRAME *)exc_sp);
+			dumpFrame (type, exc_lr, exc_sp);
 			break;
 		case MEMMANAGE_FAULT:
 			_puts ("********** MEMMANAGE FAULT **********");
-			dumpFrame (type, exc_lr, (EXC_FRAME *)exc_sp);
+			dumpFrame (type, exc_lr, exc_sp);
 			break;
 		default:
 			_puts ("********** unknown fault **********");
@@ -202,7 +202,11 @@ trapHandle (int type, uint32_t exc_lr, EXC_FRAME * exc_sp)
 	}
 
 	/* Break into the debugger */
-	asm("bkpt #0");
 
-	while(1);
+	__asm__ ("bkpt #0");
+
+	while (1) {
+	}
+
+	/* NOTREACHED */
 }
