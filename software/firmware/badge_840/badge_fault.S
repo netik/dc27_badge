@@ -63,31 +63,31 @@ CommonFault_Handler:
 	 * from thread mode or handler mode. If thread mode,
 	 * then switch to using the PSP as the current stack.
 	 */
-	cmp	r1, #4
+	and	r2, r1, #4
+	cmp	r2, #4
 	bne	L1
 	mrs	r1, psp
 	msr	msp, r1
 L1:
-	mov	r1, lr
 	mov	r2, sp
 	bl	trapHandle
 
 HardFault_Handler:
-	and	r1, lr, #4
 	mov	r0, #0
+	mov	r1, lr
 	bl	CommonFault_Handler
 
 BusFault_Handler:
-	and	r1, lr, #4
 	mov	r0, #1
+	mov	r1, lr
 	bl	CommonFault_Handler
 
 UsageFault_Handler:
-	and	r1, lr, #4
 	mov	r0, #2
+	mov	r1, lr
 	bl	CommonFault_Handler
 
 MemManage_Handler:
-	and	r1, lr, #4
 	mov	r0, #3
+	mov	r1, lr
 	bl	CommonFault_Handler

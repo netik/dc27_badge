@@ -244,16 +244,36 @@ int main(void)
 {
     uint32_t info;
     uint8_t * p;
-#ifdef CRT0_VTOR_INIT
-    __disable_irq();
-    SCB->VTOR = 0;
-    __enable_irq();
-#endif
     uint8_t * memp;
     const flash_descriptor_t * pFlash;
     uint8_t reg;
     qspi_command_t cmd;
     uint32_t * faultPtr;
+
+#ifdef CRT0_VTOR_INIT
+    __disable_irq();
+    SCB->VTOR = 0;
+    __enable_irq();
+#endif
+
+    /*
+     * Enable division by 0 traps. We do not enable unaligned access
+     * traps because the SoftDevice code performs unaligned accesses
+     * all over the place.
+     */
+
+    SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
+
+    /*
+     * Enable memory management, usage and bus fault exceptions, so that
+     * we don't always end up diverting through the hard fault handler.
+     * Note: the memory management fault only applies if the MPU is
+     * enabled, which it currently is not.
+     */
+
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk |
+        SCB_SHCSR_BUSFAULTENA_Msk |
+        SCB_SHCSR_MEMFAULTENA_Msk;
 
     halInit();
     chSysInit();
