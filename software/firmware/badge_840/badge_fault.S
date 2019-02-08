@@ -35,6 +35,7 @@
 	.fpu		fpv4-sp-d16
 
 	.thumb
+	.thumb_func
 
 	.file		"badge_fault.S"
 	.text
@@ -42,10 +43,8 @@
 	.section	.text,"ax",%progbits
 	.align		1
 	.code		16 
-	.arch armv7e-m
-	.syntax unified
-	.thumb
-	.thumb_func
+	.arch		armv7e-m
+	.syntax		unified
 
 	.type		HardFault_Handler, %function
 	.type		BusFault_Handler, %function
