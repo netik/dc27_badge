@@ -46,7 +46,7 @@
 #define MEMMANAGE_FAULT	3
 
 /*
- * Cortex-M4 exception frame, minus floating point state.
+ * Cortex-M4 exception frame, including floating point state.
  */
 
 typedef struct exc_frame {
