@@ -225,6 +225,21 @@ trapHandle (int type, uint32_t exc_lr, EXC_FRAME * exc_sp)
 			dumpFrame (type, exc_lr, exc_sp);
 			break;
 		case MEMMANAGE_FAULT:
+
+			/*
+			 * Disable the MPU before handling a memory manager
+			 * fault. If the fault occurs during exception
+			 * stacking, it means the CPU tried to push an
+			 * exception frame onto a protected area of the
+			 * stack. That protection will remain in effect
+			 * if we try to decode the stack frame in the
+			 * trap handler, and we'll trigger a hard fault.
+			 * Decoding the stack frame in this case may not
+			 * actually yield valid results, but it's wrong
+			 * to trigger another fault too.
+			 */
+			mpuDisable ();
+
 			_puts ("********** MEMMANAGE FAULT **********");
 			dumpFrame (type, exc_lr, exc_sp);
 			break;
