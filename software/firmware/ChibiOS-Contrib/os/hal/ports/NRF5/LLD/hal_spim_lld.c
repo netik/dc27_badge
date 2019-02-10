@@ -342,7 +342,7 @@ void spi_lld_start(SPIDriver *spip)
 	/*
 	 * Workaround for NRF52832 anomaly 58. The SPIM controller
 	 * always clocks out enough bits for two bytes when asked 
-	 * transfer only one bytes. This can cause problems with some
+	 * transfer only one byte. This can cause problems with some
 	 * slave devices, notably SD cards.
 	 *
 	 * To work around this, we set up a PPI event to

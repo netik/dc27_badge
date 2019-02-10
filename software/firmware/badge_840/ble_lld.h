@@ -33,6 +33,9 @@
 #ifndef _BLE_LLD_H_
 #define _BLE_LLD_H_
 
+#define BLE_GAP_VERBOSE 1
+#define BLE_L2CAP_VERBOSE 1
+
 #define BLE_APPEARANCE_DC26	0xDC1B
 #define BLE_COMPANY_ID_IDES	0x1D35
 #define BLE_NAME_IDES		"DC27 IDES"
@@ -44,7 +47,7 @@
 #define BLE_IDES_APP_TAG	1
 
 /*
- * These are some GATT service UUIDs defined by tbe BLE spec for common
+ * These are some GATT service UUIDs defined by the BLE spec for common
  * types of devices. The complete list can be found here:
  * https://www.bluetooth.com/specifications/gatt/services
  */
