@@ -62,13 +62,10 @@ CommonFault_Handler:
 	 * from thread mode or handler mode. If thread mode,
 	 * then switch to using the PSP as the current stack.
 	 */
-	and	r2, r1, #4
-	cmp	r2, #4
-	bne	L1
-	mrs	r2, psp
-	bl	trapHandle
-L1:
-	mrs	r2, msp
+	tst	r1, #4
+	ite	eq
+	mrseq	r2, msp
+	mrsne	r2, psp
 	bl	trapHandle
 
 HardFault_Handler:
