@@ -202,11 +202,15 @@ dumpFrame (int type, uint32_t lr, EXC_FRAME *p)
 void
 trapHandle (int type, uint32_t exc_lr, EXC_FRAME * exc_sp)
 {
+int i;
 	/* Reset the serial port. */
 
 	NRF_UART0->INTENCLR = 0xFFFFFFFF;
 	(void)NRF_UART0->INTENCLR;
 	NRF_UART0->TASKS_STOPTX = 1;
+
+	for (i = 0; i < 1000; i++)
+		__DSB();
 
 	_puts ("");
 	_puts ("");
