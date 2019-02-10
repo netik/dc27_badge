@@ -104,12 +104,14 @@ static char exc_msgbuf[80];
 static void
 _putc (char c)
 {
+	NRF_UART0->EVENTS_TXDRDY = 0;
+	(void)NRF_UART0->EVENTS_TXDRDY;
+	NRF_UART0->TASKS_STARTTX = 1;
 	NRF_UART0->TXD = (uint32_t)c;
 	(void)NRF_UART0->TXD;
 	while (NRF_UART0->EVENTS_TXDRDY == 0)
-		__DSB();
-	NRF_UART0->EVENTS_TXDRDY = 0;
-	(void)NRF_UART0->EVENTS_TXDRDY;
+		;
+	NRF_UART0->TASKS_STOPTX = 1;
 
 	return;
 }
@@ -203,15 +205,8 @@ trapHandle (int type, uint32_t exc_lr, EXC_FRAME * exc_sp)
 	/* Reset the serial port. */
 
 	NRF_UART0->INTENCLR = 0xFFFFFFFF;
+	(void)NRF_UART0->INTENCLR;
 	NRF_UART0->TASKS_STOPTX = 1;
-	NRF_UART0->TASKS_STARTTX = 1;
-
-	/* Drain any pending TX events */
-
-	while (NRF_UART0->EVENTS_TXDRDY != 0) {
-		NRF_UART0->EVENTS_TXDRDY = 0;
-		(void)NRF_UART0->EVENTS_TXDRDY;
-	}
 
 	_puts ("");
 	_puts ("");
