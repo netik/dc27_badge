@@ -79,6 +79,7 @@ static const SerialConfig default_config = {
 static void configure_uart(const SerialConfig *config)
 {
   uint32_t speed = UART_BAUDRATE_BAUDRATE_Baud250000;
+  int i;
 
   switch (config->speed) {
     case 1200: speed = UART_BAUDRATE_BAUDRATE_Baud1200; break;
@@ -144,6 +145,9 @@ static void configure_uart(const SerialConfig *config)
 #else
   NRF_UART0->CONFIG   &= ~(UART_CONFIG_HWFC_Enabled << UART_CONFIG_HWFC_Pos);
 #endif
+
+  for (i = 0; i < 1000; i++)
+    __DSB();
 
   /* Enable UART and clear events */
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled;
