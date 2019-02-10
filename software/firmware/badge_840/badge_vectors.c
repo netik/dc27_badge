@@ -206,6 +206,13 @@ trapHandle (int type, uint32_t exc_lr, EXC_FRAME * exc_sp)
 	NRF_UART0->TASKS_STOPTX = 1;
 	NRF_UART0->TASKS_STARTTX = 1;
 
+	/* Drain any pending TX events */
+
+	while (NRF_UART0->EVENTS_TXDRDY != 0) {
+		NRF_UART0->EVENTS_TXDRDY = 0;
+		(void)NRF_UART0->EVENTS_TXDRDY;
+	}
+
 	_puts ("");
 	_puts ("");
 
