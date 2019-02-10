@@ -159,9 +159,34 @@ dumpFrame (int type, uint32_t lr, EXC_FRAME *p)
 	sprintf (exc_msgbuf, "Fault while in %s mode", lr & 0x8 ?
 	    "thread" : "handler");
 	_puts (exc_msgbuf);
+
+	sprintf (exc_msgbuf, "Floating point context %ssaved on stack",
+	    lr & 0x10 ? "not " : "");
+	_puts (exc_msgbuf);
+
+	if (SCB->ICSR & SCB_ICSR_VECTPENDING_Msk) {
+		sprintf (exc_msgbuf, "Interrupt is pending");
+		_puts (exc_msgbuf);
+	}
+
+	if (SCB->ICSR & SCB_ICSR_VECTPENDING_Msk) {
+		sprintf (exc_msgbuf, "Exception pending: %ld",
+		    (SCB->ICSR & SCB_ICSR_VECTPENDING_Msk) >>
+		    SCB_ICSR_VECTPENDING_Pos);
+		_puts (exc_msgbuf);
+	}
+
+	if (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) {
+		sprintf (exc_msgbuf, "Exception active: %ld",
+		    (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) >>
+		    SCB_ICSR_VECTACTIVE_Pos);
+		_puts (exc_msgbuf);
+	}
+
 	sprintf (exc_msgbuf, "PC: 0x%08lX LR: 0x%08lX "
 	    "SP: 0x%08lX SR: 0x%08lX",
-	    p->exc_PC, p->exc_LR, (uint32_t)p + sizeof(EXC_FRAME),
+	    p->exc_PC, p->exc_LR,
+	    (uint32_t)p + (lr & 0x10 ? 32 : sizeof(EXC_FRAME)),
 	    p->exc_xPSR);
 	_puts (exc_msgbuf);
 	sprintf (exc_msgbuf, "R0: 0x%08lX R1: 0x%08lX "
@@ -175,7 +200,12 @@ dumpFrame (int type, uint32_t lr, EXC_FRAME *p)
 void
 trapHandle (int type, uint32_t exc_lr, EXC_FRAME * exc_sp)
 {
+	/* Reset the serial port. */
+
 	NRF_UART0->INTENCLR = 0xFFFFFFFF;
+	NRF_UART0->TASKS_STOPTX = 1;
+	NRF_UART0->TASKS_STARTTX = 1;
+
 	_puts ("");
 	_puts ("");
 

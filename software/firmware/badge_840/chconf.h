@@ -478,7 +478,23 @@
  * @note    The default failure mode is to halt the system with the global
  *          @p panic_msg variable set to @p NULL.
  */
-#define CH_DBG_ENABLE_STACK_CHECK           FALSE
+#define CH_DBG_ENABLE_STACK_CHECK           TRUE
+
+/* Since we have an MPU, we can enable this too. */
+
+#define PORT_ENABLE_GUARD_PAGES             TRUE
+
+/*
+ * The chcore_v7m.h file sets this to 64. I don't know where this
+ * number comes from. For a Cortex-M4, the amount of stack space
+ * needed during exception handling depends on whether or not lazy
+ * floating point state saving is enabled. If no floating point state
+ * needs to be saved, we need 8 words on the stack. If floating point
+ * state does need to be saved, then we need 26 words. Since we use
+ * hard floating point, we need the latter value.
+ */
+
+#define PORT_INT_REQUIRED_STACK             104
 
 /**
  * @brief   Debug option, stacks initialization.
