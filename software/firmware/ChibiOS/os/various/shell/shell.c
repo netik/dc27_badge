@@ -338,6 +338,8 @@ THD_FUNCTION(shellThread, p) {
   char *lp, *cmd, *tokp, line[SHELL_MAX_LINE_LENGTH];
   char *args[SHELL_MAX_ARGUMENTS + 1];
 
+  chRegSetThreadName ("shell");
+
 #if SHELL_USE_HISTORY == TRUE
   *(scfg->sc_histbuf) = 0;
   ShellHistory hist = {
