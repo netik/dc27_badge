@@ -64,31 +64,53 @@
  * priority (as specified in the basepri register) must be less than the
  * SVC handler priority as specified in System Handler Priority Register 2
  * (SHPR2). If the current thread's priority is higher than the SVC handler
- * priority, execiting the 'svc' instruction triggers a hard fault.
+ * priority, executing the 'svc' instruction triggers a hard fault.
  *
- * Normally ChibiOS makes sure to ensure this condition is met by itself:
- * during boot it will initialize SHPR2 to a value of 0x20, and the basepri
- * register will be loaded with a value of 0x40.
+ * Normally, when using advenced kernel mode, the basepri value is 0.
+ * When a context switch is performed, ChibiOS changes this to the
+ * CORTEX_BASEPRI_KERNEL value, 0x40, which is supposed to be higher
+ * priority than all interrupt handlers except for SVCALL. This is
+ * intended to prevent the context switch code from being preempted.
+ * During startup, ChibiOS sets the priority of the SVCALL handler by
+ * writing 0x20 to the SHPR2 register in the system control block (SCB);
  *
  * The problem is, when sd_softdevice_enable() is called, the SoftDevice
  * code changes the SHPR2 value to 0x80. The SoftDevice also makes use of
  * system calls, however it allows application code to use them as well, 
  * with certain restrictions (the system call number must be between 0x0
- * and 0xF). But with the higher SHPR2 value, ChibiOS thread contexts will
- * now have a higher priority than the SVCall handler, and now we will get
- * a trap when we try to execute an svc instruction.
+ * and 0xF). But with the higher SHPR2 value, the ChibiOS context switch
+ * code will now execute at a higher priority than the SVCALL handler,
+ * and now we'll get a trap when we try to execute an svc instruction.
  *
  * Fortunately, we can adjust the ChibiOS SVCall priority value to
  * compensate for this. If advanced mode is enabled, we change the SVCall
  * priority to 4 (normally it's 2), so that the rule is once again
  * obeyed.
+ *
+ * Unfortunately, there's still one more problem: the SoftDevice
+ * programs the radio interrupt with the highest priority of all, which
+ * allows it to preempt ChibiOS context switch code. Technically, as
+ * long as we have enough stack space we can accomodate this, but I'm
+ * not comfortable with the ChibiOS context switch code potentially
+ * being slowed down like that at arbitrary times, so for now we're
+ * going to stick with compact kernel mode, which masks off all
+ * interrupts during a context switch.
  */
 
-#ifdef notdef
-#define CORTEX_SIMPLIFIED_PRIORITY TRUE
-#endif
+/* Force the SVCALL priority to match the SoftDevice. */
 
 #define CORTEX_PRIORITY_SVCALL 4
+
+/* Force compact kernel mode. */
+
+#define CORTEX_SIMPLIFIED_PRIORITY TRUE
+
+/*
+ * We would like the idle thread to put the CPU to sleep during idle
+ * periods instead of busy-waiting. This saves power.
+ */
+
+#define CORTEX_ENABLE_WFI_IDLE TRUE
 
 /*
  * Don't remap the interrupt vector table. The SoftDevice greedily wants
@@ -483,18 +505,6 @@
 /* Since we have an MPU, we can enable this too. */
 
 #define PORT_ENABLE_GUARD_PAGES             TRUE
-
-/*
- * The chcore_v7m.h file sets this to 64. I don't know where this
- * number comes from. For a Cortex-M4, the amount of stack space
- * needed during exception handling depends on whether or not lazy
- * floating point state saving is enabled. If no floating point state
- * needs to be saved, we need 8 words on the stack. If floating point
- * state does need to be saved, then we need 26 words. Since we use
- * hard floating point, we need the latter value.
- */
-
-#define PORT_INT_REQUIRED_STACK             104
 
 /**
  * @brief   Debug option, stacks initialization.
