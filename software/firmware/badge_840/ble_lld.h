@@ -39,7 +39,7 @@
 #define BLE_MANUFACTUTER_STRING	"IDES of DEF CON Ltd."
 #define BLE_MODEL_NUMBER_STRING	"Revision 1"
 #define BLE_SYSTEM_ID_STRING	"DC27 Badge"
-#define BLE_SW_VERSION_STRING	"Beta 0.0"
+#define BLE_SW_VERSION_STRING	__DATE__ "/" __TIME__
 
 #define BLE_IDES_APP_TAG	1
 
