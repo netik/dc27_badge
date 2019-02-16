@@ -170,7 +170,9 @@
 #define STM32_DMA2_CH7_NUMBER               70
 
 /* ETH attributes.*/
-#define STM32_HAS_ETH                       FALSE
+#define STM32_HAS_ETH                       TRUE
+#define STM32_ETH_HANDLER                   Vector134
+#define STM32_ETH_NUMBER                    61
 
 /* EXTI attributes.*/
 #define STM32_EXTI_NUM_LINES                23
@@ -1441,7 +1443,7 @@
 #define STM32_USART2_TX_DMA_CHN             0x04000000
 
 #define STM32_HAS_USART3                    TRUE
-#define STM32_USART3_RX_DMA_MSK             (STM32_DMA_STREAM_ID_MSK(1, 1)
+#define STM32_USART3_RX_DMA_MSK             STM32_DMA_STREAM_ID_MSK(1, 1)
 #define STM32_USART3_RX_DMA_CHN             0x00000040
 #define STM32_USART3_TX_DMA_MSK             (STM32_DMA_STREAM_ID_MSK(1, 3) |\
                                              STM32_DMA_STREAM_ID_MSK(1, 4))
@@ -1464,7 +1466,7 @@
 /* USB attributes.*/
 #define STM32_OTG_STEPPING                  2
 #define STM32_HAS_OTG1                      TRUE
-#define STM32_OTG1_ENDPOINTS                3
+#define STM32_OTG1_ENDPOINTS                5
 
 #define STM32_HAS_OTG2                      FALSE
 #define STM32_HAS_USB                       FALSE

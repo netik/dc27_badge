@@ -559,7 +559,6 @@ void adc_lld_init(void) {
 #if defined(STM32L4XX)
   rccEnableADC123(true);
   rccResetADC123();
-
 #if defined(ADC1_2_COMMON)
   ADC1_2_COMMON->CCR = STM32_ADC_ADC123_CLOCK_MODE | ADC_DMA_MDMA;
 #elif defined(ADC123_COMMON)
@@ -860,6 +859,9 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
 
   /* ADC configuration.*/
   adcp->adcm->CFGR  = cfgr;
+#if (STM32_ADCV3_OVERSAMPLING == TRUE) || defined(__DOXYGEN__)
+  adcp->adcm->CFGR2 = grpp->cfgr2;
+#endif
 
   /* Starting conversion.*/
   adcp->adcm->CR   |= ADC_CR_ADSTART;

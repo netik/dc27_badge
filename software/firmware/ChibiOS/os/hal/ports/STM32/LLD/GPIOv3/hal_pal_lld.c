@@ -43,10 +43,12 @@
 /* Driver exported variables.                                                */
 /*===========================================================================*/
 
+#if (PAL_USE_WAIT == TRUE) || (PAL_USE_CALLBACKS == TRUE) || defined(__DOXYGEN__)
 /**
  * @brief   Event records for the 16 GPIO EXTI channels.
  */
 palevent_t _pal_events[16];
+#endif
 
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
@@ -141,6 +143,7 @@ void _pal_lld_setgroupmode(ioportid_t port,
     if (!mask)
       return;
     otyper <<= 1;
+    ascr <<= 1;
     ospeedr <<= 2;
     pupdr <<= 2;
     moder <<= 2;

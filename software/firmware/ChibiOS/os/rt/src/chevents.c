@@ -236,7 +236,7 @@ void chEvtBroadcastFlagsI(event_source_t *esp, eventflags_t flags) {
     /* When flags == 0 the thread will always be signaled because the
        source does not emit any flag.*/
     if ((flags == (eventflags_t)0) ||
-        ((elp->flags & elp->wflags) != (eventflags_t)0)) {
+        ((flags & elp->wflags) != (eventflags_t)0)) {
       chEvtSignalI(elp->listener, elp->events);
     }
     elp = elp->next;
@@ -262,7 +262,7 @@ eventflags_t chEvtGetAndClearFlags(event_listener_t *elp) {
   elp->flags = (eventflags_t)0;
   chSysUnlock();
 
-  return flags;
+  return flags & elp->wflags;
 }
 
 /**
@@ -333,7 +333,7 @@ void chEvtBroadcastFlags(event_source_t *esp, eventflags_t flags) {
 }
 
 /**
- * @brief   Returns the flags associated to an @p event_listener_t.
+ * @brief   Returns the unmasked flags associated to an @p event_listener_t.
  * @details The flags are returned and the @p event_listener_t flags mask is
  *          cleared.
  *
@@ -349,7 +349,7 @@ eventflags_t chEvtGetAndClearFlagsI(event_listener_t *elp) {
   flags = elp->flags;
   elp->flags = (eventflags_t)0;
 
-  return flags;
+  return flags & elp->wflags;
 }
 
 /**
