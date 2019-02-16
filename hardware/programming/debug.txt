@@ -51,7 +51,7 @@ A: Yes, you can. See the openocd-nrf52-stlink.sh script. There are a
       things, provides a way to issue a mass erase command, which blanks
       the flash. This is different from issuing a mass erase using the
       NVMC peripheral block. The one time you will need to use the CTRL-AP
-      to issue a mass erase is if you set the APPPROTECT bit in the
+      to issue a mass erase is if you set the APPROTECT bit in the
       NVMC to disable DAP access. (You would only do this to lock the
       chip so that nobody can copy/pirate your firmware from deployed
       devices.) When the APPROTECT bit is set, the DAP is disabled,
