@@ -4,6 +4,8 @@ Things currently completed:
 - uGFX porting
 - FatFs porting
 - Nordic SoftDevice (BLE stack) porting
+- BLE radio GAP + L2CAP support
+- BLE GATTS support
 - Application framework from DC25 badge porting
 - Bus master SPI controller driver
 - QSPI controller driver
@@ -11,7 +13,6 @@ Things currently completed:
 - 320x240 display support
 - SD card support
 - Resistive touch controller support
-- BLE radio GAP + L2CAP support
 - QSPI flash support (for 8MB MXIC flash chip on dev board)
 - NRF52840 on-board flash support
 - audio playback API
@@ -27,7 +28,8 @@ Things currently completed:
 
 Things still to do:
 
-- BLE GATTC/GATTS support (?)
+- BLE GATTC support (?)
+- BLE pairing PIN support
 - Setup app
 - Music player app
 - Game app

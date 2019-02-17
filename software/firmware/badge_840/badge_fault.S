@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,43 +30,60 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BLE_LLD_H_
-#define _BLE_LLD_H_
+	.cpu		cortex-m4
 
-#define BLE_APPEARANCE_DC26	0xDC1B
-#define BLE_COMPANY_ID_IDES	0x1D35
-#define BLE_NAME_IDES		"DC27 IDES"
-#define BLE_MANUFACTUTER_STRING	"IDES of DEF CON Ltd."
-#define BLE_MODEL_NUMBER_STRING	"Revision 1"
-#define BLE_SYSTEM_ID_STRING	"DC27 Badge"
-#define BLE_SW_VERSION_STRING	__DATE__ "/" __TIME__
+	.fpu		fpv4-sp-d16
 
-#define BLE_IDES_APP_TAG	1
+	.thumb
+	.thumb_func
 
-/*
- * These are some GATT service UUIDs defined by the BLE spec for common
- * types of devices. The complete list can be found here:
- * https://www.bluetooth.com/specifications/gatt/services
- */
+	.file		"badge_fault.S"
+	.text
 
-#define BLE_UUID_DEVICE_INFORMATION_SERVICE	0x180A
+	.section	.text,"ax",%progbits
+	.align		1
+	.code		16 
+	.arch		armv7e-m
+	.syntax		unified
 
-/*
- * These are some GATT characteristic UUIDs defined by the BLE spec for
- * different types of services. The complete list can be found here:
- * https://www.bluetooth.com/specifications/gatt/characteristics
- */
+	.type		HardFault_Handler, %function
+	.type		BusFault_Handler, %function
+	.type		UsageFault_Handler, %function
+	.type		MemManage_Handler, %function
 
-#define BLE_UUID_SYSTEM_ID_CHAR			0x2A23
-#define BLE_UUID_MODEL_NUMBER_STRING_CHAR	0x2A24
-#define BLE_UUID_SOFTWARE_REVISION_STRING_CHAR	0x2A28
-#define BLE_UUID_MANUFACTURER_NAME_STRING_CHAR	0x2A29
+	.globl		HardFault_Handler
+	.globl		BusFault_Handler
+	.globl		UsageFault_Handler
+	.globl		MemManage_Handler
 
-extern uint8_t ble_station_addr[];
-extern volatile enum NRF_SOC_EVTS flash_evt;
+CommonFault_Handler:
+	/*
+	 * Test the link register to see if we got here
+	 * from thread mode or handler mode. If thread mode,
+	 * then switch to using the PSP as the current stack.
+	 */
+	tst	r1, #4
+	ite	eq
+	mrseq	r2, msp
+	mrsne	r2, psp
+	bl	trapHandle
 
-extern void bleStart (void);
-extern void bleEnable (void);
-extern void bleDisable (void);
+HardFault_Handler:
+	mov	r0, #0
+	mov	r1, lr
+	bl	CommonFault_Handler
 
-#endif /* _BLE_LLD_H_ */
+BusFault_Handler:
+	mov	r0, #1
+	mov	r1, lr
+	bl	CommonFault_Handler
+
+UsageFault_Handler:
+	mov	r0, #2
+	mov	r1, lr
+	bl	CommonFault_Handler
+
+MemManage_Handler:
+	mov	r0, #3
+	mov	r1, lr
+	bl	CommonFault_Handler

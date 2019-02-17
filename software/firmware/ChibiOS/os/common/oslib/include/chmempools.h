@@ -167,7 +167,6 @@ extern "C" {
                                    sysinterval_t timeout);
   void *chGuardedPoolAllocTimeout(guarded_memory_pool_t *gmp,
                                   sysinterval_t timeout);
-  void chGuardedPoolFreeI(guarded_memory_pool_t *gmp, void *objp);
   void chGuardedPoolFree(guarded_memory_pool_t *gmp, void *objp);
 #endif
 #ifdef __cplusplus
@@ -203,8 +202,7 @@ static inline void chPoolObjectInit(memory_pool_t *mp,
  * @pre     The memory pool must be already been initialized.
  * @pre     The added object must be of the right size for the specified
  *          memory pool.
- * @pre     The added object must be memory aligned to the size of
- *          @p stkalign_t type.
+ * @pre     The added object must be properly aligned.
  * @note    This function is just an alias for @p chPoolFree() and has been
  *          added for clarity.
  *
@@ -223,8 +221,7 @@ static inline void chPoolAdd(memory_pool_t *mp, void *objp) {
  * @pre     The memory pool must be already been initialized.
  * @pre     The added object must be of the right size for the specified
  *          memory pool.
- * @pre     The added object must be memory aligned to the size of
- *          @p stkalign_t type.
+ * @pre     The added object must be properly aligned.
  * @note    This function is just an alias for @p chPoolFreeI() and has been
  *          added for clarity.
  *
@@ -253,6 +250,64 @@ static inline void chGuardedPoolObjectInit(guarded_memory_pool_t *gmp,
                                            size_t size) {
 
   chGuardedPoolObjectInitAligned(gmp, size, PORT_NATURAL_ALIGN);
+}
+
+/**
+ * @brief   Allocates an object from a guarded memory pool.
+ * @pre     The guarded memory pool must be already been initialized.
+ *
+ * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ * @return              The pointer to the allocated object.
+ * @retval NULL         if the pool is empty.
+ *
+ * @iclass
+ */
+static inline void *chGuardedPoolAllocI(guarded_memory_pool_t *gmp) {
+  void *p;
+
+  p = chPoolAllocI(&gmp->pool);
+  if (p != NULL) {
+    chSemFastWaitI(&gmp->sem);
+    chDbgAssert(chSemGetCounterI(&gmp->sem) >= (cnt_t)0,
+                "semaphore out of sync");
+  }
+  return p;
+}
+
+/**
+ * @brief   Releases an object into a guarded memory pool.
+ * @pre     The guarded memory pool must already be initialized.
+ * @pre     The freed object must be of the right size for the specified
+ *          guarded memory pool.
+ * @pre     The added object must be properly aligned.
+ *
+ * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ * @param[in] objp      the pointer to the object to be released
+ *
+ * @iclass
+ */
+static inline void chGuardedPoolFreeI(guarded_memory_pool_t *gmp, void *objp) {
+
+  chPoolFreeI(&gmp->pool, objp);
+  chSemSignalI(&gmp->sem);
+}
+
+/**
+ * @brief   Releases an object into a guarded memory pool.
+ * @pre     The guarded memory pool must already be initialized.
+ * @pre     The freed object must be of the right size for the specified
+ *          guarded memory pool.
+ * @pre     The added object must be properly aligned.
+ *
+ * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
+ * @param[in] objp      the pointer to the object to be released
+ *
+ * @sclass
+ */
+static inline void chGuardedPoolFreeS(guarded_memory_pool_t *gmp, void *objp) {
+
+  chGuardedPoolFreeI(gmp, objp);
+  chSchRescheduleS();
 }
 
 /**
@@ -294,25 +349,22 @@ static inline void chGuardedPoolAddI(guarded_memory_pool_t *gmp, void *objp) {
 }
 
 /**
- * @brief   Allocates an object from a guarded memory pool.
+ * @brief   Adds an object to a guarded memory pool.
  * @pre     The guarded memory pool must be already been initialized.
+ * @pre     The added object must be of the right size for the specified
+ *          guarded memory pool.
+ * @pre     The added object must be properly aligned.
+ * @note    This function is just an alias for @p chGuardedPoolFreeI() and
+ *          has been added for clarity.
  *
  * @param[in] gmp       pointer to a @p guarded_memory_pool_t structure
- * @return              The pointer to the allocated object.
- * @retval NULL         if the pool is empty.
+ * @param[in] objp      the pointer to the object to be added
  *
- * @iclass
+ * @sclass
  */
-static inline void *chGuardedPoolAllocI(guarded_memory_pool_t *gmp) {
-  void *p;
+static inline void chGuardedPoolAddS(guarded_memory_pool_t *gmp, void *objp) {
 
-  p = chPoolAllocI(&gmp->pool);
-  if (p != NULL) {
-    chSemFastWaitI(&gmp->sem);
-    chDbgAssert(chSemGetCounterI(&gmp->sem) >= (cnt_t)0,
-                "semaphore out of sync");
-  }
-  return p;
+  chGuardedPoolFreeS(gmp, objp);
 }
 #endif /* CH_CFG_USE_SEMAPHORES == TRUE */
 

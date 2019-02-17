@@ -30,13 +30,88 @@
 
 #define _CHIBIOS_RT_CONF_
 #define _CHIBIOS_RT_CONF_VER_5_0_
+#define _CHIBIOS_RT_CONF_VER_5_1_
 
 /*
  * Disable advanced kernel mode so that ChibiOS doesn't use the
  * SVC vector. This is used to make API calls to the SoftDevice.
  */
 
+/*
+ * ChibiOS supports two context switching mode on Cortex-M4: 'compact' mode
+ * and 'advanced' mode. In compact mode, thread context switches are
+ * requested using a PendSV trap. In advanced mode, the SVCall trap is
+ * used instead.
+ *
+ * One major difference between the two approaches is that issuing a PendSV
+ * can only be done by accessing a register in the System Control Block
+ * (SCB), which is a privileged operation. That is, you can only access
+ * the SCB (along with the NVIC and generic timer) in the following
+ * conditions:
+ *
+ * - The CPU is executing in an exception handler
+ * - The CPU is executing in a thread, and bit 0 of the CONTROL
+ *   register is cleared
+ *
+ * Setting bit 0 of the CONTROL register is useful in cases where we want
+ * to limit the access rights of threads for security purposes. Whether
+ * this is useful or not in an RTOS context where there is only one shared
+ * address space depends on the circumstances.
+ *
+ * Ideally we should be able to use either mode, and for the most part we
+ * _except_ when the Nordic SoftDevice is enabled.
+ *
+ * In order to use the SVCall handler, the rule is that the current CPU
+ * priority (as specified in the basepri register) must be less than the
+ * SVC handler priority as specified in System Handler Priority Register 2
+ * (SHPR2). If the current thread's priority is higher than the SVC handler
+ * priority, executing the 'svc' instruction triggers a hard fault.
+ *
+ * Normally, when using advenced kernel mode, the basepri value is 0.
+ * When a context switch is performed, ChibiOS changes this to the
+ * CORTEX_BASEPRI_KERNEL value, 0x40, which is supposed to be higher
+ * priority than all interrupt handlers except for SVCALL. This is
+ * intended to prevent the context switch code from being preempted.
+ * During startup, ChibiOS sets the priority of the SVCALL handler by
+ * writing 0x20 to the SHPR2 register in the system control block (SCB);
+ *
+ * The problem is, when sd_softdevice_enable() is called, the SoftDevice
+ * code changes the SHPR2 value to 0x80. The SoftDevice also makes use of
+ * system calls, however it allows application code to use them as well, 
+ * with certain restrictions (the system call number must be between 0x0
+ * and 0xF). But with the higher SHPR2 value, the ChibiOS context switch
+ * code will now execute at a higher priority than the SVCALL handler,
+ * and now we'll get a trap when we try to execute an svc instruction.
+ *
+ * Fortunately, we can adjust the ChibiOS SVCall priority value to
+ * compensate for this. If advanced mode is enabled, we change the SVCall
+ * priority to 4 (normally it's 2), so that the rule is once again
+ * obeyed.
+ *
+ * Unfortunately, there's still one more problem: the SoftDevice
+ * programs the radio interrupt with the highest priority of all, which
+ * allows it to preempt ChibiOS context switch code. Technically, as
+ * long as we have enough stack space we can accomodate this, but I'm
+ * not comfortable with the ChibiOS context switch code potentially
+ * being slowed down like that at arbitrary times, so for now we're
+ * going to stick with compact kernel mode, which masks off all
+ * interrupts during a context switch.
+ */
+
+/* Force the SVCALL priority to match the SoftDevice. */
+
+#define CORTEX_PRIORITY_SVCALL 4
+
+/* Force compact kernel mode. */
+
 #define CORTEX_SIMPLIFIED_PRIORITY TRUE
+
+/*
+ * We would like the idle thread to put the CPU to sleep during idle
+ * periods instead of busy-waiting. This saves power.
+ */
+
+#define CORTEX_ENABLE_WFI_IDLE TRUE
 
 /*
  * Don't remap the interrupt vector table. The SoftDevice greedily wants
@@ -73,7 +148,7 @@
  *          The value one is not valid, timeouts are rounded up to
  *          this value.
  */
-#define CH_CFG_ST_TIMEDELTA                 0
+#define CH_CFG_ST_TIMEDELTA                 2
 
 /**
  * @brief   Time intervals data size.
@@ -426,7 +501,11 @@
  * @note    The default failure mode is to halt the system with the global
  *          @p panic_msg variable set to @p NULL.
  */
-#define CH_DBG_ENABLE_STACK_CHECK           FALSE
+#define CH_DBG_ENABLE_STACK_CHECK           TRUE
+
+/* Since we have an MPU, we can enable this too. */
+
+#define PORT_ENABLE_GUARD_PAGES             TRUE
 
 /**
  * @brief   Debug option, stacks initialization.

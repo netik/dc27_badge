@@ -203,7 +203,7 @@ TCPPSRC =
 
 # List ASM source files here
 ASMSRC =
-ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
+ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM) badge_fault.S
 
 
 INCDIR = $(CHIBIOS)/os/license \

@@ -98,6 +98,17 @@ bleGattsDispatch (ble_evt_t * evt)
 #endif
 			}
 			break;
+		case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+#ifdef BLE_GATTS_VERBOSE
+			printf ("system attribute access pending\r\n");
+			r = 
+#endif
+			sd_ble_gatts_sys_attr_set (ble_conn_handle,
+			    NULL, 0, 0);
+#ifdef BLE_GATTS_VERBOSE
+			printf ("set attribute: %d\r\n", r);
+#endif
+			break;
 		default:
 			printf ("invalid GATTS event %d (%d)\r\n",
 			    evt->header.evt_id - BLE_GATTS_EVT_BASE,

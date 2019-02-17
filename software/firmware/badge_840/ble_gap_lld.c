@@ -177,7 +177,9 @@ bleGapDispatch (ble_evt_t * evt)
 {
 	ble_gap_sec_keyset_t sec_keyset;
 	ble_gap_sec_params_t sec_params;
+	ble_gap_data_length_limitation_t dlim;
 	ble_gap_evt_timeout_t * timeout;
+	ble_gap_evt_data_length_update_request_t * dup;
 	ble_gap_evt_conn_param_update_request_t * update;
 #ifdef BLE_GAP_VERBOSE
 	ble_gap_evt_conn_sec_update_t * sec;
@@ -346,6 +348,29 @@ bleGapDispatch (ble_evt_t * evt)
 			    evt->evt.gap_evt.params.phy_update.tx_phy,
 			    evt->evt.gap_evt.params.phy_update.status);
 #endif
+			break;
+
+		case  BLE_GAP_EVT_DATA_LENGTH_UPDATE:
+#ifdef BLE_GAP_VERBOSE
+			printf ("Data length update\r\n");
+#endif
+			break;
+
+		case  BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
+			dup =
+			  &evt->evt.gap_evt.params.data_length_update_request;
+			memset (&dlim, 0, sizeof(dlim));
+			r = sd_ble_gap_data_length_update (ble_conn_handle,
+			    &dup->peer_params, &dlim);
+#ifdef BLE_GAP_VERBOSE
+			printf ("Data length update: %d\n", r);
+#endif
+			if (r != NRF_SUCCESS) {
+				printf ("Data length update failed, "
+				   "RX overrun: %d TX overrun: %d\r\n",
+				    dlim.rx_payload_limited_octets,
+				    dlim.tx_payload_limited_octets);
+			}
 			break;
 
 		default:

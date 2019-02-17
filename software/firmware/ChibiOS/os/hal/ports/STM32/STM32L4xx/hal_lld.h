@@ -291,7 +291,7 @@
 #define STM32_SWPMI1SEL_HSI16   (1 << 30)   /**< SWPMI1 source is HSI16.    */
 
 #define STM32_DFSDMSEL_MASK     (1 << 31)   /**< DFSDMSEL mask.             */
-#define STM32_DFSDMSEL_PCLK1    (0 << 31)   /**< DFSDM source is PCLK1.     */
+#define STM32_DFSDMSEL_PCLK2    (0 << 31)   /**< DFSDM source is PCLK2.     */
 #define STM32_DFSDMSEL_SYSCLK   (1 << 31)   /**< DFSDM source is SYSCLK.    */
 /** @} */
 
@@ -488,7 +488,7 @@
 #endif
 
 /**
- * @brief   STM32_PLLPDIV_VALUE divider value or zero if disabled.
+ * @brief   PLLPDIV divider value or zero if disabled.
  * @note    The allowed values are 0, 2..31.
  */
 #if !defined(STM32_PLLPDIV_VALUE) || defined(__DOXYGEN__)
@@ -585,6 +585,14 @@
 #endif
 
 /**
+ * @brief   PLLSAI1PDIV divider value or zero if disabled.
+ * @note    The allowed values are 0, 2..31.
+ */
+#if !defined(STM32_PLLSAI1PDIV_VALUE) || defined(__DOXYGEN__)
+#define STM32_PLLSAI1PDIV_VALUE             0
+#endif
+
+/**
  * @brief   PLLSAI1P divider value.
  * @note    The allowed values are 7, 17.
  */
@@ -614,6 +622,14 @@
  */
 #if !defined(STM32_PLLSAI2N_VALUE) || defined(__DOXYGEN__)
 #define STM32_PLLSAI2N_VALUE                80
+#endif
+
+/**
+ * @brief   PLLSAI2PDIV divider value or zero if disabled.
+ * @note    The allowed values are 0, 2..31.
+ */
+#if !defined(STM32_PLLSAI2PDIV_VALUE) || defined(__DOXYGEN__)
+#define STM32_PLLSAI2PDIV_VALUE             0
 #endif
 
 /**
@@ -748,7 +764,7 @@
  * @brief   DFSDMSEL value (DFSDM clock source).
  */
 #if !defined(STM32_DFSDMSEL) || defined(__DOXYGEN__)
-#define STM32_DFSDMSEL                      STM32_DFSDMSEL_PCLK1
+#define STM32_DFSDMSEL                      STM32_DFSDMSEL_PCLK2
 #endif
 
 /**
@@ -914,9 +930,9 @@
 
 #elif STM32_VOS == STM32_VOS_RANGE2
 #define STM32_SYSCLK_MAX            26000000
-#define STM32_HSECLK_MAX            48000000
+#define STM32_HSECLK_MAX            26000000
 #define STM32_HSECLK_BYP_MAX        26000000
-#define STM32_HSECLK_MIN            4000000
+#define STM32_HSECLK_MIN            8000000
 #define STM32_HSECLK_BYP_MIN        8000000
 #define STM32_LSECLK_MAX            32768
 #define STM32_LSECLK_BYP_MAX        1000000
@@ -1017,8 +1033,8 @@
 #error "HSI16 not enabled, required by STM32_SAI1SEL"
 #endif
 
-#if ((STM32_SAI2SEL == STM32_SAI1SEL_PLLSAI1) ||                            \
-     (STM32_SAI2SEL == STM32_SAI1SEL_PLLSAI2)) &&                           \
+#if ((STM32_SAI2SEL == STM32_SAI2SEL_PLLSAI1) ||                            \
+     (STM32_SAI2SEL == STM32_SAI2SEL_PLLSAI2)) &&                           \
     (STM32_PLLSRC == STM32_PLLSRC_HSI16)
 #error "HSI16 not enabled, required by STM32_SAI2SEL"
 #endif
@@ -1079,8 +1095,8 @@
       #error "HSE not enabled, required by STM32_SAI1SEL"
     #endif
 
-    #if ((STM32_SAI2SEL == STM32_SAI1SEL_PLLSAI1) |                         \
-         (STM32_SAI2SEL == STM32_SAI1SEL_PLLSAI2)) &&                       \
+    #if ((STM32_SAI2SEL == STM32_SAI2SEL_PLLSAI1) |                         \
+         (STM32_SAI2SEL == STM32_SAI2SEL_PLLSAI2)) &&                       \
         (STM32_PLLSRC == STM32_PLLSRC_HSE)
       #error "HSE not enabled, required by STM32_SAI2SEL"
     #endif
@@ -1331,7 +1347,11 @@
 /**
  * @brief   PLL P output clock frequency.
  */
+#if (STM32_PLLPDIV_VALUE == 0) || defined(__DOXYGEN__)
 #define STM32_PLL_P_CLKOUT          (STM32_PLLVCO / STM32_PLLP_VALUE)
+#else
+#define STM32_PLL_P_CLKOUT          (STM32_PLLVCO / STM32_PLLPDIV_VALUE)
+#endif
 
 /**
  * @brief   PLL Q output clock frequency.
@@ -1632,7 +1652,11 @@
 /**
  * @brief   PLLSAI1-P output clock frequency.
  */
+#if (STM32_PLLSAI1PDIV_VALUE == 0) || defined(__DOXYGEN__)
 #define STM32_PLLSAI1_P_CLKOUT      (STM32_PLLSAI1VCO / STM32_PLLSAI1P_VALUE)
+#else
+#define STM32_PLLSAI1_P_CLKOUT      (STM32_PLLSAI1VCO / STM32_PLLSAI1PDIV_VALUE)
+#endif
 
 /**
  * @brief   PLLSAI1-Q output clock frequency.
@@ -1778,7 +1802,11 @@
 /**
  * @brief   PLLSAI2-P output clock frequency.
  */
+#if (STM32_PLLSAI2PDIV_VALUE == 0) || defined(__DOXYGEN__)
 #define STM32_PLLSAI2_P_CLKOUT      (STM32_PLLSAI2VCO / STM32_PLLSAI2P_VALUE)
+#else
+#define STM32_PLLSAI2_P_CLKOUT      (STM32_PLLSAI2VCO / STM32_PLLSAI2PDIV_VALUE)
+#endif
 
 /**
  * @brief   PLLSAI2-R output clock frequency.
@@ -2102,8 +2130,8 @@
 /**
  * @brief   DFSDM clock frequency.
  */
-#if (STM32_DFSDMSEL == STM32_DFSDMSEL_PCLK1) || defined(__DOXYGEN__)
-#define STM32_DFSDMCLK              STM32_PCLK1
+#if (STM32_DFSDMSEL == STM32_DFSDMSEL_PCLK2) || defined(__DOXYGEN__)
+#define STM32_DFSDMCLK              STM32_PCLK2
 #elif STM32_DFSDMSEL == STM32_DFSDMSEL_SYSCLK
 #define STM32_DFSDMCLK              STM32_SYSCLK
 #else

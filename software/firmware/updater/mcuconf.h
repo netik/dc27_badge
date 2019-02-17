@@ -21,9 +21,9 @@
  * Board setting
  */
 
+#include "halconf_community.h"
 
-#define NRF5_SOFTDEVICE_THREAD_WA_SIZE 128
-#ifdef HAL_USE_SOFTDEVICE
+#if (HAL_USE_SOFTDEVICE == TRUE)
 #define NRF5_RAND_SOFTDEVICE
 #endif
 
@@ -41,32 +41,13 @@
 /*
  * HAL driver system settings.
  */
-#define NRF5_SERIAL_USE_UART0		TRUE
-#define NRF5_SERIAL_USE_HWFLOWCTRL	FALSE
-#ifdef NRF5_RAND_SOFTDEVICE
-#define NRF5_RNG_USE_RNG0		FALSE
-#else
-#define NRF5_RNG_USE_RNG0		TRUE
-#endif
-#define NRF5_GPT_USE_TIMER1		FALSE
 #define NRF5_GPT_USE_TIMER2		TRUE
 
-#define NRF5_QEI_USE_QDEC0		TRUE
-#define NRF5_QEI_USE_LED		FALSE
+#define NRF5_SPI_USE_SPI0		TRUE
 
-#define WDG_USE_TIMEOUT_CALLBACK	TRUE
-
-#define NRF5_SPI_USE_SPI0               TRUE
-#define NRF5_SPI_USE_SPI1               FALSE
-#define NRF5_SPI_USE_SPI2               FALSE
-#define NRF5_SPI_USE_SPI3               FALSE
-
-#define NRF5_SPI_USE_DMA		FALSE
-#define NRF5_SPIM_USE_ANOM58_WAR	FALSE
+#define NRF5_SPI_SPI0_IRQ_PRIORITY	5
+#define NRF5_GPT_TIMER2_IRQ_PRIORITY	5
 
 #define SPI_SELECT_MODE			SPI_SELECT_MODE_LLD
-
-#define NRF5_I2C_USE_I2C0		FALSE
-#define NRF5_I2C_USE_I2C1		TRUE
 
 #endif /* _MCUCONF_H_ */

@@ -103,7 +103,7 @@ Port P1
 
 NRF52840 pin desgination		Function
 ------------------------		--------
-P1.00					SWO (single wire output)
+P1.00					<unused>
 P1.01					I2S SDOUT
 P1.02					I2S SCK
 P1.03					I2S LRCK

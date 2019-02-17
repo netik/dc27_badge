@@ -192,12 +192,6 @@ static THD_FUNCTION(Thread1, arg) {
     }
 }
 
-void
-SVC_Handler (void)
-{
-	while (1) {}
-}
-
 #ifdef notyet
 static void
 setup_flash (void)
@@ -250,15 +244,36 @@ int main(void)
 {
     uint32_t info;
     uint8_t * p;
+    uint8_t * memp;
+    const flash_descriptor_t * pFlash;
+    uint8_t reg;
+    qspi_command_t cmd;
+    uint32_t * faultPtr;
+
 #ifdef CRT0_VTOR_INIT
     __disable_irq();
     SCB->VTOR = 0;
     __enable_irq();
 #endif
-    uint8_t * memp;
-    const flash_descriptor_t * pFlash;
-    uint8_t reg;
-    qspi_command_t cmd;
+
+    /*
+     * Enable division by 0 traps. We do not enable unaligned access
+     * traps because the SoftDevice code performs unaligned accesses
+     * all over the place.
+     */
+
+    SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
+
+    /*
+     * Enable memory management, usage and bus fault exceptions, so that
+     * we don't always end up diverting through the hard fault handler.
+     * Note: the memory management fault only applies if the MPU is
+     * enabled, which it currently is not.
+     */
+
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk |
+        SCB_SHCSR_BUSFAULTENA_Msk |
+        SCB_SHCSR_MEMFAULTENA_Msk;
 
     halInit();
     chSysInit();
@@ -283,6 +298,48 @@ int main(void)
 		      Thread1, NULL);
 
     printf ("SYSTEM START\r\n");
+
+    /* Display reset reason */
+
+    if (NRF_POWER->RESETREAS) {
+        info = NRF_POWER->RESETREAS;
+        /* Clear accumulated reasons. */
+        NRF_POWER->RESETREAS = 0xFFFFFFFF;
+
+        printf ("Reset event (0x%X):", info);
+        if (info & POWER_RESETREAS_VBUS_Msk)
+            printf (" Wake up due to VBUS level");
+        if (info & POWER_RESETREAS_NFC_Msk)
+            printf (" Wake up due to NFC detect");
+        if (info & POWER_RESETREAS_DIF_Msk)
+            printf (" Wake up due to entering debug IF mode");
+        if (info & POWER_RESETREAS_LPCOMP_Msk)
+            printf (" Wake up due to reaching LPCOMP power threshold");
+        if (info & POWER_RESETREAS_OFF_Msk)
+            printf (" Wake up due to GPIO detect");
+        if (info & POWER_RESETREAS_LOCKUP_Msk)
+            printf (" Reset due to CPU lockup");
+        if (info & POWER_RESETREAS_SREQ_Msk)
+            printf (" Soft reset");
+        if (info & POWER_RESETREAS_DOG_Msk)
+            printf (" Watchdog reset");
+        if (info & POWER_RESETREAS_RESETPIN_Msk)
+            printf (" Reset pin asserted");
+        printf ("\r\n");
+    } else {
+        printf ("Power on\r\n");
+    }
+
+    /* Check if we rebooted due to a SoftDevice crash. */
+
+    faultPtr = (uint32_t *)NRF_FAULT_INFO_ADDR;
+    if (*faultPtr == NRF_FAULT_INFO_MAGIC) {
+        printf ("Reset after SoftDevice fault, "
+            "Id: 0x%X PC: 0x%X INFO: 0x%X\r\n",
+            faultPtr[1], faultPtr[2], faultPtr[3]);
+        faultPtr[0] = 0;
+    }
+
     info = NRF_FICR->INFO.VARIANT;
     p = (uint8_t *)&info;
     printf ("Nordic Semiconductor nRF%x Variant: %c%c%c%c ",
@@ -320,7 +377,9 @@ int main(void)
     /* Start SPI buses */
 
     spiStart (&SPID1, &spi1_config);
+    printf ("SPI bus 1 enabled\r\n");
     spiStart (&SPID4, &spi4_config);
+    printf ("SPI bus 4 enabled\r\n");
 
     /* Enable QSPI flash */
 
@@ -369,17 +428,6 @@ int main(void)
 	    pFlash->address);
     }
 
-#ifdef notdef
-    if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR)
-      printf ("ERASE FAILED\r\n");
-
-    flashWaitErase ((void *)&FLASHD2);
-
-    if (flashProgram (&FLASHD2, 0xFF000, 1024, (uint8_t *)0x20008100) !=
-      FLASH_NO_ERROR)
-      printf ("PROGRAM FAILED...\r\n");
-#endif
-
     i2cStart (&I2CD2, &i2c2_config);
 
     printf ("I2C interface enabled\r\n");
@@ -421,6 +469,25 @@ int main(void)
     /* Enable bluetooth radio */
 
     bleStart ();
+
+#ifdef flash_test
+
+    /*
+     * Note: we're compiled to use the SoftDevice for flash access,
+     * which means we can only actually perform erase and program
+     * operations on the internal flash after the SoftDevice has
+     * been enabled.
+     */
+
+    if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR)
+      printf ("ERASE FAILED\r\n");
+
+    flashWaitErase ((void *)&FLASHD2);
+
+    if (flashProgram (&FLASHD2, 0xFF000, 1024, (uint8_t *)0x20002000) !=
+      FLASH_NO_ERROR)
+      printf ("PROGRAM FAILED...\r\n");
+#endif
 
     NRF_P0->DETECTMODE = 0;
 
