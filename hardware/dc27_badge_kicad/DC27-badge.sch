@@ -392,8 +392,8 @@ U 1 1 5BA9ABB2
 P 10050 3700
 F 0 "J104" H 10100 4817 50  0000 C CNN
 F 1 "Conn_02x20_Odd_Even" H 10100 4726 50  0000 C CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical_SMD" H 10050 3700 50  0001 C CNN
-F 3 "~" H 10050 3700 50  0001 C CNN
+F 2 "samtec:SAMTEC-SSM-120-X-DV" H 10050 3700 50  0001 C CNN
+F 3 "-" H 10050 3700 50  0001 C CNN
 	1    10050 3700
 	1    0    0    -1  
 $EndComp
@@ -764,32 +764,6 @@ Text GLabel 6150 3050 2    50   Output ~ 0
 I2S_LRCK
 Text GLabel 6150 3150 2    50   Output ~ 0
 I2S_MCK
-$Comp
-L Connector:TestPoint TP108
-U 1 1 5BD7474F
-P 9550 5450
-F 0 "TP108" H 9608 5570 50  0000 L CNN
-F 1 "XTAL1" H 9608 5479 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 9750 5450 50  0001 C CNN
-F 3 "~" H 9750 5450 50  0001 C CNN
-	1    9550 5450
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	9550 5450 9550 5600
-$Comp
-L Connector:TestPoint TP107
-U 1 1 5BD7D538
-P 8800 5450
-F 0 "TP107" H 8600 5550 50  0000 L CNN
-F 1 "XTAL0" H 8500 5450 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 9000 5450 50  0001 C CNN
-F 3 "~" H 9000 5450 50  0001 C CNN
-	1    8800 5450
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	8800 5450 8800 5600
 Wire Notes Line
 	7400 500  7400 6550
 Text GLabel 8050 3200 0    50   Output ~ 0
@@ -936,7 +910,7 @@ L Connector:TestPoint TP104
 U 1 1 5BFC6440
 P 8250 3950
 F 0 "TP104" H 8308 4070 50  0000 L CNN
-F 1 "SDT_SPI_SCK" H 8308 3979 50  0000 L CNN
+F 1 "DISP_SCLK" H 8308 3979 50  0000 L CNN
 F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8450 3950 50  0001 C CNN
 F 3 "~" H 8450 3950 50  0001 C CNN
 	1    8250 3950
@@ -952,7 +926,7 @@ L Connector:TestPoint TP105
 U 1 1 5BFE1520
 P 8200 4350
 F 0 "TP105" H 8258 4470 50  0000 L CNN
-F 1 "DISP_MOSI" H 8258 4379 50  0000 L CNN
+F 1 "DISP_MISO" H 8258 4379 50  0000 L CNN
 F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8400 4350 50  0001 C CNN
 F 3 "~" H 8400 4350 50  0001 C CNN
 	1    8200 4350
@@ -1041,27 +1015,8 @@ NoConn ~ 5750 5250
 NoConn ~ 5750 5350
 Wire Wire Line
 	3450 4450 4300 4450
-$Comp
-L Connector:Conn_01x02_Female J105
-U 1 1 5C18A401
-P 2600 3400
-F 0 "J105" H 2627 3376 50  0000 L CNN
-F 1 "Conn_01x02_Female" H 2627 3285 50  0000 L CNN
-F 2 "Connector_PinHeader_1.00mm:PinHeader_1x02_P1.00mm_Horizontal" H 2600 3400 50  0001 C CNN
-F 3 "~" H 2600 3400 50  0001 C CNN
-	1    2600 3400
-	1    0    0    -1  
-$EndComp
 Text Notes 1850 3300 0    50   ~ 10
 NFC antenna connector - DNP
-Text GLabel 2300 3400 0    50   BiDi ~ 0
-NFC_ANT0
-Text GLabel 2300 3500 0    50   BiDi ~ 0
-NFC_ANT1
-Wire Wire Line
-	2300 3500 2400 3500
-Wire Wire Line
-	2400 3400 2300 3400
 Wire Wire Line
 	5900 2200 5900 2350
 Wire Wire Line
@@ -1108,17 +1063,6 @@ Wire Wire Line
 	6250 750  6250 1050
 Text Notes 7350 7500 0    50   ~ 0
 DC27 BADGE -  CPU, DISPLAY, USER INTERFACE - REV 1
-$Comp
-L Connector_Generic:Conn_02x02_Odd_Even J102
-U 1 1 5C536AAC
-P 6700 1050
-F 0 "J102" H 6750 1267 50  0000 C CNN
-F 1 "ShittyAddOnL" H 6750 1176 50  0000 C CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_2x02_P2.54mm_Vertical_SMD" H 6700 1050 50  0001 C CNN
-F 3 "~" H 6700 1050 50  0001 C CNN
-	1    6700 1050
-	1    0    0    -1  
-$EndComp
 Wire Notes Line
 	7400 1950 5700 1950
 Wire Notes Line
@@ -1258,7 +1202,7 @@ U 1 1 5C59EA27
 P 5000 3850
 F 0 "U100" H 5025 5565 50  0000 C CNN
 F 1 "BMD-340-A-R-DC27-peripheral-cache" H 5025 5474 50  0000 C CNN
-F 2 "RIGADO_BMD-340-A-R" H 5600 1750 50  0001 L BNN
+F 2 "BMD-340-A-R:RIGADO_BMD-340-A-R" H 5600 1750 50  0001 L BNN
 F 3 "Rigado" H 4550 5700 50  0001 L BNN
 F 4 "Bluetooth Low Energy 5.0 Module" H 4550 5550 50  0001 L BNN "Field4"
 F 5 "BMD-340-A-R" H 4550 5800 50  0001 L BNN "Field6"
@@ -1290,6 +1234,17 @@ F 1 "+3.3V" H 10665 2823 50  0000 C CNN
 F 2 "" H 10650 2650 50  0001 C CNN
 F 3 "" H 10650 2650 50  0001 C CNN
 	1    10650 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_02x02_Odd_Even J102
+U 1 1 5C536AAC
+P 6700 1050
+F 0 "J102" H 6750 1267 50  0000 C CNN
+F 1 "ShittyAddOnL" H 6750 1176 50  0000 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_2x02_P2.54mm_Vertical_SMD" H 6700 1050 50  0001 C CNN
+F 3 "~" H 6700 1050 50  0001 C CNN
+	1    6700 1050
 	1    0    0    -1  
 $EndComp
 $EndSCHEMATC

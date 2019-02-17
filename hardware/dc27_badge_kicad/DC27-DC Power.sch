@@ -14,7 +14,7 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
-Text Notes 300  -350 0    79   ~ 16
+Text Notes 1650 1000 0    79   ~ 16
 LiPo Charging and USB Power\n
 $Comp
 L max17043:MAX17043 U403

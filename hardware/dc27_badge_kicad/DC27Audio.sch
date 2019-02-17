@@ -180,7 +180,7 @@ U 1 1 5C153416
 P 8950 3650
 F 0 "J501" H 8977 3626 50  0000 L CNN
 F 1 "SPK LEFT" H 8977 3535 50  0000 L CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical_SMD_Pin1Left" H 8950 3650 50  0001 C CNN
+F 2 "Connector_Wire:SolderWirePad_1x02_P3.81mm_Drill0.8mm" H 8950 3650 50  0001 C CNN
 F 3 "~" H 8950 3650 50  0001 C CNN
 	1    8950 3650
 	1    0    0    -1  
@@ -191,7 +191,7 @@ U 1 1 5C15346B
 P 8950 4350
 F 0 "J502" H 8977 4326 50  0000 L CNN
 F 1 "SPK_RIGHT" H 8977 4235 50  0000 L CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical_SMD_Pin1Left" H 8950 4350 50  0001 C CNN
+F 2 "Connector_Wire:SolderWirePad_1x02_P3.81mm_Drill0.8mm" H 8950 4350 50  0001 C CNN
 F 3 "~" H 8950 4350 50  0001 C CNN
 	1    8950 4350
 	1    0    0    -1  

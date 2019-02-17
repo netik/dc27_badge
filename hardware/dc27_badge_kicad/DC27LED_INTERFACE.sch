@@ -271,68 +271,10 @@ Wire Wire Line
 Text GLabel 3100 3250 2    50   Output ~ 0
 AVCC
 Wire Wire Line
-	2700 3250 3100 3250
+	2700 3250 3000 3250
 Connection ~ 2700 3250
-$Comp
-L Device:C C307
-U 1 1 5BDAFD76
-P 2100 4450
-F 0 "C307" H 2215 4496 50  0000 L CNN
-F 1 "1uF" H 2215 4405 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric" H 2138 4300 50  0001 C CNN
-F 3 "~" H 2100 4450 50  0001 C CNN
-	1    2100 4450
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:C C308
-U 1 1 5BDAFD7C
-P 2700 4450
-F 0 "C308" H 2815 4496 50  0000 L CNN
-F 1 "0.1uF" H 2815 4405 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric" H 2738 4300 50  0001 C CNN
-F 3 "~" H 2700 4450 50  0001 C CNN
-	1    2700 4450
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2100 4250 2100 4300
-Wire Wire Line
-	2100 4250 2700 4250
-Wire Wire Line
-	2700 4250 2700 4300
-Connection ~ 2100 4250
-$Comp
-L power:GND #PWR0311
-U 1 1 5BDAFD87
-P 2100 4800
-F 0 "#PWR0311" H 2100 4550 50  0001 C CNN
-F 1 "GND" H 2105 4627 50  0000 C CNN
-F 2 "" H 2100 4800 50  0001 C CNN
-F 3 "" H 2100 4800 50  0001 C CNN
-	1    2100 4800
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:GND #PWR0312
-U 1 1 5BDAFD8D
-P 2700 4800
-F 0 "#PWR0312" H 2700 4550 50  0001 C CNN
-F 1 "GND" H 2705 4627 50  0000 C CNN
-F 2 "" H 2700 4800 50  0001 C CNN
-F 3 "" H 2700 4800 50  0001 C CNN
-	1    2700 4800
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2100 4600 2100 4800
-Wire Wire Line
-	2700 4600 2700 4800
 Text GLabel 3100 4250 2    50   Output ~ 0
 DVCC
-Wire Wire Line
-	2700 4250 3100 4250
-Connection ~ 2700 4250
 Text GLabel 5450 1850 1    50   Input ~ 0
 PVCC1
 Wire Wire Line
@@ -522,15 +464,8 @@ Wire Wire Line
 Wire Wire Line
 	1700 5200 2100 5200
 Wire Wire Line
-	1700 4250 2100 4250
-Connection ~ 1700 4250
-Wire Wire Line
-	1700 4250 1700 5200
-Wire Wire Line
 	1700 3250 2100 3250
 Connection ~ 1700 3250
-Wire Wire Line
-	1700 3250 1700 4250
 Wire Wire Line
 	1700 2250 2100 2250
 Connection ~ 1700 2250
@@ -581,4 +516,15 @@ F 3 "" H 4120 4590 50  0001 C CNN
 	1    5750 3450
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	1700 3250 1700 5200
+Wire Wire Line
+	3000 3250 3000 4250
+Wire Wire Line
+	3000 4250 3100 4250
+Connection ~ 3000 3250
+Wire Wire Line
+	3000 3250 3100 3250
+Text Notes 1850 4500 0    50   ~ 0
+note - on pcb avcc and dvcc very close, removing bypass caps here.
 $EndSCHEMATC
