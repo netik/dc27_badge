@@ -57,5 +57,6 @@ extern void i2sPlay (char *);
 extern void i2sLoopPlay (char *, uint8_t);
 
 extern uint16_t * i2sBuf;
+extern uint8_t i2sEnabled;
 
 #endif /* _I2S_LLDH_ */
