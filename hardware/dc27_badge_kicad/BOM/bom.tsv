@@ -1,0 +1,68 @@
+Designator	Value	QTY	POPULATE	Manufacturer	MPN	Footprint	Kicad Value	Description	
+BT401,	Battery	1	1	JST	S2B-PH-SM4-TB(LF)(SN)	Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal	Battery	Multiple-cell battery	
+C102, C101,	12pF	2	1	Yageo	CC0805JRNPO9BN120	Capacitor_SMD:C_0805_2012Metric	C	Unpolarized capacitor	
+C301, C303, C305, C309,	1uF	4	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_0603_1608Metric	C	Unpolarized capacitor	
+C302, C304, C306, C501, C507, C503, C602, C604,	0.1uF	8	1	MACROFAB	MF-CAP-0603-0.1uF	Capacitor_SMD:C_0603_1608Metric	C	Unpolarized capacitor	
+C401, C402, C403, C404, C405, C601, C603,	10uF	7	1	MACROFAB	MF-CAP-1206-10uF	Capacitor_SMD:C_1206_3216Metric	C	Unpolarized capacitor	
+C406,	1uF	1	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_1206_3216Metric	C	Unpolarized capacitor	
+C407,	1uF	1	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_0603_1608Metric	C	Unpolarized capacitor	
+C502,	1uF	1	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_0603_1608Metric	CP1	Polarized capacitor, US symbol	
+C504, C506, C508,	3.3uF	3	1	Nichicon	UZP1E3R3MCL1GB	Capacitor_SMD:C_0603_1608Metric	CP1	Polarized capacitor, US symbol	
+C505, C510,	100uF	2	1	MACROFAB	MF-CAP-6.3MM-100uF	Capacitor_SMD:C_0603_1608Metric	CP1_Small	Polarized capacitor, small US symbol	
+C509,	10uF	1	1	MACROFAB	MF-CAP-4MM-10uF	Capacitor_SMD:C_0603_1608Metric	CP1	Polarized capacitor, US symbol	
+C511,	1uF Ceramic	1	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_0603_1608Metric	C	Unpolarized capacitor	
+D217, D218, D219, D220, D221, D222, D223, D224, D225, D226, D227, D228, D229, D230, D231, D232, D201, D202, D203, D204, D205, D206, D207, D208, D209, D210, D211, D212, D213, D214, D215, D216,	LED_ARGB	32	1	MACROFAB	MF-LED-3228-RGB	LED_SMD:LED_Cree-PLCC4_3.2x2.8mm_CCW	LED_ARGB	RGB LED, anode/red/green/blue	
+D401,	CHG	1	1	MACROFAB	MF-LED-0603-RED	Diode_SMD:D_0603_1608Metric	LED	Light emitting diode	
+D402,	DONE	1	1	MACROFAB	MF-LED-0603-GREEN	Diode_SMD:D_0603_1608Metric	LED	Light emitting diode	
+D601,	TX LED	1	1	MACROFAB	MF-LED-0603-RED	Diode_SMD:D_0603_1608Metric	LED	Light emitting diode	
+D602,	RX LED	1	1	MACROFAB	MF-LED-0603-GREEN	Diode_SMD:D_0603_1608Metric	LED	Light emitting diode	
+J101,	Conn_ARM_JTAG_SWD_10	1	1	AMPHENOL	20021121-00010C4LF	Connector_PinHeader_1.27mm:PinHeader_2x05_P1.27mm_Vertical_SMD	Conn_ARM_JTAG_SWD_10	Cortex Debug Connector, standard ARM Cortex-M SWD and JTAG interface	
+J102,	ShittyAddOnL	1	1	SAMTEC	SSM-102-L-DV	Connector_PinSocket_2.54mm:PinSocket_2x02_P2.54mm_Vertical_SMD	Conn_02x02_Odd_Even	Generic connector, double row, 02x02, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)	
+J103,	ShittyAddOnR	1	1	SAMTEC	SSM-102-L-DV	Connector_PinSocket_2.54mm:PinSocket_2x02_P2.54mm_Vertical_SMD	Conn_02x02_Odd_Even	Generic connector, double row, 02x02, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)	
+J104,	Conn_02x20_Odd_Even	1	1	SAMTEC	SSM-120-L-DV-K-TR	samtec:SAMTEC-SSM-120-X-DV	Conn_02x20_Odd_Even	Generic connector, double row, 02x20, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)	
+J501,	SPK LEFT	1	0	DNP	DNP	Connector_Wire:SolderWirePad_1x02_P3.81mm_Drill0.8mm	Conn_01x02_Female	Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)	
+J502,	SPK_RIGHT	1	0	DNP	DNP	Connector_Wire:SolderWirePad_1x02_P3.81mm_Drill0.8mm	Conn_01x02_Female	Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)	
+J601,	USB_MICRO_RIGHT	1	1	MACROFAB	MF-CON-MICROUSB-RIGHT	MF_Connectors:MF_Connectors-MICROUSB-RIGHT	USB_MICRO_RIGHT	USB Connector	
+MH701,	DISP UL	1	0	DNP	DNP	MountingHole:MountingHole_3.2mm_M3_DIN965	MountingHole	Mounting Hole without connection	
+MH702,	DISP UR	1	0	DNP	DNP	MountingHole:MountingHole_3.2mm_M3_DIN965	MountingHole	Mounting Hole without connection	
+MH703,	DISP LL	1	0	DNP	DNP	MountingHole:MountingHole_3.2mm_M3_DIN965	MountingHole	Mounting Hole without connection	
+MH704,	DISP LR	1	0	DNP	DNP	MountingHole:MountingHole_3.2mm_M3_DIN965	MountingHole	Mounting Hole without connection	
+MH705,	LANYARD1	1	0	DNP	DNP	MountingHole:MountingHole_3.2mm_M3_DIN965	MountingHole	Mounting Hole without connection	
+MH706,	LANYARD2	1	0	DNP	DNP	MountingHole:MountingHole_3.2mm_M3_DIN965	MountingHole	Mounting Hole without connection	
+R101, R102, R103,	10K	3	1	MACROFAB	MF-RES-0603-10K	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R302, R503, R502, R501, R504,	20K	5	1	MACROFAB	MF-RES-0805-20K	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R303, R301,	10k	2	1	MACROFAB	MF-RES-0805-20K	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R402, R401,	R	2	1	MACROFAB	MF-RES-0603-1K	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R403,	2.0k	1	1	MACROFAB	MF-RES-0603-2K	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R404, R601,	1k	2	1	MACROFAB	MF-RES-0603-1K	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R602, R603,	47	2	1	MACROFAB	MF-RES-0603-47	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R604,	22.1k	1	1	TE Connectivity Passive Product	CRG0805F22K	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+R605,	47.5k	1	1	Yageo	RC0201FR-0747K5L	Resistor_SMD:R_0603_1608Metric	R	Resistor	
+SW101,	UP	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW102,	DN	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW103,	LEFT	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW104,	RIGHT	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW105,	A	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW106,	B	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW107,	ENTER	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW108,	RESET	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
+SW401,	POWER ON	1	1	MACROFAB	MF-SW-TACT-4.2MM	Button_Switch_SMD:SW_SPDT_PCM12	SW_SPDT	Switch, single pole double throw	
+TP101,	SDT_SPI_MOSI	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP102,	SDT_SPI_MISO	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP103,	SDT_SPI_SCK	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP104,	DISP_SCLK	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP105,	DISP_MISO	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP106,	DISP_MOSI	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP401,	VBATT	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP402,	3.3V TEST	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+TP403,	GND	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
+U100,	BMD-340-A-R-DC27-peripheral-cache	1	1	RIGARDO	BMD-340-A-R	BMD-340-A-R:RIGADO_BMD-340-A-R	BMD-340-A-R-DC27-peripheral-cache	ARM SoC	
+U301,	IS31FL3216A	1	1	INTEGRATED SILICON SOLUTION INC	IS31FL3216A-QFLS3-TR	Package_DFN_QFN:QFN-40-1EP_5x5mm_P0.4mm_EP3.6x3.6mm	IS31FL3216A	LED Controller	
+U401,	MCP73831-2-OT	1	1	MICROCHIP INC	MCP73831T-2ACI/OT	Package_TO_SOT_SMD:SOT-23-5	MCP73831-2-OT	Single cell, Li-Ion/Li-Po charge management controller, 4.20V, Tri-State Status Output, in SOT23-5 package	
+U402,	LM1117-3.3	1	1	TI	LM1117IMPX-3.3/NOPB	Package_TO_SOT_SMD:SOT-223	LM1117-3.3	800mA Low-Dropout Linear Regulator, 3.3V fixed output, TO-220/TO-252/TO-263/SOT-223	
+U403,	MAX17043	1	1	MAXIM	MAX17043G+T	Package_DFN_QFN:DFN-8-1EP_2x3mm_P0.5mm_EP0.61x2.2mm	MAX17043	Battery “Fuel Gauge” I2C	
+U501,	CS4344-CZZ	1	1	CIRRUS LOGIC	CS4344-CZZ	Housings_SSOP:TSSOP-10_3x3mm_Pitch0.5mm	CS4344-CZZ	I2S Audio DAC	
+U502,	LM4880	1	1	TI	LM4880MX/NOPB	Package_SO:SOIC-8_3.9x4.9mm_P1.27mm	LM4880	Audio Amplifier	
+U601,	CP2102N-A01-GQFN28	1	1	SILICON LABS	CP2102N-A01-GQFN28	Package_DFN_QFN:QFN-28-1EP_5x5mm_P0.5mm_EP3.35x3.35mm_ThermalVias	CP2102N-A01-GQFN24-Interface_USB	USB Serial UART	
+U602,	TPD3E001DRLR	1	1	TI	TPD3E001DRLR	Package_TO_SOT_SMD:SOT-553	TPD3E001DRLR-Power_Protection	USB ESD Protection Chip	
+Y101,	32.768Khz XTAL	1	1	EPSON	FC-135 32.7680KA-A5	Crystal:Crystal_SMD_MicroCrystal_CC4V-T1A-2Pin_5.0x1.9mm	Crystal	Two pin crystal	

@@ -1,5 +1,5 @@
 Drill report for /Users/jna/Dropbox/Badge Stuff/dc27_badge/hardware/dc27_badge_kicad/DC27-badge.kicad_pcb
-Created on Saturday, February 16, 2019 at 09:30:14 PM
+Created on Sunday, February 17, 2019 at 06:08:19 PM
 
 Copper Layer Stackup:
     =============================================================
@@ -13,12 +13,12 @@ Drill file 'DC27-badge.drl' contains
     plated through holes:
     =============================================================
     T1  0.20mm  0.008"  (9 holes)
-    T2  0.33mm  0.013"  (31 holes)
-    T3  0.40mm  0.016"  (218 holes)
+    T2  0.33mm  0.013"  (38 holes)
+    T3  0.40mm  0.016"  (201 holes)
     T4  0.50mm  0.020"  (2 holes)  (with 2 slots)
     T5  0.80mm  0.032"  (4 holes)
 
-    Total plated holes count 264
+    Total plated holes count 254
 
 
 Not plated through holes are merged with plated holes
