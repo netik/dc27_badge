@@ -36,6 +36,7 @@
 #include "ff.h"
 
 uint16_t * i2sBuf;
+uint8_t i2sEnabled = TRUE;
 
 static char * fname;
 static thread_t * pThread = NULL;
@@ -64,6 +65,12 @@ THD_FUNCTION(i2sThread, arg)
 			file = fname;
 			play = 1;
 			chMsgRelease (th, MSG_OK);
+		}
+
+		if (i2sEnabled == FALSE) {
+			play = 0;
+			file = NULL;
+			continue;
 		}
 
 		/*

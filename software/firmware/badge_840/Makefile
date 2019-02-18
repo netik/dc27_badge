@@ -155,6 +155,8 @@ CSRC += main.c \
 	app-update.c \
 	app-email.c \
 	app-ledsign.c \
+	app-dialer.c \
+	app-music.c \
 	async_io_lld.c \
 	scroll_lld.c \
 	ble_gap_lld.c \
@@ -275,7 +277,7 @@ UINCDIR = $(CHIBIOS)/../SoftDevice_S140/include
 ULIBDIR =
 
 # List all user libraries here
-ULIBS = -L$(CHIBIOS)/../SoftDevice_S140/lib -lsoftdevice -lc_nano -lnosys
+ULIBS = -L$(CHIBIOS)/../SoftDevice_S140/lib -lsoftdevice -lc_nano -lnosys -lm
 
 #
 # End of user defines

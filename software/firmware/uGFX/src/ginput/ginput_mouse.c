@@ -104,6 +104,8 @@ static void SendMouseEvent(GSourceListener	*psl, GMouse *m, GMouseReading *r) {
 static void GetMouseReading(GMouse *m) {
 	GMouseReading	r;
 
+	memset (&r, 0, sizeof(r));
+
 	// Step 1 - Get the Raw Reading
 	{
 		m->flags &= ~GMOUSE_FLG_NEEDREAD;
