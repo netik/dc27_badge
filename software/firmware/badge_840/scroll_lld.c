@@ -101,6 +101,7 @@ scrollImage (char * file, int delay)
 	GEventMouse * me;
 	GSourceHandle gs;
 	GListener gl;
+	int r = 0;
 
 	if (f_open (&f, file, FA_READ) != FR_OK)
 		return (-1);
@@ -134,8 +135,10 @@ scrollImage (char * file, int delay)
 		scrollCount (o == GDISP_ROTATE_90 ?
 			(gdispGetWidth() - 1) - scroll_pos : scroll_pos);
 		me = (GEventMouse *)geventEventWait(&gl, 0);
-		if (me != NULL &&  me->buttons & GMETA_MOUSE_DOWN)
+		if (me != NULL &&  me->buttons & GMETA_MOUSE_DOWN) {
+			r = -1;
 			break;
+		}
 		chThdSleepMilliseconds (delay);
 	}
 
@@ -146,8 +149,5 @@ out:
 	chHeapFree (buf);
 	f_close (&f);
 
-	if (me != NULL &&  me->buttons & GMETA_MOUSE_DOWN)
-		return (-1);
-
-	return (0);
+	return (r);
 }
