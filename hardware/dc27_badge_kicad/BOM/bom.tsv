@@ -6,6 +6,7 @@ C302, C304, C306, C501, C507, C503, C602, C604,	0.1uF	8	1	MACROFAB	MF-CAP-0603-0
 C401, C402, C403, C404, C405, C601, C603,	10uF	7	1	MACROFAB	MF-CAP-1206-10uF	Capacitor_SMD:C_1206_3216Metric	C	Unpolarized capacitor	
 C406,	1uF	1	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_1206_3216Metric	C	Unpolarized capacitor	
 C407,	1uF	1	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_0603_1608Metric	C	Unpolarized capacitor	
+C408	0.47uF	1	1	KEMET	C0603C474Z4VACTU	Capacitor_SMD:C_0603_1608Metric	C	Unpolarized capacitor	
 C502,	1uF	1	1	MACROFAB	MF-CAP-0603-1uF	Capacitor_SMD:C_0603_1608Metric	CP1	Polarized capacitor, US symbol	
 C504, C506, C508,	3.3uF	3	1	Nichicon	UZP1E3R3MCL1GB	Capacitor_SMD:C_0603_1608Metric	CP1	Polarized capacitor, US symbol	
 C505, C510,	100uF	2	1	MACROFAB	MF-CAP-6.3MM-100uF	Capacitor_SMD:C_0603_1608Metric	CP1_Small	Polarized capacitor, small US symbol	
@@ -46,7 +47,7 @@ SW105,	A	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.
 SW106,	B	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
 SW107,	ENTER	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
 SW108,	RESET	1	1	MACROFAB	MF-SW-TACT-4.2MM	MF_Switches:MF_Switches-TACT4.2MM	TACT_4.2MM	Momentary Switch	
-SW401,	POWER ON	1	1	MACROFAB	MF-SW-TACT-4.2MM	Button_Switch_SMD:SW_SPDT_PCM12	SW_SPDT	Switch, single pole double throw	
+SW401,	POWER ON	1	1		PCM12SMTR	Button_Switch_SMD:SW_SPDT_PCM12	SW_SPDT	Switch, single pole double throw	
 TP101,	SDT_SPI_MOSI	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
 TP102,	SDT_SPI_MISO	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	
 TP103,	SDT_SPI_SCK	1	0	DNP	DNP	TestPoint:TestPoint_Pad_D2.0mm	TestPoint	Test Point	

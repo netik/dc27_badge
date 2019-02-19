@@ -1,21 +1,21 @@
 G04 #@! TF.GenerationSoftware,KiCad,Pcbnew,(5.0.2-5)-5*
-G04 #@! TF.CreationDate,2019-02-17T18:08:13-08:00*
+G04 #@! TF.CreationDate,2019-02-18T15:44:08-08:00*
 G04 #@! TF.ProjectId,DC27-badge,44433237-2d62-4616-9467-652e6b696361,rev?*
 G04 #@! TF.SameCoordinates,Original*
 G04 #@! TF.FileFunction,Copper,L2,Inr*
 G04 #@! TF.FilePolarity,Positive*
 %FSLAX46Y46*%
 G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
-G04 Created by KiCad (PCBNEW (5.0.2-5)-5) date Sunday, February 17, 2019 at 06:08:13 PM*
+G04 Created by KiCad (PCBNEW (5.0.2-5)-5) date Monday, February 18, 2019 at 03:44:08 PM*
 %MOMM*%
 %LPD*%
 G01*
 G04 APERTURE LIST*
 G04 #@! TA.AperFunction,ViaPad*
-%ADD10R,1.998980X1.998980*%
+%ADD10C,1.998980*%
 G04 #@! TD*
 G04 #@! TA.AperFunction,ViaPad*
-%ADD11C,1.998980*%
+%ADD11R,1.998980X1.998980*%
 G04 #@! TD*
 G04 #@! TA.AperFunction,ViaPad*
 %ADD12O,1.200000X0.500000*%
@@ -37,12 +37,12 @@ G04 #@! TA.AperFunction,Conductor*
 G04 #@! TD*
 G04 APERTURE END LIST*
 D10*
-G04 #@! TO.N,Net-(C505-Pad2)*
-G04 #@! TO.C,J501*
-X84200000Y-59400000D03*
-D11*
 G04 #@! TO.N,BATT_CSN*
+G04 #@! TO.C,J501*
 X88010000Y-59400000D03*
+D11*
+G04 #@! TO.N,Net-(C505-Pad2)*
+X84200000Y-59400000D03*
 G04 #@! TD*
 D12*
 G04 #@! TO.N,N/C*
@@ -50,11 +50,11 @@ G04 #@! TO.C,J601*
 X68930000Y-135100000D03*
 X68930000Y-128500000D03*
 G04 #@! TD*
-D11*
+D10*
 G04 #@! TO.N,BATT_CSN*
 G04 #@! TO.C,J502*
 X127010000Y-59400000D03*
-D10*
+D11*
 G04 #@! TO.N,Net-(C510-Pad2)*
 X123200000Y-59400000D03*
 G04 #@! TD*
