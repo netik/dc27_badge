@@ -518,6 +518,11 @@ bleGapConnect (ble_gap_addr_t * peer)
 	ble_gap_conn_params_t cparams;
 	int r;
 
+	/* Don't try to connect if already connected. */
+
+	if (ble_conn_handle != BLE_CONN_HANDLE_INVALID)
+		return (NRF_ERROR_INVALID_STATE);
+
 	memset (&sparams, 0, sizeof(sparams));
 	memset (&cparams, 0, sizeof(cparams));
 
@@ -547,6 +552,11 @@ int
 bleGapDisconnect (void)
 {
 	int r;
+
+	/* Don't try to disconnect if already disconnected. */
+
+	if (ble_conn_handle == BLE_CONN_HANDLE_INVALID)
+		return (NRF_ERROR_INVALID_STATE);
 
 	r = sd_ble_gap_disconnect (ble_conn_handle,
 	    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);

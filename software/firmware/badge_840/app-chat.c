@@ -385,7 +385,8 @@ chat_event (OrchardAppContext *context,
 
 			/* Connect to the user */
 
-			bleGapConnect (&p->netid);
+			if (bleGapConnect (&p->netid) != NRF_SUCCESS)
+				orchardAppExit ();
 
 			screen_alert_draw (FALSE, "Connecting...");
 		} else {
