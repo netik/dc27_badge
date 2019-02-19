@@ -36,6 +36,7 @@
 #include "chprintf.h"
 
 #include "scroll_lld.h"
+#include "i2s_lld.h"
 
 #ifdef notyet
 #include "userconfig.h"
@@ -136,6 +137,8 @@ ledsign_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		} while (sts == 0);
 		gdispClear (Black);
 		scrollCount (0);
+		if (sts != 0)
+			i2sPlay ("click.raw");
 		orchardAppExit ();
 	}
 
