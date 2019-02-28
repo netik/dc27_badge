@@ -147,7 +147,7 @@ dumpFrame (int type, uint32_t lr, EXC_FRAME *p)
 		_puts ("Forced fault due to configurable priority violation");
 
 	if (SCB->CFSR & SCB_CFSR_MMARVALID_Msk) {
-		sprintf (exc_msgbuf, "Memory fault fault address: 0x%08lX",
+		sprintf (exc_msgbuf, "Memory fault address: 0x%08lX",
 		    SCB->BFAR);
 		_puts (exc_msgbuf);
 	}
