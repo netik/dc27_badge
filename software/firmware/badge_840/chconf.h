@@ -53,13 +53,14 @@
  * - The CPU is executing in a thread, and bit 0 of the CONTROL
  *   register is cleared
  *
- * Setting bit 0 of the CONTROL register is useful in cases where we want
+ * Setting bit 0 of the CONTROL register causes threads to execute in
+ * unprivileged mode, which can be useful in cases where you might want
  * to limit the access rights of threads for security purposes. Whether
  * this is useful or not in an RTOS context where there is only one shared
  * address space depends on the circumstances.
  *
  * Ideally we should be able to use either mode, and for the most part we
- * _except_ when the Nordic SoftDevice is enabled.
+ * can, _except_ when the Nordic SoftDevice is enabled.
  *
  * In order to use the SVCall handler, the rule is that the current CPU
  * priority (as specified in the basepri register) must be less than the
