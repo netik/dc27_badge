@@ -40,6 +40,8 @@
 #include "src/gdisp/gdisp_driver.h"
 #include "src/gwin/gwin_class.h"
 
+#include "i2s_lld.h"
+
 /*
  * We need two widgets: a console and the keyboard.
  * We also need one listener object for detecting keypresses
@@ -132,7 +134,7 @@ static uint8_t handle_input (char * name, uint8_t max,
 		break;
 	default:
 		if (p->pos == max) {
-			/*playDoh ();*/
+			i2sPlay ("wilhelm.raw");
 		} else {
 			name[p->pos] = pk->c[0];
 			p->pos++;
