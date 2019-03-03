@@ -79,6 +79,11 @@
 # notice it.
 #
 
+MYDIR=`dirname "$0"`
+
+filename=`basename "$1"`
+newfilename=${filename%.*}.vid
+
 rm -f $2/video.bin
 
 # Convert video to raw rgb565 pixel frames at 16.25 frames/sec
@@ -91,6 +96,6 @@ ffmpeg -i "$1" -ac 2 -ar 15600 $2/sample.wav
 sox --encoding signed-integer $2/sample.wav $2/sample.raw channels 2 rate 15600
 
 # Now merge the video and audio into a single file
-./bin/videomerge $2/video.bin $2/sample.raw $2/video.vid
+${MYDIR}/../bin/videomerge $2/video.bin $2/sample.raw $2/${newfilename}
 
 rm -f $2/video.bin $2/sample.wav $2/sample.u16 $2/sample.raw

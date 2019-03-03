@@ -15,9 +15,11 @@
 # located.
 #
 
+MYDIR=`dirname "$0"`
+
 FFMPEG=/usr/local/bin/ffmpeg
 IDENTIFY=/usr/local/bin/identify
-RGBHDR=tools/bin/rgbhdr
+RGBHDR=${MYDIR}/../bin/rgbhdr
 
 if [ "$1" == "" ]; then
     echo "Usage: $0 filename"

@@ -22,10 +22,12 @@
 # they can be copied to the "photos" subdirectory on the badge's SD card.
 #
 
+MYDIR=`dirname "$0"`
+
 if [ "$1" == "" ]; then
     echo "Usage: $0 filename"
     exit
 fi
 
 convert $1 -resize !320x240 -rotate 90 -flop photo.jpg
-tools/scripts/convert_to_rgb.sh photo.jpg photo.rgb
+${MYDIR}/convert_to_rgb.sh photo.jpg photo.rgb
