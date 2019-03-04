@@ -134,6 +134,9 @@ dirs:
 	-[ -d sdcard/photos ] || mkdir -p sdcard/photos
 	-[ -d sdcard/font/led ] || mkdir -p sdcard/font/led
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
+	-[ -d video ] || mkdir -p video
+	-[ -d tif/mirrored ] || mkdir -p tif/mirrored
+	-[ -d jpg/mirrored ] || mkdir -p jpg/mirrored
 
 cleansd:
 	@if [ -d "sdcard" ]; then rm -rf sdcard; fi; 
@@ -145,4 +148,7 @@ clean: clean_images
 	-rm -f dac/*.raw
 	-rm -f dac/fight/*.raw
 	-rm -f video/*
+	-rm -f tif/mirrored/*
 	-rm -fr sdcard/*
+	-rmdir tif/mirrored
+	-rmdir video
