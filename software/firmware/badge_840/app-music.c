@@ -40,9 +40,9 @@
 #include "ff.h"
 #include "ffconf.h"
 
-#ifdef notyet
+#include "async_io_lld.h"
+
 #include "fix_fft.h"
-#endif
 
 #include "src/gdisp/gdisp_driver.h"
 
@@ -51,15 +51,45 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define MUSIC_SAMPLES 2048
+#define MUSIC_BYTES (MUSIC_SAMPLES * 2)
+#define MUSIC_FFT_MAX_AMPLITUDE 128
+
 #define BACKGROUND HTML2COLOR(0x470b67)
+
 
 typedef struct _MusicHandles {
 	char **			listitems;
 	int			itemcnt;
 	OrchardUiContext	uiCtx;
-	short			in[128];
-	short			out[128];
+	short			real[MUSIC_SAMPLES / 2];
+	short			imaginary[MUSIC_SAMPLES / 2];
 } MusicHandles;
+
+
+static unsigned int
+isqrt(unsigned int x)  
+{  
+	register unsigned int op, res, one;  
+  
+	op = x;  
+	res = 0;  
+  
+	/* "one" starts at the highest power of four <= than the argument. */  
+	one = 1 << 30;  /* second-to-top bit set */  
+	while (one > op) one >>= 2;  
+  
+	while (one != 0) {  
+		if (op >= res + one) {  
+			op -= res + one;  
+			res += one << 1;  /* <-- faster than 2 * one */
+		}  
+		res >>= 1;  
+		one >>= 2;  
+	}
+  
+	return (res);  
+}
 
 static uint32_t
 music_init(OrchardAppContext *context)
@@ -131,31 +161,30 @@ music_start (OrchardAppContext *context)
 	return;
 }
 
-#ifdef notyet
 static void
-columnDraw (int col, short amp, int erase)
+columnDraw (int col, short amp)
 {
 	int x;
 	int y;
 
 	/* Clamp the amplitude at 128 pixels */
 
-	if (amp > 128)
-		amp = 128;
+	if (amp > MUSIC_FFT_MAX_AMPLITUDE)
+		amp = MUSIC_FFT_MAX_AMPLITUDE;
 
 	/* Set up the drawing aperture */
 
 	GDISP->p.x = col * 5;
-	GDISP->p.y = 240 - amp;
+	GDISP->p.y = 240 - MUSIC_FFT_MAX_AMPLITUDE;
 	GDISP->p.cx = 4;
-	GDISP->p.cy = amp;
+	GDISP->p.cy = MUSIC_FFT_MAX_AMPLITUDE;
 
 	/* Now draw the column */
 
 	gdisp_lld_write_start (GDISP);
-	for (y = amp; y > 0; y--) {
-		if (erase)
-			GDISP->p.color = BACKGROUND;
+	for (y = MUSIC_FFT_MAX_AMPLITUDE; y > 0; y--) {
+		if (y > amp)
+			GDISP->p.color = Black /*BACKGROUND*/;
 		else {
 			if (y >= 0 && y < 32)
 				GDISP->p.color = Lime;
@@ -172,22 +201,60 @@ columnDraw (int col, short amp, int erase)
 
 	return;
 }
-#endif
+
+static void
+music_visualize (MusicHandles * p, uint16_t * samples)
+{
+	unsigned int sum;
+	short b;
+	int i;
+	int r;
+
+	/* Gather up one channel's worth of samples */
+
+	for (i = 0; i < MUSIC_SAMPLES / 2; i++) {
+		p->real[i] = (~(samples[i*2] - 1));
+		p->imaginary[i] = 0;
+	}
+
+	/* Perform FFT calculation */
+
+	fix_fft (p->real, p->imaginary, 10, 0);
+
+	/* Combine real and imaginary parts into absolute values */
+
+	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
+		sum = ((p->real[i] * p->real[i]) +
+		    (p->imaginary[i] * p->imaginary[i]));
+		p->real[i] = (short)isqrt (sum);
+	}
+
+	/* Draw the bar graph */
+
+	r = 0;
+	for (i = 0; i < 64; i++) {
+		b = p->real[r + 0] / 16;
+		b += p->real[r + 1] / 16;
+		b /= 2;
+		r += 2;
+		columnDraw (i, b);
+	}
+
+	return;
+}
 
 static int
 musicPlay (MusicHandles * p, char * fname)
 {
 	FIL f;
 	uint16_t * buf;
+	uint16_t * p1;
+	uint16_t * p2;
 	uint16_t * i2sBuf;
 	UINT br;
 	GEventMouse * me = NULL;
 	GSourceHandle gs;
 	GListener gl;
-#ifdef notyet
-	int i;
-	short b;
-#endif
 	int r = 0;
 
 	i2sPlay (NULL);
@@ -196,11 +263,13 @@ musicPlay (MusicHandles * p, char * fname)
 		return (0);
 
 	i2sBuf = chHeapAlloc (NULL,
-	    (I2S_SAMPLES * sizeof(uint16_t)) * 2);
+	    (MUSIC_SAMPLES * sizeof(uint16_t)) * 2);
 
 	buf = i2sBuf;
+	p1 = buf;
+	p2 = buf + MUSIC_SAMPLES;
 
-	f_read (&f, buf, I2S_BYTES, &br);
+	f_read (&f, buf, MUSIC_BYTES, &br);
 
 	gs = ginputGetMouse (0);
 	geventListenerInit (&gl);
@@ -208,34 +277,22 @@ musicPlay (MusicHandles * p, char * fname)
 
 	while (1) {
 
-		i2sSamplesPlay (buf, br >> 1);
+		asyncIoRead (&f, p2, MUSIC_BYTES, &br);
 
-#ifdef notyet
-		for (i = 1; i < 63; i++) {
-			b = p->in[i];
-			columnDraw (i, b, 1);
+		i2sSamplesPlay (p1, br >> 1);
+
+		music_visualize (p, p1);
+
+		if (p1 == buf) {
+ 			p1 += MUSIC_SAMPLES;
+			p2 = buf;
+		} else {
+			p1 = buf;
+			p2 += MUSIC_SAMPLES;
 		}
-
-		for (i = 0; i < 128; i++)
-			p->in[i] = buf[i] << 2;
-
-		fix_fft (p->in, p->out, 7, 0);
-
-		for (i = 1; i < 63; i++) {
-			b = abs(p->in[i]);
-			b >>= 3;
-			p->in[i] = b;
-			columnDraw (i, b, 0);
-		}
-#endif
-		if (buf == i2sBuf)
-			buf += I2S_SAMPLES;
-		else
-			buf = i2sBuf;
-
-		f_read (&f, buf, I2S_BYTES, &br);
 
 		i2sSamplesWait ();
+		asyncIoWait ();
 
 		if (br == 0)
 			break;

@@ -157,6 +157,7 @@ CSRC += main.c \
 	app-ledsign.c \
 	app-dialer.c \
 	app-music.c \
+	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \
 	ble_gap_lld.c \
