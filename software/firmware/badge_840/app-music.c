@@ -210,18 +210,28 @@ music_visualize (MusicHandles * p, uint16_t * samples)
 	int i;
 	int r;
 
-	/* Gather up one channel's worth of samples */
+	/*
+	 * Gather up one channel's worth of samples. Undo the 1s
+	 * complement operation to turn them back into signed 16-bit
+	 * integer samples.
+	 */
 
 	for (i = 0; i < MUSIC_SAMPLES / 2; i++) {
 		p->real[i] = (~(samples[i*2] - 1));
 		p->imaginary[i] = 0;
 	}
 
-	/* Perform FFT calculation */
+	/* Perform FFT calculation. 1<<10 is 1024, so m here is 10. */
 
 	fix_fft (p->real, p->imaginary, 10, 0);
 
-	/* Combine real and imaginary parts into absolute values */
+	/*
+	 * Combine real and imaginary parts into absolute values. Note:
+	 * we only use half the array in the output compared to the
+	 * input. That is, we fed in 1024 samples, but we only use
+	 * 512 output bins. It looks like the remaining 512 bins are
+	 * just a mirror image of the first 512.
+	 */
 
 	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
 		sum = ((p->real[i] * p->real[i]) +
@@ -229,7 +239,12 @@ music_visualize (MusicHandles * p, uint16_t * samples)
 		p->real[i] = (short)isqrt (sum);
 	}
 
-	/* Draw the bar graph */
+	/*
+	 * Draw the bar graph. We take the first 128 samples and average
+	 * every 2 samples together to get 64 bars. This discards some of
+	 * the high end samples. There ought to be a better way to condense
+	 * the results but I'm not sure how to do it yet.
+	 */
 
 	r = 0;
 	for (i = 0; i < 64; i++) {
