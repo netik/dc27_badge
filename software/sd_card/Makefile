@@ -151,4 +151,5 @@ clean: clean_images
 	-rm -f tif/mirrored/*
 	-rm -fr sdcard/*
 	-rmdir tif/mirrored
+	-rmdir jpg/mirrored
 	-rmdir video
