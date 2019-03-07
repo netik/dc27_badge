@@ -50,7 +50,7 @@
 # rate of around 16KHz. The closest you can is 15.625KHz.
 #
 # This means we can't adjust the audio sample rate arbitrarily. It
-# turns out you can get a whole number ration with a video rate of 13
+# turns out you can get a whole number ratio with a video rate of 13
 # frames per second. However the hardware has enough bandwidth for
 # about 16 frames per second, and a higher frame rate would be nice.
 # But at 16 frames/second, the math doesn't work out.
@@ -61,7 +61,7 @@
 # fine. (The NTSC frame rate is 29.97 fps after all.)
 #
 # The problem though is that even with 16.25 frames/second, we get
-# close to a whole number ration, but not quite:
+# close to a whole number ratio, but not quite:
 #
 # 16.25 x 120 = 1950 scanlines/second
 # 15625 / 1950 = 8.01282051282051282051 samples/scanline
