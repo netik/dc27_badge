@@ -47,7 +47,7 @@ typedef struct dialer_button {
 #define DIALER_I2SRATE		30303	/* actual I2S LRCLK rate */	
 #define DIALER_SAMPLERATE	(DIALER_I2SRATE + DIALER_OFFSET)
 
-volatile DIALER_BUTTON buttons[] =  {
+static const DIALER_BUTTON buttons[] =  {
 	{ 0,   0,   "1",     1209, 697,  1100 },
 	{ 60,  0,   "2",     1336, 697,  1012 },
 	{ 120, 0,   "3",     1477, 697,  924  },
