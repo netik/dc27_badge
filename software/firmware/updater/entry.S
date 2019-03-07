@@ -48,9 +48,36 @@
 	.type		main, %function
 
 	.globl		main
+	.globl		chMtxObjectInit
+	.globl		chThdResumeI
+	.globl		chThdSuspendS
+	.globl		chMtxLock
+	.globl		chMtxUnlock
+	.globl		chThdSuspendTimeoutS
+	.globl		_port_irq_epilogue
 
 	/* Load an initial stack, then jump to the updater code */
 main:
 	ldr	r0, = #UPDATER_STACK
 	mov	sp, r0
 	bl	updater
+
+/*
+ * We're using some ChibiOS drivers in the updater, but not using ChibiOS
+ * itself. We're careful to use APIs that don't require the ChibiOS kernel
+ * or scheduler, however in a couple of cases we still have some unresolved
+ * linker references. We need to stub these routines out. To save space,
+ * we can create one routine as a stub and alias all the other functions
+ * to it.
+ *
+ * Note that a few of these only show up when we build without LTO.
+ */
+
+chMtxObjectInit:
+chThdResumeI:
+chThdSuspendS:
+chMtxLock:
+chMtxUnlock:
+chThdSuspendTimeoutS:
+_port_irq_epilogue:
+	bx	lr

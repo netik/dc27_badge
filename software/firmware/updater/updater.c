@@ -121,36 +121,6 @@ mmc_callback(GPTDriver *gptp)
 	return;
 }
 
-/*
- * We're using some ChibiOS drivers in the updater, but not using ChibiOS
- * itself. We're careful to use APIs that don't require the ChibiOS kernel
- * or scheduler, however in a couple of cases we still have some unresolved
- * linker references. We need to stub these routines out. To save space,
- * we can create one routine as a stub and alias all the other functions
- * to it.
- *
- * Note that a few of these only show up when we build without LTO.
- */
-
-__attribute__ ((alias ("_port_irq_epilogue")))
-void chMtxObjectInit (mutex_t *mp);
-__attribute__ ((alias ("_port_irq_epilogue")))
-void chThdResumeI (thread_reference_t *trp, msg_t msg);
-__attribute__ ((alias ("_port_irq_epilogue")))
-msg_t chThdSuspendS (thread_reference_t *trp);
-__attribute__ ((alias ("_port_irq_epilogue")))
-void chMtxLock (mutex_t *mp);
-__attribute__ ((alias ("_port_irq_epilogue")))
-void chMtxUnlock (mutex_t *mp);
-__attribute__ ((alias ("_port_irq_epilogue")))
-msg_t chThdSuspendTimeoutS(thread_reference_t *trp, sysinterval_t timeout);
-
-void
-_port_irq_epilogue (void)
-{
-	return;
-}
-
 extern void Vector68 (void);
 
 static const GPTConfig gpt2_config = {
