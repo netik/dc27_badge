@@ -50,6 +50,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define MUSIC_SAMPLES 2048
 #define MUSIC_BYTES (MUSIC_SAMPLES * 2)
@@ -66,30 +67,6 @@ typedef struct _MusicHandles {
 	short			imaginary[MUSIC_SAMPLES / 2];
 } MusicHandles;
 
-
-static unsigned int
-isqrt(unsigned int x)  
-{  
-	register unsigned int op, res, one;  
-  
-	op = x;  
-	res = 0;  
-  
-	/* "one" starts at the highest power of four <= than the argument. */  
-	one = 1 << 30;  /* second-to-top bit set */  
-	while (one > op) one >>= 2;  
-  
-	while (one != 0) {  
-		if (op >= res + one) {  
-			op -= res + one;  
-			res += one << 1;  /* <-- faster than 2 * one */
-		}  
-		res >>= 1;  
-		one >>= 2;  
-	}
-  
-	return (res);  
-}
 
 static uint32_t
 music_init(OrchardAppContext *context)
@@ -236,7 +213,7 @@ music_visualize (MusicHandles * p, uint16_t * samples)
 	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
 		sum = ((p->real[i] * p->real[i]) +
 		    (p->imaginary[i] * p->imaginary[i]));
-		p->real[i] = (short)isqrt (sum);
+		p->real[i] = (short)sqrt (sum);
 	}
 
 	/*

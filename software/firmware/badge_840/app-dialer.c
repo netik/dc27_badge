@@ -6,8 +6,8 @@
 #include "ble_lld.h"
 
 #include <stdint.h>
-#include <math.h>
 #include <string.h>
+#include <math.h>
 
 #include <math.h>
 
@@ -47,7 +47,7 @@ typedef struct dialer_button {
 #define DIALER_I2SRATE		30303	/* actual I2S LRCLK rate */	
 #define DIALER_SAMPLERATE	(DIALER_I2SRATE + DIALER_OFFSET)
 
-static const DIALER_BUTTON buttons[] =  {
+volatile DIALER_BUTTON buttons[] =  {
 	{ 0,   0,   "1",     1209, 697,  1100 },
 	{ 60,  0,   "2",     1336, 697,  1012 },
 	{ 120, 0,   "3",     1477, 697,  924  },
@@ -79,7 +79,7 @@ static const DIALER_BUTTON buttons[] =  {
 	{ 0,   0,   "1",     700,  900,  748  },
 	{ 60,  0,   "2",     700,  1100, 308  },
 	{ 120, 0,   "3",     900,  1100, 476  },
-	{ 180, 0,   "KP1",   1100, 1700, 256  }, 
+	{ 180, 0,   "KP1",   1100, 1700, 252  }, 
 
 	{ 0,   60,  "4",     700,  1300, 1012 },
 	{ 60,  60,  "5",     900,  1300, 2346 },
@@ -118,33 +118,6 @@ typedef struct _DHandles {
 	uint8_t			sound;
 } DHandles;
 
-static double fast_sin(double x)
-{
-	const double PI	=  3.14159265358979323846264338327950288;
-	const double INVPI =  0.31830988618379067153776752674502872;
-	const double A	 =  0.00735246819687011731341356165096815;
-	const double B	 = -0.16528911397014738207016302002888890;
-	const double C	 =  0.99969198629596757779830113868360584;
-
-	int32_t k;
-	double x2;
-
-	/* find offset of x from the range -pi/2 to pi/2 */
-	k = round (INVPI * x);
-
-	/* bring x into range */
-	x -= k * PI;
-
-	/* calculate sine */
-	x2 = x * x;
-	x = x*(C + x2*(B + A*x2));
-
-	/* if x is in an odd pi count we must flip */
-	if (k % 2) x = -x;
-
-	return x;
-}
-
 #ifdef CALIBRATION
 
 #define DIALER_MATCHES 6
@@ -179,9 +152,9 @@ calc (uint8_t b)
 
 	for (i = 0; i < DIALER_SAMPLES; i++) {
 		point1 = fract1 * i;
-		result = 16383 + (fast_sin (point1) * 16383);
+		result = 16383 + (sin (point1) * 16383);
 		point2 = fract2 * i;
-		result += 16383 + (fast_sin (point2) * 16383);
+		result += 16383 + (sin (point2) * 16383);
 		result /= 2.0;
 		buf[i] = (uint16_t)round (result);
 		buf[i] = ~(buf[i]) + 1;
@@ -234,9 +207,9 @@ tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 
 	for (i = 0; i < samples; i++) {
 		point1 = fract1 * i;
-		result = 16383 + (fast_sin (point1) * 16383);
+		result = 16383 + (sin (point1) * 16383);
 		point2 = fract2 * i;
-		result += 16383 + (fast_sin (point2) * 16383);
+		result += 16383 + (sin (point2) * 16383);
 		result /= 2.0;
 		buf[i] = (uint16_t)round (result);
 		buf[i] = ~(buf[i]) + 1;
