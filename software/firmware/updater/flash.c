@@ -58,8 +58,18 @@ flashErase (uint8_t * buf)
 void
 flashProgram (uint8_t * src, uint8_t * dst)
 {
+	uint32_t * s;
+	uint32_t * d;
+	unsigned i;
+
+	s = (uint32_t *)src;
+	d = (uint32_t *)dst;
+
 	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
-	memcpy (dst, src, FLASH_PAGE_SIZE);
+
+	for (i = 0; i < (FLASH_PAGE_SIZE / sizeof(uint32_t)); i++)
+		d[i] = s[i];
+
 	while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
 		;
 	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
