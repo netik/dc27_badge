@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018
+ * Copyright (c) 2018, 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,10 @@
 #include "hal.h"
 #include "nrf52flash_lld.h"
 
+#if (HAL_USE_SOFTDEVICE == TRUE)
 #include "nrf_soc.h"
 #include "ble_lld.h"
+#endif
 
 static const flash_descriptor_t *nrf52_get_descriptor(void *instance);
 static flash_error_t nrf52_read(void *instance, flash_offset_t offset,
@@ -149,16 +151,23 @@ nrf52_start_erase_sector (void *instance, flash_sector_t sector)
 
 	osalMutexUnlock (&devp->mutex);
 
+#if (HAL_USE_SOFTDEVICE == TRUE)
 	if (r == NRF_SUCCESS)
 		return (FLASH_NO_ERROR);
+
 	return (FLASH_ERROR_ERASE);
+#else
+	return (FLASH_NO_ERROR);
+#endif
 }
 
 static flash_error_t
 nrf52_query_erase (void *instance, uint32_t *msec)
 {
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
+#if (HAL_USE_SOFTDEVICE == TRUE)
 	enum NRF_SOC_EVTS evt;
+#endif
 
 	osalMutexLock (&devp->mutex);
 
@@ -191,9 +200,13 @@ nrf52_query_erase (void *instance, uint32_t *msec)
 #endif
 	osalMutexUnlock (&devp->mutex);
 
+#if (HAL_USE_SOFTDEVICE == TRUE)
 	if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
 		return (FLASH_NO_ERROR);
 	return (FLASH_ERROR_ERASE);
+#else
+	return (FLASH_NO_ERROR);
+#endif
 }
 
 static flash_error_t
@@ -233,6 +246,10 @@ nrf52_program (void *instance, flash_offset_t offset,
 
 	if (n & 0x3)
 		return (FLASH_ERROR_PROGRAM);
+#else
+	uint32_t * s;
+	uint32_t * d;
+	unsigned i;
 #endif
 	if ((offset + n) > (FLASH_PAGE_SIZE * nrf52_descriptor.sectors_count))
 		return (FLASH_ERROR_PROGRAM);
@@ -259,8 +276,14 @@ nrf52_program (void *instance, flash_offset_t offset,
 	evt = flash_evt;
 	flash_evt = 0;
 #else
+	s = (uint32_t *)pp;
+	d = (uint32_t *)(p + offset);
+
 	devp->port->CONFIG = NVMC_CONFIG_WEN_Wen;
-        memcpy (p + offset, pp, n);
+
+	for (i = 0; i < (FLASH_PAGE_SIZE / sizeof(uint32_t)); i++)
+		d[i] = s[i];
+
 	while (devp->port->READY == NVMC_READY_READY_Busy)
                 ;
 	devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
@@ -268,9 +291,14 @@ nrf52_program (void *instance, flash_offset_t offset,
 
 	osalMutexUnlock (&devp->mutex);
 
+#if (HAL_USE_SOFTDEVICE == TRUE)
 	if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
 		return (FLASH_NO_ERROR);
+
 	return (FLASH_ERROR_PROGRAM);
+#else
+	return (FLASH_NO_ERROR);
+#endif
 }
 
 void
