@@ -234,23 +234,20 @@ nrf52_program (void *instance, flash_offset_t offset,
 #if (HAL_USE_SOFTDEVICE == TRUE)
 	enum NRF_SOC_EVTS evt;
 	int r;
-
-	/*
-	 * Note: the sd_flash_write() API expects the flash write size
-	 * to be expressed as a number of 32-bit words, whereas the
-	 * ChibiOS flash API expects the size to be expressed in bytes.
-	 * This means we need to divide the size by 4 here. It also means
-	 * the size supplied by the caller must always be a multiple of 4
-	 * in order for things to work right.
-	 */
-
-	if (n & 0x3)
-		return (FLASH_ERROR_PROGRAM);
 #else
 	uint32_t * s;
 	uint32_t * d;
 	unsigned i;
 #endif
+
+	/*
+         * Check that the size is always a multiple of 4 bytes, since
+	 * the flash must be written in words.
+	 */
+
+	if (n & 0x3)
+		return (FLASH_ERROR_PROGRAM);
+
 	if ((offset + n) > (FLASH_PAGE_SIZE * nrf52_descriptor.sectors_count))
 		return (FLASH_ERROR_PROGRAM);
 
@@ -281,7 +278,7 @@ nrf52_program (void *instance, flash_offset_t offset,
 
 	devp->port->CONFIG = NVMC_CONFIG_WEN_Wen;
 
-	for (i = 0; i < (FLASH_PAGE_SIZE / sizeof(uint32_t)); i++)
+	for (i = 0; i < (n / sizeof(uint32_t)); i++)
 		d[i] = s[i];
 
 	while (devp->port->READY == NVMC_READY_READY_Busy)
