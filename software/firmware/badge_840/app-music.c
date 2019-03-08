@@ -191,7 +191,7 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	 * Gather up one channel's worth of samples.
 	 *
 	 * Note: each sample is supposed to be a raw signed integer.
-	 * Technically we're using the 1s complement values here. We
+	 * Technically we're using the 2s complement values here. We
 	 * could undo that, but experimentation shows that it doesn't
 	 * seem to make any difference to the FFT function, so we
 	 * save some CPU cycles here and just don't bother.
