@@ -207,20 +207,24 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	fix_fft (p->real, p->imaginary, 10, 0);
 
 	/*
-	 * Combine real and imaginary parts into absolute values. Note:
-	 * we only use half the array in the output compared to the
-	 * input. That is, we fed in 1024 samples, but we only use
+	 * Combine real and imaginary parts into absolute values. This
+	 * is done by summing the square of the real portion and the
+	 * square of the imaginary portion, then taking the square
+	 * root.
+	 *
+	 * Note: we only use half the array in the output compared to
+	 * the input. That is, we fed in 1024 samples, but we only use
 	 * 512 output bins. It looks like the remaining 512 bins are
 	 * just a mirror image of the first 512.
 	 *
 	 * We also apply some scaling by dividing the amplitude values
-	 * by 16. This seems to yield a reasonable range.
+	 * by 12. This seems to yield a reasonable range.
 	 */
 
 	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
 		sum = ((p->real[i] * p->real[i]) +
 		    (p->imaginary[i] * p->imaginary[i]));
-		p->real[i] = (short)(sqrt (sum) / 16.0);
+		p->real[i] = (short)(sqrt (sum) / 12.0);
 	}
 
 	/*
