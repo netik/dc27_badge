@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2017-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -149,19 +149,20 @@ columnDraw (int col, short amp)
 	if (amp > MUSIC_FFT_MAX_AMPLITUDE)
 		amp = MUSIC_FFT_MAX_AMPLITUDE;
 
-	/* Set up the drawing aperture */
+	/*
+	 * Set the drawing aperture.
+	 * We offset the bar graph by 7 pixels to the right
+	 * so that it appears centered.
+	 */
 
-	GDISP->p.x = col * 5;
-	GDISP->p.y = 240 - MUSIC_FFT_MAX_AMPLITUDE;
-	GDISP->p.cx = 4;
-	GDISP->p.cy = MUSIC_FFT_MAX_AMPLITUDE;
+	GDISP->p.x = 7 + (col * 3);
 
 	/* Now draw the column */
 
 	gdisp_lld_write_start (GDISP);
 	for (y = MUSIC_FFT_MAX_AMPLITUDE; y > 0; y--) {
 		if (y > amp)
-			GDISP->p.color = Black /*BACKGROUND*/;
+			GDISP->p.color = Black;
 		else {
 			if (y >= 0 && y < 32)
 				GDISP->p.color = Lime;
@@ -170,9 +171,8 @@ columnDraw (int col, short amp)
 			if (y >= 64 && y <= 128)
 				GDISP->p.color = Red;
 		}
-		for (x = 0; x < 4; x++) {
+		for (x = 0; x < 2; x++)
 			gdisp_lld_write_color (GDISP);
-		}
 	}
 	gdisp_lld_write_stop (GDISP);
 
@@ -180,7 +180,7 @@ columnDraw (int col, short amp)
 }
 
 static void
-music_visualize (MusicHandles * p, uint16_t * samples)
+musicVisualize (MusicHandles * p, uint16_t * samples)
 {
 	unsigned int sum;
 	short b;
@@ -188,13 +188,17 @@ music_visualize (MusicHandles * p, uint16_t * samples)
 	int r;
 
 	/*
-	 * Gather up one channel's worth of samples. Undo the 1s
-	 * complement operation to turn them back into signed 16-bit
-	 * integer samples.
+	 * Gather up one channel's worth of samples.
+	 *
+	 * Note: each sample is supposed to be a raw signed integer.
+	 * Technically we're using the 1s complement values here. We
+	 * could undo that, but experimentation shows that it doesn't
+	 * seem to make any difference to the FFT function, so we
+	 * save some CPU cycles here and just don't bother.
 	 */
 
 	for (i = 0; i < MUSIC_SAMPLES / 2; i++) {
-		p->real[i] = (~(samples[i*2] - 1));
+		p->real[i] = samples[i * 2];
 		p->imaginary[i] = 0;
 	}
 
@@ -208,27 +212,34 @@ music_visualize (MusicHandles * p, uint16_t * samples)
 	 * input. That is, we fed in 1024 samples, but we only use
 	 * 512 output bins. It looks like the remaining 512 bins are
 	 * just a mirror image of the first 512.
+	 *
+	 * We also apply some scaling by dividing the amplitude values
+	 * by 16. This seems to yield a reasonable range.
 	 */
 
 	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
 		sum = ((p->real[i] * p->real[i]) +
 		    (p->imaginary[i] * p->imaginary[i]));
-		p->real[i] = (short)sqrt (sum);
+		p->real[i] = (short)(sqrt (sum) / 16.0);
 	}
 
 	/*
-	 * Draw the bar graph. We take the first 128 samples and average
-	 * every 2 samples together to get 64 bars. This discards some of
-	 * the high end samples. There ought to be a better way to condense
-	 * the results but I'm not sure how to do it yet.
+	 * Draw the bar graph. We draw 102 bars. Each bar contains 5 
+	 * adjacent bins averaged together, which ads up to 510 bins.
+	 * At 2 pixels per bar, plus 1 pixel between for spacing, this
+	 * works out to 306 pixels, which roughly fits the 320 pixel
+	 * horizontal display resolution with 14 pixels left over.
 	 */
 
 	r = 0;
-	for (i = 0; i < 64; i++) {
-		b = p->real[r + 0] / 16;
-		b += p->real[r + 1] / 16;
-		b /= 2;
-		r += 2;
+	for (i = 0; i < 102; i++) {
+		b = p->real[r + 0];
+		b += p->real[r + 1];
+		b += p->real[r + 2];
+		b += p->real[r + 3];
+		b += p->real[r + 4];
+		b /= 5;
+		r += 5;
 		columnDraw (i, b);
 	}
 
@@ -250,6 +261,12 @@ musicPlay (MusicHandles * p, char * fname)
 	int r = 0;
 
 	i2sPlay (NULL);
+
+	/* Initialize some of the display write window info. */
+
+	GDISP->p.y = 240 - MUSIC_FFT_MAX_AMPLITUDE;
+	GDISP->p.cx = 2;
+	GDISP->p.cy = MUSIC_FFT_MAX_AMPLITUDE;
 
 	if (f_open (&f, fname, FA_READ) != FR_OK)
 		return (0);
@@ -273,7 +290,7 @@ musicPlay (MusicHandles * p, char * fname)
 
 		i2sSamplesPlay (p1, br >> 1);
 
-		music_visualize (p, p1);
+		musicVisualize (p, p1);
 
 		if (p1 == buf) {
  			p1 += MUSIC_SAMPLES;
