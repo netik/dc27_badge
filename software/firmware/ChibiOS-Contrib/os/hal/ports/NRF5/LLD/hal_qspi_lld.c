@@ -403,7 +403,7 @@ qspi_lld_send(QSPIDriver *qspip, const qspi_command_t *cmdp,
 	 * in ChibiOS.
 	 *
 	 * Rather than requiring you to use raw command transactions to handle
-	 * plain flash reads and writes, the Nordic QSPI controller has a
+	 * plain flash reads and writes, the Nordic QSPI controller has
 	 * shortcut registers. These can be used to specify exactly what
 	 * addresses and lengths to read/write, and the controller will issue
 	 * the necessary QSPI commands internally.
