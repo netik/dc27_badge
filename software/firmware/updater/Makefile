@@ -44,7 +44,7 @@ LD=	arm-none-eabi-ld
 OBJCOPY= arm-none-eabi-objcopy
 
 CFLAGS+=  -mcpu=cortex-m4 -Os -ggdb -fomit-frame-pointer		\
-	-mfpu=fpv4-sp-d16 -fsingle-precision-constant			\
+	-mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant	\
 	-falign-functions=4 -nostdlib -DBIG_ENDIAN=0 -DLITTLE_ENDIAN=1	\
 	-Dasm=__asm__ -ansi -ffunction-sections				\
 	-DUPDATER -fdata-sections -fno-common -std=c99			\
@@ -70,7 +70,7 @@ CFLAGS+=  -mcpu=cortex-m4 -Os -ggdb -fomit-frame-pointer		\
 ASFLAGS= $(CFLAGS)
 
 updater: $(OBJS)
-	$(CC) $(OBJS) -ggdb -nostdlib -nostartfiles			\
+	$(CC) $(OBJS) -ggdb -nostdlib -nostartfiles -mfloat-abi=hard	\
 	-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -flto			\
 	-Wl,--no-warn-mismatch,-Tlink.lds -lc -lgcc -o $@
 	$(OBJCOPY) -O binary $@ updater.bin
