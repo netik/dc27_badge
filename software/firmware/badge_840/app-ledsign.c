@@ -138,7 +138,7 @@ ledsign_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		gdispClear (Black);
 		scrollCount (0);
 		if (sts != 0)
-			i2sPlay ("click.raw");
+			i2sPlay ("click.snd");
 		orchardAppExit ();
 	}
 

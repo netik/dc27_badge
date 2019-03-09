@@ -51,7 +51,7 @@ credits_start(OrchardAppContext *context)
 
 	(void)context;
 
-	i2sPlay ("mario.raw");
+	i2sPlay ("mario.snd");
 
 	gdispClear (Black);
 	scrollAreaSet (0, 0);
@@ -65,7 +65,7 @@ credits_start(OrchardAppContext *context)
 	if (r == 0)
 		i2sPlay (NULL);
 	else
-		i2sPlay ("click.raw");
+		i2sPlay ("click.snd");
 
 	orchardAppExit ();
 

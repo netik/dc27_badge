@@ -65,7 +65,7 @@ static void ugfx_event(eventid_t id) {
   (void) id;
 
   if (ugfx_evt.ugfx.pEvent->type != GEVENT_GWIN_BUTTON_UP) {
-    i2sPlay ("click.raw");
+    i2sPlay ("click.snd");
     i2sWait ();
   }
   instance.app->event (instance.context, &ugfx_evt);

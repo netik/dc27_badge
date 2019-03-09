@@ -154,7 +154,7 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		}
 
 		if (videoPlay (p->listitems[uiContext->selected + 1]) != 0)
-			i2sPlay ("click.raw");
+			i2sPlay ("click.snd");
 
 		orchardAppExit ();
 	}

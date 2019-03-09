@@ -93,7 +93,7 @@ music_start (OrchardAppContext *context)
 	while (1) {
 		if (f_readdir (&d, &info) != FR_OK || info.fname[0] == 0)
 			break;
-		if (strstr (info.fname, ".RAW") != NULL)
+		if (strstr (info.fname, ".SND") != NULL)
 			i++;
 	}
 
@@ -121,7 +121,7 @@ music_start (OrchardAppContext *context)
 	while (1) {
 		if (f_readdir (&d, &info) != FR_OK || info.fname[0] == 0)
 			break;
-		if (strstr (info.fname, ".RAW") != NULL) {
+		if (strstr (info.fname, ".SND") != NULL) {
 			p->listitems[i] =
 			    chHeapAlloc (NULL, strlen (info.fname) + 1);
 			memset (p->listitems[i], 0, strlen (info.fname) + 1);
@@ -382,7 +382,7 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		gdispCloseFont (font);
 
 		if (musicPlay (p, p->listitems[uiContext->selected + 1]) != 0)
-			i2sPlay ("click.raw");
+			i2sPlay ("click.snd");
 
 		orchardAppExit ();
 	}

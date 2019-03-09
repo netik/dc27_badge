@@ -489,7 +489,7 @@ i2sTest (void)
 	uint32_t * blah;
 	int start = 0;
 
-	if (f_open (&f, "0:DRWHO.RAW", FA_READ) != FR_OK)
+	if (f_open (&f, "0:DRWHO.SND", FA_READ) != FR_OK)
 		return;
 
 	p = sbuf1;

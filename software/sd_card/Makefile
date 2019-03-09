@@ -63,13 +63,13 @@ photos/%.rgb: photos_src/%.tif
 photos: tools_dep $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.tif)))))
 
 # Sounds
-dac/%.raw: dac/%.mp3
+dac/%.snd: dac/%.mp3
 	$(TOOLS_DIR)/scripts/sndmp3toraw.sh $<
 
-dac/%.raw: dac/%.wav
+dac/%.snd: dac/%.wav
 	$(TOOLS_DIR)/scripts/sndmp3toraw.sh $<
 
-dac/fight/%.raw: dac/fight/%.mp3
+dac/fight/%.snd: dac/fight/%.mp3
 	$(TOOLS_DIR)/scripts/sndmp3toraw.sh $<
 
 # Videos
@@ -86,9 +86,9 @@ images: tools_dep photos \
 
 # When possible please use .wav files as source material. MP3s already
 # have enough compression and loss.
-sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .raw, $(basename $(wildcard dac/fight*.mp3))))) \
-                  $(addprefix dac/, $(notdir  $(addsuffix .raw, $(basename $(wildcard dac/*.wav))))) \
-	          $(addprefix dac/fight/, $(notdir  $(addsuffix .raw, $(basename $(wildcard dac/fight/*.mp3)))))
+sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/fight*.mp3))))) \
+                  $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/*.wav))))) \
+	          $(addprefix dac/fight/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/fight/*.mp3)))))
 
 video: tools_dep $(addprefix video/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/*.mp4)))))
 
@@ -98,9 +98,9 @@ sdcard: dirs tools_dep images sounds video
 	-cp rgb/font/led/*.rgb sdcard/font/led
 	-cp ../firmware/updater/updater.bin sdcard
 	-cp ../firmware/badge_840/build/badge.bin sdcard
-	-cp dac/*.raw sdcard
+	-cp dac/*.snd sdcard
 	-cp photos/*.rgb sdcard/photos
-	-cp dac/fight/*.raw sdcard/fight
+	-cp dac/fight/*.snd sdcard/fight
 	-cp video/*.vid sdcard
 	@echo
 	@echo 'sdcard built!'
@@ -145,8 +145,8 @@ cleansd:
 # remove tools, sounds, images, and video
 clean: clean_images
 	$(MAKE) -C $(TOOLS_DIR) clean
-	-rm -f dac/*.raw
-	-rm -f dac/fight/*.raw
+	-rm -f dac/*.snd
+	-rm -f dac/fight/*.snd
 	-rm -f video/*
 	-rm -f tif/mirrored/*
 	-rm -fr sdcard/*

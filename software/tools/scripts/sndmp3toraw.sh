@@ -14,3 +14,4 @@
 prefix="`echo $1 | cut -d . -f 1`"
 
 sox --encoding signed-integer $1 $prefix.raw channels 2 rate 15625 contrast 80
+mv -f $prefix.raw $prefix.snd

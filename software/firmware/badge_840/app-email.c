@@ -57,7 +57,7 @@ email_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
 	if (event->type == appEvent && event->app.event == appTerminate) {
 		if (videoPlay ("rickroll.vid") != 0)
-			 i2sPlay ("click.raw");
+			 i2sPlay ("click.snd");
 	}
 
 	return;

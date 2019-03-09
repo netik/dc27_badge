@@ -161,7 +161,7 @@ joyHandle (uint8_t s)
 		joyEvent.type = keyEvent;
 
 		if (joyEvent.key.flags == keyPress) {
-			i2sPlay("click.raw");
+			i2sPlay("click.snd");
 			i2sWait ();
 		}
 
