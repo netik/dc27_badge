@@ -219,7 +219,7 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	 * just a mirror image of the first 512.
 	 *
 	 * We also apply some scaling by dividing the amplitude values
-	 * by 12. This seems to yield a reasonable range.
+	 * by 14. This seems to yield a reasonable range.
 	 */
 
 	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
@@ -229,11 +229,12 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	}
 
 	/*
-	 * Draw the bar graph. We draw 102 bars. Each bar contains 5 
-	 * adjacent bins averaged together, which ads up to 510 bins.
-	 * At 2 pixels per bar, plus 1 pixel between for spacing, this
-	 * works out to 306 pixels, which roughly fits the 320 pixel
-	 * horizontal display resolution with 14 pixels left over.
+	 * Draw the bar graph. We draw 160 bars that are each one pixel
+	 * wide with one pixel of spacing in between. Each bar contains 3 
+	 * adjacent bins averaged together, which ads up to 480 bins.
+	 * This leaves 32 bins left over. We start from the 16th bin
+	 * so that the lowest and highest 16 bins are ones that are
+	 * left undisplayed.
 	 */
 
 	r = 16;
