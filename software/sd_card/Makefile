@@ -86,8 +86,7 @@ images: tools_dep photos \
 
 # When possible please use .wav files as source material. MP3s already
 # have enough compression and loss.
-sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/fight*.mp3))))) \
-                  $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/*.wav))))) \
+sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/*.wav dac/*.mp3))))) \
 	          $(addprefix dac/fight/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/fight/*.mp3)))))
 
 video: tools_dep $(addprefix video/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/*.mp4)))))

@@ -93,9 +93,9 @@ ffmpeg -i "$1" -r 16.25 -s 160x120 -f rawvideo -pix_fmt rgb565be $2/video.bin
 ffmpeg -i "$1" -ac 2 -ar 15600 $2/sample.wav
 
 # Convert WAV to 2's complement signed 16 bit samples
-sox --encoding signed-integer $2/sample.wav $2/sample.raw channels 2 rate 15600
+sox $2/sample.wav $2/sample.s16 channels 2 rate 15600 loudness 12
 
 # Now merge the video and audio into a single file
-${MYDIR}/../bin/videomerge $2/video.bin $2/sample.raw $2/${newfilename}
+${MYDIR}/../bin/videomerge $2/video.bin $2/sample.s16 $2/${newfilename}
 
-rm -f $2/video.bin $2/sample.wav $2/sample.u16 $2/sample.raw
+rm -f $2/video.bin $2/sample.wav 2/sample.s16
