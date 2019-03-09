@@ -32,7 +32,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "chprintf.h"
 #include "orchard-app.h"
 #include "orchard-ui.h"
 #include "i2s_lld.h"
@@ -47,6 +46,10 @@
 #include "src/gdisp/gdisp_driver.h"
 
 #include "fontlist.h"
+
+#include "ides_gfx.h"
+
+#include "badge.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -141,7 +144,6 @@ music_start (OrchardAppContext *context)
 static void
 columnDraw (int col, short amp)
 {
-	int x;
 	int y;
 
 	/* Clamp the amplitude at 128 pixels */
@@ -155,7 +157,7 @@ columnDraw (int col, short amp)
 	 * so that it appears centered.
 	 */
 
-	GDISP->p.x = 7 + (col * 3);
+	GDISP->p.x = col;
 
 	/* Now draw the column */
 
@@ -171,8 +173,7 @@ columnDraw (int col, short amp)
 			if (y >= 64 && y <= 128)
 				GDISP->p.color = Red;
 		}
-		for (x = 0; x < 2; x++)
-			gdisp_lld_write_color (GDISP);
+		gdisp_lld_write_color (GDISP);
 	}
 	gdisp_lld_write_stop (GDISP);
 
@@ -224,7 +225,7 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
 		sum = ((p->real[i] * p->real[i]) +
 		    (p->imaginary[i] * p->imaginary[i]));
-		p->real[i] = (short)(sqrt (sum) / 12.0);
+		p->real[i] = (short)(sqrt (sum) / 14.0);
 	}
 
 	/*
@@ -235,15 +236,13 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	 * horizontal display resolution with 14 pixels left over.
 	 */
 
-	r = 0;
-	for (i = 0; i < 102; i++) {
-		b = p->real[r + 0];
+	r = 16;
+	for (i = 0; i < 320; i += 2) {
+		b = p->real[r];
 		b += p->real[r + 1];
 		b += p->real[r + 2];
-		b += p->real[r + 3];
-		b += p->real[r + 4];
-		b /= 5;
-		r += 5;
+		b /= 3;
+		r += 3;
 		columnDraw (i, b);
 	}
 
@@ -269,7 +268,7 @@ musicPlay (MusicHandles * p, char * fname)
 	/* Initialize some of the display write window info. */
 
 	GDISP->p.y = 240 - MUSIC_FFT_MAX_AMPLITUDE;
-	GDISP->p.cx = 2;
+	GDISP->p.cx = 1;
 	GDISP->p.cy = MUSIC_FFT_MAX_AMPLITUDE;
 
 	if (f_open (&f, fname, FA_READ) != FR_OK)
@@ -331,7 +330,6 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	OrchardUiContext * uiContext;
 	const OrchardUi * ui;
 	MusicHandles * p;
-	char buf[32];
 	font_t font;
 
 	p = context->priv;
@@ -363,15 +361,24 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			orchardAppExit ();
 			return;
 		}
-		gdispClear (BACKGROUND);
+
+		putImageFile ("MUSIC.RGB", 0, 0);
 
 		font = gdispOpenFont (FONT_FIXED);
-		chsnprintf (buf, sizeof(buf), "Now playing: %s",
-		    p->listitems[uiContext->selected + 1]);
+
+		gdispDrawStringBox (0,
+		    gdispGetFontMetric(font, fontHeight) * 1,
+		    gdispGetWidth () / 2,
+		    gdispGetFontMetric(font, fontHeight),
+		    "Now playing:", font, Cyan, justifyCenter);
+
 		gdispDrawStringBox (0,
 		    gdispGetFontMetric(font, fontHeight) * 2,
-		    gdispGetWidth(), gdispGetFontMetric(font, fontHeight),
-		    buf, font, Cyan, justifyCenter);
+		    gdispGetWidth () / 2,
+		    gdispGetFontMetric(font, fontHeight),
+		    p->listitems[uiContext->selected + 1],
+		    font, Cyan, justifyCenter);
+
 		gdispCloseFont (font);
 
 		if (musicPlay (p, p->listitems[uiContext->selected + 1]) != 0)
