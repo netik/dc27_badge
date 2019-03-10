@@ -287,7 +287,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		return;
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		pixelbuf[pixelpos] = __builtin_bswap16 (g->p.color);
+		pixelbuf[pixelpos] = g->p.color;
 		pixelpos++;
 		if (pixelpos == DISPLAY_BUF) {
 			spiSend (&SPI_BUS, pixelpos * 2 , pixelbuf);

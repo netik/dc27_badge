@@ -270,7 +270,7 @@ typedef uint16_t	colorformat;
 		#define RED_OF(c)			((c) & (((1<<COLOR_BITS_R)-1) << COLOR_SHIFT_R))
 		#define RGB2COLOR_R(r)		((COLOR_TYPE)((r) & (0xFF & ~((1<<(8-COLOR_BITS_R))-1))))
 	#elif COLOR_BITS_R + COLOR_SHIFT_R > 8
-		#define RED_OF(c)			(((c) & (((1<<COLOR_BITS_R)-1) << COLOR_SHIFT_R)) >> (COLOR_BITS_R+COLOR_SHIFT_R-8))
+		#define RED_OF(c)			((__builtin_bswap16 (c) & (((1<<COLOR_BITS_R)-1) << COLOR_SHIFT_R)) >> (COLOR_BITS_R+COLOR_SHIFT_R-8))
 		#define RGB2COLOR_R(r)		(((COLOR_TYPE)((r) & (0xFF & ~((1<<(8-COLOR_BITS_R))-1)))) << (COLOR_BITS_R+COLOR_SHIFT_R-8))
 	#else // COLOR_BITS_R + COLOR_SHIFT_R < 8
 		#define RED_OF(c)			(((c) & (((1<<COLOR_BITS_R)-1) << COLOR_SHIFT_R)) << (8-(COLOR_BITS_R+COLOR_SHIFT_R)))
@@ -280,7 +280,7 @@ typedef uint16_t	colorformat;
 		#define GREEN_OF(c)			((c) & (((1<<COLOR_BITS_G)-1) << COLOR_SHIFT_G))
 		#define RGB2COLOR_G(g)		((COLOR_TYPE)((g) & (0xFF & ~((1<<(8-COLOR_BITS_G))-1))))
 	#elif COLOR_BITS_G + COLOR_SHIFT_G > 8
-		#define GREEN_OF(c)			(((c) & (((1<<COLOR_BITS_G)-1) << COLOR_SHIFT_G)) >> (COLOR_BITS_G+COLOR_SHIFT_G-8))
+		#define GREEN_OF(c)			((__builtin_bswap16 (c) & (((1<<COLOR_BITS_G)-1) << COLOR_SHIFT_G)) >> (COLOR_BITS_G+COLOR_SHIFT_G-8))
 		#define RGB2COLOR_G(g)		(((COLOR_TYPE)((g) & (0xFF & ~((1<<(8-COLOR_BITS_G))-1)))) << (COLOR_BITS_G+COLOR_SHIFT_G-8))
 	#else // COLOR_BITS_G + COLOR_SHIFT_G < 8
 		#define GREEN_OF(c)			(((c) & (((1<<COLOR_BITS_G)-1) << COLOR_SHIFT_G)) << (8-(COLOR_BITS_G+COLOR_SHIFT_G)))
@@ -293,7 +293,7 @@ typedef uint16_t	colorformat;
 		#define BLUE_OF(c)			(((c) & (((1<<COLOR_BITS_B)-1) << COLOR_SHIFT_B)) >> (COLOR_BITS_B+COLOR_SHIFT_B-8))
 		#define RGB2COLOR_B(b)		(((COLOR_TYPE)((b) & (0xFF & ~((1<<(8-COLOR_BITS_B))-1)))) << (COLOR_BITS_B+COLOR_SHIFT_B-8))
 	#else // COLOR_BITS_B + COLOR_SHIFT_B < 8
-		#define BLUE_OF(c)			(((c) & (((1<<COLOR_BITS_B)-1) << COLOR_SHIFT_B)) << (8-(COLOR_BITS_B+COLOR_SHIFT_B)))
+		#define BLUE_OF(c)			((__builtin_bswap16 (c) & (((1<<COLOR_BITS_B)-1) << COLOR_SHIFT_B)) << (8-(COLOR_BITS_B+COLOR_SHIFT_B)))
 		#define RGB2COLOR_B(b)		(((COLOR_TYPE)((b) & (0xFF & ~((1<<(8-COLOR_BITS_B))-1)))) >> (8-(COLOR_BITS_B+COLOR_SHIFT_B)))
 	#endif
 	#define LUMA_OF(c)				((RED_OF(c)+((uint16_t)GREEN_OF(c)<<1)+BLUE_OF(c))>>2)
@@ -301,8 +301,8 @@ typedef uint16_t	colorformat;
 	#define EXACT_GREEN_OF(c)		(((uint16_t)(((c)>>COLOR_SHIFT_G)&((1<<COLOR_BITS_G)-1))*255)/((1<<COLOR_BITS_G)-1))
 	#define EXACT_BLUE_OF(c)		(((uint16_t)(((c)>>COLOR_SHIFT_B)&((1<<COLOR_BITS_B)-1))*255)/((1<<COLOR_BITS_B)-1))
 	#define EXACT_LUMA_OF(c)		((EXACT_RED_OF(c)+((uint16_t)EXACT_GREEN_OF(c)<<1)+EXACT_BLUE_OF(c))>>2)
-	#define LUMA2COLOR(l)			(RGB2COLOR_R(l) | RGB2COLOR_G(l) | RGB2COLOR_B(l))
-	#define RGB2COLOR(r,g,b)		(RGB2COLOR_R(r) | RGB2COLOR_G(g) | RGB2COLOR_B(b))
+	#define LUMA2COLOR(l)			__builtin_bswap16 ((RGB2COLOR_R(l) | RGB2COLOR_G(l) | RGB2COLOR_B(l)))
+	#define RGB2COLOR(r,g,b)		__builtin_bswap16 ((RGB2COLOR_R(r) | RGB2COLOR_G(g) | RGB2COLOR_B(b)))
 
 	// Calculate HTML2COLOR
 	#if COLOR_BITS_R + COLOR_SHIFT_R == 24
@@ -326,7 +326,7 @@ typedef uint16_t	colorformat;
 	#else // COLOR_BITS_B + COLOR_SHIFT_B < 8
 		#define HTML2COLOR_B(h)		(((h) & (0xFFL & ~((1<<(8-COLOR_BITS_B))-1))) >> (8-(COLOR_BITS_B+COLOR_SHIFT_B)))
 	#endif
-	#define HTML2COLOR(h)		((COLOR_TYPE)(HTML2COLOR_R(h) | HTML2COLOR_G(h) | HTML2COLOR_B(h)))
+	#define HTML2COLOR(h)		((COLOR_TYPE)__builtin_bswap16 ((HTML2COLOR_R(h) | HTML2COLOR_G(h) | HTML2COLOR_B(h))))
 
 	// Special hack to allow alpha on RGB888
 	#if GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888

@@ -8,7 +8,7 @@
 #
 # convert_to_rgb.sh
 #
-# Convert any readable image into a rgb565 image with proper header.
+# Convert any readable image into a rgb565be image with proper header.
 # Requires ffmpeg, imagemagick, and rgbhdr
 #
 # Run this from chibios-orchard/sd_card only, or tools will not be
@@ -41,7 +41,7 @@ then
     CODEC=tiff
 fi
 
-${FFMPEG} -loglevel panic -vcodec ${CODEC} -i $filename -vcodec rawvideo -f rawvideo -pix_fmt rgb565 /tmp/out$$.raw 
+${FFMPEG} -loglevel panic -vcodec ${CODEC} -i $filename -vcodec rawvideo -f rawvideo -pix_fmt rgb565be /tmp/out$$.raw 
 
 cat /tmp/hdr$$.rgb /tmp/out$$.raw > ${newfilename}
 
