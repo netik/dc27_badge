@@ -214,9 +214,10 @@ bleGattsStart (void)
             BLE_UUID_MANUFACTURER_NAME_STRING_CHAR,
 	    BLE_GATTS_AUTHORIZE_TYPE_READ,
 	    BLE_MANUFACTUTER_STRING, &mf_handle);
-	    
+ 
 	if (r != NRF_SUCCESS)
-		printf ("Adding manufacturer string characteristic\r\n");
+		printf ("Adding manufacturer string "
+		    "characteristic failed\r\n");
 
 	r = bleGattsStrCharAdd (ble_gatts_handle,
             BLE_UUID_MODEL_NUMBER_STRING_CHAR,
@@ -224,7 +225,8 @@ bleGattsStart (void)
 	    BLE_MODEL_NUMBER_STRING, &model_handle);
 
 	if (r != NRF_SUCCESS)
-		printf ("Adding model string characteristic\r\n");
+		printf ("Adding model string "
+		    "characteristic failed\r\n");
 
 	r = bleGattsStrCharAdd (ble_gatts_handle,
             BLE_UUID_SYSTEM_ID_CHAR,
@@ -232,7 +234,8 @@ bleGattsStart (void)
 	    BLE_SYSTEM_ID_STRING, &sysid_handle);
 
 	if (r != NRF_SUCCESS)
-		printf ("Adding system ID string characteristic\r\n");
+		printf ("Adding system ID string "
+		    "characteristic failed\r\n");
 
 	r = bleGattsStrCharAdd (ble_gatts_handle,
             BLE_UUID_SOFTWARE_REVISION_STRING_CHAR,
@@ -240,7 +243,8 @@ bleGattsStart (void)
 	    BLE_SW_VERSION_STRING, &sw_handle);
 
 	if (r != NRF_SUCCESS)
-		printf ("Adding software version string characteristic\r\n");
+		printf ("Adding software version string "
+		    "characteristic failed\r\n");
 
 	return;
 }
