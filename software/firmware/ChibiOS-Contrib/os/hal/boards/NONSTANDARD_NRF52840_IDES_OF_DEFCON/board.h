@@ -120,6 +120,8 @@
 #define IOPORT1_QSPI_DIO2      22U
 #define IOPORT1_QSPI_DIO3      23U
 
+#define IOPORT1_I2S_AMPSD	2U
+
 #define IOPORT2_I2S_SDOUT       1U
 #define IOPORT2_I2S_SCK         2U
 #define IOPORT2_I2S_LRCK        3U

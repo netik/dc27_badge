@@ -46,7 +46,12 @@
 #define I2S_PPI_CHAN		1
 #define I2S_EGU_TASK		1
 
+#define I2S_AMP_OFF		0
+#define I2S_AMP_ON		1
+
 extern void i2sStart (void);
+
+extern void i2sAudioAmpCtl (uint8_t);
 
 extern void i2sSamplesPlay (void *, int);
 extern void i2sSamplesWait (void);

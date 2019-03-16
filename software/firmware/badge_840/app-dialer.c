@@ -331,6 +331,10 @@ static void dialer_start(OrchardAppContext *context)
 	i2sWait ();
 	i2sEnabled = FALSE;
 
+	/* Power up the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_ON);
+
 	/*
  	 * Reset the I2S block for an LRCLK frequency of 30303Hz.
 	 * The default setting of 15625Hz is too slow to accurately
@@ -450,6 +454,10 @@ dialer_exit(OrchardAppContext *context)
 	NRF_I2S->TASKS_START = 1;
 
 	i2sEnabled = TRUE;
+
+	/* Power down the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_OFF);
 
 	chHeapFree (p);
 	context->priv = NULL;

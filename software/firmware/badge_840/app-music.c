@@ -286,6 +286,10 @@ musicPlay (MusicHandles * p, char * fname)
 	geventListenerInit (&gl);
 	geventAttachSource (&gl, gs, GLISTEN_MOUSEMETA);
 
+	/* Power up the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_ON);
+
 	while (1) {
 
 		asyncIoRead (&f, p2, MUSIC_BYTES, &br);
@@ -314,6 +318,10 @@ musicPlay (MusicHandles * p, char * fname)
 			break;
 		}
 	}
+
+	/* Power down the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_ON);
 
 	f_close (&f);
 	chHeapFree (i2sBuf);

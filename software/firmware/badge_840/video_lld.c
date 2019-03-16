@@ -122,6 +122,10 @@ videoPlay (char * fname)
 
 	f_read(&f, p1, VID_CHUNK_BYTES, &br);
 
+	/* Power up the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_ON);
+
 	while (1) {
 
 		if (br == 0)
@@ -203,6 +207,10 @@ videoPlay (char * fname)
 	i2sSamplesStop ();
 	while (SPID4.state != SPI_READY)
 		chThdSleep (1);
+
+	/* Power down the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_OFF);
 
 	gdisp_lld_write_stop (GDISP);
 
