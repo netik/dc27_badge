@@ -324,13 +324,6 @@ static void dialer_start(OrchardAppContext *context)
 	gwinSetDefaultFont (p->font);
 
 	/*
-	 * Turn off the radio. When the SoftDevice is active, it causes
-	 * a fluctuation in the I2S clock which makes playback of fixed
-	 * tones sound "wobbly."
-	 */
-
- 	bleDisable ();
-	/*
 	 * Drain the I2S controller and prevent anyone else from
 	 * using it until we're done with it.
 	 */ 
@@ -457,8 +450,6 @@ dialer_exit(OrchardAppContext *context)
 	NRF_I2S->TASKS_START = 1;
 
 	i2sEnabled = TRUE;
-
-	bleEnable ();
 
 	chHeapFree (p);
 	context->priv = NULL;
