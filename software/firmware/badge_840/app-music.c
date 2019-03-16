@@ -49,8 +49,6 @@
 
 #include "ides_gfx.h"
 
-#include "badge.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
