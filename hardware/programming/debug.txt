@@ -13,7 +13,7 @@ a 10-pin mini header, which must be connected to an separate debugger.
 
 Our off-board debugger of choice is the Olimex ARM-USB-OCD-H. This is
 a pretty standard debugger based on an FTDI chipset. It supports both
-standard ARM JTAG and SWD. Note that if you use SDW you must also
+standard ARM JTAG and SWD. Note that if you use SWD you must also
 purchase the ARM-JTAG-SWD adapter and the ARM-JTAG-20-10 adapter. You
 can use any other debugger that supports SWD. We just happen to like
 this one.
