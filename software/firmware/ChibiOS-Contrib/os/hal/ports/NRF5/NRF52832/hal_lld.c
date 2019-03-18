@@ -55,24 +55,29 @@
  */
 void hal_lld_init(void)
 {
-  /* High frequency clock initialisation
+  /*
+   * High frequency clock initialisation
    */
+
   NRF_CLOCK->TASKS_HFCLKSTOP = 1;
 #if !defined(NRF5_XTAL_VALUE) && (NRF5_XTAL_VALUE != 32000000)
 #error "A 32Mhz crystal is mandatory on nRF52 boards."
 #endif
 
-  
-  /* Low frequency clock initialisation
-   * Clock is only started if st driver requires it
+  /* This enables the HXCO using the external 32Mhz crystal */
+
+  NRF_CLOCK->TASKS_HFCLKSTART = 1;
+
+
+  /*
+   * Low frequency clock initialisation
+   * Select the low external 32KHz crystal as the low frequency
+   * clock source.
    */
+
   NRF_CLOCK->TASKS_LFCLKSTOP = 1;
   NRF_CLOCK->LFCLKSRC = NRF5_LFCLK_SOURCE;
-  
-#if (OSAL_ST_MODE != OSAL_ST_MODE_NONE) /*&&
-    (NRF5_SYSTEM_TICKS == NRF5_SYSTEM_TICKS_AS_RTC)*/
   NRF_CLOCK->TASKS_LFCLKSTART = 1;
-#endif
 }
 
 /**

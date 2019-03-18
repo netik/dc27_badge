@@ -102,6 +102,10 @@ THD_FUNCTION(i2sThread, arg)
 			continue;
 		}
 
+		/* Power up the audio amp */
+
+		palClearPad (IOPORT1, IOPORT1_I2S_AMPSD);
+
 		while (1) {
 
 			/* Start the samples playing */
@@ -143,6 +147,11 @@ THD_FUNCTION(i2sThread, arg)
 			file = NULL;
 			play = 0;
 		}
+
+		/* Power down the audio amp */
+
+		palSetPad (IOPORT1, IOPORT1_I2S_AMPSD);
+
 		chHeapFree (i2sBuf);
                	i2sBuf = NULL;
 		f_close (&f);
@@ -259,6 +268,10 @@ i2sStart (void)
 
 	pThread = chThdCreateStatic (waI2sThread, sizeof(waI2sThread),
 	    I2S_THREAD_PRIO, i2sThread, NULL);
+
+	/* Put audio amp in shutdown mode */
+
+	palSetPad (IOPORT1, IOPORT1_I2S_AMPSD);
 
 	/*
 	 * According to the CS4344 manual, we need to have MCK
@@ -471,6 +484,23 @@ i2sLoopPlay (char * file, uint8_t loop)
 	i2sloop = loop;
 	fname = file;
 	chMsgSend (pThread, MSG_OK);
+
+	return;
+}
+
+void
+i2sAudioAmpCtl (uint8_t ctl)
+{
+	switch (ctl) {
+		case I2S_AMP_OFF:
+			palSetPad (IOPORT1, IOPORT1_I2S_AMPSD);
+			break;
+		case I2S_AMP_ON:
+			palClearPad (IOPORT1, IOPORT1_I2S_AMPSD);
+			break;
+		default:
+			break;
+	}
 
 	return;
 }

@@ -378,8 +378,12 @@ int main(void)
 
     spiStart (&SPID1, &spi1_config);
     printf ("SPI bus 1 enabled\r\n");
-    spiStart (&SPID4, &spi4_config);
-    printf ("SPI bus 4 enabled\r\n");
+    if (NRF_FICR->INFO.VARIANT == 0x41414141)
+        printf ("Skipping SPI bus 4 setup on broken preview silicon\r\n");
+    else {
+        spiStart (&SPID4, &spi4_config);
+        printf ("SPI bus 4 enabled\r\n");
+    }
 
     /* Enable QSPI flash */
 
@@ -438,11 +442,15 @@ int main(void)
 
     printf ("I2S interface enabled\r\n");
 
-    /* Enable display and touch panel */
+    if (NRF_FICR->INFO.VARIANT == 0x41414141)
+        printf ("Skipping screen setup on broken preview silicon\r\n");
+    else {
+        /* Enable display and touch panel */
 
-    printf ("Main screen turn on\r\n");
+        printf ("Main screen turn on\r\n");
 
-    gfxInit ();
+        gfxInit ();
+    }
 
     /* Mount SD card */
 
