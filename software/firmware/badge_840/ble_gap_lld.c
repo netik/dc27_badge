@@ -111,7 +111,7 @@ bleGapAdvStart (void)
 
 	/* Set our appearance */
 
-	val = BLE_APPEARANCE_DC26;
+	val = BLE_APPEARANCE_DC27;
 	r = bleGapAdvBlockAdd (&val, 2,
 	    BLE_GAP_AD_TYPE_APPEARANCE, pkt, &size);
 
@@ -500,7 +500,7 @@ bleGapStart (void)
 	if (r != NRF_SUCCESS)
 		printf ("GAP device name set failed: 0x%x\r\n", r);
 
-	r = sd_ble_gap_appearance_set (BLE_APPEARANCE_DC26);
+	r = sd_ble_gap_appearance_set (BLE_APPEARANCE_DC27);
 
 	if (r != NRF_SUCCESS)
 		printf ("GAP appearance set failed: 0x%x\r\n", r);
