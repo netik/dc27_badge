@@ -109,6 +109,7 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
 
   if (queue_cnt < RADIO_QUEUE_LEN) {
     r_evt = chHeapAlloc (NULL, sizeof(OrchardAppRadioEvent));
+    memset (r_evt, 0, sizeof(OrchardAppRadioEvent));
     radio_evt[prod_idx] = r_evt;
 
     r_evt->type = type;
