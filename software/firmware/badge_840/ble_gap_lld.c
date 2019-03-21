@@ -176,6 +176,7 @@ bleGapDispatch (ble_evt_t * evt)
 	ble_gap_evt_conn_sec_update_t * sec;
 	ble_gap_conn_sec_mode_t * secmode;
 #endif
+	ble_gap_phys_t phys;
 	ble_gap_addr_t * addr;
 	ble_data_t scan_buffer;
 	ble_peer_entry * p;
@@ -418,13 +419,13 @@ bleGapDispatch (ble_evt_t * evt)
 #endif
 			break;
 
-		case  BLE_GAP_EVT_DATA_LENGTH_UPDATE:
+		case BLE_GAP_EVT_DATA_LENGTH_UPDATE:
 #ifdef BLE_GAP_VERBOSE
 			printf ("Data length update\r\n");
 #endif
 			break;
 
-		case  BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
+		case BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
 			dup =
 			  &evt->evt.gap_evt.params.data_length_update_request;
 			memset (&dlim, 0, sizeof(dlim));
@@ -440,7 +441,11 @@ bleGapDispatch (ble_evt_t * evt)
 				    dlim.tx_payload_limited_octets);
 			}
 			break;
-
+		case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
+			phys.rx_phys = BLE_GAP_PHY_AUTO;
+			phys.tx_phys = BLE_GAP_PHY_AUTO;
+			sd_ble_gap_phy_update (ble_conn_handle, &phys);
+			break;
 		default:
 			printf ("invalid GAP event %d (%d)\r\n",
 			    evt->header.evt_id - BLE_GAP_EVT_BASE,
