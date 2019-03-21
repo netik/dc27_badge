@@ -65,7 +65,7 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x400
+  USE_PROCESS_STACKSIZE = 0x500
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
@@ -117,6 +117,11 @@ include $(GFXLIB)/drivers/ginput/touch/MCU/driver.mk
 
 # FatFS library
 FATFS = $(CHIBIOS)/../FatFs
+# The production board doesn't have a QSPI flash chip mounted. Trying
+# to probe for it will cause a hang during boot, so for now this is
+# disabled. Ultimately we need to create a separate BSP director for
+# the production board where the QSPI support can be removed entirely.
+# FATFSDEFS+= -DDRV_QSPI=1
 include $(FATFS)/build.mk
 
 # Define linker script file here

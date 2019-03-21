@@ -50,7 +50,8 @@
 #define MAX_PEERMEM	(PEER_ADDR_LEN + BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_MAX_SUPPORTED + 1)
 
 typedef struct _ChatHandles {
-	char *			listitems[MAX_PEERS + 2];
+	char *			peernames[MAX_PEERS + 2];
+	ble_gap_addr_t		peeraddrs[MAX_PEERS + 2];
 	OrchardUiContext	uiCtx;
 	char			txbuf[MAX_PEERMEM + BLE_IDES_L2CAP_MTU + 3];
 	char			rxbuf[BLE_IDES_L2CAP_MTU];
@@ -67,11 +68,10 @@ insert_peer (OrchardAppContext * context, ble_evt_t * evt,
     OrchardAppRadioEvent * radio)
 {
 	ChatHandles *	p;
-	int		i;
-	char 		peerid[PEER_ADDR_LEN + 1];
 	uint8_t	*	name;
 	uint8_t 	len;
 	ble_gap_addr_t *	addr;
+	int i;
 
 	p = context->priv;
 
@@ -91,21 +91,27 @@ insert_peer (OrchardAppContext * context, ble_evt_t * evt,
 	} else
 		name[len] = 0x00;
 
-	chsnprintf (peerid, sizeof(peerid), "%02x:%02x:%02x:%02x:%02x:%02x",
-	    addr->addr[5], addr->addr[4], addr->addr[3],
-	    addr->addr[2], addr->addr[1], addr->addr[0]);
-
 	for (i = 2; i < p->peers; i++) {
-		/* Already an entry for this badge, just return. */
-		if (strncmp (p->listitems[i], peerid, PEER_ADDR_LEN) == 0)
+		if (memcmp (&p->peeraddrs[i], addr,
+		    sizeof (ble_gap_addr_t)) == 0) {
+			/* Already an entry for this badge, just return. */
 			return (-1);
+		}
 	}
 
 	/* No match, add a new entry */
 
-	p->listitems[p->peers] = chHeapAlloc (NULL, MAX_PEERMEM);
-	chsnprintf (p->listitems[p->peers], MAX_PEERMEM, "%s:%s",
-	    peerid, name);
+	memcpy (&p->peeraddrs[p->peers], addr, sizeof (ble_gap_addr_t));
+
+	p->peernames[p->peers] = chHeapAlloc (NULL, MAX_PEERMEM);
+
+	if (len)
+		chsnprintf (p->peernames[p->peers], MAX_PEERMEM, "%s", name);
+	else
+		chsnprintf (p->peernames[p->peers], MAX_PEERMEM,
+		    "%02x:%02x:%02x:%02x:%02x:%02x",
+		    addr->addr[5], addr->addr[4], addr->addr[3],
+		    addr->addr[2], addr->addr[1], addr->addr[0]);
 
 	p->peers++;
 
@@ -136,8 +142,6 @@ chat_event (OrchardAppContext *context,
 	const OrchardUi * ui;
 	ChatHandles * p;
 	OrchardAppEvent * e;
-	unsigned int addr[6];
-	char * c;
 	int i;
 
 	/*
@@ -166,10 +170,10 @@ chat_event (OrchardAppContext *context,
 			if (airplane_mode_check() == true)
 				return;
 #endif
-			p->listitems[0] = "Scanning for users...";
-			p->listitems[1] = "Exit";
+			p->peernames[0] = "Scanning for users...";
+			p->peernames[1] = "Exit";
 
-			p->uiCtx.itemlist = (const char **)p->listitems;
+			p->uiCtx.itemlist = (const char **)p->peernames;
 			p->uiCtx.total = 1;
 
 			context->instance->ui = getUiByName ("list");
@@ -186,8 +190,8 @@ chat_event (OrchardAppContext *context,
 				ui->exit (context);
 			p = context->priv;
 			for (i = 2; i < p->peers; i++) {
-				if (p->listitems[i] != NULL)
-					chHeapFree (p->listitems[i]);
+				if (p->peernames[i] != NULL)
+					chHeapFree (p->peernames[i]);
 			}
 			if (p->cid != BLE_L2CAP_CID_INVALID)
 				bleL2CapDisconnect (p->cid);
@@ -226,8 +230,8 @@ chat_event (OrchardAppContext *context,
 
 		if (radio->type == l2capRxEvent) {
 			chsnprintf (p->rxbuf, sizeof(p->rxbuf), "<%s> %s",
-			    p->listitems[p->peer], radio->pkt);
-			p->listitems[0] = p->rxbuf;
+			    p->peernames[p->peer], radio->pkt);
+			p->peernames[0] = p->rxbuf;
 			/* Tell the keyboard UI to redraw */
 			e->type = uiEvent;
 			ui->event (context, e);
@@ -263,6 +267,7 @@ chat_event (OrchardAppContext *context,
 			 */
 
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
+/*printf ("L2CAPCONNECTING!!!!!\r\n");*/
 				if (bleL2CapConnect (BLE_IDES_CHAT_PSM) !=
 				    NRF_SUCCESS) {
 					screen_alert_draw (FALSE,
@@ -281,9 +286,9 @@ chat_event (OrchardAppContext *context,
 			screen_alert_draw (FALSE, "Channel open!");
 			chThdSleepMilliseconds (1000);
 			p->cid = evt->evt.l2cap_evt.local_cid;
-			p->listitems[0] = "Type @ or press button to exit";
+			p->peernames[0] = "Type @ or press button to exit";
 			memset (p->txbuf, 0, sizeof(p->txbuf));
-			p->listitems[1] = p->txbuf;
+			p->peernames[1] = p->txbuf;
 
 			/* Terminate the list UI. */
 
@@ -293,7 +298,7 @@ chat_event (OrchardAppContext *context,
 
 			/* Load the keyboard UI. */
 
-			p->uiCtx.itemlist = (const char **)p->listitems;
+			p->uiCtx.itemlist = (const char **)p->peernames;
 			p->uiCtx.total = BLE_IDES_L2CAP_MTU - 1;
 			context->instance->ui = getUiByName ("keyboard");
 			context->instance->uicontext = &p->uiCtx;
@@ -342,32 +347,9 @@ chat_event (OrchardAppContext *context,
 			context->instance->ui = NULL;
 			context->instance->uicontext = NULL;
 
-			/*
-			 * This is a little messy. Now that we've chosen
-			 * a user to talk to, we need their netid to use
-			 * as the destination address for the radio packet
-			 * header. We don't want to waste the RAM to save
-			 * a netid in addition to the name string, so instead
-			 * we recover the netid of the chosen user from
-			 * the name string and cache it.
-			 */
-
 			p->peer = uiContext->selected + 1;
-			c = &p->listitems[p->peer][PEER_ADDR_LEN];
-			*c = '\0';
-			sscanf (p->listitems[p->peer],
-			    "%02x:%02x:%02x:%02x:%02x:%02x",
-			    &addr[5], &addr[4], &addr[3],
-			    &addr[2], &addr[1], &addr[0]);
-			*c = ':';
-			p->netid.addr_id_peer = TRUE;
-			p->netid.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
-			p->netid.addr[0] = addr[0];
-			p->netid.addr[1] = addr[1];
-			p->netid.addr[2] = addr[2];
-			p->netid.addr[3] = addr[3];
-			p->netid.addr[4] = addr[4];
-			p->netid.addr[5] = addr[5];
+			memcpy (&p->netid, &p->peeraddrs[p->peer],
+			    sizeof(p->netid));
 
 			/*
 			 * Now that we chose a peer, release any memory
@@ -377,14 +359,15 @@ chat_event (OrchardAppContext *context,
 			for (i = 2; i < p->peers; i++) {
 				if (i == p->peer)
 					continue;
-				if (p->listitems[i] != NULL) {
-					chHeapFree (p->listitems[i]);
-					p->listitems[i] = NULL;
+				if (p->peernames[i] != NULL) {
+					chHeapFree (p->peernames[i]);
+					p->peernames[i] = NULL;
 				}
 			}
 
 			/* Connect to the user */
 
+/*printf ("GAPCONNECTING!!!!!\r\n");*/
 			if (bleGapConnect (&p->netid) != NRF_SUCCESS)
 				orchardAppExit ();
 

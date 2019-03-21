@@ -22,7 +22,9 @@
 #include "orchard-ui.h"
 #include "orchard-app.h"
 
+#ifdef DRV_QSPI
 #include "m25q.h"
+#endif
 #include "nrf52flash_lld.h"
 #include "hal_flash.h"
 
@@ -30,7 +32,9 @@
 
 #include "badge.h"
 
+#ifdef DRV_QSPI
 FATFS qspi_fs;
+#endif
 
 struct evt_table orchard_events;
 
@@ -73,6 +77,7 @@ static const I2CConfig i2c2_config = {
 	IOPORT1_I2C_SDA		/* sda_pad */
 };
 
+#ifdef DRV_QSPI
 static const QSPIConfig qspi1_config = {
 	NULL,			/* enc_cp */
 	IOPORT1_QSPI_SCK,	/* SCK */
@@ -83,17 +88,21 @@ static const QSPIConfig qspi1_config = {
 	IOPORT1_QSPI_DIO3,	/* DIO3 */
 	0x18000000		/* membase */
 };
+#endif
 
 static const NRF52FLASHConfig nrf52_config = {
 	256		/* NRF52840 has 1MB flash (256 * 4096) */
 };
 
+#ifdef DRV_QSPI
 static const M25QConfig m25qcfg1 = {
   .busp             = &QSPID1,
   .buscfg           = &qspi1_config
 };
 
 M25QDriver FLASHD1;
+#endif
+
 NRF52FLASHDriver FLASHD2;
 
 static void
@@ -244,10 +253,12 @@ int main(void)
 {
     uint32_t info;
     uint8_t * p;
-    uint8_t * memp;
     const flash_descriptor_t * pFlash;
+#ifdef DRV_QSPI
+    uint8_t * memp;
     uint8_t reg;
     qspi_command_t cmd;
+#endif
     uint32_t * faultPtr;
 
 #ifdef CRT0_VTOR_INIT
@@ -385,6 +396,7 @@ int main(void)
         printf ("SPI bus 4 enabled\r\n");
     }
 
+#ifdef DRV_QSPI
     /* Enable QSPI flash */
 
     m25qObjectInit (&FLASHD1);
@@ -418,6 +430,7 @@ int main(void)
     }
 
     m25qMemoryUnmap (&FLASHD1);
+#endif
 
     /* Enable on-board flash */
 
@@ -465,6 +478,7 @@ int main(void)
     m25qMemoryMap (&FLASHD1, &memp);
 #endif
 
+#ifdef DRV_QSPI
     /* Mount QSPI flash as secondary filesystem */
 
     if (f_mount (&qspi_fs, "1:", 1) != FR_OK) {
@@ -473,6 +487,7 @@ int main(void)
         printf ("QSPI filesystem mounted\r\n");
         /*f_chdrive ("1:");*/
     }
+#endif
 
     /* Enable bluetooth radio */
 

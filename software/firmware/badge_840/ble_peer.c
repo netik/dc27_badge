@@ -72,6 +72,8 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * name, uint8_t len, int8_t rssi)
 		if (memcmp (peer_addr, p->ble_peer_addr, 6) == 0) {
 			p->ble_ttl = BLE_PEER_LIST_TTL;
 			p->ble_rssi = rssi;
+			if (name != NULL)
+				memcpy (p->ble_peer_name, name, len);
 			osalMutexUnlock (&peer_mutex);
 			return;
 		}
@@ -100,6 +102,27 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * name, uint8_t len, int8_t rssi)
 	osalMutexUnlock (&peer_mutex);
 
 	return;
+}
+
+ble_peer_entry *
+blePeerFind (uint8_t * peer_addr)
+{
+	ble_peer_entry * p;
+	int i;
+
+	osalMutexLock (&peer_mutex);
+	for (i = 0; i < BLE_PEER_LIST_SIZE; i++) {
+		p = &ble_peer_list[i];
+		if (p->ble_used == 0)
+			continue;
+		if (memcmp (peer_addr, p->ble_peer_addr, 6) == 0)
+			break;
+	}
+	if (i == BLE_PEER_LIST_SIZE)
+		p = NULL;
+	osalMutexUnlock (&peer_mutex);
+
+	return (p);
 }
 
 void
