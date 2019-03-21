@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2017-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,7 @@ static int bleGapScanStart (void);
 static int bleGapAdvStart (void);
 
 static uint8_t ble_adv_block[BLE_GAP_ADV_MAX_SIZE];
+static uint8_t ble_scan_block[BLE_GAP_ADV_MAX_SIZE];
 static uint8_t ble_scan_buffer[BLE_GAP_SCAN_BUFFER_EXTENDED_MAX];
 static uint8_t ble_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 
@@ -85,6 +86,7 @@ bleGapScanStart (void)
 	scan.timeout = BLE_IDES_SCAN_TIMEOUT;
 	scan.window = MSEC_TO_UNITS(100, UNIT_0_625_MS);
 	scan.interval = MSEC_TO_UNITS(200, UNIT_0_625_MS);
+	scan.active = 1;
 
 	scan_buffer.p_data = ble_scan_buffer;
 	scan_buffer.len = sizeof(ble_scan_buffer);
@@ -103,8 +105,6 @@ bleGapAdvStart (void)
 	uint8_t * pkt;
 	uint8_t size;
 	uint16_t val;
-	uint8_t ble_name[BLE_GAP_DEVNAME_MAX_LEN];
-	uint16_t len = BLE_GAP_DEVNAME_MAX_LEN;
 	int r;
 
 	pkt = bleGapAdvBlockStart (&size);
@@ -114,16 +114,6 @@ bleGapAdvStart (void)
 	val = BLE_APPEARANCE_DC27;
 	r = bleGapAdvBlockAdd (&val, 2,
 	    BLE_GAP_AD_TYPE_APPEARANCE, pkt, &size);
-
-	if (r != NRF_SUCCESS)
-		return (r);
-
-	/* Set our full name */
-
-	sd_ble_gap_device_name_get (ble_name, &len);
-
-	r = bleGapAdvBlockAdd (ble_name, len,
-	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, pkt, &size);
 
 	if (r != NRF_SUCCESS)
 		return (r);
@@ -181,11 +171,16 @@ bleGapDispatch (ble_evt_t * evt)
 	ble_gap_evt_timeout_t * timeout;
 	ble_gap_evt_data_length_update_request_t * dup;
 	ble_gap_evt_conn_param_update_request_t * update;
+	ble_gap_adv_report_type_t rtype;
 #ifdef BLE_GAP_VERBOSE
 	ble_gap_evt_conn_sec_update_t * sec;
 	ble_gap_conn_sec_mode_t * secmode;
 #endif
 	ble_gap_addr_t * addr;
+	ble_data_t scan_buffer;
+	ble_peer_entry * p;
+	uint8_t * data;
+	uint8_t datalen;
 	uint8_t * name;
 	uint8_t len;
 	int r;
@@ -271,28 +266,101 @@ bleGapDispatch (ble_evt_t * evt)
 			break;
 		case BLE_GAP_EVT_ADV_REPORT:
 			addr = &evt->evt.gap_evt.params.adv_report.peer_addr;
-#ifdef BLE_GAP_SCAN_VERBOSE
-			printf ("GAP scan report...\r\n");
-			printf ("peer: %x:%x:%x:%x:%x:%x rssi: %d\r\n",
-			    addr->addr[5], addr->addr[4], addr->addr[3],
-			    addr->addr[2], addr->addr[1], addr->addr[0],
-			    evt->evt.gap_evt.params.adv_report.rssi);
-#endif
 			len = evt->evt.gap_evt.params.adv_report.data.len;
 			name = evt->evt.gap_evt.params.adv_report.data.p_data;
+			datalen = evt->evt.gap_evt.params.adv_report.data.len;
+			data = evt->evt.gap_evt.params.adv_report.data.p_data;
+			rtype = evt->evt.gap_evt.params.adv_report.type;
+
 			if (bleGapAdvBlockFind (&name, &len,
 			    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME) !=
 			    NRF_SUCCESS) {
 				name = NULL;
 				len = 0;
 			}
+
+			p = blePeerFind (addr->addr);
 			blePeerAdd (addr->addr, name, len,
 			    evt->evt.gap_evt.params.adv_report.rssi);
-			len = evt->evt.gap_evt.params.adv_report.data.len;
-			name = evt->evt.gap_evt.params.adv_report.data.p_data;
-			orchardAppRadioCallback (advertisementEvent, evt,
-			    name, len);
+
+			/*
+			 * If this packet (either advertisement or scan
+			 * response) contains a name, or
+			 * if this is an advertisement with no name and
+			 * the device is not scannable (so we know we'll
+			 * never get a name), or
+			 * if this is a scan response and we've already
+			 * gotten an advertisement and neither one had
+			 * a name,
+			 * then send an advertisement notification to
+			 * our apps.
+			 */
+
+			if (name != NULL ||
+			    (rtype.scannable == 0) ||
+			    (rtype.scan_response && p != NULL)) {
+				orchardAppRadioCallback (advertisementEvent,
+				    evt, data, datalen);
+			}
+
+			/*
+			 * Ok, this is a little nutty. In BLE, when you
+			 * advertise, you broadcast a single packet. This
+			 * packet can contain your appearance and supported
+			 * UUIDs. It can also contain the device name. And
+			 * it can also specify if the device is scannable
+			 * or not. If devices are scannable, then you can
+			 * send a scan request to them, and they will reply
+			 * with a scan response packet, which is another 31
+			 * bytes and may contain additional information that
+			 * wouldn't fit in the advertisement broadcast.
+			 *
+			 * It seems that the way the Nordic SoftDevice works,
+			 * once you receive an advertisement event indicating
+			 * scannability, you have to immediately call the
+			 * scan start function again, otherwise you won't
+			 * receive the scan response packet. I don't think
+			 * this is clearly documented anywhere; like many
+			 * subtle details, it's just strongly implied by
+			 * the example code in the Nordic SDK.
+			 */
+
 			memset (ble_scan_buffer, 0, sizeof(ble_scan_buffer));
+			scan_buffer.p_data = ble_scan_buffer;
+			scan_buffer.len = sizeof(ble_scan_buffer);
+
+			sd_ble_gap_scan_start (NULL, &scan_buffer);
+#ifdef BLE_GAP_SCAN_VERBOSE
+			printf ("GAP advertisement report, type: %d...\r\n",
+			    rtype);
+			printf ("Peer: %x:%x:%x:%x:%x:%x rssi: %d\r\n",
+			    addr->addr[5], addr->addr[4], addr->addr[3],
+			    addr->addr[2], addr->addr[1], addr->addr[0],
+			    evt->evt.gap_evt.params.adv_report.rssi);
+			printf ("Report type is: ");
+			if (rtype.connectable)
+				printf ("connectable ");
+			if (rtype.scannable)
+				printf ("scannable ");
+			if (rtype.directed)
+				printf ("directed ");
+			else
+				printf ("undirected ");
+			if (rtype.scan_response)
+				printf ("scan response ");
+			printf ("\r\n");
+#endif
+			break;
+		case BLE_GAP_EVT_SCAN_REQ_REPORT:
+#ifdef BLE_GAP_SCAN_VERBOSE
+			addr =
+			    &evt->evt.gap_evt.params.scan_req_report.peer_addr;
+			printf ("GAP scan request received from: ");
+			printf ("%x:%x:%x:%x:%x:%x rssi: %d\r\n",
+			    addr->addr[5], addr->addr[4], addr->addr[3],
+			    addr->addr[2], addr->addr[1], addr->addr[0],
+			    evt->evt.gap_evt.params.scan_req_report.rssi);
+#endif
 			break;
 		case BLE_GAP_EVT_TIMEOUT:
 			timeout = &evt->evt.gap_evt.params.timeout;
@@ -421,6 +489,10 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	ble_gap_adv_params_t adv_params;
 	ble_gap_adv_data_t adv_data;
 	uint32_t r;
+	uint8_t * p2;
+	uint8_t s2;
+	uint8_t ble_name[BLE_GAP_DEVNAME_MAX_LEN];
+	uint16_t namelen = BLE_GAP_DEVNAME_MAX_LEN;
 
 	memset (&adv_params, 0, sizeof(adv_params));
 	memset (&adv_data, 0, sizeof(adv_data));
@@ -428,14 +500,33 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_data.adv_data.p_data = pkt;
 	adv_data.adv_data.len = len;
 
+	p2 = ble_scan_block;
+	s2 = BLE_GAP_ADV_MAX_SIZE;
+	memset (p2, 0, BLE_GAP_ADV_MAX_SIZE);
+
+	/*
+	 * Set our full name. We use the scan data block for this,
+	 * which allows us to have a full 31 bytes, separate from
+	 * the advertisement packet.
+	 */
+
+	sd_ble_gap_device_name_get (ble_name, &namelen);
+
+	r = bleGapAdvBlockAdd (ble_name, namelen,
+	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, p2, &s2);
+
+	adv_data.scan_rsp_data.p_data = p2;
+	adv_data.scan_rsp_data.len = BLE_GAP_ADV_MAX_SIZE - s2;
+
 	adv_params.properties.type =
 	    BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
 
 	adv_params.interval = MSEC_TO_UNITS(33, UNIT_0_625_MS);
 	adv_params.duration = MSEC_TO_UNITS(2000, UNIT_10_MS);
-	adv_params.filter_policy = BLE_GAP_ADV_FP_ANY;
+	adv_params.filter_policy =  BLE_GAP_SCAN_FP_ACCEPT_ALL;
 	adv_params.primary_phy = BLE_GAP_PHY_AUTO;
 	adv_params.set_id = 1;
+	/*adv_params.scan_req_notification = 1;*/
 
 	r = sd_ble_gap_adv_set_configure (&ble_adv_handle,
 	    &adv_data, &adv_params);
