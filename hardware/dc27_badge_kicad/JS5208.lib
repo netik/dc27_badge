@@ -1,0 +1,33 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#(c) SnapEDA 2016 (snapeda.com)
+#This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA) with Design Exception 1.0
+#
+# JS5208
+#
+DEF JS5208 U 0 40 Y Y 1 L N
+F0 "U" 0 0 50 H I L BNN
+F1 "JS5208" 0 0 50 H I L BNN
+F2 "JS5208_PKG" 0 0 50 H I L BNN
+F3 "Unavailable" 0 0 50 H I L BNN
+F4 "None" 0 0 50 H I L BNN
+F5 "None" 0 0 50 H I L BNN
+F6 "JS5208" 0 0 50 H I L BNN
+F7 "JS Series 20 mA Gull Wing Silver Contact Navigation Switch" 0 0 50 H I L BNN
+F8 "E-Switch" 0 0 50 H I L BNN
+DRAW
+P 2 0 0 10 400 200 400 -200 N
+P 2 0 0 10 400 -200 -400 -200 N
+P 2 0 0 10 -400 -200 -400 200 N
+P 2 0 0 10 -400 200 400 200 N
+T 0 -400 230 50 0 0 0 JS5208 Normal 0 L B
+X A-U AU -600 100 200 R 40 40 0 0 B 
+X C-D CD -600 0 200 R 40 40 0 0 B 
+X GND COM -600 -100 200 R 40 40 0 0 B 
+X B-L BL 600 100 200 L 40 40 0 0 B 
+X D-R DR 600 0 200 L 40 40 0 0 B 
+X E-BTN EBTN 600 -100 200 L 40 40 0 0 B 
+ENDDRAW
+ENDDEF
+#
+# End Library
