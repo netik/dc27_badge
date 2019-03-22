@@ -339,7 +339,7 @@ bleEnable (void)
 	cfg.conn_cfg.conn_cfg_tag = BLE_IDES_APP_TAG;
 	cfg.conn_cfg.params.gap_conn_cfg.conn_count = 2;
 	cfg.conn_cfg.params.gap_conn_cfg.event_length =
-            BLE_GAP_EVENT_LENGTH_DEFAULT;
+	    BLE_GAP_EVENT_LENGTH_CODED_PHY_MIN;
 
 	r = sd_ble_cfg_set (BLE_CONN_CFG_GAP, &cfg, ram_start);
 
@@ -373,6 +373,20 @@ bleEnable (void)
 	cfg.conn_cfg.params.l2cap_conn_cfg.ch_count = 1;
 
 	r = sd_ble_cfg_set (BLE_CONN_CFG_L2CAP, &cfg, ram_start);
+
+	/*
+	 * Set GATT configuration.
+	 * The main thing this does is increase the allowable MTU.
+	 * We may not end up actually using it unless the peer
+	 * requests a data length change. iPhones tend to do this.
+	 */
+
+	memset (&cfg, 0, sizeof(cfg));
+
+	cfg.conn_cfg.conn_cfg_tag = BLE_IDES_APP_TAG;
+	cfg.conn_cfg.params.gatt_conn_cfg.att_mtu = 247;
+
+	r = sd_ble_cfg_set (BLE_CONN_CFG_GATT, &cfg, ram_start);
 
 	/* Set ATT table size */
 

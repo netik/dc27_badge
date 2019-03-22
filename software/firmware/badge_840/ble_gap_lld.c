@@ -432,14 +432,26 @@ bleGapDispatch (ble_evt_t * evt)
 			r = sd_ble_gap_data_length_update (ble_conn_handle,
 			    &dup->peer_params, &dlim);
 #ifdef BLE_GAP_VERBOSE
-			printf ("Data length update: %d\n", r);
+			printf ("Data length update: %d\r\n", r);
 #endif
+			/* If it failed, try with smaller sizes */
+
 			if (r != NRF_SUCCESS) {
-				printf ("Data length update failed, "
-				   "RX overrun: %d TX overrun: %d\r\n",
+				dup->peer_params.max_tx_octets -=
+				    dlim.tx_payload_limited_octets;
+				dup->peer_params.max_rx_octets -=
+				    dlim.rx_payload_limited_octets;
+				r = sd_ble_gap_data_length_update (
+				    ble_conn_handle, &dup->peer_params, &dlim);
+			}
+
+			if (r != NRF_SUCCESS) {
+				printf ("Data length update failed (%x), "
+				   "RX overrun: %d TX overrun: %d\r\n", r,
 				    dlim.rx_payload_limited_octets,
 				    dlim.tx_payload_limited_octets);
 			}
+
 			break;
 		case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
 			phys.rx_phys = BLE_GAP_PHY_AUTO;
