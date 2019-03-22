@@ -279,7 +279,7 @@ int main(void)
      * Enable memory management, usage and bus fault exceptions, so that
      * we don't always end up diverting through the hard fault handler.
      * Note: the memory management fault only applies if the MPU is
-     * enabled, which it currently is not.
+     * enabled, which it currently is (for stack guard pages).
      */
 
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk |
@@ -362,6 +362,27 @@ int main(void)
     chThdSleep(2);
     printf (PORT_INFO "\r\n");
     chThdSleep(2);
+
+    /* Check if the reset pin has been set, and update the UICR if not */
+
+    if (NRF_UICR->PSELRESET[0] != IOPORT1_RESET) {
+        printf ("Reset pin not configured, programming... ");
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een;
+        NRF_NVMC->ERASEUICR = 1;
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+                ;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+
+        NRF_UICR->PSELRESET[0] = IOPORT1_RESET;
+        NRF_UICR->PSELRESET[1] = IOPORT1_RESET;
+
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+                ;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+        printf ("Done.\r\n");
+    }
 
     printf("Priority levels %d\r\n", CORTEX_PRIORITY_LEVELS);
 
