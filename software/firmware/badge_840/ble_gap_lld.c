@@ -109,7 +109,6 @@ bleGapAdvStart (void)
 
 	pkt = bleGapAdvBlockStart (&size);
 
-#ifdef notdef
 	/* Set our appearance */
 
 	val = BLE_APPEARANCE_DC27;
@@ -118,7 +117,6 @@ bleGapAdvStart (void)
 
 	if (r != NRF_SUCCESS)
 		return (r);
-#endif
 
 	/* Set manufacturer ID */
 
