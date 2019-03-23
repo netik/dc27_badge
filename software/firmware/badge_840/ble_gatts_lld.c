@@ -60,6 +60,7 @@ bleGattsDispatch (ble_evt_t * evt)
 	ble_gatts_evt_rw_authorize_request_t *	req;
 	ble_gatts_rw_authorize_reply_params_t	rep;
 #ifdef BLE_GATTS_VERBOSE
+	ble_gatts_evt_exchange_mtu_request_t *	mtu;
 	ble_gatts_evt_write_t *			write;
 	int r;
 #endif
@@ -107,6 +108,21 @@ bleGattsDispatch (ble_evt_t * evt)
 			    NULL, 0, 0);
 #ifdef BLE_GATTS_VERBOSE
 			printf ("set attribute: %d\r\n", r);
+#endif
+			break;
+		case BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST:
+#ifdef BLE_GATTS_VERBOSE
+			mtu = &evt->evt.gatts_evt.params.exchange_mtu_request;
+			printf ("GATTS MTU exchange: %d\r\n",
+			    mtu->client_rx_mtu);
+#endif
+#ifdef BLE_GATTS_VERBOSE
+			r =
+#endif
+			sd_ble_gatts_exchange_mtu_reply (ble_conn_handle,
+			    BLE_GATT_ATT_MTU_DEFAULT);
+#ifdef BLE_GATTS_VERBOSE
+			printf ("MTU exchange reply: %x\r\n", r);
 #endif
 			break;
 		default:
