@@ -415,7 +415,7 @@ dialer_event(OrchardAppContext *context, const OrchardAppEvent *event)
 				if (p->mode)
 					b += DIALER_MAXBUTTONS;
 #endif
-				chThdSetPriority (NORMALPRIO + 1);
+				chThdSetPriority (HIGHPRIO - 5);
 				tonePlay (w, b, 0);
 				chThdSetPriority (ORCHARD_APP_PRIO);
 			}

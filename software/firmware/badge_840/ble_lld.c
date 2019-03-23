@@ -266,7 +266,7 @@ bleStart (void)
 	/* Create SoftDevice event thread */
 
 	chThdCreateStatic (waSdThread, sizeof(waSdThread),
-	    HIGHPRIO, sdThread, NULL);
+	    HIGHPRIO - 10, sdThread, NULL);
 
 	/* Set up SoftDevice ISR */
 
