@@ -25,11 +25,11 @@ Things currently completed:
 - I2C support (tested good)
 - Video app
 - Extend button support to handle extra buttons requested by John
+- Music player app
 
 Things still to do:
 
 - BLE GATTC support (?)
 - BLE pairing PIN support
 - Setup app
-- Music player app
 - Game app
