@@ -145,12 +145,14 @@ bleGattsStrCharAdd (uint16_t ble_gatts_handle, uint16_t uuid,
 	ble_gatts_char_md_t	ble_char_md;
 	ble_gatts_attr_md_t	ble_attr_md;
 	ble_gatts_attr_t	ble_attr_char_val;
+	ble_gatts_char_pf_t	ble_char_pf;
 	ble_uuid_t		ble_char_uuid;
 	int r;
 
 	memset (&ble_char_md, 0, sizeof(ble_char_md));
 	memset (&ble_attr_md, 0, sizeof (ble_attr_md));
 	memset (&ble_attr_char_val, 0, sizeof (ble_attr_char_val));
+	memset (&ble_char_pf, 0, sizeof (ble_gatts_char_pf_t));
 
 	/* Set up attribute metadata */
 
@@ -180,6 +182,10 @@ bleGattsStrCharAdd (uint16_t ble_gatts_handle, uint16_t uuid,
 		ble_char_md.char_props.read = 1;
 	if (rw & BLE_GATTS_AUTHORIZE_TYPE_WRITE)
 		ble_char_md.char_props.write = 1;
+
+	ble_char_pf.format = BLE_GATT_CPF_FORMAT_UTF8S;
+	ble_char_pf.name_space = BLE_GATT_CPF_NAMESPACE_BTSIG;
+	ble_char_md.p_char_pf = &ble_char_pf;
 
 	/* Add the characteristic to the stack. */
 
