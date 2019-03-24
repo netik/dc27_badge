@@ -60,6 +60,7 @@ bleGattsDispatch (ble_evt_t * evt)
 	ble_gatts_evt_rw_authorize_request_t *	req;
 	ble_gatts_rw_authorize_reply_params_t	rep;
 #ifdef BLE_GATTS_VERBOSE
+	ble_gatts_evt_exchange_mtu_request_t *	mtu;
 	ble_gatts_evt_write_t *			write;
 	int r;
 #endif
@@ -109,6 +110,21 @@ bleGattsDispatch (ble_evt_t * evt)
 			printf ("set attribute: %d\r\n", r);
 #endif
 			break;
+		case BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST:
+#ifdef BLE_GATTS_VERBOSE
+			mtu = &evt->evt.gatts_evt.params.exchange_mtu_request;
+			printf ("GATTS MTU exchange: %d\r\n",
+			    mtu->client_rx_mtu);
+#endif
+#ifdef BLE_GATTS_VERBOSE
+			r =
+#endif
+			sd_ble_gatts_exchange_mtu_reply (ble_conn_handle,
+			    BLE_GATT_ATT_MTU_DEFAULT);
+#ifdef BLE_GATTS_VERBOSE
+			printf ("MTU exchange reply: %x\r\n", r);
+#endif
+			break;
 		default:
 			printf ("invalid GATTS event %d (%d)\r\n",
 			    evt->header.evt_id - BLE_GATTS_EVT_BASE,
@@ -129,12 +145,14 @@ bleGattsStrCharAdd (uint16_t ble_gatts_handle, uint16_t uuid,
 	ble_gatts_char_md_t	ble_char_md;
 	ble_gatts_attr_md_t	ble_attr_md;
 	ble_gatts_attr_t	ble_attr_char_val;
+	ble_gatts_char_pf_t	ble_char_pf;
 	ble_uuid_t		ble_char_uuid;
 	int r;
 
 	memset (&ble_char_md, 0, sizeof(ble_char_md));
 	memset (&ble_attr_md, 0, sizeof (ble_attr_md));
 	memset (&ble_attr_char_val, 0, sizeof (ble_attr_char_val));
+	memset (&ble_char_pf, 0, sizeof (ble_gatts_char_pf_t));
 
 	/* Set up attribute metadata */
 
@@ -164,6 +182,10 @@ bleGattsStrCharAdd (uint16_t ble_gatts_handle, uint16_t uuid,
 		ble_char_md.char_props.read = 1;
 	if (rw & BLE_GATTS_AUTHORIZE_TYPE_WRITE)
 		ble_char_md.char_props.write = 1;
+
+	ble_char_pf.format = BLE_GATT_CPF_FORMAT_UTF8S;
+	ble_char_pf.name_space = BLE_GATT_CPF_NAMESPACE_BTSIG;
+	ble_char_md.p_char_pf = &ble_char_pf;
 
 	/* Add the characteristic to the stack. */
 
