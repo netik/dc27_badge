@@ -263,6 +263,7 @@ musicPlay (MusicHandles * p, char * fname)
 	int r = 0;
 
 	i2sPlay (NULL);
+	i2sEnabled = FALSE;
 
 	/* Initialize some of the display write window info. */
 
@@ -322,6 +323,7 @@ musicPlay (MusicHandles * p, char * fname)
 	/* Power down the audio amp */
 
 	i2sAudioAmpCtl (I2S_AMP_ON);
+	i2sEnabled = TRUE;
 
 	f_close (&f);
 	chHeapFree (i2sBuf);
