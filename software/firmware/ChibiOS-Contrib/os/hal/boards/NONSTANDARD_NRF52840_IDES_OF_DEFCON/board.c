@@ -80,10 +80,10 @@ const PALConfig pal_default_config_p1 =
         PAL_MODE_OUTPUT_PULLUP,       /* P1.6 : SPI SCK        */
         PAL_MODE_INPUT_PULLUP,        /* P1.7 : SPI MISO       */
         PAL_MODE_OUTPUT_PULLUP,       /* P1.8 : SPI MOSI       */
-        PAL_MODE_UNCONNECTED,         /* P1.9 :                */
-        PAL_MODE_INPUT_PULLUP,        /* P1.10: BTN5           */
-        PAL_MODE_INPUT_PULLUP,        /* P1.11: BTN6           */
-        PAL_MODE_INPUT_PULLUP,        /* P1.12: BTN7           */
+        PAL_MODE_INPUT_PULLUP,        /* P1.9 : BTN5           */
+        PAL_MODE_INPUT_PULLUP,        /* P1.10: BTN6           */
+        PAL_MODE_INPUT_PULLUP,        /* P1.11: BTN7           */
+        PAL_MODE_UNCONNECTED ,        /* P1.12:                */
         PAL_MODE_UNCONNECTED,         /* P1.13:                */
         PAL_MODE_UNCONNECTED,         /* P1.14:                */
         PAL_MODE_UNCONNECTED,         /* P1.15:                */

@@ -131,9 +131,9 @@
 #define IOPORT2_SPI_MISO        7U
 #define IOPORT2_SPI_MOSI        8U
 
-#define IOPORT2_BTN5           10U
-#define IOPORT2_BTN6           11U
-#define IOPORT2_BTN7           12U
+#define IOPORT2_BTN5            9U
+#define IOPORT2_BTN6           10U
+#define IOPORT2_BTN7           11U
 
 /* Analog inpupt */
 #define IOPORT1_AIN0            2U
