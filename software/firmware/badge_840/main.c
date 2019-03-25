@@ -36,6 +36,8 @@
 FATFS qspi_fs;
 #endif
 
+#include "led.h"
+
 struct evt_table orchard_events;
 
 /* linker set for command objects */
@@ -192,7 +194,7 @@ static THD_FUNCTION(Thread1, arg) {
 
     (void)arg;
     uint8_t led = LED4;
-    
+
     chRegSetThreadName ("blinker");
 
     while (1) {
@@ -289,7 +291,7 @@ int main(void)
     halInit();
     chSysInit();
     shellInit();
- 
+
     sdStart (&SD1, &serial_config);
     chThdSleepMilliseconds (50);
     printf ("\r\n");
@@ -304,7 +306,7 @@ int main(void)
     gptStart (&GPTD3, &gpt2_config);
 
     /* Launch test blinker thread. */
-    
+
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO+1,
 		      Thread1, NULL);
 
@@ -440,7 +442,7 @@ int main(void)
         reg |= 0x40; /* set the QE bit */
         qspiSend (&QSPID1, &cmd, 1, &reg);
     }
- 
+
     m25qMemoryMap (&FLASHD1, &memp);
     pFlash = flashGetDescriptor (&FLASHD1);
 
@@ -467,13 +469,13 @@ int main(void)
     }
 
     i2cStart (&I2CD2, &i2c2_config);
-
     printf ("I2C interface enabled\r\n");
 
+		/* start the LEDs */
+		led_init();
+
     /* Enable I2S controller */
-
     i2sStart ();
-
     printf ("I2S interface enabled\r\n");
 
     if (NRF_FICR->INFO.VARIANT == 0x41414141)
