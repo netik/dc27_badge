@@ -62,6 +62,16 @@
 #define BLE_UUID_SOFTWARE_REVISION_STRING_CHAR	0x2A28
 #define BLE_UUID_MANUFACTURER_NAME_STRING_CHAR	0x2A29
 
+/*
+ * BLE role types. For some reason these are not defined in the
+ * SoftDevice headers.
+ */
+
+#define BLE_ADV_ROLE_PERIPH_ONLY		0
+#define BLE_ADV_ROLE_CENTRAL_ONLY		1
+#define BLE_ADV_ROLE_BOTH_PERIPH_PREFERRED	2
+#define BLE_ADV_ROLE_BOTH_CENTRAL_PREFERRED	3
+
 extern uint8_t ble_station_addr[];
 extern volatile enum NRF_SOC_EVTS flash_evt;
 
