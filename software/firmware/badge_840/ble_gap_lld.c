@@ -139,7 +139,7 @@ bleGapAdvStart (void)
 
 	/* Set role */
 
-	val = 2 /*BLE_GAP_ROLE_PERIPH*/;
+	val = BLE_ADV_ROLE_BOTH_PERIPH_PREFERRED;
 	r = bleGapAdvBlockAdd (&val, 1,
 	    BLE_GAP_AD_TYPE_LE_ROLE, pkt, &size);
 

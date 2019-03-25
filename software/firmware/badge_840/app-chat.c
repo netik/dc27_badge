@@ -267,7 +267,6 @@ chat_event (OrchardAppContext *context,
 			 */
 
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
-/*printf ("L2CAPCONNECTING!!!!!\r\n");*/
 				if (bleL2CapConnect (BLE_IDES_CHAT_PSM) !=
 				    NRF_SUCCESS) {
 					screen_alert_draw (FALSE,
@@ -367,7 +366,6 @@ chat_event (OrchardAppContext *context,
 
 			/* Connect to the user */
 
-/*printf ("GAPCONNECTING!!!!!\r\n");*/
 			if (bleGapConnect (&p->netid) != NRF_SUCCESS)
 				orchardAppExit ();
 
