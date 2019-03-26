@@ -45,7 +45,7 @@
 #include "i2s_lld.h"
 
 int
-videoPlay (char * fname)
+videoWinPlay (char * fname, int x, int y)
 {
 	int i;
 	int j;
@@ -99,10 +99,17 @@ videoPlay (char * fname)
 
 	/* Set the display window */
 
-	GDISP->p.x = 0;
-	GDISP->p.y = 0;
-	GDISP->p.cx = gdispGetWidth ();
-	GDISP->p.cy = gdispGetHeight ();
+	if (x == -1) {
+		GDISP->p.x = 0;
+		GDISP->p.y = 0;
+		GDISP->p.cx = gdispGetWidth ();
+		GDISP->p.cy = gdispGetHeight ();
+	} else {
+		GDISP->p.x = x;
+		GDISP->p.y = y;
+		GDISP->p.cx = VID_PIXELS_PER_LINE;
+		GDISP->p.cy = VID_LINES_PER_FRAME;
+	}
 
 	gdisp_lld_write_start (GDISP);
 
@@ -130,6 +137,13 @@ videoPlay (char * fname)
 
 		if (br == 0)
 			break;
+
+		/* Wait for display bus to come ready */
+
+		osalSysLock ();
+		if (SPID4.state != SPI_READY)
+			(void) osalThreadSuspendS (&SPID4.thread);
+		osalSysUnlock ();
 
 		/* Start next async read */
 
@@ -160,27 +174,31 @@ videoPlay (char * fname)
 			scnt = 0;
 		}
 
-		/* Wait for display bus to come ready */
-
-		while (SPID4.state != SPI_READY)
-			chThdSleep (1);
-
 		/* Draw the current batch of lines to the screen */
 
-		for (j = 0; j < VID_CHUNK_LINES; j++) {
-			pixel_t pix;
-			p = linebuf + (320 * j * 2);
+		if (x == -1) {
+			for (j = 0; j < VID_CHUNK_LINES; j++) {
+				pixel_t pix;
+				p = linebuf + (320 * j * 2);
 
-			/* Expand one 160 pixel line to two 320 pixel lines */
+				/*
+				 * Expand one 160 pixel line to
+				 * two 320 pixel lines
+				 */
 
-			for (i = 0; i < 160; i++) {
-				pix =  p1[i + (160 * j)];;
-				p[0] = p[1] = p[320] = p[321] = pix;
-				p += 2;
+				for (i = 0; i < 160; i++) {
+					pix =  p1[i + (160 * j)];;
+					p[0] = p[1] = p[320] = p[321] = pix;
+					p += 2;
+				}
 			}
-		}
 
-		spiStartSend (&SPID4, 320 * 2 * VID_CHUNK_LINES * 2, linebuf);
+			spiStartSend (&SPID4,
+			    320 * 2 * VID_CHUNK_LINES * 2, linebuf);
+		} else {
+			spiStartSend (&SPID4, VID_CHUNK_LINES * 
+			    VID_PIXELS_PER_LINE * 2, p1);
+		}
 
 		/* Switch to next waiting chunk */
 
@@ -205,8 +223,10 @@ videoPlay (char * fname)
 
 	i2sSamplesWait ();
 	i2sSamplesStop ();
-	while (SPID4.state != SPI_READY)
-		chThdSleep (1);
+	osalSysLock ();
+	if (SPID4.state != SPI_READY)
+		(void) osalThreadSuspendS (&SPID4.thread);
+	osalSysUnlock ();
 
 	/* Power down the audio amp */
 
@@ -229,4 +249,10 @@ videoPlay (char * fname)
 		return (-1);
 
 	return (0);
+}
+
+int
+videoPlay (char * fname)
+{
+	return (videoWinPlay (fname, -1, -1));
 }

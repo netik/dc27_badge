@@ -71,6 +71,7 @@
 	((NRF5_GPT_FREQ_16MHZ * VID_CHUNK_LINES) /	\
 	(VID_LINES_PER_FRAME * VID_FRAMES_PER_SEC))
 
+extern int videoWinPlay (char *, int, int);
 extern int videoPlay (char *);
 
 #endif /* _VIDEO_LLD_H_ */
