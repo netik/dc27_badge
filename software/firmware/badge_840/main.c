@@ -473,7 +473,8 @@ int main(void)
 
 		/* start the LEDs */
 		led_init();
-
+		led_test();
+		
     /* Enable I2S controller */
     i2sStart ();
     printf ("I2S interface enabled\r\n");

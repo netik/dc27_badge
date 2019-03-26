@@ -27,16 +27,15 @@ const unsigned char led_address[LED_COUNT_INTERNAL][3] = {
     {0x6C, 0x7C, 0x8C}, {0x6E, 0x7E, 0x8E},
 
     /* D217-D224 */
-    
     {0x00, 0x10, 0x20}, {0x02, 0x12, 0x22}, {0x04, 0x14, 0x24},
     {0x06, 0x16, 0x26}, {0x08, 0x18, 0x28}, {0x0A, 0x1A, 0x2A},
-    {0x0C, 0x1C, 0x2C}, {0x0E, 0x1E, 0x2E}, {0x30, 0x40, 0x50},
-    {0x32, 0x42, 0x52}, {0x34, 0x44, 0x54}, {0x36, 0x46, 0x56},
-    {0x38, 0x48, 0x58}, {0x3A, 0x4A, 0x5A}, {0x3C, 0x4C, 0x5C},
-    {0x3E, 0x4E, 0x5E},
+    {0x0C, 0x1C, 0x2C}, {0x0E, 0x1E, 0x2E},
 
-    };
-
+    /* D225-D232 */
+    {0x30, 0x40, 0x50}, {0x32, 0x42, 0x52}, {0x34, 0x44, 0x54},
+    {0x36, 0x46, 0x56}, {0x38, 0x48, 0x58}, {0x3A, 0x4A, 0x5A},
+    {0x3C, 0x4C, 0x5C}, {0x3E, 0x4E, 0x5E},
+};
 
 const uint8_t gamma_values[] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -56,8 +55,8 @@ const uint8_t gamma_values[] = {
     148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175, 177,
     180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
     215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
-    255};
-
+    255
+};
 
 /* Brightness control */
 static uint8_t m_brightness = 10;
@@ -77,11 +76,6 @@ void led_init() {
   for (uint8_t i = 0; i < ISSI_ADDR_MAX; i++) {
     led_memory[i] = 0;
   }
-
-  // turn on the first led
-  hal_i2c_write_reg_byte(LED_I2C_ADDR, 0xb0, 0xff); // b
-//  hal_i2c_write_reg_byte(LED_I2C_ADDR, 0xa0, 0xcc); // r
-//  hal_i2c_write_reg_byte(LED_I2C_ADDR, 0x90, 0xff); // g
 }
 
 void led_clear() {
@@ -91,9 +85,9 @@ void led_clear() {
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
   if (index < LED_COUNT) {
-    led_memory[led_address[index][0]] = gamma_values[b / 2];
-    led_memory[led_address[index][1]] = gamma_values[g / 2];
-    led_memory[led_address[index][2]] = gamma_values[r / 2];
+    led_memory[led_address[index][0]] = gamma_values[g / 2];
+    led_memory[led_address[index][1]] = gamma_values[r / 2];
+    led_memory[led_address[index][2]] = gamma_values[b / 2];
   }
 }
 
@@ -121,12 +115,7 @@ void led_show() {
   for (uint8_t i = 0; i < LED_COUNT_INTERNAL; i++) {
     for (uint8_t ii = 0; ii < 3; ii++) {
       uint8_t address = led_address[i][ii];
-      if (i < LED_COUNT) {
-        // Actual LEDS halve their brightness
-        drv_is31fl_send_value(address, led_memory[address] / 2);
-      } else {
-        drv_is31fl_send_value(address, led_memory[address]);
-      }
+      hal_i2c_write_reg_byte(LED_I2C_ADDR, address, led_memory[address]);
     }
   }
 #endif
