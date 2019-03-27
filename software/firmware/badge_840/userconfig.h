@@ -6,6 +6,7 @@
  * goes in here 
  */
 
+#define CONFIG_FLASH_ADDR 0xFF000
 #define CONFIG_FLASH_SECTOR 255
 #define CONFIG_SIGNATURE  0xdeadbeef  // duh
 #define CONFIG_VERSION    1

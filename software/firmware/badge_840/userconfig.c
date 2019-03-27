@@ -136,7 +136,8 @@ void configStart(void) {
   uint8_t wipeconfig = false;
   osalMutexObjectInit(&config_mutex);
 
-  flashRead(&FLASHD2, CONFIG_FLASH_SECTOR, sizeof(userconfig), (uint8_t *)&config);
+  flashRead(&FLASHD2, CONFIG_FLASH_ADDR,
+    sizeof(userconfig), (uint8_t *)&config);
 
   /* if the user is holding down UP and DOWN, then we will wipe the configuration */
 #ifdef ENABLE_JOYPAD

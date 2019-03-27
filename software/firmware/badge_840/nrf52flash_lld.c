@@ -100,7 +100,7 @@ nrf52_read (void *instance, flash_offset_t offset, size_t n, uint8_t *rp)
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
 	uint8_t * p;
 
-	if ((offset + (n * FLASH_PAGE_SIZE)) >
+	if ((offset + n) >
 	    (FLASH_PAGE_SIZE * nrf52_descriptor.sectors_count))
 		return (FLASH_ERROR_READ);
 
