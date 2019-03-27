@@ -18,10 +18,13 @@ uint8_t led_brightness_get(void);
 bool led_init(void);
 void led_clear(void);
 void led_show(void);
+
 void led_pattern_balls_init(led_pattern_balls_t *);
 void led_pattern_balls(led_pattern_balls_t*);
 void led_pattern_flame(void);
 void led_pattern_kitt(int8_t*, int8_t*);
+void led_pattern_sparkle(uint8_t*);
+void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value);
 
 /* control vars */
 static uint8_t ledExitRequest = 0;
@@ -152,6 +155,7 @@ void led_clear() {
   led_show();
 }
 
+
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
   if (index < LED_COUNT) {
     led_memory[led_address[index][0]] = gamma_values[g / 2];
@@ -231,19 +235,22 @@ void led_test() {
 }
 
 /* Threads ------------------------------------------------------ */
-static THD_WORKING_AREA(waBlingThread, 256);
+static THD_WORKING_AREA(waBlingThread, 512);
 static THD_FUNCTION(bling_thread, arg) {
   (void)arg;
   userconfig *config = getConfig();
   /* animation state vars */
   led_pattern_balls_t anim_balls;
   int8_t anim_index = 0;
+  uint8_t anim_uindex = 0;
   int8_t anim_position = 0;
+  float anim_hue = 100;
+  float anim_value = 0;
 
   chRegSetThreadName("LED Bling");
 
 	led_pattern_balls_init(&anim_balls);
-  led_current_func = 3;
+  led_current_func = 5;
 
   //led_current_func = fxlist[config->led_pattern].function;
 
@@ -263,7 +270,14 @@ static THD_FUNCTION(bling_thread, arg) {
         break;
       case 3:
         led_pattern_kitt(&anim_index, &anim_position);
-      // ... add more animations here ...
+        break;
+      case 4:
+        led_pattern_sparkle(&anim_uindex);
+        break;
+      case 5:
+        led_pattern_double_sweep(&anim_uindex, &anim_hue, &anim_value);
+        break;
+        // ... add more animations here ...
       }
     }
 
@@ -401,6 +415,48 @@ void led_pattern_kitt(int8_t* p_index, int8_t* p_direction) {
     if (*p_index < 0) {
       *p_index = 0;
       *p_direction = 1;
+    }
+  }
+}
+
+void led_pattern_sparkle(uint8_t* p_index) {
+  uint8_t mode = randRange(0, 2);
+
+  switch (mode) {
+    case 0:
+      *p_index = randRange(0, LED_COUNT);
+      led_set(*p_index, 255, 255, 255);
+      break;
+    case 1:;
+      float hue = (float)randRange(0, 100) / 100.0;
+      led_set_rgb(*p_index, util_hsv_to_rgb(hue, 1.0, 1.0));
+      break;
+  }
+  led_show();
+}
+
+void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value) {
+  color_rgb_t rgb = util_hsv_to_rgb(*p_hue, 1.0, *p_value);
+  led_set_rgb(16, rgb);
+  led_set_rgb(16 + *p_index, rgb);
+  led_set_rgb(16 - *p_index, rgb);
+  led_show();
+
+  (*p_index)++;
+  if (*p_index > 16) {
+    *p_index = 0;
+
+    // Ensure hue wraps around
+    *p_hue += 0.1;
+    if (*p_hue >= 1.0) {
+      *p_hue -= 1.0;
+    }
+
+    // Alternate light / dark
+    if (*p_value > 0) {
+      *p_value = 0;
+    } else {
+      *p_value = 1.0;
     }
   }
 }

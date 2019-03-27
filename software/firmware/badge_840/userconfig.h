@@ -1,11 +1,12 @@
 #ifndef __USERCONFIG_H__
 #define __USERCONFIG_H__
 /* userconfig.h
- * 
+ *
  * anything that has to do with long term storage of users
- * goes in here 
+ * goes in here
  */
 
+#define CONFIG_ADDRESS 0xFF000
 #define CONFIG_FLASH_SECTOR 255
 #define CONFIG_SIGNATURE  0xdeadbeef  // duh
 #define CONFIG_VERSION    1
@@ -23,7 +24,7 @@ typedef enum _player_type {
 } player_type;
 
 /* WARNING: if you change the userconfig struct, update CONFIG_VERSION
- * above so that the config is automatically init'd with the new 
+ * above so that the config is automatically init'd with the new
  * else, the config struct will be misaligned and full of garbage.
  */
 typedef struct userconfig {
@@ -34,10 +35,10 @@ typedef struct userconfig {
      SIM-UID */
   uint32_t netid;
   int8_t tempcal; /* temperature calibration +/- some degrees F */
-  
+
   /* hw config */
   uint8_t led_pattern;
-  
+
   /* used for solid-color */
   uint8_t led_r;
   uint8_t led_g;
@@ -47,7 +48,7 @@ typedef struct userconfig {
   uint8_t sound_enabled;
   uint8_t airplane_mode;
   uint8_t rotate;
-  
+
   /* touchpad calibration data */
   uint8_t touch_data_present;
   float touch_data[6];
@@ -59,9 +60,9 @@ typedef struct userconfig {
   player_type current_type;
   player_type p_type;
   char name[CONFIG_NAME_MAXLEN+1];
-  
+
   uint16_t lastdeath; // last time you died
-  uint8_t in_combat; 
+  uint8_t in_combat;
   uint16_t unlocks;
 
   int16_t hp;
@@ -71,7 +72,7 @@ typedef struct userconfig {
   uint8_t agl;
   uint8_t might;
   uint8_t luck;
-  
+
   /* long-term counters */
   uint16_t won;
   uint16_t lost;
@@ -92,7 +93,7 @@ typedef struct _peer {
   uint16_t unlocks;       /* 2 */
   /* Player stats */
   int16_t hp;             /* 2 */
-  uint16_t xp;            /* 2 */  
+  uint16_t xp;            /* 2 */
   uint8_t level;          /* 1 */
   uint8_t agl;            /* 1 */
   uint8_t might;          /* 1 */
@@ -115,9 +116,9 @@ typedef struct _fightpkt {
 
   /* unique network ID determined from use of lower 64 bits of SIM-UID */
   uint8_t opcode;         /* 1 - BATTLE_OPCODE */
-  
+
   /* clock, if any */
-  unsigned long rtc;      /* 4 */ 
+  unsigned long rtc;      /* 4 */
   /* Player Payload */
   char name[CONFIG_NAME_MAXLEN + 1];  /* 16 */
   player_type p_type;     /* 1 */
@@ -125,7 +126,7 @@ typedef struct _fightpkt {
   uint8_t in_combat;      /* 1 */
   uint16_t unlocks;       /* 2 */
   int16_t hp;             /* 2 */
-  uint16_t xp;            /* 2 */  
+  uint16_t xp;            /* 2 */
   uint8_t level;          /* 1 */
   uint8_t agl;            /* 1 */
   uint8_t might;          /* 1 */
@@ -152,4 +153,3 @@ extern unsigned long rtc;
 extern unsigned long rtc_set_at;
 
 #endif
-

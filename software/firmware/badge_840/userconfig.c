@@ -132,11 +132,9 @@ static void init_config(userconfig *config) {
 }
 
 void configStart(void) {
-  userconfig config;
+  userconfig *config = (userconfig *)CONFIG_ADDRESS;
   uint8_t wipeconfig = false;
   osalMutexObjectInit(&config_mutex);
-
-  flashRead(&FLASHD2, CONFIG_FLASH_SECTOR, sizeof(userconfig), (uint8_t *)&config);
 
   /* if the user is holding down UP and DOWN, then we will wipe the configuration */
 #ifdef ENABLE_JOYPAD
@@ -161,19 +159,19 @@ void configStart(void) {
     wipeconfig = true;
   }
 
-  if ( (config.signature != CONFIG_SIGNATURE) || (wipeconfig)) {
+  if ( (config->signature != CONFIG_SIGNATURE) || (wipeconfig)) {
     printf("Config not found, Initializing!\r\n");
     init_config(&config_cache);
-    memcpy(&config, &config_cache, sizeof(userconfig));
+    memcpy(config, &config_cache, sizeof(userconfig));
     configSave(&config_cache);
-  } else if ( config.version != CONFIG_VERSION ) {
+  } else if ( config->version != CONFIG_VERSION ) {
     printf("Config found, but wrong version.\r\n");
     init_config(&config_cache);
-    memcpy(&config, &config_cache, sizeof(userconfig));
+    memcpy(config, &config_cache, sizeof(userconfig));
     configSave(&config_cache);
   } else {
     printf("Config OK!\r\n");
-    memcpy(&config_cache, &config, sizeof(userconfig));
+    memcpy(&config_cache, config, sizeof(userconfig));
 
     if (config_cache.in_combat != 0) {
       if (config_cache.p_type > 0) {
@@ -184,7 +182,7 @@ void configStart(void) {
       }
     }
 
-    if (config.p_type != config.current_type) {
+    if (config->p_type != config->current_type) {
       // reset class on fight
       printf("Class reset to %d.\r\n", config_cache.p_type);
       config_cache.current_type = config_cache.p_type;
