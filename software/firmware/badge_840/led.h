@@ -6,6 +6,8 @@
 #define LED_COUNT 32
 #define LED_COUNT_INTERNAL 32
 #define EFFECTS_REDRAW_MS 35
+#define LED_PATTERNS_FULL 10
+#define LED_PATTERNS_LIMITED 5
 
 typedef uint32_t color_rgb_t;
 
@@ -13,6 +15,7 @@ typedef uint32_t color_rgb_t;
 extern bool led_init(void);
 extern void led_test(void);
 extern void ledStart(void);
+extern uint8_t ledStop(void);
 
 /* Animation structs */
 #define LED_PATTERN_ROLLER_COASTER_COUNT 5

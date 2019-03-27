@@ -76,6 +76,26 @@ const uint8_t gamma_values[] = {
     255
 };
 
+const char *fxlist[] = {
+  "Off", 
+  "Double Bounce",
+  "Dot (White)",
+  "Larson Scanner",
+  "Rainbow Fade",
+  "Rainbow Loop",
+  "Green Cycle",
+  "Yellow Ramp",
+  "Comet",
+  "Wave",
+  "Mardi Gras",
+  "All Solid",
+  "Spot the Fed",
+  "Violets",
+  "RGB Bounce",
+  "Violet Wave",
+  "Kraftwerk"
+};
+
 /* Brightness control */
 static uint8_t m_brightness = 10;
 
@@ -299,6 +319,12 @@ void ledStart(void) {
    * better than a normal thread */
   chThdCreateStatic(waBlingThread, sizeof(waBlingThread),
                     NORMALPRIO, bling_thread, NULL);
+}
+
+uint8_t ledStop(void) {
+  ledExitRequest = 1;
+  led_clear();
+  return ledsOff;
 }
 
 /* Animations ------------------------------------------------------------- */
