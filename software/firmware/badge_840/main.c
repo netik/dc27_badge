@@ -22,6 +22,8 @@
 #include "orchard-ui.h"
 #include "orchard-app.h"
 
+#include "userconfig.h"
+
 #ifdef DRV_QSPI
 #include "m25q.h"
 #endif
@@ -198,8 +200,8 @@ static THD_FUNCTION(Thread1, arg) {
     chRegSetThreadName ("blinker");
 
     while (1) {
-	palTogglePad(IOPORT1, led);
-	chThdSleepMilliseconds(1000);
+			palTogglePad(IOPORT1, led);
+			chThdSleepMilliseconds(1000);
     }
 }
 
@@ -456,10 +458,8 @@ int main(void)
 #endif
 
     /* Enable on-board flash */
-
     nrf52FlashObjectInit (&FLASHD2);
     nrf52FlashStart (&FLASHD2, &nrf52_config);
-
     pFlash = flashGetDescriptor (&FLASHD2);
 
     if (pFlash->sectors_count > 0) {
@@ -471,26 +471,27 @@ int main(void)
     i2cStart (&I2CD2, &i2c2_config);
     printf ("I2C interface enabled\r\n");
 
-		/* start the LEDs */
-		led_init();
-		led_test();
-		
+    /* start the LEDs */
+    if (led_init()) {
+      printf("I2C LED controller found.\r\n");
+      ledStart();
+    } else {
+      printf("I2C LED controller not found. No Bling ;(\r\n");
+    }
+
     /* Enable I2S controller */
     i2sStart ();
     printf ("I2S interface enabled\r\n");
 
     if (NRF_FICR->INFO.VARIANT == 0x41414141)
-        printf ("Skipping screen setup on broken preview silicon\r\n");
+      printf ("Skipping screen setup on broken preview silicon\r\n");
     else {
-        /* Enable display and touch panel */
-
-        printf ("Main screen turn on\r\n");
-
-        gfxInit ();
+      /* Enable display and touch panel */
+      printf ("Main screen turn on\r\n");
+      gfxInit ();
     }
 
     /* Mount SD card */
-
     if (gfileMount ('F', "0:") == FALSE)
         printf ("No SD card found\r\n");
     else
@@ -514,9 +515,10 @@ int main(void)
 #endif
 
     /* Enable bluetooth radio */
-
     bleStart ();
 
+    /* Init the user configuration */
+    configStart();
 #ifdef flash_test
 
     /*

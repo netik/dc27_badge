@@ -144,6 +144,8 @@ CSRC = $(STARTUPSRC) \
 
 CSRC += main.c \
 	is31fl_lld.c \
+	userconfig.c \
+	rand.c \
 	led.c \
 	cmd-audio.c \
 	cmd-radio.c \

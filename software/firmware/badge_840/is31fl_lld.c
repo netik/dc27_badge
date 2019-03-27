@@ -97,7 +97,6 @@ bool hal_i2c_write_reg_byte(uint8_t i2c_address, uint8_t reg, uint8_t value) {
 }
 
 bool drv_is31fl_init(void) {
-#ifndef CONFIG_BADGE_TYPE_STANDALONE
   // Avoid initializing too often
   if (m_last_init_attempt > 0) {
     if (m_initialized ||
@@ -115,13 +114,11 @@ bool drv_is31fl_init(void) {
     //post_state_get()->led_driver_ack = false;
     return false;
   }
-  chThdSleepMilliseconds(100);
 
   // Set global current control
   drv_is31fl_set_page(ISSI_PAGE_FUNCTION);
   hal_i2c_write_reg_byte(LED_I2C_ADDR, ISSI_REG_GCC, 0xFF);
   chThdSleepMilliseconds(10);
-  printf("led: gcc set\r\n");
 
   // Turn off all LEDs
   drv_is31fl_set_page(ISSI_PAGE_LED);
@@ -129,7 +126,6 @@ bool drv_is31fl_init(void) {
     hal_i2c_write_reg_byte(LED_I2C_ADDR, i, 0x00);
   }
 
-  printf("led: all off\r\n");
   chThdSleepMilliseconds(100);
 
   drv_is31fl_set_page(ISSI_PAGE_FUNCTION);
@@ -146,7 +142,6 @@ bool drv_is31fl_init(void) {
   for (uint8_t i = 0; i <= 0xBE; i += 1) {
     hal_i2c_write_reg_byte(LED_I2C_ADDR, i, 0x00);
   }
-  printf("led: pwm 0\r\n");
 
   chThdSleepMilliseconds(100);
 
@@ -155,7 +150,6 @@ bool drv_is31fl_init(void) {
   for (uint8_t i = 0; i <= 0x17; i++) {
     hal_i2c_write_reg_byte(LED_I2C_ADDR, i, 0xFF);
   }
-  printf("led: all on \r\n");
 
   // get the open/short status
   drv_is31fl_set_page(ISSI_PAGE_LED);
@@ -178,9 +172,6 @@ bool drv_is31fl_init(void) {
   m_initialized = true;
   //post_state_get()->led_driver_ack = true;
   return true;
-#endif
-
-  return false;
 }
 
 void drv_is31fl_gcc_set(uint8_t gcc) {

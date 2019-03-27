@@ -42,6 +42,8 @@
 #include "nrf_soc.h"
 
 #include "badge.h"
+#include "math.h"
+#include "rand.h"
 
 #define NRF5_RAND_SOFTDEVICE
 
@@ -51,7 +53,7 @@
 
 #define RANDOM_BUFFER_SIZE 16
 static uint8_t random_buffer[RANDOM_BUFFER_SIZE];
-  
+
 static void
 cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 {
@@ -77,7 +79,7 @@ cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 	}
 
 	printf ("Fetching %d random byte(s):\r\n", size);
-    
+
 	sd_rand_application_vector_get (random_buffer, size);
 #else
 	if (size > RANDOM_BUFFER_SIZE) {
@@ -86,7 +88,7 @@ cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 	}
 
 	printf ("Fetching %d random byte(s):\r\n", size);
-    
+
 	rngStart (&RNGD1, NULL);
 	rngWrite (&RNGD1, random_buffer, size, TIME_INFINITE);
  	rngStop (&RNGD1);
@@ -99,6 +101,9 @@ cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 	}
 	if (!nl)
 		printf ("\r\n");
+
+  printf("range-random: %d \r\n", randRange(0,100));
+  printf("rand(): %d\r\n", randByte());
 	return;
 }
 

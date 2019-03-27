@@ -3,6 +3,11 @@
 #include "led.h"
 #include "badge.h"
 #include "is31fl_lld.h"
+#include "math.h"
+#include "userconfig.h"
+#include "rand.h"
+
+#define MILLIS() chVTGetSystemTime()
 
 unsigned char led_memory[ISSI_ADDR_MAX];
 
@@ -10,10 +15,17 @@ unsigned char led_memory[ISSI_ADDR_MAX];
 void led_set_all(uint8_t r, uint8_t g, uint8_t b);
 void led_brightness_set(uint8_t brightness);
 uint8_t led_brightness_get(void);
-void led_init(void);
+bool led_init(void);
 void led_clear(void);
 void led_show(void);
+void led_pattern_balls_init(led_pattern_balls_t *);
+void led_pattern_balls(led_pattern_balls_t*);
 
+/* control vars */
+static uint8_t ledExitRequest = 0;
+static uint8_t ledsOff = 1;
+// the current function that updates the LEDs. Override with ledSetFunction();
+static uint8_t led_current_func = 1;
 const unsigned char led_address[LED_COUNT_INTERNAL][3] = {
     /* Here LEDs are in Green, Red, Blue order*/
     /* D201-D208 */
@@ -70,12 +82,66 @@ void led_brightness_set(uint8_t brightness) {
   drv_is31fl_gcc_set(m_brightness);
 }
 
-void led_init() {
-  drv_is31fl_init();
+/* color utils */
+color_rgb_t util_hsv_to_rgb(float H, float S, float V) {
+  H = fmodf(H, 1.0);
+
+  float h = H * 6;
+  uint8_t i = floor(h);
+  float a = V * (1 - S);
+  float b = V * (1 - S * (h - i));
+  float c = V * (1 - (S * (1 - (h - i))));
+  float rf, gf, bf;
+
+  switch (i) {
+    case 0:
+      rf = V * 255;
+      gf = c * 255;
+      bf = a * 255;
+      break;
+    case 1:
+      rf = b * 255;
+      gf = V * 255;
+      bf = a * 255;
+      break;
+    case 2:
+      rf = a * 255;
+      gf = V * 255;
+      bf = c * 255;
+      break;
+    case 3:
+      rf = a * 255;
+      gf = b * 255;
+      bf = V * 255;
+      break;
+    case 4:
+      rf = c * 255;
+      gf = a * 255;
+      bf = V * 255;
+      break;
+    case 5:
+    default:
+      rf = V * 255;
+      gf = a * 255;
+      bf = b * 255;
+      break;
+  }
+
+  uint8_t R = rf;
+  uint8_t G = gf;
+  uint8_t B = bf;
+
+  color_rgb_t RGB = (R << 16) + (G << 8) + B;
+  return RGB;
+}
+
+bool led_init() {
   // on exit, the chip is now in the PWM page
   for (uint8_t i = 0; i < ISSI_ADDR_MAX; i++) {
     led_memory[i] = 0;
   }
+
+  return drv_is31fl_init();
 }
 
 void led_clear() {
@@ -90,7 +156,6 @@ void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
     led_memory[led_address[index][2]] = gamma_values[b / 2];
   }
 }
-
 
 void led_set_rgb(uint32_t index, color_rgb_t rgb) {
   led_set(index, (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
@@ -122,31 +187,30 @@ void led_show() {
 }
 
 void led_test() {
-    printf("Testing Red\r\n");
+    printf("LED Test: Red\r\n");
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       led_set(i, 255, 0, 0);
     }
     led_show();
-    chThdSleepMilliseconds(2000);
+    chThdSleepMilliseconds(1000);
     led_clear();
 
-    printf("Testing Green\r\n");
+    printf("LED Test: Green\r\n");
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       led_set(i, 0, 255, 0);
     }
     led_show();
-    chThdSleepMilliseconds(2000);
+    chThdSleepMilliseconds(1000);
     led_clear();
 
-    printf("Testing Blue\r\n");
+    printf("LED Test: Blue\r\n");
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       led_set(i, 0, 0, 255);
     }
     led_show();
-    chThdSleepMilliseconds(2000);
+    chThdSleepMilliseconds(1000);
     led_clear();
-
-#ifdef HSVTEST
+#ifdef HSV_TEST
     // HSV cycle
     for (uint8_t i = 0; i < 3; i++) {
       for (float h = 0; h < 1; h += 0.01) {
@@ -156,7 +220,141 @@ void led_test() {
         chThdSleepMilliseconds(500);
       }
     }
-#endif
+
     led_clear();
+
     chThdSleepMilliseconds(1000);
+#endif
+}
+
+/* Threads ------------------------------------------------------ */
+static THD_WORKING_AREA(waBlingThread, 256);
+static THD_FUNCTION(bling_thread, arg) {
+  (void)arg;
+  userconfig *config = getConfig();
+
+  chRegSetThreadName("LED Bling");
+
+  led_pattern_balls_t balls;
+	led_pattern_balls_init(&balls);
+  led_current_func = 1;
+
+  //led_current_func = fxlist[config->led_pattern].function;
+
+  while (!ledsOff) {
+    // wait until the next update cycle
+    chThdYield();
+    chThdSleepMilliseconds(EFFECTS_REDRAW_MS);
+
+    // re-render the internal framebuffer animations
+    if (led_current_func != 0) {
+      switch (led_current_func) {
+      case 1:
+        led_pattern_flame();
+        break;
+      case 2:
+        led_pattern_balls(&balls);
+        break;
+      // ... add more animations here ...
+      }
+    }
+
+    if( ledExitRequest ) {
+      // force one full cycle through an update on request to force LEDs off
+      led_set_all(0,0,0);
+      led_show();
+      ledsOff = 1;
+      chThdExitS(MSG_OK);
+    }
+  }
+  return;
+}
+
+void ledStart(void) {
+  ledExitRequest = 0;
+  ledsOff = 0;
+  /* LEDs are very, very sensitive to timing. Make this slightly
+   * better than a normal thread */
+  chThdCreateStatic(waBlingThread, sizeof(waBlingThread),
+                    NORMALPRIO, bling_thread, NULL);
+}
+
+/* Animations */
+
+/**
+ * @brief Initilize balls
+ * @param p_balls : Pointer to balls
+ */
+void led_pattern_balls_init(led_pattern_balls_t* p_balls) {
+  p_balls->start_height = 1;
+  p_balls->gravity = -9.81;
+  p_balls->impact_velocity_start =
+      sqrt(-2 * p_balls->gravity * p_balls->start_height);
+
+  // Initialize the led balls state
+  for (int i = 0; i < LED_PATTERN_BALLS_COUNT; i++) {
+    p_balls->clock_since_last_bounce[i] = MILLIS();
+    p_balls->height[i] = p_balls->start_height;
+    p_balls->position[i] = 0;
+    p_balls->impact_velocity[i] = p_balls->impact_velocity_start;
+    p_balls->time_since_last_bounce[i] = 0;
+    p_balls->dampening[i] = 0.90 - (float)i / pow(LED_PATTERN_BALLS_COUNT, 2);
+    p_balls->colors[i] =
+        util_hsv_to_rgb((float)randRange(0, 100) / 100.0, 1, 1);
+  }
+}
+
+/**
+ * @brief Bouncing ball LED pattern mode. Ported from tweaking4all
+ * @param p_balls : Pointer to balls state
+ */
+void led_pattern_balls(led_pattern_balls_t* p_balls) {
+  for (int i = 0; i < LED_PATTERN_BALLS_COUNT; i++) {
+    p_balls->time_since_last_bounce[i] =
+        MILLIS() - p_balls->clock_since_last_bounce[i];
+    p_balls->height[i] =
+        0.5 * p_balls->gravity *
+            pow(p_balls->time_since_last_bounce[i] / 1000, 2.0) +
+        p_balls->impact_velocity[i] * p_balls->time_since_last_bounce[i] / 1000;
+
+    if (p_balls->height[i] < 0) {
+      p_balls->height[i] = 0;
+      p_balls->impact_velocity[i] =
+          p_balls->dampening[i] * p_balls->impact_velocity[i];
+      p_balls->clock_since_last_bounce[i] = MILLIS();
+
+      // Bouncing has stopped, start over
+      if (p_balls->impact_velocity[i] < 0.01) {
+        p_balls->impact_velocity[i] = p_balls->impact_velocity_start;
+        p_balls->colors[i] =
+            util_hsv_to_rgb((float)randRange(0, 100) / 100.0, 1, 1);
+      }
+    }
+    p_balls->position[i] =
+        round(p_balls->height[i] * (LED_COUNT - 1) / p_balls->start_height);
+  }
+
+  for (int i = 0; i < LED_PATTERN_BALLS_COUNT; i++) {
+    led_set_rgb(p_balls->position[i], p_balls->colors[i]);
+  }
+  led_show();
+  led_set_all(0, 0, 0);
+}
+
+/**
+ * @brief Flame LED mode
+ */
+void led_pattern_flame() {
+  uint8_t red, green;
+  for (int x = 0; x < LED_COUNT; x++) {
+    // 1 in 4 chance of pixel changing
+    if (randRange(0, 4) == 0) {
+      // Pick a random red color and ensure green never exceeds it ensuring some
+      // shade of red orange or yellow
+      red = randRange(180, 255);
+      green = randRange(0, red);
+      led_set(x, red, green, 0);
+    }
+  }
+  led_show();
 }
