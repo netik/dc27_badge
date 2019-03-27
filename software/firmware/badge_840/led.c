@@ -20,6 +20,8 @@ void led_clear(void);
 void led_show(void);
 void led_pattern_balls_init(led_pattern_balls_t *);
 void led_pattern_balls(led_pattern_balls_t*);
+void led_pattern_flame(void);
+void led_pattern_kitt(int8_t*, int8_t*);
 
 /* control vars */
 static uint8_t ledExitRequest = 0;
@@ -39,14 +41,15 @@ const unsigned char led_address[LED_COUNT_INTERNAL][3] = {
     {0x6C, 0x7C, 0x8C}, {0x6E, 0x7E, 0x8E},
 
     /* D217-D224 */
+    {0x30, 0x40, 0x50}, {0x32, 0x42, 0x52}, {0x34, 0x44, 0x54},
+    {0x36, 0x46, 0x56}, {0x38, 0x48, 0x58}, {0x3A, 0x4A, 0x5A},
+    {0x3C, 0x4C, 0x5C}, {0x3E, 0x4E, 0x5E},
+
+    /* D225-D232 */
     {0x00, 0x10, 0x20}, {0x02, 0x12, 0x22}, {0x04, 0x14, 0x24},
     {0x06, 0x16, 0x26}, {0x08, 0x18, 0x28}, {0x0A, 0x1A, 0x2A},
     {0x0C, 0x1C, 0x2C}, {0x0E, 0x1E, 0x2E},
 
-    /* D225-D232 */
-    {0x30, 0x40, 0x50}, {0x32, 0x42, 0x52}, {0x34, 0x44, 0x54},
-    {0x36, 0x46, 0x56}, {0x38, 0x48, 0x58}, {0x3A, 0x4A, 0x5A},
-    {0x3C, 0x4C, 0x5C}, {0x3E, 0x4E, 0x5E},
 };
 
 const uint8_t gamma_values[] = {
@@ -232,12 +235,15 @@ static THD_WORKING_AREA(waBlingThread, 256);
 static THD_FUNCTION(bling_thread, arg) {
   (void)arg;
   userconfig *config = getConfig();
+  /* animation state vars */
+  led_pattern_balls_t anim_balls;
+  int8_t anim_index = 0;
+  int8_t anim_position = 0;
 
   chRegSetThreadName("LED Bling");
 
-  led_pattern_balls_t balls;
-	led_pattern_balls_init(&balls);
-  led_current_func = 1;
+	led_pattern_balls_init(&anim_balls);
+  led_current_func = 3;
 
   //led_current_func = fxlist[config->led_pattern].function;
 
@@ -253,8 +259,10 @@ static THD_FUNCTION(bling_thread, arg) {
         led_pattern_flame();
         break;
       case 2:
-        led_pattern_balls(&balls);
+        led_pattern_balls(&anim_balls);
         break;
+      case 3:
+        led_pattern_kitt(&anim_index, &anim_position);
       // ... add more animations here ...
       }
     }
@@ -279,7 +287,7 @@ void ledStart(void) {
                     NORMALPRIO, bling_thread, NULL);
 }
 
-/* Animations */
+/* Animations ------------------------------------------------------------- */
 
 /**
  * @brief Initilize balls
@@ -357,4 +365,42 @@ void led_pattern_flame() {
     }
   }
   led_show();
+}
+
+/**
+ * @brief Do a kitt (knight rider) like pattern because of course
+ * @param p_index : Pointer to current index
+ * @param p_direction : Pointer to current direction
+ */
+void led_pattern_kitt(int8_t* p_index, int8_t* p_direction) {
+  int8_t index;
+  led_set_all(0, 0, 0);
+
+  for (int8_t i = 0; i < 4; i++) {
+    if (*p_direction > 0) {
+      index = *p_index - i;
+    } else {
+      index = *p_index + i;
+    }
+
+    if (index >= 0 && index < LED_COUNT) {
+      led_set(index, 255 / (i + 1), 0, 0);
+    }
+  }
+
+  led_show();
+
+  if (*p_direction > 0) {
+    (*p_index) += 2;
+    if (*p_index >= LED_COUNT) {
+      *p_index = LED_COUNT - 1;
+      *p_direction = -1;
+    }
+  } else {
+    (*p_index) -= 2;
+    if (*p_index < 0) {
+      *p_index = 0;
+      *p_direction = 1;
+    }
+  }
 }
