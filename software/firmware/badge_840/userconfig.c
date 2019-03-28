@@ -93,7 +93,7 @@ static void init_config(userconfig *config) {
   config->netid = 0; // we will use the bluetooth address instead of this var.
   config->unlocks = 0;
   config->led_pattern = 1;
-  config->led_shift = 4;
+  config->led_brightness = 0xff;
   config->sound_enabled = 1;
   config->airplane_mode = 0;
   config->rotate = 0;
