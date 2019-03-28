@@ -76,7 +76,7 @@ static const SPIConfig spi4_config = {
 };
 
 static const I2CConfig i2c2_config = {
-	100000,			/* clock */
+	400000,			/* clock */
 	IOPORT1_I2C_SCK,	/* scl_pad */
 	IOPORT1_I2C_SDA		/* sda_pad */
 };
@@ -471,14 +471,6 @@ int main(void)
     i2cStart (&I2CD2, &i2c2_config);
     printf ("I2C interface enabled\r\n");
 
-    /* start the LEDs */
-    if (led_init()) {
-      printf("I2C LED controller found.\r\n");
-      ledStart();
-    } else {
-      printf("I2C LED controller not found. No Bling ;(\r\n");
-    }
-
     /* Enable I2S controller */
     i2sStart ();
     printf ("I2S interface enabled\r\n");
@@ -519,6 +511,15 @@ int main(void)
 
     /* Init the user configuration */
     configStart();
+
+		/* start the LEDs */
+		if (led_init()) {
+			printf("I2C LED controller found.\r\n");
+			ledStart();
+		} else {
+			printf("I2C LED controller not found. No Bling ;(\r\n");
+		}
+
 #ifdef flash_test
 
     /*
