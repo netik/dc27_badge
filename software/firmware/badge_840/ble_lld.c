@@ -67,8 +67,8 @@ uint8_t ble_station_addr[6];
 
 static thread_reference_t sdThreadReference;
 static ble_evt_t ble_evt;
-static volatile enum NRF_SOC_EVTS soc_evt;
-volatile enum NRF_SOC_EVTS flash_evt;
+static volatile uint32_t soc_evt;
+volatile uint32_t flash_evt;
 static volatile uint8_t radio_evt;
 
 /*

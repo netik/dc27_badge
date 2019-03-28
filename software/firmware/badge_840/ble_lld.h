@@ -73,7 +73,7 @@
 #define BLE_ADV_ROLE_BOTH_CENTRAL_PREFERRED	3
 
 extern uint8_t ble_station_addr[];
-extern volatile enum NRF_SOC_EVTS flash_evt;
+extern volatile uint32_t flash_evt;
 
 extern void bleStart (void);
 extern void bleEnable (void);
