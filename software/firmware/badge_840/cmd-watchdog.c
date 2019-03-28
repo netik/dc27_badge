@@ -67,7 +67,7 @@ cmd_watchdog(BaseSequentialStream *chp, int argc, char *argv[])
 	if ((argc != 2) || (strcmp(argv[0], "start"))) {
 		usage:
 		printf ("Usage: watchdog start <timeout>\r\n"
-		    "  <timeout> = 0..%d seconds\r\n",
+		    "  <timeout> = 0..%ld seconds\r\n",
 		    WDG_MAX_TIMEOUT_MS/1000);
 		return;
 	}

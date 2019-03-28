@@ -59,7 +59,7 @@ uint8_t hal_i2c_read_reg_byte(uint8_t i2c_address, uint8_t reg) {
 
   r = i2cMasterTransmitTimeout(&I2CD2, LED_I2C_ADDR, &txbuf, 1, &rxbuf, 1, TIME_INFINITE);
   if (r != MSG_OK) {
-    printf("i2cstatus = %d\r\n", r);
+    printf("i2cstatus = %ld\r\n", r);
     return 0;
   }
 
@@ -77,9 +77,9 @@ bool hal_i2c_write_reg_byte(uint8_t i2c_address, uint8_t reg, uint8_t value) {
   r = i2cMasterTransmitTimeout(&I2CD2, LED_I2C_ADDR, txbuf, 2, NULL, 0, TIME_INFINITE);
 
   if (r != MSG_OK) {
-    printf("i2cstatus = %d\r\n", r);
+    printf("i2cstatus = %ld\r\n", r);
     e = i2cGetErrors(&I2CD2);
-    printf("LED write failed = %d ", i2cGetErrors(&I2CD2));
+    printf("LED write failed = %ld ", i2cGetErrors(&I2CD2));
 
     if (e & I2C_NO_ERROR) { printf("I2C_NO_ERROR "); }
     if (e & I2C_BUS_ERROR) { printf("I2C_BUS_ERROR "); }
