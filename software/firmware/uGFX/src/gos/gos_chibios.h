@@ -10,13 +10,20 @@
 
 #if GFX_USE_OS_CHIBIOS
 
+#ifdef notdef
 // This shouldn't be needed but some people are complaining
 // about TRUE/FALSE redefinition so we fix it here.
 #undef TRUE
 #undef FALSE
+#endif
 
 #include "ch.h"
 #include "hal.h"
+
+#if CH_CFG_USE_HEAP == FALSE
+#include <stdlib.h>
+#include <malloc.h>
+#endif
 
 /*===========================================================================*/
 /* Type definitions                                                          */
@@ -103,8 +110,13 @@ extern "C" {
 #define gfxHalt(msg)					{ chSysHalt(msg); }
 #endif
 
+#if CH_CFG_USE_HEAP == TRUE
 #define gfxAlloc(sz)				chHeapAlloc(0, sz)
 #define gfxFree(ptr)				chHeapFree(ptr)
+#else
+#define gfxAlloc(sz)				malloc(sz)
+#define gfxFree(ptr)				free(ptr)
+#endif
 #define gfxYield()					chThdYield()
 #define gfxMillisecondsToTicks(ms)	TIME_MS2I(ms)
 #define gfxSystemLock()				chSysLock()

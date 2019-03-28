@@ -34,6 +34,7 @@
 #include "orchard-events.h"
 #include "orchard-ui.h"
 #include <string.h>
+#include <stdlib.h>
 
 #include "fontlist.h"
 #include "ides_gfx.h"
@@ -155,7 +156,7 @@ static void keyboard_start (OrchardAppContext *context)
 	GWidgetInit wi;
 
 	ctx = context->instance->uicontext;
-	ctx->priv = chHeapAlloc (NULL, sizeof(KeyboardHandles));
+	ctx->priv = malloc (sizeof(KeyboardHandles));
 	p = ctx->priv;
 
 	p->font = gdispOpenFont (FONT_KEYBOARD);
@@ -264,7 +265,7 @@ static void keyboard_exit(OrchardAppContext *context)
 
 	gdispCloseFont (p->font);
 
-	chHeapFree (p);
+	free (p);
 	context->instance->uicontext->priv = NULL;
 
 	return;

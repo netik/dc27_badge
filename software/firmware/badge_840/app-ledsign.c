@@ -42,6 +42,8 @@
 #include "userconfig.h"
 #endif
 
+#include <stdlib.h>
+
 #define MESSAGELEN	128
 
 #include <string.h>
@@ -63,16 +65,16 @@ ledsign_start(OrchardAppContext *context)
 
 	config = getConfig();
 #endif
-	keyboardUiContext = chHeapAlloc (NULL, sizeof(OrchardUiContext));
-	keyboardUiContext->itemlist = (const char **)chHeapAlloc(NULL,
-		sizeof(char *) * 2);
+	keyboardUiContext = malloc (sizeof(OrchardUiContext));
+	keyboardUiContext->itemlist =
+	    (const char **)malloc (sizeof(char *) * 2); 
 	keyboardUiContext->itemlist[0] =
 		"Type a message,\npress ENTER when done.";
 #ifdef notyet
 	keyboardUiContext->itemlist[1] = config->led_string;
 	keyboardUiContext->total = CONFIG_LEDSIGN_MAXLEN - 1;
 #else
-	context->priv = chHeapAlloc (NULL, MESSAGELEN);
+	context->priv = malloc (MESSAGELEN);
 	memset (context->priv,0, MESSAGELEN);
 	keyboardUiContext->itemlist[1] = context->priv;
 	keyboardUiContext->total = MESSAGELEN - 1;
@@ -148,9 +150,9 @@ ledsign_event(OrchardAppContext *context, const OrchardAppEvent *event)
 static void
 ledsign_exit(OrchardAppContext *context)
 {
-	chHeapFree (context->instance->uicontext->itemlist);
-	chHeapFree (context->instance->uicontext);
- 	chHeapFree (context->priv);
+	free (context->instance->uicontext->itemlist);
+	free (context->instance->uicontext);
+ 	free (context->priv);
  
 	return;
 }

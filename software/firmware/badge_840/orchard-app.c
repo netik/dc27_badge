@@ -36,7 +36,7 @@ event_source_t orchard_app_key;
 
 static uint8_t ui_override = 0;
 
-#define RADIO_QUEUE_LEN	8
+#define RADIO_QUEUE_LEN	16
 
 static uint8_t prod_idx;
 static uint8_t cons_idx;
@@ -79,10 +79,10 @@ static void flush_radio_queue (void) {
 
   for (i = 0; i < RADIO_QUEUE_LEN; i++) {
     if (radio_evt[i] != NULL)
-        chHeapFree (radio_evt[i]);
+        free (radio_evt[i]);
     radio_evt[i] = NULL;
     if (radio_pkt[i] != NULL)
-        chHeapFree (radio_pkt[i]);
+        free (radio_pkt[i]);
     radio_pkt[i] = NULL;
   }
 
@@ -96,7 +96,7 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
   ble_evt_t * evt, void * pkt, uint8_t len) {
  
   OrchardAppRadioEvent * r_evt;
- 
+
   if (instance.context == NULL)
     return;
 
@@ -108,7 +108,7 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
    */
 
   if (queue_cnt < RADIO_QUEUE_LEN) {
-    r_evt = chHeapAlloc (NULL, sizeof(OrchardAppRadioEvent));
+    r_evt = malloc (sizeof(OrchardAppRadioEvent));
     memset (r_evt, 0, sizeof(OrchardAppRadioEvent));
     radio_evt[prod_idx] = r_evt;
 
@@ -116,7 +116,7 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
 
     if (pkt != NULL && len != 0)
       {
-      radio_pkt[prod_idx] = chHeapAlloc (NULL, len);
+      radio_pkt[prod_idx] = malloc (len);
       r_evt->pkt = radio_pkt[prod_idx];
       memcpy (r_evt->pkt, pkt, len);
       r_evt->pktlen = len;
@@ -150,9 +150,9 @@ static void radio_event(eventid_t id) {
         memcpy (&evt.radio, r_evt, sizeof(OrchardAppRadioEvent));
         instance.app->event (instance.context, &evt);
 
-        chHeapFree (radio_evt[cons_idx]);
+        free (radio_evt[cons_idx]);
         if (radio_pkt[cons_idx] != NULL)
-            chHeapFree (radio_pkt[cons_idx]);
+            free (radio_pkt[cons_idx]);
         radio_evt[cons_idx] = NULL;
         radio_pkt[cons_idx] = NULL;
 

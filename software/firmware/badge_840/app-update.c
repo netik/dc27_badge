@@ -91,7 +91,7 @@ update (VHandles * p)
 
 	/* Stop the gtimer thread */
 
-	t = chHeapAlloc (NULL, sizeof(GTimer));
+	t = malloc (sizeof(GTimer));
 	gtimerInit (t);
 	gtimerStart (t, gtimerCallback, NULL, FALSE, 1);
 
@@ -226,7 +226,7 @@ update_start(OrchardAppContext *context)
 		goto done;
 	}
 
-	p = chHeapAlloc (NULL, sizeof(VHandles));
+	p = malloc (sizeof(VHandles));
 	memset (p, 0, sizeof(VHandles));
 	context->priv = p;
 
@@ -314,7 +314,7 @@ void update_exit(OrchardAppContext *context)
 	geventDetachSource (&p->glCtListener, NULL);
 	geventRegisterCallback (&p->glCtListener, NULL, NULL);
    
-	chHeapFree (p);
+	free (p);
 	context->priv = NULL;
 
 	return;

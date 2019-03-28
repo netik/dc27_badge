@@ -278,7 +278,7 @@ launcher_start (OrchardAppContext *context)
 		current++;
 	}
 
-	list = chHeapAlloc (NULL, sizeof(struct launcher_list) +
+	list = malloc (sizeof(struct launcher_list) +
 	    + (total_apps * sizeof(struct launcher_list_item)) );
 
 	context->priv = list;
@@ -503,7 +503,7 @@ launcher_exit (OrchardAppContext *context)
 	geventRegisterCallback (&list->gl, NULL, NULL);
 	geventDetachSource (&list->gl, NULL);
   
-	chHeapFree (context->priv);
+	free (context->priv);
 	context->priv = NULL;
 
 	return;

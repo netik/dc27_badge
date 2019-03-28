@@ -187,7 +187,7 @@ shell_termination_handler(eventid_t id)
 {
 	static int i = 1;
 
-	printf ("\r\nRespawning shell (shell #%d, event %d)\r\n", ++i, id);
+	printf ("\r\nRespawning shell (shell #%d, event %ld)\r\n", ++i, id);
 	shellRestart ();
 }
 
@@ -228,7 +228,7 @@ setup_flash (void)
 	if (f_open (&f, "8MB.DMG", FA_READ) != FR_OK)
 		printf ("OPEN FAILED!!!\r\n");
 
-	orig = buf = chHeapAlloc (NULL, 65536 + 32);
+	orig = buf = malloc (65536 + 32);
 	addr = (uint32_t)buf;
 	addr &= ~0x1F;
 	addr += 32;
@@ -244,7 +244,7 @@ setup_flash (void)
 	}
 	printf ("DONE!\r\n");
 
-	chHeapFree (orig);
+	free (orig);
 	f_close (&f);
 
 	return;
@@ -321,7 +321,7 @@ int main(void)
         /* Clear accumulated reasons. */
         NRF_POWER->RESETREAS = 0xFFFFFFFF;
 
-        printf ("Reset event (0x%X):", info);
+        printf ("Reset event (0x%lX):", info);
         if (info & POWER_RESETREAS_VBUS_Msk)
             printf (" Wake up due to VBUS level");
         if (info & POWER_RESETREAS_NFC_Msk)
@@ -350,18 +350,18 @@ int main(void)
     faultPtr = (uint32_t *)NRF_FAULT_INFO_ADDR;
     if (*faultPtr == NRF_FAULT_INFO_MAGIC) {
         printf ("Reset after SoftDevice fault, "
-            "Id: 0x%X PC: 0x%X INFO: 0x%X\r\n",
+            "Id: 0x%lX PC: 0x%lX INFO: 0x%lX\r\n",
             faultPtr[1], faultPtr[2], faultPtr[3]);
         faultPtr[0] = 0;
     }
 
     info = NRF_FICR->INFO.VARIANT;
     p = (uint8_t *)&info;
-    printf ("Nordic Semiconductor nRF%x Variant: %c%c%c%c ",
+    printf ("Nordic Semiconductor nRF%lx Variant: %c%c%c%c ",
         NRF_FICR->INFO.PART, p[3], p[2], p[1], p[0]);
-    printf ("RAM: %dKB Flash: %dKB\r\n", NRF_FICR->INFO.RAM,
+    printf ("RAM: %ldKB Flash: %ldKB\r\n", NRF_FICR->INFO.RAM,
         NRF_FICR->INFO.FLASH);
-    printf ("Device ID: %x%x\r\n", NRF_FICR->DEVICEID[0],
+    printf ("Device ID: %lX%lX\r\n", NRF_FICR->DEVICEID[0],
         NRF_FICR->DEVICEID[1]);
     chThdSleep(2);
     printf (PORT_INFO "\r\n");
@@ -463,7 +463,7 @@ int main(void)
     pFlash = flashGetDescriptor (&FLASHD2);
 
     if (pFlash->sectors_count > 0) {
-        printf ("On-board NRF52840 flash detected: %dMB mapped at 0x%x\r\n",
+        printf ("On-board NRF52840 flash detected: %ldMB mapped at 0x%lx\r\n",
             (pFlash->sectors_count * pFlash->sectors_size) >> 20,
 	    pFlash->address);
     }

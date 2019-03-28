@@ -290,7 +290,7 @@ bleStart (void)
 	ble_station_addr[4] = addr.addr[1];
 	ble_station_addr[5] = addr.addr[0];
 
-	printf ("Station address: %x:%x:%x:%x:%x:%x\r\n",
+	printf ("Station address: %X:%X:%X:%X:%X:%X\r\n",
 	    ble_station_addr[0], ble_station_addr[1],
 	    ble_station_addr[2], ble_station_addr[3],
 	    ble_station_addr[4], ble_station_addr[5]);
@@ -386,10 +386,10 @@ bleEnable (void)
 	r = sd_ble_enable (&ram_start);
 
 	if (r == NRF_SUCCESS)
-		printf ("Bluetooth LE enabled. (RAM base: 0x%x)\r\n",
+		printf ("Bluetooth LE enabled. (RAM base: 0x%lx)\r\n",
 		    ram_start);
 	else {
-		printf ("Enabling BLE failed (0x%x 0x%x)\r\n", r, ram_start);
+		printf ("Enabling BLE failed (0x%x 0x%lx)\r\n", r, ram_start);
 		return;
 	}
 

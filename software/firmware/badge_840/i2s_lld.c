@@ -35,6 +35,8 @@
 #include "i2s_lld.h"
 #include "ff.h"
 
+#include <stdlib.h>
+
 uint16_t * i2sBuf;
 uint8_t i2sEnabled = TRUE;
 
@@ -89,14 +91,14 @@ THD_FUNCTION(i2sThread, arg)
 			continue;
 		}
 
-		i2sBuf = chHeapAlloc (NULL, I2S_BYTES * 2);
+		i2sBuf = malloc (I2S_BYTES * 2);
 
 		/* Load the first block of samples. */
 
 		p = i2sBuf;
 		if (f_read (&f, p, I2S_BYTES, &br) != FR_OK) {
 			f_close (&f);
-			chHeapFree (i2sBuf);
+			free (i2sBuf);
 			i2sBuf = NULL;
 			play = 0;
 			continue;
@@ -152,7 +154,7 @@ THD_FUNCTION(i2sThread, arg)
 
 		palSetPad (IOPORT1, IOPORT1_I2S_AMPSD);
 
-		chHeapFree (i2sBuf);
+		free (i2sBuf);
                	i2sBuf = NULL;
 		f_close (&f);
 	}
