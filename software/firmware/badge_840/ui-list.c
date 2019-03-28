@@ -35,6 +35,7 @@
 #include "orchard-ui.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "fontlist.h"
 
@@ -52,10 +53,10 @@ static void list_start (OrchardAppContext *context)
 	unsigned int i;
 
 	ctx = context->instance->uicontext;
-	ctx->priv = chHeapAlloc (NULL, sizeof(ListHandles));
+	ctx->priv = malloc (sizeof(ListHandles));
 	p = ctx->priv;
 
-	p->font = gdispOpenFont (FONT_FIXED);
+	p->font = gdispOpenFont (FONT_TEXTENTRY);
 	gwinSetDefaultFont (p->font);
 
         gdispFillArea (0, 0, gdispGetWidth(),
@@ -161,7 +162,7 @@ static void list_exit(OrchardAppContext *context)
 
 	gdispClear (Black);
 
-	chHeapFree (p);
+	free (p);
 	context->instance->uicontext->priv = NULL;
 
 	return;

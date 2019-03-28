@@ -104,9 +104,9 @@ music_start (OrchardAppContext *context)
 
 	i += 2;
 
-	p = chHeapAlloc (NULL, sizeof(MusicHandles));
+	p = malloc (sizeof(MusicHandles));
 	memset (p, 0, sizeof(MusicHandles));
-	p->listitems = chHeapAlloc (NULL, sizeof(char *) * i);
+	p->listitems = malloc (sizeof(char *) * i);
 	p->itemcnt = i;
 
 	p->listitems[0] = "Choose a song";
@@ -121,7 +121,7 @@ music_start (OrchardAppContext *context)
 			break;
 		if (strstr (info.fname, ".SND") != NULL) {
 			p->listitems[i] =
-			    chHeapAlloc (NULL, strlen (info.fname) + 1);
+			    malloc (strlen (info.fname) + 1);
 			memset (p->listitems[i], 0, strlen (info.fname) + 1);
 			strcpy (p->listitems[i], info.fname);
 			i++;
@@ -274,8 +274,7 @@ musicPlay (MusicHandles * p, char * fname)
 	if (f_open (&f, fname, FA_READ) != FR_OK)
 		return (0);
 
-	i2sBuf = chHeapAlloc (NULL,
-	    (MUSIC_SAMPLES * sizeof(uint16_t)) * 2);
+	i2sBuf = malloc ((MUSIC_SAMPLES * sizeof(uint16_t)) * 2);
 
 	buf = i2sBuf;
 	p1 = buf;
@@ -326,7 +325,7 @@ musicPlay (MusicHandles * p, char * fname)
 	i2sEnabled = TRUE;
 
 	f_close (&f);
-	chHeapFree (i2sBuf);
+	free (i2sBuf);
 
 	geventDetachSource (&gl, NULL);
 
@@ -411,10 +410,10 @@ music_exit(OrchardAppContext *context)
             return;
 
 	for (i = 2; i < p->itemcnt; i++)
-		chHeapFree (p->listitems[i]);
+		free (p->listitems[i]);
 
-	chHeapFree (p->listitems);
-	chHeapFree (p);
+	free (p->listitems);
+	free (p);
 
 	context->priv = NULL;
 

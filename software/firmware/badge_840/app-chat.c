@@ -31,6 +31,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "orchard-app.h"
 #include "orchard-ui.h"
@@ -103,7 +104,7 @@ insert_peer (OrchardAppContext * context, ble_evt_t * evt,
 
 	memcpy (&p->peeraddrs[p->peers], addr, sizeof (ble_gap_addr_t));
 
-	p->peernames[p->peers] = chHeapAlloc (NULL, MAX_PEERMEM);
+	p->peernames[p->peers] = malloc (MAX_PEERMEM);
 
 	if (len)
 		chsnprintf (p->peernames[p->peers], MAX_PEERMEM, "%s", name);
@@ -163,7 +164,7 @@ chat_event (OrchardAppContext *context,
 
 	if (event->type == appEvent) {
 		if (event->app.event == appStart) {
-			p = chHeapAlloc(NULL, sizeof(ChatHandles));
+			p = malloc (sizeof(ChatHandles));
 			memset (p, 0, sizeof(ChatHandles));
 			p->peers = 2;
 #ifdef notdef
@@ -191,12 +192,12 @@ chat_event (OrchardAppContext *context,
 			p = context->priv;
 			for (i = 2; i < p->peers; i++) {
 				if (p->peernames[i] != NULL)
-					chHeapFree (p->peernames[i]);
+					free (p->peernames[i]);
 			}
 			if (p->cid != BLE_L2CAP_CID_INVALID)
 				bleL2CapDisconnect (p->cid);
 			bleGapDisconnect ();
-			chHeapFree (p);
+			free (p);
 			context->priv = NULL;
 		}
 		return;
@@ -277,7 +278,11 @@ chat_event (OrchardAppContext *context,
 						ui->exit (context);
 					orchardAppExit ();
 				}
-			}
+				screen_alert_draw (FALSE,
+				    "L2CAP Connecting...");
+			} else
+				screen_alert_draw (FALSE, "Wrong role?");
+		
 			return;
 		}
 
@@ -359,7 +364,7 @@ chat_event (OrchardAppContext *context,
 				if (i == p->peer)
 					continue;
 				if (p->peernames[i] != NULL) {
-					chHeapFree (p->peernames[i]);
+					free (p->peernames[i]);
 					p->peernames[i] = NULL;
 				}
 			}

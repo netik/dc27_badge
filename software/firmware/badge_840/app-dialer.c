@@ -5,13 +5,10 @@
 #include "i2s_lld.h"
 #include "ble_lld.h"
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-
-#include <math.h>
-
-#include "badge.h"
 
 typedef struct dialer_button {
 	coord_t		button_x;
@@ -120,6 +117,8 @@ typedef struct _DHandles {
 
 #ifdef CALIBRATION
 
+#include "badge.h"
+
 #define DIALER_MATCHES 6
 #define DIALER_SAMPLES 4096
 
@@ -198,7 +197,7 @@ tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 
 	samples = buttons[b].button_samples;
 
-	buf = chHeapAlloc (NULL, samples * sizeof(uint16_t));
+	buf = malloc (samples * sizeof(uint16_t));
 
 	pi = (3.14159265358979323846264338327950288 * 2);
 
@@ -232,7 +231,7 @@ tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 	i2sSamplesWait ();
 	i2sSamplesStop ();
 
-	chHeapFree (buf);
+	free (buf);
 
 	return;
 }
@@ -308,7 +307,7 @@ static void dialer_start(OrchardAppContext *context)
 {
 	DHandles * p;
 
-	p = chHeapAlloc (NULL, sizeof(DHandles));
+	p = malloc (sizeof(DHandles));
 	memset (p, 0, sizeof(DHandles));
 	context->priv = p;
 	p->font = gdispOpenFont (FONT_KEYBOARD);
@@ -459,7 +458,7 @@ dialer_exit(OrchardAppContext *context)
 
 	i2sAudioAmpCtl (I2S_AMP_OFF);
 
-	chHeapFree (p);
+	free (p);
 	context->priv = NULL;
 
 	return;

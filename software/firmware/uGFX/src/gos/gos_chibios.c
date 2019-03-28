@@ -179,6 +179,7 @@ void gfxSemSignalI(gfxSem *psem)
 
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param)
 {
+#if CH_CFG_USE_HEAP == TRUE
 	if (!stackarea) {
 		if (!stacksz) stacksz = 256;
 		#if (CH_KERNEL_MAJOR == 2) || (CH_KERNEL_MAJOR == 3)
@@ -187,6 +188,9 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 			return chThdCreateFromHeap(0, stacksz, "ugfx", prio, (tfunc_t)fn, param);
 		#endif
 	}
+#else
+	(void) stackarea;
+#endif
 
 	if (!stacksz)
 		return 0;

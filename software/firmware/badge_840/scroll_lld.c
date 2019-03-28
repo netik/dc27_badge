@@ -38,6 +38,8 @@
 
 #include "scroll_lld.h"
 
+#include <stdlib.h>
+
 #define ILI9341_VSDEF	0x33
 #define ILI9341_VSADD	0x37
 
@@ -99,7 +101,7 @@ scrollImage (char * file, int delay)
 	geventListenerInit (&gl);
 	geventAttachSource (&gl, gs, GLISTEN_MOUSEMETA);
 
-	buf = chHeapAlloc (NULL, sizeof(pixel_t) * gdispGetHeight ());
+	buf = malloc (sizeof(pixel_t) * gdispGetHeight ());
 
 	hdr = (GDISP_IMAGE *)buf;
 	f_read (&f, hdr, sizeof(GDISP_IMAGE), &br);
@@ -135,7 +137,7 @@ scrollImage (char * file, int delay)
 
 out:
 
-	chHeapFree (buf);
+	free (buf);
 	f_close (&f);
 
 	return (r);

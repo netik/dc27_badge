@@ -82,9 +82,9 @@ video_start (OrchardAppContext *context)
 
 	i += 2;
 
-	p = chHeapAlloc (NULL, sizeof(VideoHandles));
+	p = malloc (sizeof(VideoHandles));
 	memset (p, 0, sizeof(VideoHandles));
-	p->listitems = chHeapAlloc (NULL, sizeof(char *) * i);
+	p->listitems = malloc (sizeof(char *) * i);
 	p->itemcnt = i;
 
 	p->listitems[0] = "Choose a video";
@@ -99,7 +99,7 @@ video_start (OrchardAppContext *context)
 			break;
 		if (strstr (info.fname, ".VID") != NULL) {
 			p->listitems[i] =
-			    chHeapAlloc (NULL, strlen (info.fname) + 1);
+			    malloc (strlen (info.fname) + 1);
 			memset (p->listitems[i], 0, strlen (info.fname) + 1);
 			strcpy (p->listitems[i], info.fname);
 			i++;
@@ -174,10 +174,10 @@ video_exit(OrchardAppContext *context)
             return;
 
 	for (i = 2; i < p->itemcnt; i++)
-		chHeapFree (p->listitems[i]);
+		free (p->listitems[i]);
 
-	chHeapFree (p->listitems);
-	chHeapFree (p);
+	free (p->listitems);
+	free (p);
 
 	context->priv = NULL;
 

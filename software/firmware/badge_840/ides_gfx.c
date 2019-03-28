@@ -167,7 +167,7 @@ putImageFile (char *name, int16_t x, int16_t y)
 
 	len = 2048 /*sizeof(pixel_t) * w * 8*/;
 
-	buf = chHeapAlloc (NULL, len * 2);
+	buf = malloc (len * 2);
 
 	p1 = buf;
 	p2 = buf + len;
@@ -207,7 +207,7 @@ putImageFile (char *name, int16_t x, int16_t y)
 
 	f_close (&f);
 
-	chHeapFree (buf);
+	free (buf);
 #endif
 	return (0);
 }

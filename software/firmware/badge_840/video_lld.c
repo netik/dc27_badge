@@ -44,6 +44,8 @@
 #include "async_io_lld.h"
 #include "i2s_lld.h"
 
+#include <stdlib.h>
+
 int
 videoWinPlay (char * fname, int x, int y)
 {
@@ -69,31 +71,30 @@ videoWinPlay (char * fname, int x, int y)
 
 	/* Allocate memory */
 
-	buf = chHeapAlloc (NULL, VID_CHUNK_BYTES * 2);
+	buf = malloc (VID_CHUNK_BYTES * 2);
 
 	if (buf == NULL)
  		return (-1);
 
-	linebuf = chHeapAlloc (NULL, 320 * 2 * VID_CHUNK_LINES * 2);
+	linebuf = malloc (320 * 2 * VID_CHUNK_LINES * 2);
 
 	if (linebuf == NULL) {
-		chHeapFree (buf);
+		free (buf);
  		return (-1);
 	}
 
-	i2sBuf = chHeapAlloc (NULL,
-	    VID_AUDIO_BYTES_PER_CHUNK * VID_AUDIO_BUFCNT * 2);
+	i2sBuf = malloc (VID_AUDIO_BYTES_PER_CHUNK * VID_AUDIO_BUFCNT * 2);
 
 	if (i2sBuf == NULL) {
-		chHeapFree (linebuf);
-		chHeapFree (buf);
+		free (linebuf);
+		free (buf);
  		return (-1);
 	}
 
 	if (f_open(&f, fname, FA_READ) != FR_OK) {
-		chHeapFree (buf);
-		chHeapFree (linebuf);
-		chHeapFree (i2sBuf);
+		free (buf);
+		free (linebuf);
+		free (i2sBuf);
 		return (-1);
 	}
 
@@ -240,9 +241,9 @@ videoWinPlay (char * fname, int x, int y)
 
 	/* Release memory */
 
-	chHeapFree (buf);
-	chHeapFree (linebuf);
-	chHeapFree (i2sBuf);
+	free (buf);
+	free (linebuf);
+	free (i2sBuf);
 	i2sBuf = NULL;
 
 	if (me != NULL && me->buttons & GMETA_MOUSE_DOWN)

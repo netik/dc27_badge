@@ -152,6 +152,7 @@ CSRC += main.c \
 	cmd-reset.c \
 	cmd-random.c \
 	cmd-watchdog.c \
+	cmd-mem.c \
 	orchard-app.c \
 	orchard-ui.c \
 	ui-keyboard.c \
@@ -186,6 +187,7 @@ CSRC += main.c \
 	scanf.c \
 	strtoq.c \
 	strtouq.c \
+	newlib_syscall.c \
         $(GFXSRC) \
 	$(FATFSSRC)
 
