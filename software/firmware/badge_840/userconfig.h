@@ -63,7 +63,7 @@ typedef struct userconfig {
 
   uint16_t lastdeath; // last time you died
   uint8_t in_combat;
-  uint16_t unlocks;
+  uint32_t unlocks;
 
   int16_t hp;
   uint16_t xp;

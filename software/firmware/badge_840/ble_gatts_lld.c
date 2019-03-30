@@ -30,6 +30,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -46,13 +47,74 @@
 #include "ble_gap_lld.h"
 #include "ble_gatts_lld.h"
 
-#include "badge.h"
+#include "orchard-app.h"
 
+static ble_gatts_char_handles_t pw_handle;	
+static ble_gatts_char_handles_t ul_handle;	
 static ble_gatts_char_handles_t mf_handle;	
 static ble_gatts_char_handles_t sysid_handle;	
 static ble_gatts_char_handles_t model_handle;	
 static ble_gatts_char_handles_t sw_handle;	
-static uint16_t ble_gatts_handle;
+static uint16_t ble_gatts_devid_handle;
+static uint16_t ble_gatts_ides_handle;
+
+extern uint32_t _data_start;
+
+static void
+bleGattsWriteHandle (ble_gatts_evt_write_t * req,
+    ble_gatts_rw_authorize_reply_params_t * rep)
+{
+	rep->params.write.gatt_status = BLE_GATT_STATUS_SUCCESS;
+	rep->params.write.update = 1;
+	rep->params.write.offset = req->offset;
+	rep->params.write.len = req->len;
+	rep->params.write.p_data = req->data;
+
+	if (req->handle == ul_handle.value_handle) {
+		if (req->len > sizeof (ble_unlocks)) {
+			rep->params.write.gatt_status =
+			    BLE_GATT_STATUS_ATTERR_INVALID_ATT_VAL_LENGTH;
+#ifdef BLE_GATTS_VERBOSE
+			printf ("unlock update size incorrect\n");
+#endif
+		} else if (strncmp (ble_password, BLE_IDES_PASSWORD,
+			    strlen (BLE_IDES_PASSWORD))) {
+			rep->params.write.gatt_status =
+			    BLE_GATT_STATUS_ATTERR_WRITE_NOT_PERMITTED;
+#ifdef BLE_GATTS_VERBOSE
+			printf ("unlock update permission denied\n");
+#endif
+		} else {
+			memcpy (&ble_unlocks, req->data, req->len);
+			chEvtBroadcast (&unlocks_updated);
+#ifdef BLE_GATTS_VERBOSE
+			printf ("new unlock value: 0x%lx\n", ble_unlocks);
+#endif
+		}
+	}
+
+	if (req->handle == pw_handle.value_handle) {
+		if (req->len > sizeof (ble_password)) {
+			rep->params.write.gatt_status =
+			    BLE_GATT_STATUS_ATTERR_INVALID_ATT_VAL_LENGTH;
+#ifdef BLE_GATTS_VERBOSE
+			printf ("password update size incorrect\n");
+#endif
+		} else if (strncmp ((char *)req->data, BLE_IDES_PASSWORD,
+			    strlen (BLE_IDES_PASSWORD))) {
+			rep->params.write.gatt_status =
+			    BLE_GATT_STATUS_ATTERR_WRITE_NOT_PERMITTED;
+#ifdef BLE_GATTS_VERBOSE
+			printf ("password incorrect\n");
+#endif
+		} else {
+			memset (ble_password, 0, sizeof (ble_password));
+			memcpy (ble_password, req->data, req->len);
+		}
+	}
+
+	return;
+}
 
 void
 bleGattsDispatch (ble_evt_t * evt)
@@ -69,51 +131,44 @@ bleGattsDispatch (ble_evt_t * evt)
 		case BLE_GATTS_EVT_WRITE:
 #ifdef BLE_GATTS_VERBOSE
 			write = &evt->evt.gatts_evt.params.write;
-			printf ("write to handle %x uuid %x\r\n",
+			printf ("write to handle %x uuid %x\n",
 			    write->handle, write->uuid.uuid);
 #endif
 			break;
 		case BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST:
 #ifdef BLE_GATTS_VERBOSE
-			printf ("RW authorization request received\r\n");
+			printf ("RW authorization request received\n");
 #endif
 			req = &evt->evt.gatts_evt.params.authorize_request;
 			rep.type = req->type;
 			if (req->type == BLE_GATTS_AUTHORIZE_TYPE_WRITE) {
-				rep.params.write.gatt_status =
-				    BLE_GATT_STATUS_SUCCESS;
-				rep.params.write.update = 1;
-				rep.params.write.offset =
-				    req->request.write.offset;
-				rep.params.write.len =
-				    req->request.write.len;
-				rep.params.write.p_data =
-				    req->request.write.data;
+				bleGattsWriteHandle (&req->request.write,
+				    &rep);
 #ifdef BLE_GATTS_VERBOSE
 				r =
 #endif
 				sd_ble_gatts_rw_authorize_reply (
 				    ble_conn_handle, &rep);
 #ifdef BLE_GATTS_VERBOSE
-				printf ("sent reply: %d\r\n", r);
+				printf ("sent reply: %d\n", r);
 #endif
 			}
 			break;
 		case BLE_GATTS_EVT_SYS_ATTR_MISSING:
 #ifdef BLE_GATTS_VERBOSE
-			printf ("system attribute access pending\r\n");
+			printf ("system attribute access pending\n");
 			r = 
 #endif
 			sd_ble_gatts_sys_attr_set (ble_conn_handle,
 			    NULL, 0, 0);
 #ifdef BLE_GATTS_VERBOSE
-			printf ("set attribute: %d\r\n", r);
+			printf ("set attribute: %d\n", r);
 #endif
 			break;
 		case BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST:
 #ifdef BLE_GATTS_VERBOSE
 			mtu = &evt->evt.gatts_evt.params.exchange_mtu_request;
-			printf ("GATTS MTU exchange: %d\r\n",
+			printf ("GATTS MTU exchange: %d\n",
 			    mtu->client_rx_mtu);
 #endif
 #ifdef BLE_GATTS_VERBOSE
@@ -122,11 +177,11 @@ bleGattsDispatch (ble_evt_t * evt)
 			sd_ble_gatts_exchange_mtu_reply (ble_conn_handle,
 			    BLE_GATT_ATT_MTU_DEFAULT);
 #ifdef BLE_GATTS_VERBOSE
-			printf ("MTU exchange reply: %x\r\n", r);
+			printf ("MTU exchange reply: %x\n", r);
 #endif
 			break;
 		default:
-			printf ("invalid GATTS event %d (%d)\r\n",
+			printf ("unhandled GATTS event %d (%d)\n",
 			    evt->header.evt_id - BLE_GATTS_EVT_BASE,
 			    evt->header.evt_id);
 			break;
@@ -139,26 +194,31 @@ bleGattsDispatch (ble_evt_t * evt)
  */
 
 static int
-bleGattsStrCharAdd (uint16_t ble_gatts_handle, uint16_t uuid,
-    uint8_t rw, char * str, ble_gatts_char_handles_t * char_handle)
+bleGattsStrCharAdd (uint16_t ble_gatts_handle, ble_uuid_t * uuid,
+    uint8_t rw, char * str, ble_gatts_char_handles_t * char_handle,
+    uint8_t * description)
 {
 	ble_gatts_char_md_t	ble_char_md;
+	ble_gatts_attr_md_t	ble_desc_md;
 	ble_gatts_attr_md_t	ble_attr_md;
 	ble_gatts_attr_t	ble_attr_char_val;
 	ble_gatts_char_pf_t	ble_char_pf;
-	ble_uuid_t		ble_char_uuid;
 	int r;
 
 	memset (&ble_char_md, 0, sizeof(ble_char_md));
-	memset (&ble_attr_md, 0, sizeof (ble_attr_md));
+	memset (&ble_desc_md, 0, sizeof(ble_attr_md));
+	memset (&ble_attr_md, 0, sizeof(ble_attr_md));
 	memset (&ble_attr_char_val, 0, sizeof (ble_attr_char_val));
-	memset (&ble_char_pf, 0, sizeof (ble_gatts_char_pf_t));
+	memset (&ble_char_pf, 0, sizeof(ble_gatts_char_pf_t));
 
 	/* Set up attribute metadata */
 
 	BLE_GAP_CONN_SEC_MODE_SET_OPEN (&ble_attr_md.read_perm);
 	BLE_GAP_CONN_SEC_MODE_SET_OPEN (&ble_attr_md.write_perm);
-	ble_attr_md.vloc = BLE_GATTS_VLOC_STACK;
+	if (str < (char *)&_data_start)
+		ble_attr_md.vloc = BLE_GATTS_VLOC_STACK;
+	else
+		ble_attr_md.vloc = BLE_GATTS_VLOC_USER;
 
 	/* Write requests trigger an authorizationr request */
 
@@ -167,10 +227,7 @@ bleGattsStrCharAdd (uint16_t ble_gatts_handle, uint16_t uuid,
 
 	/* Set up GATT attribute data */
 
-	ble_char_uuid.uuid = uuid;
-	ble_char_uuid.type = BLE_UUID_TYPE_BLE;
-
-	ble_attr_char_val.p_uuid = &ble_char_uuid;
+	ble_attr_char_val.p_uuid = uuid;
 	ble_attr_char_val.p_attr_md = &ble_attr_md;
 	ble_attr_char_val.init_len = strlen (str);
 	ble_attr_char_val.max_len = strlen (str);
@@ -183,9 +240,106 @@ bleGattsStrCharAdd (uint16_t ble_gatts_handle, uint16_t uuid,
 	if (rw & BLE_GATTS_AUTHORIZE_TYPE_WRITE)
 		ble_char_md.char_props.write = 1;
 
+	/* Set up presentation format and descrtiption string. */
+
 	ble_char_pf.format = BLE_GATT_CPF_FORMAT_UTF8S;
 	ble_char_pf.name_space = BLE_GATT_CPF_NAMESPACE_BTSIG;
+	/* The description and unit come from the BLE spec. */
+	ble_char_pf.desc = 0x0106; /* main */
+	ble_char_pf.unit = 0x2700; /* unitless */
 	ble_char_md.p_char_pf = &ble_char_pf;
+
+	if (description != NULL) {
+		BLE_GAP_CONN_SEC_MODE_SET_OPEN (&ble_desc_md.read_perm);
+		BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS (&ble_desc_md.write_perm);
+		ble_desc_md.vloc = BLE_GATTS_VLOC_USER;
+		ble_char_md.p_char_user_desc = description;
+		ble_char_md.char_user_desc_size =
+		    strlen ((char *)description) + 1;
+		ble_char_md.char_user_desc_max_size =
+		    strlen ((char *)description) + 1;
+		ble_char_md.p_user_desc_md = &ble_desc_md;
+	}
+
+	/* Add the characteristic to the stack. */
+
+	r = sd_ble_gatts_characteristic_add (ble_gatts_handle,
+	    &ble_char_md, &ble_attr_char_val, char_handle);
+
+	return (r);
+}
+
+/*
+ * Add a uint32_t type characteristic
+ */
+
+static int
+bleGattsIntCharAdd (uint16_t ble_gatts_handle, ble_uuid_t * uuid,
+    uint8_t rw, uint32_t * val, ble_gatts_char_handles_t * char_handle,
+    uint8_t * description)
+{
+	ble_gatts_char_md_t	ble_char_md;
+	ble_gatts_attr_md_t	ble_desc_md;
+	ble_gatts_attr_md_t	ble_attr_md;
+	ble_gatts_attr_t	ble_attr_char_val;
+	ble_gatts_char_pf_t	ble_char_pf;
+	int r;
+
+	memset (&ble_char_md, 0, sizeof (ble_char_md));
+	memset (&ble_desc_md, 0, sizeof (ble_attr_md));
+	memset (&ble_attr_md, 0, sizeof (ble_attr_md));
+	memset (&ble_attr_char_val, 0, sizeof (ble_attr_char_val));
+	memset (&ble_char_pf, 0, sizeof (ble_gatts_char_pf_t));
+
+	/* Set up attribute metadata */
+
+	BLE_GAP_CONN_SEC_MODE_SET_OPEN (&ble_attr_md.read_perm);
+	BLE_GAP_CONN_SEC_MODE_SET_OPEN (&ble_attr_md.write_perm);
+	if (val < &_data_start)
+		ble_attr_md.vloc = BLE_GATTS_VLOC_STACK;
+	else
+		ble_attr_md.vloc = BLE_GATTS_VLOC_USER;
+
+	/* Write requests trigger an authorizationr request */
+
+	if (rw & BLE_GATTS_AUTHORIZE_TYPE_WRITE)
+		ble_attr_md.wr_auth = 1;
+
+	/* Set up GATT attribute data */
+
+	ble_attr_char_val.p_uuid = uuid;
+	ble_attr_char_val.p_attr_md = &ble_attr_md;
+	ble_attr_char_val.init_len = sizeof (val);
+	ble_attr_char_val.max_len = sizeof (val);
+	ble_attr_char_val.p_value = (uint8_t *)val;
+
+	/* Set up GATT characteristic metadata */
+
+	if (rw & BLE_GATTS_AUTHORIZE_TYPE_READ)
+		ble_char_md.char_props.read = 1;
+	if (rw & BLE_GATTS_AUTHORIZE_TYPE_WRITE)
+		ble_char_md.char_props.write = 1;
+
+	/* Set up presentation format and descrtiption string. */
+
+	ble_char_pf.format = BLE_GATT_CPF_FORMAT_UINT32;
+	ble_char_pf.name_space = BLE_GATT_CPF_NAMESPACE_BTSIG;
+	/* The description and unit come from the BLE spec. */
+	ble_char_pf.desc = 0x0106; /* main */
+	ble_char_pf.unit = 0x2700; /* unitless */
+	ble_char_md.p_char_pf = &ble_char_pf;
+
+	if (description != NULL) {
+		BLE_GAP_CONN_SEC_MODE_SET_OPEN (&ble_desc_md.read_perm);
+		BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS (&ble_desc_md.write_perm);
+		ble_desc_md.vloc = BLE_GATTS_VLOC_USER;
+		ble_char_md.p_char_user_desc = description;
+		ble_char_md.char_user_desc_size =
+		    strlen ((char *)description) + 1;
+		ble_char_md.char_user_desc_max_size =
+		    strlen ((char *)description) + 1;
+		ble_char_md.p_user_desc_md = &ble_desc_md;
+	}
 
 	/* Add the characteristic to the stack. */
 
@@ -199,9 +353,7 @@ void
 bleGattsStart (void)
 {
 	ble_uuid_t		ble_service_uuid;
-#ifdef notyet
 	ble_uuid128_t		ble_base_uuid = {BLE_IDES_UUID_BASE};
-#endif
 	int r;
 
 	/*
@@ -211,62 +363,96 @@ bleGattsStart (void)
 	 * 3) Add one or more characteristics to the service
 	 */
 
-#ifdef notyet
-	memset (&ble_service_uuid, 0, sizeof(ble_service_uuid));
-
-	r = sd_ble_uuid_vs_add (&ble_base_uuid, &ble_service_uuid.type);
-
-	printf ("UUID ADD: %x TYPE: %d\r\n", r, ble_service_uuid.type);
-#endif
-
-	/* Add the service to the stack */
+	/* Add device ID the service to the stack */
 
 	ble_service_uuid.type = BLE_UUID_TYPE_BLE;
 	ble_service_uuid.uuid = BLE_UUID_DEVICE_INFORMATION_SERVICE;
 
 	r = sd_ble_gatts_service_add (BLE_GATTS_SRVC_TYPE_PRIMARY,
-	    &ble_service_uuid, &ble_gatts_handle);
+	    &ble_service_uuid, &ble_gatts_devid_handle);
 
 	if (r != NRF_SUCCESS)
-		printf ("Adding GATT service failed\r\n");
+		printf ("Adding GATT service failed\n");
 
-	/* Now add the characteristics */
+	/* Now add the characteristics for the device ID service */
 
-	r = bleGattsStrCharAdd (ble_gatts_handle,
-            BLE_UUID_MANUFACTURER_NAME_STRING_CHAR,
+	ble_service_uuid.uuid = BLE_UUID_MANUFACTURER_NAME_STRING_CHAR;
+
+	r = bleGattsStrCharAdd (ble_gatts_devid_handle, &ble_service_uuid,
 	    BLE_GATTS_AUTHORIZE_TYPE_READ,
-	    BLE_MANUFACTUTER_STRING, &mf_handle);
+	    BLE_MANUFACTUTER_STRING, &mf_handle, NULL);
  
 	if (r != NRF_SUCCESS)
 		printf ("Adding manufacturer string "
-		    "characteristic failed\r\n");
+		    "characteristic failed (%x)\n", r);
 
-	r = bleGattsStrCharAdd (ble_gatts_handle,
-            BLE_UUID_MODEL_NUMBER_STRING_CHAR,
+	ble_service_uuid.uuid = BLE_UUID_MODEL_NUMBER_STRING_CHAR;
+
+	r = bleGattsStrCharAdd (ble_gatts_devid_handle, &ble_service_uuid,
 	    BLE_GATTS_AUTHORIZE_TYPE_READ,
-	    BLE_MODEL_NUMBER_STRING, &model_handle);
+	    BLE_MODEL_NUMBER_STRING, &model_handle, NULL);
 
 	if (r != NRF_SUCCESS)
 		printf ("Adding model string "
-		    "characteristic failed\r\n");
+		    "characteristic failed (%x)\n", r);
 
-	r = bleGattsStrCharAdd (ble_gatts_handle,
-            BLE_UUID_SYSTEM_ID_CHAR,
+	ble_service_uuid.uuid = BLE_UUID_SYSTEM_ID_CHAR;
+
+	r = bleGattsStrCharAdd (ble_gatts_devid_handle, &ble_service_uuid,
 	    BLE_GATTS_AUTHORIZE_TYPE_READ,
-	    BLE_SYSTEM_ID_STRING, &sysid_handle);
+	    BLE_SYSTEM_ID_STRING, &sysid_handle, NULL);
 
 	if (r != NRF_SUCCESS)
 		printf ("Adding system ID string "
-		    "characteristic failed\r\n");
+		    "characteristic failed (%x)\n", r);
 
-	r = bleGattsStrCharAdd (ble_gatts_handle,
-            BLE_UUID_SOFTWARE_REVISION_STRING_CHAR,
+	ble_service_uuid.uuid = BLE_UUID_SOFTWARE_REVISION_STRING_CHAR;
+
+	r = bleGattsStrCharAdd (ble_gatts_devid_handle, &ble_service_uuid,
 	    BLE_GATTS_AUTHORIZE_TYPE_READ,
-	    BLE_SW_VERSION_STRING, &sw_handle);
+	    BLE_SW_VERSION_STRING, &sw_handle, NULL);
 
 	if (r != NRF_SUCCESS)
 		printf ("Adding software version string "
-		    "characteristic failed\r\n");
+		    "characteristic failed (%x)\n", r);
+
+	/* Add our custom service UUID */
+
+	memset (&ble_service_uuid, 0, sizeof(ble_service_uuid));
+
+	r = sd_ble_uuid_vs_add (&ble_base_uuid, &ble_service_uuid.type);
+
+	/* Add the service to the stack */
+
+	ble_service_uuid.uuid = BLE_UUID_IDES_BADGE_SERVICE;
+
+	r = sd_ble_gatts_service_add (BLE_GATTS_SRVC_TYPE_PRIMARY,
+	    &ble_service_uuid, &ble_gatts_ides_handle);
+
+	if (r != NRF_SUCCESS)
+		printf ("Adding custom GATT service failed\n");
+
+	/* Now add characteristics for our custom service */
+
+	ble_service_uuid.uuid = BLE_UUID_IDES_BADGE_PASSWORD;
+
+	r = bleGattsStrCharAdd (ble_gatts_ides_handle, &ble_service_uuid,
+	    BLE_GATTS_AUTHORIZE_TYPE_READ | BLE_GATTS_AUTHORIZE_TYPE_WRITE,
+            ble_password, &pw_handle, (uint8_t *)"Security Password");
+ 
+	if (r != NRF_SUCCESS)
+		printf ("Adding password string "
+		    "characteristic failed (%x)\n", r);
+
+	ble_service_uuid.uuid = BLE_UUID_IDES_BADGE_UNLOCKS;
+
+	r = bleGattsIntCharAdd (ble_gatts_ides_handle, &ble_service_uuid,
+	    BLE_GATTS_AUTHORIZE_TYPE_READ | BLE_GATTS_AUTHORIZE_TYPE_WRITE,
+	    &ble_unlocks, &ul_handle, (uint8_t *)"Unlocks");
+ 
+	if (r != NRF_SUCCESS)
+		printf ("Adding unlock "
+		    "characteristic failed (%x)\n", r);
 
 	return;
 }

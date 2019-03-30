@@ -26,6 +26,7 @@ orchard_app_instance instance;
 static OrchardAppEvent ugfx_evt;
 
 /* orchard event sources */
+event_source_t unlocks_updated;
 event_source_t orchard_app_terminated;
 event_source_t orchard_app_terminate;
 event_source_t timer_expired;
@@ -408,7 +409,6 @@ void orchardAppInit(void) {
 
   orchard_app_list = orchard_apps();
   instance.app = orchard_app_list;
-  chEvtObjectInit(&orchard_app_terminated);
   chEvtObjectInit(&orchard_app_terminate);
   chEvtObjectInit(&timer_expired);
   chEvtObjectInit(&ui_completed);

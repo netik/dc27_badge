@@ -25,6 +25,8 @@ struct _OrchardAppContext;
 typedef struct _OrchardAppContext OrchardAppContext;
 struct orchard_app_instance;
 
+extern event_source_t unlocks_updated;
+
 /* Emitted to an app when it's about to be terminated */
 extern event_source_t orchard_app_terminate;
 

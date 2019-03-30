@@ -172,6 +172,7 @@ CSRC += main.c \
 	scroll_lld.c \
 	ble_gap_lld.c \
 	ble_l2cap_lld.c \
+	ble_gattc_lld.c \
 	ble_gatts_lld.c \
 	ble_lld.c \
 	ble_peer.c \

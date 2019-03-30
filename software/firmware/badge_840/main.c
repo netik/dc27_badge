@@ -187,8 +187,22 @@ shell_termination_handler(eventid_t id)
 {
 	static int i = 1;
 
-	printf ("\r\nRespawning shell (shell #%d, event %ld)\r\n", ++i, id);
+	printf ("\nRespawning shell (shell #%d, event %ld)\n", ++i, id);
 	shellRestart ();
+}
+
+static void
+unlock_update_handler(eventid_t id)
+{
+	userconfig * config;
+
+	(void)id;
+
+	config = getConfig();
+	config->unlocks = __builtin_bswap32 (ble_unlocks);
+	configSave (config);
+
+	return;
 }
 
 static THD_WORKING_AREA(waThread1, 64);
@@ -222,11 +236,11 @@ setup_flash (void)
     		flashWaitErase ((void *)&FLASHD1);
 		printf (".");
 	}
-	printf ("DONE!\r\n");
+	printf ("DONE!\n");
 
 
 	if (f_open (&f, "8MB.DMG", FA_READ) != FR_OK)
-		printf ("OPEN FAILED!!!\r\n");
+		printf ("OPEN FAILED!!!\n");
 
 	orig = buf = malloc (65536 + 32);
 	addr = (uint32_t)buf;
@@ -242,7 +256,7 @@ setup_flash (void)
     		flashProgram (&FLASHD1, i * 65536, 65536, buf);
 		printf (".");
 	}
-	printf ("DONE!\r\n");
+	printf ("DONE!\n");
 
 	free (orig);
 	f_close (&f);
@@ -296,7 +310,7 @@ int main(void)
 
     sdStart (&SD1, &serial_config);
     chThdSleepMilliseconds (50);
-    printf ("\r\n");
+    printf ("\n");
     chThdSleepMilliseconds (50);
 
     palClearPad (IOPORT1, LED1);
@@ -312,7 +326,7 @@ int main(void)
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO+1,
 		      Thread1, NULL);
 
-    printf ("SYSTEM START\r\n");
+    printf ("SYSTEM START\n");
 
     /* Display reset reason */
 
@@ -340,9 +354,9 @@ int main(void)
             printf (" Watchdog reset");
         if (info & POWER_RESETREAS_RESETPIN_Msk)
             printf (" Reset pin asserted");
-        printf ("\r\n");
+        printf ("\n");
     } else {
-        printf ("Power on\r\n");
+        printf ("Power on\n");
     }
 
     /* Check if we rebooted due to a SoftDevice crash. */
@@ -350,7 +364,7 @@ int main(void)
     faultPtr = (uint32_t *)NRF_FAULT_INFO_ADDR;
     if (*faultPtr == NRF_FAULT_INFO_MAGIC) {
         printf ("Reset after SoftDevice fault, "
-            "Id: 0x%lX PC: 0x%lX INFO: 0x%lX\r\n",
+            "Id: 0x%lX PC: 0x%lX INFO: 0x%lX\n",
             faultPtr[1], faultPtr[2], faultPtr[3]);
         faultPtr[0] = 0;
     }
@@ -359,12 +373,12 @@ int main(void)
     p = (uint8_t *)&info;
     printf ("Nordic Semiconductor nRF%lx Variant: %c%c%c%c ",
         NRF_FICR->INFO.PART, p[3], p[2], p[1], p[0]);
-    printf ("RAM: %ldKB Flash: %ldKB\r\n", NRF_FICR->INFO.RAM,
+    printf ("RAM: %ldKB Flash: %ldKB\n", NRF_FICR->INFO.RAM,
         NRF_FICR->INFO.FLASH);
-    printf ("Device ID: %lX%lX\r\n", NRF_FICR->DEVICEID[0],
+    printf ("Device ID: %lX%lX\n", NRF_FICR->DEVICEID[0],
         NRF_FICR->DEVICEID[1]);
     chThdSleep(2);
-    printf (PORT_INFO "\r\n");
+    printf (PORT_INFO "\n");
     chThdSleep(2);
 
     /* Check if the reset pin has been set, and update the UICR if not */
@@ -385,10 +399,10 @@ int main(void)
         while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
                 ;
         NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
-        printf ("Done.\r\n");
+        printf ("Done.\n");
     }
 
-    printf("Priority levels %d\r\n", CORTEX_PRIORITY_LEVELS);
+    printf("Priority levels %d\n", CORTEX_PRIORITY_LEVELS);
 
     /* Set up I/O pins */
 
@@ -404,7 +418,7 @@ int main(void)
 
     joyStart ();
 
-    printf ("Joypad enabled\r\n");
+    printf ("Joypad enabled\n");
 
     /* Start async I/O thread */
 
@@ -413,12 +427,12 @@ int main(void)
     /* Start SPI buses */
 
     spiStart (&SPID1, &spi1_config);
-    printf ("SPI bus 1 enabled\r\n");
+    printf ("SPI bus 1 enabled\n");
     if (NRF_FICR->INFO.VARIANT == 0x41414141)
-        printf ("Skipping SPI bus 4 setup on broken preview silicon\r\n");
+        printf ("Skipping SPI bus 4 setup on broken preview silicon\n");
     else {
         spiStart (&SPID4, &spi4_config);
-        printf ("SPI bus 4 enabled\r\n");
+        printf ("SPI bus 4 enabled\n");
     }
 
 #ifdef DRV_QSPI
@@ -449,7 +463,7 @@ int main(void)
     pFlash = flashGetDescriptor (&FLASHD1);
 
     if (pFlash->sectors_count > 0) {
-        printf ("On-board QSPI flash detected: %dMB mapped at 0x%x\r\n",
+        printf ("On-board QSPI flash detected: %dMB mapped at 0x%x\n",
             (pFlash->sectors_count * pFlash->sectors_size) >> 20,
 	    pFlash->address);
     }
@@ -463,39 +477,39 @@ int main(void)
     pFlash = flashGetDescriptor (&FLASHD2);
 
     if (pFlash->sectors_count > 0) {
-        printf ("On-board NRF52840 flash detected: %ldMB mapped at 0x%lx\r\n",
+        printf ("On-board NRF52840 flash detected: %ldMB mapped at 0x%lx\n",
             (pFlash->sectors_count * pFlash->sectors_size) >> 20,
 	    pFlash->address);
     }
 
     i2cStart (&I2CD2, &i2c2_config);
-    printf ("I2C interface enabled\r\n");
+    printf ("I2C interface enabled\n");
 
     /* start the LEDs */
     if (led_init()) {
-      printf("I2C LED controller found.\r\n");
+      printf("I2C LED controller found.\n");
       ledStart();
     } else {
-      printf("I2C LED controller not found. No Bling ;(\r\n");
+      printf("I2C LED controller not found. No Bling ;(\n");
     }
 
     /* Enable I2S controller */
     i2sStart ();
-    printf ("I2S interface enabled\r\n");
+    printf ("I2S interface enabled\n");
 
     if (NRF_FICR->INFO.VARIANT == 0x41414141)
-      printf ("Skipping screen setup on broken preview silicon\r\n");
+      printf ("Skipping screen setup on broken preview silicon\n");
     else {
       /* Enable display and touch panel */
-      printf ("Main screen turn on\r\n");
+      printf ("Main screen turn on\n");
       gfxInit ();
     }
 
     /* Mount SD card */
     if (gfileMount ('F', "0:") == FALSE)
-        printf ("No SD card found\r\n");
+        printf ("No SD card found\n");
     else
-        printf ("SD card detected\r\n");
+        printf ("SD card detected\n");
 
 #ifdef notyet
     m25qMemoryUnmap (&FLASHD1);
@@ -507,9 +521,9 @@ int main(void)
     /* Mount QSPI flash as secondary filesystem */
 
     if (f_mount (&qspi_fs, "1:", 1) != FR_OK) {
-        printf ("QSPI filesystem mount failed\r\n");
+        printf ("QSPI filesystem mount failed\n");
     } else {
-        printf ("QSPI filesystem mounted\r\n");
+        printf ("QSPI filesystem mounted\n");
         /*f_chdrive ("1:");*/
     }
 #endif
@@ -529,29 +543,32 @@ int main(void)
      */
 
     if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR)
-      printf ("ERASE FAILED\r\n");
+      printf ("ERASE FAILED\n");
 
     flashWaitErase ((void *)&FLASHD2);
 
     if (flashProgram (&FLASHD2, 0xFF000, 1024, (uint8_t *)0x20002000) !=
       FLASH_NO_ERROR)
-      printf ("PROGRAM FAILED...\r\n");
+      printf ("PROGRAM FAILED...\n");
 #endif
 
     NRF_P0->DETECTMODE = 0;
 
     /* Launch shell thread */
 
-    evtTableInit (orchard_events, 5);
+    evtTableInit (orchard_events, 3);
+    chEvtObjectInit (&orchard_app_terminated);
+    chEvtObjectInit (&unlocks_updated);
     evtTableHook (orchard_events, shell_terminated, shell_termination_handler);
+    evtTableHook (orchard_events, unlocks_updated, unlock_update_handler);
+    evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
+
 
     shellRestart ();
 
     uiStart ();
     orchardAppInit ();
     orchardAppRestart ();
-
-    evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
 
     while (true) {
         chEvtDispatch(evtHandlers(orchard_events), chEvtWaitOne(ALL_EVENTS));

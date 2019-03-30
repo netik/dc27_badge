@@ -70,7 +70,7 @@ bleL2CapDispatch (ble_evt_t * evt)
 		case BLE_L2CAP_EVT_CH_SETUP_REQUEST:
 			request = &evt->evt.l2cap_evt.params.ch_setup_request;
 #ifdef BLE_L2CAP_VERBOSE
-			printf ("L2CAP setup requested %x\r\n",
+			printf ("L2CAP setup requested %x\n",
 			    evt->evt.l2cap_evt.local_cid);
 			printf ("MTU: %d peer MPS: %d "
 			     "TX MPS: %d credits: %d ",
@@ -78,7 +78,7 @@ bleL2CapDispatch (ble_evt_t * evt)
 				request->tx_params.peer_mps,
 				request->tx_params.tx_mps,
 				request->tx_params.credits);
-			printf ("PSM: %x\r\n", request->le_psm);
+			printf ("PSM: %x\n", request->le_psm);
 #endif
 			ble_local_cid = evt->evt.l2cap_evt.local_cid;
 			bleL2CapSetupReply (request);
@@ -87,7 +87,7 @@ bleL2CapDispatch (ble_evt_t * evt)
 		case BLE_L2CAP_EVT_CH_SETUP_REFUSED:
 #ifdef BLE_L2CAP_VERBOSE
                         refused = &evt->evt.l2cap_evt.params.ch_setup_refused;
-			printf ("L2CAP setup refused: %x %x\r\n",
+			printf ("L2CAP setup refused: %x %x\n",
 			    refused->source, refused->status);
 #endif
 			orchardAppRadioCallback (l2capConnectRefusedEvent,
@@ -96,10 +96,10 @@ bleL2CapDispatch (ble_evt_t * evt)
 
 		case BLE_L2CAP_EVT_CH_SETUP:
 #ifdef BLE_L2CAP_VERBOSE
-			printf ("L2CAP setup completed\r\n");
+			printf ("L2CAP setup completed\n");
 			setup = &evt->evt.l2cap_evt.params.ch_setup;
 			printf ("MTU: %d peer MPS: %d "
-			     "TX MPS: %d credits: %d\r\n",
+			     "TX MPS: %d credits: %d\n",
 				setup->tx_params.tx_mtu,
 				setup->tx_params.peer_mps,
 				setup->tx_params.tx_mps,
@@ -112,7 +112,7 @@ bleL2CapDispatch (ble_evt_t * evt)
 
 		case BLE_L2CAP_EVT_CH_RELEASED:
 #ifdef BLE_L2CAP_VERBOSE
-			printf ("L2CAP channel release\r\n");
+			printf ("L2CAP channel release\n");
 #endif
 			ble_local_cid = BLE_L2CAP_CID_INVALID;
 			orchardAppRadioCallback (l2capDisconnectEvent,
@@ -121,13 +121,13 @@ bleL2CapDispatch (ble_evt_t * evt)
 
 		case BLE_L2CAP_EVT_CH_SDU_BUF_RELEASED:
 #ifdef BLE_L2CAP_VERBOSE
-			printf ("L2CAP channel SDU buffer released\r\n");
+			printf ("L2CAP channel SDU buffer released\n");
 #endif
 			break;
 
 		case BLE_L2CAP_EVT_CH_CREDIT:
 #ifdef BLE_L2CAP_VERBOSE
-			printf ("L2CAP credit received\r\n");
+			printf ("L2CAP credit received\n");
 #endif
 			orchardAppRadioCallback (l2capTxDoneEvent, evt,
 			    NULL, 0);
@@ -135,8 +135,8 @@ bleL2CapDispatch (ble_evt_t * evt)
 
 		case BLE_L2CAP_EVT_CH_RX:
 			rx = &evt->evt.l2cap_evt.params.rx;
-			printf ("L2CAP SDU received\r\n");
-			printf ("DATA RECEIVED: [%s]\r\n", rx->sdu_buf.p_data);
+			printf ("L2CAP SDU received\n");
+			printf ("DATA RECEIVED: [%s]\n", rx->sdu_buf.p_data);
 			orchardAppRadioCallback (l2capRxEvent, evt,
 			    rx->sdu_buf.p_data, rx->sdu_buf.len);
 			rx_data.p_data = ble_rx_buf;
@@ -147,14 +147,14 @@ bleL2CapDispatch (ble_evt_t * evt)
 
 		case BLE_L2CAP_EVT_CH_TX:
 #ifdef BLE_L2CAP_VERBOSE
-			printf ("L2CAP SDU transmitted\r\n");
+			printf ("L2CAP SDU transmitted\n");
 #endif
 			orchardAppRadioCallback (l2capTxEvent, evt,
 			    NULL, 0);
 			break;
 
 		default:
-			printf ("unknown L2CAP event: %d (%d)\r\n",
+			printf ("unhandled L2CAP event: %d (%d)\n",
 			    evt->header.evt_id - BLE_L2CAP_EVT_BASE,
 			    evt->header.evt_id);
 			break;
@@ -183,7 +183,7 @@ bleL2CapConnect (uint16_t psm)
 	r = sd_ble_l2cap_ch_setup (ble_conn_handle, &cid, &params);
 
 	if (r != NRF_SUCCESS)
-		printf ("L2CAP connect failed (0x%x)\r\n", r);
+		printf ("L2CAP connect failed (0x%x)\n", r);
 
 	return (r);
 }
@@ -196,7 +196,7 @@ bleL2CapDisconnect (uint16_t cid)
 	r = sd_ble_l2cap_ch_release (ble_conn_handle, cid);
 
 	if (r != NRF_SUCCESS)
-		printf ("L2CAP disconnect failed (0x%x)\r\n", r);
+		printf ("L2CAP disconnect failed (0x%x)\n", r);
 
 	return (r);
 }
@@ -218,7 +218,7 @@ bleL2CapSetupReply (ble_l2cap_evt_ch_setup_request_t * request)
 	r = sd_ble_l2cap_ch_setup (ble_conn_handle, &ble_local_cid, &params);
 
 	if (r != NRF_SUCCESS)
-		printf ("L2CAP reply failed (0x%x)\r\n", r);
+		printf ("L2CAP reply failed (0x%x)\n", r);
 
 	return;
 }
@@ -235,7 +235,7 @@ bleL2CapSend (char * str)
 	r = sd_ble_l2cap_ch_tx (ble_conn_handle, ble_local_cid, &data);
 
 	if (r != NRF_SUCCESS)
-		printf ("L2CAP tx failed (0x%x)\r\n", r);
+		printf ("L2CAP tx failed (0x%x)\n", r);
 
 	return (r);
 }

@@ -33,8 +33,13 @@
 #ifndef _BLE_LLD_H_
 #define _BLE_LLD_H_
 
+#define BLE_IDES_PASSWORD	"narf"
 #define BLE_APPEARANCE_DC27	0xDC1B
 #define BLE_COMPANY_ID_IDES	0x1DE5
+#define BLE_IDES_UUID_BASE					\
+	{ 0xAA, 0x24, 0xC0, 0x7B, 0x52, 0x7D, 0x11, 0xE9,	\
+	  0xAC, 0x2D, 0xB8, 0xAE, 0xED, 0x76, 0x09, 0x11 }
+#define BLE_IDES_UUID_STRING	"aa24c07b-527d-11e9-ac2d-b8aeed760911"
 #define BLE_NAME_IDES		"DC27 IDES of DEF CON"
 #define BLE_MANUFACTUTER_STRING	"IDES of DEF CON Ltd."
 #define BLE_MODEL_NUMBER_STRING	"Revision 1"
@@ -72,6 +77,19 @@
 #define BLE_ADV_ROLE_BOTH_PERIPH_PREFERRED	2
 #define BLE_ADV_ROLE_BOTH_CENTRAL_PREFERRED	3
 
+/*
+ * These are our custom UUIDs for our private service
+ */
+
+#define BLE_UUID_IDES_BADGE_SERVICE		0x0001
+
+
+#define BLE_UUID_IDES_BADGE_PASSWORD		0x0001
+#define BLE_UUID_IDES_BADGE_UNLOCKS		0x0002
+#define BLE_UUID_IDES_BADGE_GAMEVAL1		0x0003
+
+extern uint32_t ble_unlocks;
+extern char ble_password[32];
 extern uint8_t ble_station_addr[];
 extern volatile uint32_t flash_evt;
 
