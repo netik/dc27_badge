@@ -51,10 +51,11 @@ credits_start(OrchardAppContext *context)
 
 	(void)context;
 
-	i2sPlay ("mario.snd");
-
 	gdispClear (Black);
+
 	scrollAreaSet (0, 0);
+	i2sWait ();
+	i2sPlay ("mario.snd");
 	r = scrollImage ("credits.rgb", 15);
 
 	chThdSleepMilliseconds (800);
@@ -62,6 +63,7 @@ credits_start(OrchardAppContext *context)
 	gdispClear (Black);
 	scrollCount (0);
 
+	i2sPlay (NULL);
 	if (r == 0)
 		i2sPlay (NULL);
 	else
@@ -84,7 +86,6 @@ credits_event(OrchardAppContext *context, const OrchardAppEvent *event)
 static void
 credits_exit(OrchardAppContext *context)
 {
-	i2sPlay (NULL);
 	(void)context;
 	return;
 }

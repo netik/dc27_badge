@@ -46,6 +46,7 @@ static void
 email_start (OrchardAppContext *context)
 {
 	(void)context;
+	gdispClear (Black);
 	orchardAppExit ();
 	return;
 }
@@ -56,6 +57,7 @@ email_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	(void) context;
 
 	if (event->type == appEvent && event->app.event == appTerminate) {
+		i2sWait ();
 		if (videoPlay ("rickroll.vid") != 0)
 			 i2sPlay ("click.snd");
 	}

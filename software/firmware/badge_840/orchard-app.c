@@ -66,8 +66,10 @@ static void ugfx_event(eventid_t id) {
   (void) id;
 
   if (ugfx_evt.ugfx.pEvent->type != GEVENT_GWIN_BUTTON_UP) {
-    i2sPlay ("click.snd");
-    i2sWait ();
+    if (strcmp (instance.app->name, "Launcher") == 0)
+      i2sPlay ("ping.snd");
+    else
+      i2sPlay ("click.snd");
   }
   instance.app->event (instance.context, &ugfx_evt);
   geventEventComplete (ugfx_evt.ugfx.pListener);
