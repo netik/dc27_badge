@@ -33,7 +33,20 @@
 #ifndef _BLE_GATTC_LLD_H_
 #define _BLE_GATTC_LLD_H_
 
+#define BLE_GATTC_SERVICE_DISCOVERED		0x00000001
+#define BLE_GATTC_CHARACTERISTIC_DISCOVERED	0x00000002
+#define BLE_GATTC_DESCRIPTOR_DISCOVERED		0x00000004
+#define BLE_GATTC_ATTR_DISCOVERED		0x00000008
+#define BLE_GATTC_CHAR_READ			0x00000010
+#define BLE_GATTC_CHAR_WRITTEN			0x00000020
+#define BLE_GATTC_ERROR				0xFFFFFFFF
+
 extern void bleGattcStart (void);
 extern void bleGattcDispatch (ble_evt_t *);
+extern int bleGattcDiscover (bool);
+extern int bleGattcReadStr (uint16_t uuid, uint8_t * str);
+extern int bleGattcReadInt (uint16_t uuid, uint8_t * uint32_t);
+extern int bleGattcWriteStr (uint16_t uuid, uint8_t * str);
+extern int bleGattcWriteInt (uint16_t uuid, uint8_t * uint32_t);
 
 #endif /* __BLE_GATTC_LLD_H */

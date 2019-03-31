@@ -49,14 +49,16 @@
 
 #include "orchard-app.h"
 
-static ble_gatts_char_handles_t pw_handle;	
-static ble_gatts_char_handles_t ul_handle;	
+ble_gatts_char_handles_t pw_handle;	
+ble_gatts_char_handles_t ul_handle;	
+ble_gatts_char_handles_t ch_handle;	
+uint16_t ble_gatts_ides_handle;
+const ble_uuid128_t ble_ides_base_uuid = {BLE_IDES_UUID_BASE};
 static ble_gatts_char_handles_t mf_handle;	
 static ble_gatts_char_handles_t sysid_handle;	
 static ble_gatts_char_handles_t model_handle;	
 static ble_gatts_char_handles_t sw_handle;	
 static uint16_t ble_gatts_devid_handle;
-static uint16_t ble_gatts_ides_handle;
 
 extern uint32_t _data_start;
 
@@ -353,7 +355,6 @@ void
 bleGattsStart (void)
 {
 	ble_uuid_t		ble_service_uuid;
-	ble_uuid128_t		ble_base_uuid = {BLE_IDES_UUID_BASE};
 	int r;
 
 	/*
@@ -420,8 +421,8 @@ bleGattsStart (void)
 
 	memset (&ble_service_uuid, 0, sizeof(ble_service_uuid));
 
-	r = sd_ble_uuid_vs_add (&ble_base_uuid, &ble_service_uuid.type);
-
+	r = sd_ble_uuid_vs_add (&ble_ides_base_uuid, &ble_service_uuid.type);
+printf ("NEW TYPE: %d\n", ble_service_uuid.type);
 	/* Add the service to the stack */
 
 	ble_service_uuid.uuid = BLE_UUID_IDES_BADGE_SERVICE;
@@ -452,6 +453,16 @@ bleGattsStart (void)
  
 	if (r != NRF_SUCCESS)
 		printf ("Adding unlock "
+		    "characteristic failed (%x)\n", r);
+
+	ble_service_uuid.uuid = BLE_UUID_IDES_BADGE_CHATREQUEST;
+
+	r = bleGattsIntCharAdd (ble_gatts_ides_handle, &ble_service_uuid,
+	    BLE_GATTS_AUTHORIZE_TYPE_READ | BLE_GATTS_AUTHORIZE_TYPE_WRITE,
+	    &ble_chatreq, &ch_handle, (uint8_t *)"Chat Request");
+ 
+	if (r != NRF_SUCCESS)
+		printf ("Adding chat request "
 		    "characteristic failed (%x)\n", r);
 
 	return;

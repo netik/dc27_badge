@@ -12,8 +12,6 @@
 
 #include "rand.h"
 
-#include "ble_lld.h"
-
 #include <string.h>
 
 /* We implement a naive real-time clock protocol like NTP but
@@ -193,12 +191,25 @@ void configStart(void) {
     }
   }
 
-  ble_unlocks = __builtin_bswap32 (config_cache.unlocks);
-
   return;
 }
 
 struct userconfig *getConfig(void) {
-  // returns volitale config
+  userconfig *config = (userconfig *)CONFIG_FLASH_ADDR;
+
+  /*
+   * returns volatile config, unless we're called very early
+   * during startup, in which case we try to return a pointer
+   * to the actual flash memory. This is to avoid a "chicken-and-the-egg"
+   * problem where the BLE startup code needs to read the board config.
+   * (We need the SoftDevice to do flash accesses so we have to initialize
+   * BLE first and userconfig second, but that means config_cache will
+   * never be valid until after we initialize the radio.
+   */
+
+  if (config_cache.signature != CONFIG_SIGNATURE &&
+      config->signature == CONFIG_SIGNATURE)
+    return (config);
+
   return &config_cache;
 }

@@ -68,6 +68,7 @@
 
 uint8_t ble_station_addr[6];
 uint32_t ble_unlocks;
+uint32_t ble_chatreq;
 char ble_password[32];
 
 static thread_reference_t sdThreadReference;
@@ -267,6 +268,7 @@ void
 bleStart (void)
 {
 	ble_gap_addr_t addr;
+	userconfig * config;
 
 	/* Create SoftDevice event thread */
 
@@ -276,6 +278,9 @@ bleStart (void)
 	/* Set up SoftDevice ISR */
 
 	nvicEnableVector (SD_EVT_IRQn, NRF5_SD_IRQ_PRIORITY);
+
+	config = getConfig ();
+	ble_unlocks = __builtin_bswap32 (config->unlocks);
 
 	/* Initialize peer list handling */
 

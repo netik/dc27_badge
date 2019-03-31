@@ -123,7 +123,13 @@ typedef enum _OrchardAppRadioEventType {
    l2capRxEvent,		/* L2CAP data received */
    l2capTxEvent,		/* L2CAP data sent */
    l2capTxDoneEvent,		/* L2CAP data acknowledged */
-   advertisementEvent		/* Received advertisement */
+   advertisementEvent,		/* Received advertisement */
+   gattcServiceDiscoverEvent,	/* GATTC service discovery complete */
+   gattcCharDiscoverEvent,	/* GATTC characteristic discovery complete */
+   gattcAttrDiscoverEvent,	/* GATTC attribute discovery complete */
+   gattcCharReadByUuidEvent,	/* GATTC characteristic read b/UUID complete */
+   gattcCharReadEvent,		/* GATTC characteristic read complete */
+   gattcCharWriteEvent		/* GATTC characteristic write complete */
 } OrchardAppRadioEventType;
 
 typedef struct _OrchardAppRadioEvent {

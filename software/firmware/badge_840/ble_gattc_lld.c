@@ -46,12 +46,136 @@
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
 #include "ble_gattc_lld.h"
+#include "ble_gatts_lld.h"
+
+#include "orchard-app.h"
+
+static thread_reference_t bleGattcThreadReference;
+static uint32_t bleDetectEvents;
 
 void
 bleGattcDispatch (ble_evt_t * evt)
 {
+	ble_gattc_evt_prim_srvc_disc_rsp_t * pri;
+	ble_gattc_evt_attr_info_disc_rsp_t * attrs;
+#ifdef BLE_GATTC_VERBOSE
+	ble_gattc_evt_char_disc_rsp_t * chars;
+	ble_gattc_evt_char_val_by_uuid_read_rsp_t * ruuid;
+	ble_gattc_service_t * s;
+#endif
+	int i;
+	int next;
 
 	switch (evt->header.evt_id) {
+		case BLE_GATTC_EVT_PRIM_SRVC_DISC_RSP:
+			pri = &evt->evt.gattc_evt.params.prim_srvc_disc_rsp;
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC services discovery event\n");
+
+			printf ("COUNT: %d\n", pri->count);
+			for (i = 0; i < pri->count; i++) {
+				s = &pri->services[i];
+				printf ("UUID: %x TYPE: %d ",
+				    s->uuid.uuid, s->uuid.type);
+				printf ("RANGES: %d %d\n",
+				    s->handle_range.start_handle,
+				    s->handle_range.end_handle);
+			}
+#endif
+
+			orchardAppRadioCallback (gattcServiceDiscoverEvent,
+			    evt, NULL, 0);
+
+			if (evt->evt.gattc_evt.gatt_status ==
+			    BLE_GATT_STATUS_SUCCESS) {
+				i = pri->count - 1;
+				next = pri->services[i].handle_range.end_handle;
+				sd_ble_gattc_primary_services_discover (
+				    ble_conn_handle, next, NULL);
+			}
+
+			if (evt->evt.gattc_evt.gatt_status !=
+			    BLE_GATT_STATUS_SUCCESS && pri->count == 0) {
+				osalSysLock ();
+				bleDetectEvents = BLE_GATTC_SERVICE_DISCOVERED;
+				osalThreadResumeS (&bleGattcThreadReference,
+				    MSG_OK);
+				osalSysUnlock ();
+			}
+			break;
+		case BLE_GATTC_EVT_CHAR_DISC_RSP:
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC characteristics discovery event\n");
+			chars = &evt->evt.gattc_evt.params.char_disc_rsp;
+			printf ("CHARS: %d\n", chars->count);
+#endif
+			orchardAppRadioCallback (gattcCharDiscoverEvent,
+			    evt, NULL, 0);
+			break;
+		case BLE_GATTC_EVT_DESC_DISC_RSP:
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC descriptors discovery event\n");
+#endif
+			break;
+		case BLE_GATTC_EVT_ATTR_INFO_DISC_RSP:
+			attrs = &evt->evt.gattc_evt.params.attr_info_disc_rsp;
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC attribute discovery event\n");
+			printf ("ATTRS: %d FORMAT: %d\n",
+			    attrs->count, attrs->format);
+#endif
+			orchardAppRadioCallback (gattcAttrDiscoverEvent,
+			    evt, NULL, 0);
+			osalSysLock ();
+			if (attrs->count == 1 && attrs->format ==
+			    BLE_GATTC_ATTR_INFO_FORMAT_128BIT &&
+			    memcpy (attrs->info.attr_info128[0].uuid.uuid128,
+			        ble_ides_base_uuid.uuid128, 16) == 0)
+				bleDetectEvents = BLE_GATTC_SERVICE_DISCOVERED;
+			else
+				bleDetectEvents = BLE_GATTC_ERROR;
+			osalThreadResumeS (&bleGattcThreadReference,
+			    MSG_OK);
+			osalSysUnlock ();
+			break;
+		case BLE_GATTC_EVT_CHAR_VAL_BY_UUID_READ_RSP:
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC read by UUID\n");
+			ruuid =
+			  &evt->evt.gattc_evt.params.char_val_by_uuid_read_rsp;
+			printf ("COUNT: %d\n", ruuid->count);
+			printf ("VALUE LEN: %d\n", ruuid->value_len);
+			printf ("STATUS: %x\n", evt->evt.gattc_evt.gatt_status);
+#endif
+
+			orchardAppRadioCallback (gattcCharReadByUuidEvent,
+			    evt, NULL, 0);
+
+			osalSysLock ();
+			if (evt->evt.gattc_evt.gatt_status ==
+			    BLE_GATT_STATUS_SUCCESS)
+				bleDetectEvents = BLE_GATTC_CHAR_READ;
+			else
+				bleDetectEvents = BLE_GATTC_ERROR;
+			osalThreadResumeS (&bleGattcThreadReference,
+			    MSG_OK);
+			osalSysUnlock ();
+
+			break;
+		case BLE_GATTC_EVT_READ_RSP:
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC read\n");
+#endif
+			orchardAppRadioCallback (gattcCharReadEvent,
+			    evt, NULL, 0);
+			break;
+		case BLE_GATTC_EVT_WRITE_RSP:
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC write\n");
+#endif
+			orchardAppRadioCallback (gattcCharWriteEvent,
+			    evt, NULL, 0);
+			break;
 		default:
 			printf ("unhandled GATTC event %d (%d)\r\n",
 			    evt->header.evt_id - BLE_GATTC_EVT_BASE,
@@ -65,4 +189,65 @@ void
 bleGattcStart (void)
 {
 	return;
+}
+
+int
+bleGattcDiscover (bool blocking)
+{
+	int r;
+	msg_t tr = MSG_OK;
+	ble_gattc_handle_range_t ranges;
+	ble_uuid_t uuid;
+
+	if (ble_conn_handle == BLE_CONN_HANDLE_INVALID)
+		return (NRF_ERROR_INVALID_STATE);
+
+	bleDetectEvents = 0;
+
+#ifdef notdef
+	r = sd_ble_gattc_primary_services_discover (ble_conn_handle,
+	    BLE_UUID_TYPE_BLE, NULL);
+
+	if (blocking == FALSE)
+		return (NRF_ERROR_BUSY);
+
+	osalSysLock ();
+	if (bleDetectEvents == 0)
+		tr = osalThreadSuspendTimeoutS (&bleGattcThreadReference,
+		    OSAL_MS2I(5000));
+	osalSysUnlock ();
+
+	if (tr == MSG_TIMEOUT)
+		return (-1);
+#endif
+
+	ranges.start_handle = ble_gatts_ides_handle;
+	ranges.end_handle = ble_gatts_ides_handle;
+printf ("HANDLE: %d %d\n", ranges.start_handle, ranges.end_handle);
+/*
+	r = sd_ble_gattc_attr_info_discover (ble_conn_handle, &ranges);
+*/
+
+	uuid.type = BLE_UUID_TYPE_BLE;
+	uuid.uuid = 0x2800;
+
+	r = sd_ble_gattc_char_value_by_uuid_read (ble_conn_handle,
+	    &uuid, &ranges);
+
+	if (r != NRF_SUCCESS)
+		return (r);
+
+	osalSysLock ();
+	if (bleDetectEvents == 0)
+		tr = osalThreadSuspendTimeoutS (&bleGattcThreadReference,
+		    OSAL_MS2I(5000));
+	osalSysUnlock ();
+
+	if (tr == MSG_TIMEOUT)
+		return (NRF_ERROR_TIMEOUT);
+
+	if (bleDetectEvents == BLE_GATTC_CHAR_READ)
+		return (NRF_SUCCESS);
+
+	return (NRF_ERROR_NOT_FOUND);
 }

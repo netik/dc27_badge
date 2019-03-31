@@ -33,6 +33,12 @@
 #ifndef _BLE_GATTS_LLD_H_
 #define _BLE_GATTS_LLD_H_
 
+extern ble_gatts_char_handles_t pw_handle;
+extern ble_gatts_char_handles_t ul_handle;
+extern ble_gatts_char_handles_t ch_handle;
+extern uint16_t ble_gatts_ides_handle;
+extern const ble_uuid128_t ble_ides_base_uuid;
+
 extern void bleGattsStart (void);
 extern void bleGattsDispatch (ble_evt_t *);
 

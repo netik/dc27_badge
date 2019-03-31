@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2017-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,6 @@
 #define BLE_IDES_PASSWORD	"narf"
 #define BLE_APPEARANCE_DC27	0xDC1B
 #define BLE_COMPANY_ID_IDES	0x1DE5
-#define BLE_IDES_UUID_BASE					\
-	{ 0xAA, 0x24, 0xC0, 0x7B, 0x52, 0x7D, 0x11, 0xE9,	\
-	  0xAC, 0x2D, 0xB8, 0xAE, 0xED, 0x76, 0x09, 0x11 }
-#define BLE_IDES_UUID_STRING	"aa24c07b-527d-11e9-ac2d-b8aeed760911"
 #define BLE_NAME_IDES		"DC27 IDES of DEF CON"
 #define BLE_MANUFACTUTER_STRING	"IDES of DEF CON Ltd."
 #define BLE_MODEL_NUMBER_STRING	"Revision 1"
@@ -47,6 +43,29 @@
 #define BLE_SW_VERSION_STRING	__DATE__ "/" __TIME__
 
 #define BLE_IDES_APP_TAG	1
+
+/*
+ * Our private Badge service UUID. Note that private UUIDs work in kind of
+ * a funny way. First, for whatever the reason, the Nordic stack sends them
+ * out in reverse order (from last byte to first). I don't know why: 128 bit
+ * UUIDs are essentially byte arrays, which don't have any ordering rules.
+ *
+ * Second, with a custom service, the service and all characteristics
+ * therein get their own unique 128-bit UUID, but they're all derived
+ * from the vendor-specific base UUID. The base UUID is 128 bits long,
+ * but two octets, at offsets 2 and 3, are reserved and contain the
+ * service and characteristic values. In the Nordic software, these are
+ * specified as 16-bit values, but they get folded into bytes 2 and 3
+ * of the base UUID.
+ *
+ * We leave these bytes as 0 in our vendor UUID since they'll be filled
+ * in later.
+ */
+
+#define BLE_IDES_UUID_BASE					\
+	{ 0x11, 0x09, 0x76, 0xED, 0xAE, 0xB8, 0x2D, 0xAC,	\
+	  0xED, 0x11, 0x7D, 0x52, 0x00, 0x00, 0x24, 0xAA }
+#define BLE_IDES_UUID_STRING	"aa24xxxx-527d-11e9-ac2d-b8aeed760911"
 
 /*
  * These are some GATT service UUIDs defined by the BLE spec for common
@@ -81,14 +100,16 @@
  * These are our custom UUIDs for our private service
  */
 
-#define BLE_UUID_IDES_BADGE_SERVICE		0x0001
+#define BLE_UUID_IDES_BADGE_SERVICE		0x0000
 
 
 #define BLE_UUID_IDES_BADGE_PASSWORD		0x0001
 #define BLE_UUID_IDES_BADGE_UNLOCKS		0x0002
-#define BLE_UUID_IDES_BADGE_GAMEVAL1		0x0003
+#define BLE_UUID_IDES_BADGE_CHATREQUEST		0x0003
+#define BLE_UUID_IDES_BADGE_GAMEVAL1		0x0004
 
 extern uint32_t ble_unlocks;
+extern uint32_t ble_chatreq;
 extern char ble_password[32];
 extern uint8_t ble_station_addr[];
 extern volatile uint32_t flash_evt;

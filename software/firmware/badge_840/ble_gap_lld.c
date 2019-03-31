@@ -559,7 +559,9 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_params.filter_policy =  BLE_GAP_SCAN_FP_ACCEPT_ALL;
 	adv_params.primary_phy = BLE_GAP_PHY_AUTO;
 	adv_params.set_id = 1;
-	/*adv_params.scan_req_notification = 1;*/
+#ifdef BLE_GAP_SCAN_VERBOSE
+	adv_params.scan_req_notification = 1;
+#endif
 
 	r = sd_ble_gap_adv_set_configure (&ble_adv_handle,
 	    &adv_data, &adv_params);
