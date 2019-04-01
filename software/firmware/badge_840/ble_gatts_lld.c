@@ -422,7 +422,7 @@ bleGattsStart (void)
 	memset (&ble_service_uuid, 0, sizeof(ble_service_uuid));
 
 	r = sd_ble_uuid_vs_add (&ble_ides_base_uuid, &ble_service_uuid.type);
-printf ("NEW TYPE: %d\n", ble_service_uuid.type);
+
 	/* Add the service to the stack */
 
 	ble_service_uuid.uuid = BLE_UUID_IDES_BADGE_SERVICE;
