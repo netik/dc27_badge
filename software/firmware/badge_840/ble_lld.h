@@ -73,7 +73,21 @@
  * https://www.bluetooth.com/specifications/gatt/services
  */
 
+#define BLE_UUID_GENERIC_ACCESS_SERVICE		0x1800
+#define BLE_UUID_GENERIC_ATTRIBUTE_SERVICE	0x1801
 #define BLE_UUID_DEVICE_INFORMATION_SERVICE	0x180A
+
+/*
+ * These are some GATT declaration UUIDs defined by the BLE spec for
+ * different types of declarations. These can be used to enumerate
+ * GATT services provided by a peripheral device. The complete list can
+ * be found here: https://www.bluetooth.com/specifications/gatt/declarations
+ */
+
+#define BLE_UUID_PRIMARY_SERVICE_DECLARATION	0x2800
+#define BLE_UUID_SECONDARY_SERVICE_DECLARATION	0x2801
+#define BLE_UUID_INCLUDE_DECLARATION		0x2802
+#define BLE_UUID_CHARACTERISTIC_DECLARATION	0x2803
 
 /*
  * These are some GATT characteristic UUIDs defined by the BLE spec for

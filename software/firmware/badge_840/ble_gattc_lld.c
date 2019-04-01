@@ -229,7 +229,7 @@ bleGattcDiscover (bool blocking)
 */
 
 	uuid.type = BLE_UUID_TYPE_BLE;
-	uuid.uuid = 0x2800;
+	uuid.uuid = BLE_UUID_PRIMARY_SERVICE_DECLARATION;
 
 	r = sd_ble_gattc_char_value_by_uuid_read (ble_conn_handle,
 	    &uuid, &ranges);
