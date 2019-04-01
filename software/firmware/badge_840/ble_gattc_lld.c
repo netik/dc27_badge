@@ -223,7 +223,7 @@ bleGattcDiscover (bool blocking)
 
 	ranges.start_handle = ble_gatts_ides_handle;
 	ranges.end_handle = ble_gatts_ides_handle;
-printf ("HANDLE: %d %d\n", ranges.start_handle, ranges.end_handle);
+
 /*
 	r = sd_ble_gattc_attr_info_discover (ble_conn_handle, &ranges);
 */
