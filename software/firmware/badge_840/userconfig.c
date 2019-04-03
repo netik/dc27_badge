@@ -208,7 +208,7 @@ struct userconfig *getConfig(void) {
    * problem where the BLE startup code needs to read the board config.
    * (We need the SoftDevice to do flash accesses so we have to initialize
    * BLE first and userconfig second, but that means config_cache will
-   * never be valid until after we initialize the radio.
+   * never be valid until after we initialize the radio.)
    */
 
   if (config_cache.signature != CONFIG_SIGNATURE &&
