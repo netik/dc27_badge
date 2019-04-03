@@ -34,7 +34,7 @@
 #define _I2S_LLDH_
 
 #define I2S_THREAD_PRIO		(NORMALPRIO + 1)
-#define I2S_SAMPLES		512
+#define I2S_SAMPLES		1024
 #define I2S_BYTES		(I2S_SAMPLES * sizeof(uint16_t))
 
 #define I2S_PLAY_ONCE		0
