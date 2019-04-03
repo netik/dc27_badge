@@ -43,6 +43,7 @@
  * features.
  */
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -58,17 +59,22 @@
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
 #include "ble_l2cap_lld.h"
+#include "ble_gattc_lld.h"
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
+#include "userconfig.h"
 #include "badge.h"
 
 uint8_t ble_station_addr[6];
+uint32_t ble_unlocks;
+uint32_t ble_chatreq;
+char ble_password[32];
 
 static thread_reference_t sdThreadReference;
 static ble_evt_t ble_evt;
-static volatile enum NRF_SOC_EVTS soc_evt;
-volatile enum NRF_SOC_EVTS flash_evt;
+static volatile uint32_t soc_evt;
+volatile uint32_t flash_evt;
 static volatile uint8_t radio_evt;
 
 /*
@@ -106,7 +112,7 @@ bleEventDispatch (ble_evt_t * evt)
 {
 	if (evt->header.evt_id >= BLE_EVT_BASE &&
 	    evt->header.evt_id <= BLE_EVT_LAST)
-		printf ("common BLE event\r\n");
+		printf ("common BLE event\n");
 
 	if (evt->header.evt_id >= BLE_GAP_EVT_BASE &&
 	    evt->header.evt_id <= BLE_GAP_EVT_LAST)
@@ -114,7 +120,7 @@ bleEventDispatch (ble_evt_t * evt)
 
 	if (evt->header.evt_id >= BLE_GATTC_EVT_BASE &&
 	    evt->header.evt_id <= BLE_GATTC_EVT_LAST)
-		printf ("GATT client event\r\n");
+		bleGattcDispatch (evt);
 
 	if (evt->header.evt_id >= BLE_GATTS_EVT_BASE &&
 	    evt->header.evt_id <= BLE_GATTS_EVT_LAST)
@@ -262,6 +268,7 @@ void
 bleStart (void)
 {
 	ble_gap_addr_t addr;
+	userconfig * config;
 
 	/* Create SoftDevice event thread */
 
@@ -272,9 +279,17 @@ bleStart (void)
 
 	nvicEnableVector (SD_EVT_IRQn, NRF5_SD_IRQ_PRIORITY);
 
+	config = getConfig ();
+	ble_unlocks = __builtin_bswap32 (config->unlocks);
+
 	/* Initialize peer list handling */
 
 	blePeerStart ();
+
+	/* Initialize current password */
+
+	memset (ble_password, 0, sizeof (ble_password));
+	strcpy (ble_password, "squeamishossifrage");
 
 	/* Start and configure SoftDevice */
 
@@ -290,7 +305,7 @@ bleStart (void)
 	ble_station_addr[4] = addr.addr[1];
 	ble_station_addr[5] = addr.addr[0];
 
-	printf ("Station address: %X:%X:%X:%X:%X:%X\r\n",
+	printf ("Station address: %X:%X:%X:%X:%X:%X\n",
 	    ble_station_addr[0], ble_station_addr[1],
 	    ble_station_addr[2], ble_station_addr[3],
 	    ble_station_addr[4], ble_station_addr[5]);
@@ -315,10 +330,10 @@ bleEnable (void)
 	r = sd_softdevice_enable (&clock_source, nordic_fault_handler);
 
 	if (r == NRF_SUCCESS)
-		printf ("SoftDevice version %d.%d.%d enabled\r\n",
+		printf ("SoftDevice version %d.%d.%d enabled\n",
 		    SD_MAJOR_VERSION, SD_MINOR_VERSION, SD_BUGFIX_VERSION);
 	else {
-		printf ("Enabling softdevice failed (0x%x)\r\n", r);
+		printf ("Enabling softdevice failed (0x%x)\n", r);
 		return;
 	}
 
@@ -357,7 +372,7 @@ bleEnable (void)
 
 	memset (&cfg, 0, sizeof(cfg));
 
-	cfg.common_cfg.vs_uuid_cfg.vs_uuid_count = 0;
+	cfg.common_cfg.vs_uuid_cfg.vs_uuid_count = 1;
 
 	r = sd_ble_cfg_set (BLE_COMMON_CFG_VS_UUID, &cfg, ram_start);
 
@@ -378,7 +393,7 @@ bleEnable (void)
 
 	memset (&cfg, 0, sizeof(cfg));
 
-	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 512;
+	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 768;
 	r = sd_ble_cfg_set (BLE_GATTS_CFG_ATTR_TAB_SIZE, &cfg, ram_start);
 	
 	/* Enable BLE support in SoftDevice */
@@ -386,10 +401,10 @@ bleEnable (void)
 	r = sd_ble_enable (&ram_start);
 
 	if (r == NRF_SUCCESS)
-		printf ("Bluetooth LE enabled. (RAM base: 0x%lx)\r\n",
+		printf ("Bluetooth LE enabled. (RAM base: 0x%lx)\n",
 		    ram_start);
 	else {
-		printf ("Enabling BLE failed (0x%x 0x%lx)\r\n", r, ram_start);
+		printf ("Enabling BLE failed (0x%x 0x%lx)\n", r, ram_start);
 		return;
 	}
 
@@ -410,9 +425,9 @@ bleDisable (void)
 	r = sd_softdevice_disable ();
 
 	if (r == NRF_SUCCESS)
-		printf ("Bluetooth LE disabled\r\n");
+		printf ("Bluetooth LE disabled\n");
 	else
-		printf ("Disaabling BLE failed (0x%x)\r\n", r);
+		printf ("Disaabling BLE failed (0x%x)\n", r);
 
 	return;
 }

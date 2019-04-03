@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2017-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,9 +46,70 @@
 
 #include "ble_gap_lld.h"
 #include "ble_l2cap_lld.h"
+#include "ble_gattc_lld.h"
+#include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
 #include "badge.h"
+
+static void
+radio_discover (BaseSequentialStream *chp, int argc, char *argv[])
+{
+	uint8_t uuid[16];
+	uint16_t len;
+	int r;
+
+	len = sizeof(uuid);
+	r = bleGattcRead (ble_gatts_ides_handle, uuid, &len, TRUE);
+
+	if (r == NRF_SUCCESS) {
+		if (memcmp (uuid, ble_ides_base_uuid.uuid128, 16) == 0)	 
+		printf ("Badge service found\n");
+	} else
+		printf ("Discovery failed\n");
+	return;
+}
+
+static void
+radio_read (BaseSequentialStream *chp, int argc, char *argv[])
+{
+	uint8_t buf[16];
+	uint16_t handle;
+	uint16_t len;
+	int r;
+
+	handle = atoi (argv[1]);
+	len = sizeof(buf);
+
+	r = bleGattcRead (handle, buf, &len, TRUE);
+
+	if (r == NRF_SUCCESS) {
+		printf ("Read %d bytes\n", len);
+	} else
+		printf ("Read failed\n");
+	return;
+}
+
+static void
+radio_write (BaseSequentialStream *chp, int argc, char *argv[])
+{
+	uint8_t buf[16];
+	uint16_t len;
+	uint16_t handle;
+	int r;
+
+	handle = atoi (argv[1]);
+	strcpy ((char *)buf, argv[2]);
+	len = strlen (argv[2]);
+
+	r = bleGattcRead (handle, buf, &len, TRUE);
+
+	if (r == NRF_SUCCESS) {
+		printf ("Write succeeded\n");
+	} else
+		printf ("Write failed\n");
+	return;
+}
 
 static void
 radio_disconnect (BaseSequentialStream *chp, int argc, char *argv[])
@@ -66,7 +127,7 @@ radio_connect (BaseSequentialStream *chp, int argc, char *argv[])
 	memset (&peer, 0, sizeof(peer));
 
 	if (argc != 2) {
-		printf ("No peer specified\r\n");
+		printf ("No peer specified\n");
 		return;
 	}
 
@@ -112,7 +173,7 @@ static void
 radio_send (BaseSequentialStream *chp, int argc, char *argv[])
 {
 	if (argc != 2) {
-		printf ("No message specified\r\n");
+		printf ("No message specified\n");
 		return;
 	}
 
@@ -125,15 +186,18 @@ cmd_radio (BaseSequentialStream *chp, int argc, char *argv[])
 {
 
 	if (argc == 0) {
-		chprintf(chp, "Radio commands:\r\n");
-		chprintf(chp, "connect [addr]       Connect to peer\r\n");
-		chprintf(chp, "cancel               Connect cancel\r\n");
-		chprintf(chp, "disconnect           Disconnect from peer\r\n");
-		chprintf(chp, "l2capconnect         Create L2CAP channel\r\n");
-		chprintf(chp, "send [msg]           Transmit to peer\r\n");
-		chprintf(chp, "enable               Enable BLE radio\r\n");
-		chprintf(chp, "disable              Disable BLE radio\r\n");
-		chprintf(chp, "peerlist             Display nearby peers\r\n");
+		printf ("Radio commands:\n");
+		printf ("connect [addr]       Connect to peer\n");
+		printf ("cancel               Connect cancel\n");
+		printf ("disconnect           Disconnect from peer\n");
+		printf ("l2capconnect         Create L2CAP channel\n");
+		printf ("send [msg]           Transmit to peer\n");
+		printf ("enable               Enable BLE radio\n");
+		printf ("disable              Disable BLE radio\n");
+		printf ("peerlist             Display nearby peers\n");
+		printf ("discover             Discover GATTC services\n");
+		printf ("read                 Perform GATTC read\n");
+		printf ("write                Perform GATTC write\n");
 		return;
 	}
 
@@ -155,8 +219,14 @@ cmd_radio (BaseSequentialStream *chp, int argc, char *argv[])
 		bleEnable ();
 	else if (strcmp (argv[0], "peerlist") == 0)
 		blePeerShow ();
+	else if (strcmp (argv[0], "discover") == 0)
+		radio_discover (chp, argc, argv);
+	else if (strcmp (argv[0], "read") == 0)
+		radio_read (chp, argc, argv);
+	else if (strcmp (argv[0], "write") == 0)
+		radio_write (chp, argc, argv);
 	else
-		chprintf(chp, "Unrecognized radio command\r\n");
+		printf ("Unrecognized radio command\n");
 
 	return;
 }

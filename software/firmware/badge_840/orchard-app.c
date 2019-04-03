@@ -26,6 +26,7 @@ orchard_app_instance instance;
 static OrchardAppEvent ugfx_evt;
 
 /* orchard event sources */
+event_source_t unlocks_updated;
 event_source_t orchard_app_terminated;
 event_source_t orchard_app_terminate;
 event_source_t timer_expired;
@@ -65,8 +66,10 @@ static void ugfx_event(eventid_t id) {
   (void) id;
 
   if (ugfx_evt.ugfx.pEvent->type != GEVENT_GWIN_BUTTON_UP) {
-    i2sPlay ("click.snd");
-    i2sWait ();
+    if (strcmp (instance.app->name, "Launcher") == 0)
+      i2sPlay ("ping.snd");
+    else
+      i2sPlay ("click.snd");
   }
   instance.app->event (instance.context, &ugfx_evt);
   geventEventComplete (ugfx_evt.ugfx.pListener);
@@ -408,7 +411,6 @@ void orchardAppInit(void) {
 
   orchard_app_list = orchard_apps();
   instance.app = orchard_app_list;
-  chEvtObjectInit(&orchard_app_terminated);
   chEvtObjectInit(&orchard_app_terminate);
   chEvtObjectInit(&timer_expired);
   chEvtObjectInit(&ui_completed);

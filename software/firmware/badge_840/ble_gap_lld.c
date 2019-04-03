@@ -94,7 +94,7 @@ bleGapScanStart (void)
 	r = sd_ble_gap_scan_start (&scan, &scan_buffer);
 
 	if (r != NRF_SUCCESS && r != NRF_ERROR_INVALID_STATE)
-		printf ("GAP failed to start scanning: %d\r\n", r);
+		printf ("GAP failed to start scanning: %d\n", r);
 
 	return (r);
 }
@@ -102,6 +102,7 @@ bleGapScanStart (void)
 static int
 bleGapAdvStart (void)
 {
+	ble_uuid128_t	ble_base_uuid = {BLE_IDES_UUID_BASE};
 	uint8_t * pkt;
 	uint8_t size;
 	uint16_t val;
@@ -137,20 +138,10 @@ bleGapAdvStart (void)
 	if (r != NRF_SUCCESS)
 		return (r);
 
-	/* Set role */
+	/* Advertise our vendor UUID */
 
-	val = BLE_ADV_ROLE_BOTH_PERIPH_PREFERRED;
-	r = bleGapAdvBlockAdd (&val, 1,
-	    BLE_GAP_AD_TYPE_LE_ROLE, pkt, &size);
-
-	if (r != NRF_SUCCESS)
-		return (r);
-
-	/* Advertise device info UUID */
-
-	val = BLE_UUID_DEVICE_INFORMATION_SERVICE;
-	r = bleGapAdvBlockAdd (&val, 2,
-	    BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE, pkt, &size);
+	r = bleGapAdvBlockAdd (&ble_base_uuid, sizeof(ble_base_uuid),
+	    BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE, pkt, &size);
 
 	if (r != NRF_SUCCESS)
 		return (r);
@@ -198,7 +189,7 @@ bleGapDispatch (ble_evt_t * evt)
 			printf ("peer: %x:%x:%x:%x:%x:%x ",
 			    addr->addr[5], addr->addr[4], addr->addr[3],
 			    addr->addr[2], addr->addr[1], addr->addr[0]);
-			printf ("role; %d\r\n", ble_gap_role);
+			printf ("role; %d\n", ble_gap_role);
 #endif
 			sd_ble_gap_tx_power_set (BLE_GAP_TX_POWER_ROLE_CONN,
 			    ble_conn_handle, 8);
@@ -209,7 +200,7 @@ bleGapDispatch (ble_evt_t * evt)
 
 		case BLE_GAP_EVT_DISCONNECTED:
 #ifdef BLE_GAP_VERBOSE
-			printf ("GAP disconnected...\r\n");
+			printf ("GAP disconnected...\n");
 #endif
 			ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 			orchardAppRadioCallback (disconnectEvent, evt,
@@ -218,20 +209,26 @@ bleGapDispatch (ble_evt_t * evt)
 #ifdef notdef
 			if (r != NRF_SUCCESS) {
 				printf ("GAP stop advertisement after "
-				    "disconnect failed! 0x%x\r\n", r);
+				    "disconnect failed! 0x%x\n", r);
 			}
 #endif
 			r = sd_ble_gap_adv_start (ble_adv_handle,
 			    BLE_IDES_APP_TAG);
 			if (r != NRF_SUCCESS) {
 				printf ("GAP restart advertisement after "
-				    "disconnect failed! 0x%x\r\n", r);
+				    "disconnect failed! 0x%x\n", r);
 			}
+
+			/* Reset the password when someone disconnects */
+
+			memset (ble_password, 0, sizeof (ble_password));
+			strcpy (ble_password, "squeamishossifrage");
+
 			break;
 
 		case BLE_GAP_EVT_AUTH_STATUS:
 #ifdef BLE_GAP_VERBOSE
-			printf ("GAP auth status... (%d)\r\n",
+			printf ("GAP auth status... (%d)\n",
 			    evt->evt.gap_evt.params.auth_status.auth_status);
 #endif
 			break;
@@ -240,8 +237,8 @@ bleGapDispatch (ble_evt_t * evt)
 #ifdef BLE_GAP_VERBOSE
 			sec = &evt->evt.gap_evt.params.conn_sec_update;
 			secmode = &sec->conn_sec.sec_mode;
-			printf ("gap connections security update...\r\n");
-			printf ("security mode: %d level: %d keylen: %d\r\n",
+			printf ("gap connections security update...\n");
+			printf ("security mode: %d level: %d keylen: %d\n",
 			    secmode->sm, secmode->lv,
 			    sec->conn_sec.encr_key_size);
 #endif
@@ -262,7 +259,7 @@ bleGapDispatch (ble_evt_t * evt)
 			    BLE_GAP_SEC_STATUS_SUCCESS, &sec_params,
 			    &sec_keyset);
 #ifdef BLE_GAP_VERBOSE
-			printf ("gap security param request...(%d)\r\n", r);
+			printf ("gap security param request...(%d)\n", r);
 #endif
 			break;
 		case BLE_GAP_EVT_ADV_REPORT:
@@ -332,9 +329,9 @@ bleGapDispatch (ble_evt_t * evt)
 
 			sd_ble_gap_scan_start (NULL, &scan_buffer);
 #ifdef BLE_GAP_SCAN_VERBOSE
-			printf ("GAP advertisement report, type: %d...\r\n",
+			printf ("GAP advertisement report, type: %d...\n",
 			    rtype);
-			printf ("Peer: %x:%x:%x:%x:%x:%x rssi: %d\r\n",
+			printf ("Peer: %x:%x:%x:%x:%x:%x rssi: %d\n",
 			    addr->addr[5], addr->addr[4], addr->addr[3],
 			    addr->addr[2], addr->addr[1], addr->addr[0],
 			    evt->evt.gap_evt.params.adv_report.rssi);
@@ -349,7 +346,7 @@ bleGapDispatch (ble_evt_t * evt)
 				printf ("undirected ");
 			if (rtype.scan_response)
 				printf ("scan response ");
-			printf ("\r\n");
+			printf ("\n");
 #endif
 			break;
 		case BLE_GAP_EVT_SCAN_REQ_REPORT:
@@ -357,7 +354,7 @@ bleGapDispatch (ble_evt_t * evt)
 			addr =
 			    &evt->evt.gap_evt.params.scan_req_report.peer_addr;
 			printf ("GAP scan request received from: ");
-			printf ("%x:%x:%x:%x:%x:%x rssi: %d\r\n",
+			printf ("%x:%x:%x:%x:%x:%x rssi: %d\n",
 			    addr->addr[5], addr->addr[4], addr->addr[3],
 			    addr->addr[2], addr->addr[1], addr->addr[0],
 			    evt->evt.gap_evt.params.scan_req_report.rssi);
@@ -366,7 +363,7 @@ bleGapDispatch (ble_evt_t * evt)
 		case BLE_GAP_EVT_TIMEOUT:
 			timeout = &evt->evt.gap_evt.params.timeout;
 #ifdef BLE_GAP_TIMEOUT_VERBOSE
-			printf ("GAP timeout event, src: %d\r\n",
+			printf ("GAP timeout event, src: %d\n",
 			    timeout->src);
 #endif
 			if (timeout->src == BLE_GAP_TIMEOUT_SRC_SCAN)
@@ -381,26 +378,26 @@ bleGapDispatch (ble_evt_t * evt)
 
 		case BLE_GAP_EVT_ADV_SET_TERMINATED:
 #ifdef BLE_GAP_TIMEOUT_VERBOSE
-			printf ("GAP advertisement timeout\r\n");
+			printf ("GAP advertisement timeout\n");
 #endif
 			if (ble_conn_handle == BLE_CONN_HANDLE_INVALID) {
 				r = sd_ble_gap_adv_start (ble_adv_handle,
 				    BLE_IDES_APP_TAG);
 				if (r != NRF_SUCCESS)
 					printf ("GAP restart advertisement "
-					    "failed! 0x%x\r\n", r);
+					    "failed! 0x%x\n", r);
 			}
 			break;
 
 		case BLE_GAP_EVT_CONN_PARAM_UPDATE:
 #ifdef BLE_GAP_VERBOSE
-			printf ("GAP connection parameter update\r\n");
+			printf ("GAP connection parameter update\n");
 #endif
 			break;
 
 		case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
 #ifdef BLE_GAP_VERBOSE
-			printf ("GAP connection parameter update request\r\n");
+			printf ("GAP connection parameter update request\n");
 #endif
 			update =
 			    &evt->evt.gap_evt.params.conn_param_update_request;
@@ -412,7 +409,7 @@ bleGapDispatch (ble_evt_t * evt)
 		case BLE_GAP_EVT_PHY_UPDATE:
 #ifdef BLE_GAP_VERBOSE
 			printf ("GAP PHY update completed, ");
-			printf ("RX PHY: %d TX PHY: %d status: %d\r\n",
+			printf ("RX PHY: %d TX PHY: %d status: %d\n",
 			    evt->evt.gap_evt.params.phy_update.rx_phy,
 			    evt->evt.gap_evt.params.phy_update.tx_phy,
 			    evt->evt.gap_evt.params.phy_update.status);
@@ -421,7 +418,7 @@ bleGapDispatch (ble_evt_t * evt)
 
 		case BLE_GAP_EVT_DATA_LENGTH_UPDATE:
 #ifdef BLE_GAP_VERBOSE
-			printf ("Data length update\r\n");
+			printf ("Data length update\n");
 #endif
 			break;
 
@@ -432,7 +429,7 @@ bleGapDispatch (ble_evt_t * evt)
 			r = sd_ble_gap_data_length_update (ble_conn_handle,
 			    &dup->peer_params, &dlim);
 #ifdef BLE_GAP_VERBOSE
-			printf ("Data length update: %d\r\n", r);
+			printf ("Data length update: %d\n", r);
 #endif
 			/* If it failed, try with smaller sizes */
 
@@ -447,7 +444,7 @@ bleGapDispatch (ble_evt_t * evt)
 
 			if (r != NRF_SUCCESS) {
 				printf ("Data length update failed (%x), "
-				   "RX overrun: %d TX overrun: %d\r\n", r,
+				   "RX overrun: %d TX overrun: %d\n", r,
 				    dlim.rx_payload_limited_octets,
 				    dlim.tx_payload_limited_octets);
 			}
@@ -459,7 +456,7 @@ bleGapDispatch (ble_evt_t * evt)
 			sd_ble_gap_phy_update (ble_conn_handle, &phys);
 			break;
 		default:
-			printf ("invalid GAP event %d (%d)\r\n",
+			printf ("unhandled GAP event %d (%d)\n",
 			    evt->header.evt_id - BLE_GAP_EVT_BASE,
 			    evt->header.evt_id);
 			break;
@@ -506,8 +503,9 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	ble_gap_adv_params_t adv_params;
 	ble_gap_adv_data_t adv_data;
 	uint32_t r;
-	uint8_t * p2;
-	uint8_t s2;
+	uint8_t * pktrsp;
+	uint8_t sizersp;
+	uint16_t val;
 	uint8_t ble_name[BLE_GAP_DEVNAME_MAX_LEN];
 	uint16_t namelen = BLE_GAP_DEVNAME_MAX_LEN;
 
@@ -517,9 +515,9 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_data.adv_data.p_data = pkt;
 	adv_data.adv_data.len = len;
 
-	p2 = ble_scan_block;
-	s2 = BLE_GAP_ADV_MAX_SIZE;
-	memset (p2, 0, BLE_GAP_ADV_MAX_SIZE);
+	pktrsp = ble_scan_block;
+	sizersp = BLE_GAP_ADV_MAX_SIZE;
+	memset (pktrsp, 0, BLE_GAP_ADV_MAX_SIZE);
 
 	/*
 	 * Set our full name. We use the scan data block for this,
@@ -530,10 +528,28 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	sd_ble_gap_device_name_get (ble_name, &namelen);
 
 	r = bleGapAdvBlockAdd (ble_name, namelen,
-	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, p2, &s2);
+	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, pktrsp, &sizersp);
 
-	adv_data.scan_rsp_data.p_data = p2;
-	adv_data.scan_rsp_data.len = BLE_GAP_ADV_MAX_SIZE - s2;
+	/* Advertise device info UUID */
+
+	val = BLE_UUID_DEVICE_INFORMATION_SERVICE;
+	r = bleGapAdvBlockAdd (&val, 2,
+	    BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE, pktrsp, &sizersp);
+
+	if (r != NRF_SUCCESS)
+		return (r);
+
+	/* Set role */
+
+	val = BLE_ADV_ROLE_BOTH_PERIPH_PREFERRED;
+	r = bleGapAdvBlockAdd (&val, 1,
+	    BLE_GAP_AD_TYPE_LE_ROLE, pktrsp, &sizersp);
+
+	if (r != NRF_SUCCESS)
+		return (r);
+
+	adv_data.scan_rsp_data.p_data = pktrsp;
+	adv_data.scan_rsp_data.len = BLE_GAP_ADV_MAX_SIZE - sizersp;
 
 	adv_params.properties.type =
 	    BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
@@ -543,7 +559,9 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_params.filter_policy =  BLE_GAP_SCAN_FP_ACCEPT_ALL;
 	adv_params.primary_phy = BLE_GAP_PHY_AUTO;
 	adv_params.set_id = 1;
-	/*adv_params.scan_req_notification = 1;*/
+#ifdef BLE_GAP_SCAN_VERBOSE
+	adv_params.scan_req_notification = 1;
+#endif
 
 	r = sd_ble_gap_adv_set_configure (&ble_adv_handle,
 	    &adv_data, &adv_params);
@@ -606,12 +624,12 @@ bleGapStart (void)
 	    strlen ((char *)ble_name));
 
 	if (r != NRF_SUCCESS)
-		printf ("GAP device name set failed: 0x%x\r\n", r);
+		printf ("GAP device name set failed: 0x%x\n", r);
 
 	r = sd_ble_gap_appearance_set (BLE_APPEARANCE_DC27);
 
 	if (r != NRF_SUCCESS)
-		printf ("GAP appearance set failed: 0x%x\r\n", r);
+		printf ("GAP appearance set failed: 0x%x\n", r);
 
 	bleGapAdvStart ();
 	bleGapScanStart ();
@@ -648,7 +666,7 @@ bleGapConnect (ble_gap_addr_t * peer)
 	r = sd_ble_gap_connect (peer, &sparams, &cparams, BLE_IDES_APP_TAG);
 
 	if (r != NRF_SUCCESS) {
-		printf ("GAP connect failed: 0x%x\r\n", r);
+		printf ("GAP connect failed: 0x%x\n", r);
 		bleGapStart ();
 		return (r);
 	}
@@ -670,7 +688,7 @@ bleGapDisconnect (void)
 	    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
 
 	if (r != NRF_SUCCESS)
-		printf ("GAP disconnect failed: 0x%x\r\n", r);
+		printf ("GAP disconnect failed: 0x%x\n", r);
 
 	bleGapAdvStart ();
 	return (r);

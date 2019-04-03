@@ -56,7 +56,7 @@ static void list_start (OrchardAppContext *context)
 	ctx->priv = malloc (sizeof(ListHandles));
 	p = ctx->priv;
 
-	p->font = gdispOpenFont (FONT_TEXTENTRY);
+	p->font = gdispOpenFont (FONT_FIXED);
 	gwinSetDefaultFont (p->font);
 
         gdispFillArea (0, 0, gdispGetWidth(),

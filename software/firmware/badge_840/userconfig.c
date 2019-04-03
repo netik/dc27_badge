@@ -74,7 +74,7 @@ void configSave(userconfig *newConfig) {
   ret = flashProgram (&FLASHD2, 0xFF000, sizeof(userconfig), (uint8_t *)newConfig);
 
   if (ret != FLASH_NO_ERROR) {
-    printf("ERROR (%d): Unable to save config to flash.\r\n", ret);
+    printf("ERROR (%d): Unable to save config to flash.\n", ret);
   }
 
   osalMutexUnlock(&config_mutex);
@@ -153,7 +153,7 @@ void configStart(void) {
    */
   if (palReadPad (BUTTON_ENTER_PORT, BUTTON_ENTER_PIN) == 0) {
 #endif
-    printf("FACTORY RESET requested\r\n");
+    printf("FACTORY RESET requested\n");
 
     /* play a tone to tell them we're resetting */
 #ifdef notyet
@@ -164,23 +164,23 @@ void configStart(void) {
   }
 
   if ( (config->signature != CONFIG_SIGNATURE) || (wipeconfig)) {
-    printf("Config not found, Initializing!\r\n");
+    printf("Config not found, Initializing!\n");
     init_config(&config_cache);
     memcpy(config, &config_cache, sizeof(userconfig));
     configSave(&config_cache);
   } else if ( config->version != CONFIG_VERSION ) {
-    printf("Config found, but wrong version.\r\n");
+    printf("Config found, but wrong version.\n");
     init_config(&config_cache);
     memcpy(config, &config_cache, sizeof(userconfig));
     configSave(&config_cache);
   } else {
-    printf("Config OK!\r\n");
+    printf("Config OK!\n");
     memcpy(&config_cache, config, sizeof(userconfig));
 
     if (config_cache.in_combat != 0) {
       if (config_cache.p_type > 0) {
         // we will only release this when type is set
-        printf("You were stuck in combat. Fixed.\r\n");
+        printf("You were stuck in combat. Fixed.\n");
         config_cache.in_combat = 0;
         configSave(&config_cache);
       }
@@ -188,7 +188,7 @@ void configStart(void) {
 
     if (config->p_type != config->current_type) {
       // reset class on fight
-      printf("Class reset to %d.\r\n", config_cache.p_type);
+      printf("Class reset to %d.\n", config_cache.p_type);
       config_cache.current_type = config_cache.p_type;
       config_cache.hp = maxhp(config_cache.p_type, config_cache.unlocks, config_cache.level);
       configSave(&config_cache);
@@ -199,6 +199,21 @@ void configStart(void) {
 }
 
 struct userconfig *getConfig(void) {
-  // returns volitale config
+  userconfig *config = (userconfig *)CONFIG_FLASH_ADDR;
+
+  /*
+   * returns volatile config, unless we're called very early
+   * during startup, in which case we try to return a pointer
+   * to the actual flash memory. This is to avoid a "chicken-and-the-egg"
+   * problem where the BLE startup code needs to read the board config.
+   * (We need the SoftDevice to do flash accesses so we have to initialize
+   * BLE first and userconfig second, but that means config_cache will
+   * never be valid until after we initialize the radio.
+   */
+
+  if (config_cache.signature != CONFIG_SIGNATURE &&
+      config->signature == CONFIG_SIGNATURE)
+    return (config);
+
   return &config_cache;
 }

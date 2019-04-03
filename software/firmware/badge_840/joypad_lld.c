@@ -161,8 +161,8 @@ joyHandle (uint8_t s)
 		joyEvent.type = keyEvent;
 
 		if (joyEvent.key.flags == keyPress) {
-			i2sPlay("click.snd");
-			i2sWait ();
+			i2sPlay("ping.snd");
+			/*i2sWait ();*/
 		}
 
 		chEvtBroadcast (&orchard_app_key);

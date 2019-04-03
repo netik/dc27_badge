@@ -30,16 +30,20 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BLE_GATTS_LLD_H_
-#define _BLE_GATTS_LLD_H_
+#ifndef _BLE_GATTC_LLD_H_
+#define _BLE_GATTC_LLD_H_
 
-extern ble_gatts_char_handles_t pw_handle;
-extern ble_gatts_char_handles_t ul_handle;
-extern ble_gatts_char_handles_t ch_handle;
-extern uint16_t ble_gatts_ides_handle;
-extern const ble_uuid128_t ble_ides_base_uuid;
+#define BLE_GATTC_SERVICE_DISCOVERED		0x00000001
+#define BLE_GATTC_CHARACTERISTIC_DISCOVERED	0x00000002
+#define BLE_GATTC_DESCRIPTOR_DISCOVERED		0x00000004
+#define BLE_GATTC_ATTR_DISCOVERED		0x00000008
+#define BLE_GATTC_CHAR_READ			0x00000010
+#define BLE_GATTC_CHAR_WRITTEN			0x00000020
+#define BLE_GATTC_ERROR				0xFFFFFFFF
 
-extern void bleGattsStart (void);
-extern void bleGattsDispatch (ble_evt_t *);
+extern void bleGattcStart (void);
+extern void bleGattcDispatch (ble_evt_t *);
+extern int bleGattcRead (uint16_t handle, uint8_t *, uint16_t *, bool);
+extern int bleGattcWrite (uint16_t handle, uint8_t *, uint16_t, bool);
 
-#endif /* __BLE_GATTS_LLD_H */
+#endif /* __BLE_GATTC_LLD_H */
