@@ -1,4 +1,4 @@
-#include "ch.h"
+  #include "ch.h"
 #include "hal.h"
 #include "shell.h"
 #include "chprintf.h"
@@ -65,6 +65,7 @@ void configSave(userconfig *newConfig) {
 
   if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR) {
     printf ("configSave: Flash Erase Failed!\r\n");
+    osalMutexUnlock(&config_mutex);
     return;
   }
 

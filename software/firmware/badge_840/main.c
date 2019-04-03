@@ -141,7 +141,7 @@ static const GPTConfig gpt2_config = {
     .resolution = 32,
 };
 
-static THD_WORKING_AREA(shell_wa, 1024);
+static THD_WORKING_AREA(shell_wa, 1280);
 static thread_t *shell_tp = NULL;
 
 static SerialConfig serial_config = {

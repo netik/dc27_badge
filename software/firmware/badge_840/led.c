@@ -18,17 +18,20 @@ uint8_t led_brightness_get(void);
 bool led_init(void);
 void led_clear(void);
 void led_show(void);
+void ledSetPattern(uint8_t);
 
 void led_pattern_balls_init(led_pattern_balls_t *);
 void led_pattern_balls(led_pattern_balls_t*);
 void led_pattern_flame(void);
 void led_pattern_kitt(int8_t*, int8_t*);
+void led_pattern_triangle(int8_t*, int8_t*);
 void led_pattern_sparkle(uint8_t*);
 void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value);
 
 /* control vars */
+static thread_t * pThread;
 static uint8_t ledExitRequest = 0;
-static uint8_t ledsOff = 1;
+uint8_t ledsOff = 1;
 // the current function that updates the LEDs. Override with ledSetFunction();
 static uint8_t led_current_func = 1;
 const unsigned char led_address[LED_COUNT_INTERNAL][3] = {
@@ -76,36 +79,46 @@ const uint8_t gamma_values[] = {
     255
 };
 
+// common colors
+const color_rgb_t roygbiv[7] = { 0xff0000,
+                                 0xff3200,
+                                 0xffff00,
+                                 0x00ff00,
+                                 0x0000ff,
+                                 0x4B0082,
+                                 0xee82ee
+                               };
+
+
 const char *fxlist[] = {
-  "Off", 
-  "Double Bounce",
-  "Dot (White)",
+  "Off",
+  "Flame",
+  "Balls",
   "Larson Scanner",
-  "Rainbow Fade",
-  "Rainbow Loop",
-  "Green Cycle",
-  "Yellow Ramp",
-  "Comet",
-  "Wave",
-  "Mardi Gras",
-  "All Solid",
-  "Spot the Fed",
-  "Violets",
-  "RGB Bounce",
-  "Violet Wave",
-  "Kraftwerk"
+  "Sparkle",
+  "Double Sweep",
+  "Triangle",
+  "xx",
+  "xx",
+  "xx",
+  "xx",
+  "xx",
+  "xx",
+  "xx",
+  "xx",
+  "xx",
+  "xx"
 };
 
 /* Brightness control */
-static uint8_t m_brightness = 10;
+static uint8_t led_brightness_level = 0xff;
 
 uint8_t led_brightness_get() {
-  return m_brightness;
+  return led_brightness_level;
 }
 
 void led_brightness_set(uint8_t brightness) {
-  m_brightness = brightness;
-  drv_is31fl_gcc_set(m_brightness);
+  led_brightness_level = brightness;
 }
 
 /* color utils */
@@ -175,12 +188,15 @@ void led_clear() {
   led_show();
 }
 
+void ledSetPattern(uint8_t patt) {
+  led_current_func = patt;
+}
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
   if (index < LED_COUNT) {
-    led_memory[led_address[index][0]] = gamma_values[g / 2];
-    led_memory[led_address[index][1]] = gamma_values[r / 2];
-    led_memory[led_address[index][2]] = gamma_values[b / 2];
+    led_memory[led_address[index][0]] = g;
+    led_memory[led_address[index][1]] = r;
+    led_memory[led_address[index][2]] = b;
   }
 }
 
@@ -201,7 +217,6 @@ void led_set_all_rgb(color_rgb_t rgb) {
 }
 
 void led_show() {
-#ifndef CONFIG_BADGE_TYPE_STANDALONE
   drv_is31fl_set_page(ISSI_PAGE_PWM);
 
   for (uint8_t i = 0; i < LED_COUNT_INTERNAL; i++) {
@@ -210,7 +225,6 @@ void led_show() {
       hal_i2c_write_reg_byte(LED_I2C_ADDR, address, led_memory[address]);
     }
   }
-#endif
 }
 
 void led_test() {
@@ -257,7 +271,6 @@ void led_test() {
 /* Threads ------------------------------------------------------ */
 static THD_WORKING_AREA(waBlingThread, 512);
 static THD_FUNCTION(bling_thread, arg) {
-  (void)arg;
   userconfig *config = getConfig();
   /* animation state vars */
   led_pattern_balls_t anim_balls;
@@ -266,19 +279,25 @@ static THD_FUNCTION(bling_thread, arg) {
   int8_t anim_position = 0;
   float anim_hue = 100;
   float anim_value = 0;
+  uint8_t last_brightness = led_brightness_level;
 
+  (void)arg;
   chRegSetThreadName("LED Bling");
 
+  drv_is31fl_gcc_set(led_brightness_level);
 	led_pattern_balls_init(&anim_balls);
-  led_current_func = 5;
-
-  //led_current_func = fxlist[config->led_pattern].function;
+  led_current_func = config->led_pattern;
 
   while (!ledsOff) {
     // wait until the next update cycle
     chThdYield();
     chThdSleepMilliseconds(EFFECTS_REDRAW_MS);
 
+    // do we need to update brightness?
+    if (last_brightness != led_brightness_level) {
+      drv_is31fl_gcc_set(led_brightness_level);
+      last_brightness = led_brightness_level;
+    }
     // re-render the internal framebuffer animations
     if (led_current_func != 0) {
       switch (led_current_func) {
@@ -297,6 +316,9 @@ static THD_FUNCTION(bling_thread, arg) {
       case 5:
         led_pattern_double_sweep(&anim_uindex, &anim_hue, &anim_value);
         break;
+      case 6:
+        led_pattern_triangle(&anim_index, &anim_position);
+        break;
         // ... add more animations here ...
       }
     }
@@ -306,6 +328,7 @@ static THD_FUNCTION(bling_thread, arg) {
       led_set_all(0,0,0);
       led_show();
       ledsOff = 1;
+
       chThdExitS(MSG_OK);
     }
   }
@@ -315,15 +338,19 @@ static THD_FUNCTION(bling_thread, arg) {
 void ledStart(void) {
   ledExitRequest = 0;
   ledsOff = 0;
-  /* LEDs are very, very sensitive to timing. Make this slightly
-   * better than a normal thread */
-  chThdCreateStatic(waBlingThread, sizeof(waBlingThread),
+
+  /* now that we're not using WS2812B's, we can make this a
+   * normal priority thread */
+  pThread = chThdCreateStatic(waBlingThread, sizeof(waBlingThread),
                     NORMALPRIO, bling_thread, NULL);
 }
 
 uint8_t ledStop(void) {
   ledExitRequest = 1;
-  led_clear();
+
+  chThdWait(pThread);
+  pThread = NULL;
+
   return ledsOff;
 }
 
@@ -485,4 +512,24 @@ void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value) {
       *p_value = 1.0;
     }
   }
+}
+
+void led_pattern_triangle(int8_t *fx_index, int8_t *fx_position) {
+  // pulsating triangle, ramp up
+  int16_t N3 = LED_COUNT/4;
+  (*fx_index)++;
+  if ( *fx_index % 3 != 0 ) { return; } // 1/3rd speed
+  led_clear();
+
+  for(int i = 0; i < LED_COUNT; i++ ) {
+    if ((i == (0 + *fx_position)) || (i == (N3 + 1 + *fx_position)) ||
+        (i == (N3 * 3 - 1) + *fx_position)) {
+      led_set(i, *fx_index % 255, *fx_index % 255, 0);
+    }
+  }
+
+  (*fx_position)++;
+  if (*fx_position > N3) { *fx_position = 0; }
+
+  led_show();
 }

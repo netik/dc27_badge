@@ -17,6 +17,10 @@
 #include "badge.h"
 #include "unlocks.h"
 
+/* This is defined in led.c, we need access to it for this config */
+extern uint8_t ledsOff;
+extern char *fxlist[];
+
 /* prototypes */
 static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[]);
 static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]);
@@ -29,7 +33,7 @@ static void cmd_config_led_dim(BaseSequentialStream *chp, int argc, char *argv[]
 static void cmd_config_led_list(BaseSequentialStream *chp);
 
 /* end prototypes */
-                
+
 static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
 {
   tmElements_t dt;
@@ -43,10 +47,10 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
     delta = (chVTGetSystemTime() - rtc_set_at);
     curtime = rtc + delta;
     breakTime(curtime, &dt);
-    
+
     chprintf(chp, "%02d/%02d/%02d %02d:%02d:%02d\r\n", 1970+dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
   }
-  
+
   chprintf(chp, "name       %s (class now:%d / perm:%d)\r\n", config->name, config->current_type, config->p_type);
   chprintf(chp, "signature  0x%08x\r\n", config->signature);
   chprintf(chp, "version    %d\r\n", config->version);
@@ -56,12 +60,12 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
   chprintf(chp, "lastdeath  %d\r\n", config->lastdeath);
   chprintf(chp, "incombat   %d\r\n", config->in_combat);
   chprintf(chp, "tempcal    %d\r\n", config->tempcal);
-  //  chprintf(chp, "led mode   %d dim %d\r\n", config->led_pattern, config->led_shift);
+  chprintf(chp, "led mode   %d:%s power %d/255\r\n", config->led_pattern, fxlist[config->led_pattern], config->led_brightness);
   chprintf(chp, "led color  %d %d %d\r\n",
            config->led_r,
            config->led_g,
            config->led_b);
-  
+
   chprintf(chp, "won/lost   %d/%d\r\n\r\n",
            config->won,
            config->lost);
@@ -89,7 +93,7 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     chprintf(chp, "Invalid set command.\r\nUsage: config set var value\r\n");
     return;
   }
-  
+
   if (!strcasecmp(argv[1], "pingdump")) {
     if (!strcmp(argv[2], "1")) {
       config->unlocks |= UL_PINGDUMP;
@@ -99,7 +103,7 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     chprintf(chp, "Pingdump set.\r\n");
     return;
   }
-  
+
   if (!strcasecmp(argv[1], "name")) {
     strncpy(config->name, argv[2], CONFIG_NAME_MAXLEN);
     chprintf(chp, "Name set.\r\n");
@@ -112,7 +116,7 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     } else {
       config->sound_enabled = 0;
     }
-    
+
     strncpy(config->name, argv[2], CONFIG_NAME_MAXLEN);
     chprintf(chp, "Sound set to %d.\r\n", config->sound_enabled);
     return;
@@ -220,8 +224,8 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
     cmd_config_show(chp, argc, argv);
     return;
   }
-  
-  if (!strcasecmp(argv[0], "set")) { 
+
+  if (!strcasecmp(argv[0], "set")) {
     cmd_config_set(chp, argc, argv);
     return;
   }
@@ -230,41 +234,39 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
     cmd_config_save(chp, argc, argv);
     return;
   }
-  
+
   if (!strcasecmp(argv[0], "led")) {
     if (!strcasecmp(argv[1], "list")) {
       cmd_config_led_list(chp);
       return;
     }
-    
+
     if (!strcasecmp(argv[1], "dim")) {
       cmd_config_led_dim(chp, argc, argv);
       return;
     }
-    
+
     if (!strcasecmp(argv[1], "all")) {
       cmd_config_led_all(chp, argc, argv);
       return;
     }
-    
-    if (!strcasecmp(argv[1], "run")) { 
+
+    if (!strcasecmp(argv[1], "run")) {
       cmd_config_led_run(chp, argc, argv);
       return;
     }
-    
-    if (!strcasecmp(argv[1], "stop")) { 
+
+    if (!strcasecmp(argv[1], "stop")) {
       cmd_config_led_stop(chp);
       return;
     }
   }
-  
+
   chprintf(chp, "Unrecognized config command.\r\n");
-  
+
 }
 
 /* LED configuration */
-extern char *fxlist[];
-
 static void cmd_config_led_stop(BaseSequentialStream *chp) {
   ledStop();
   chprintf(chp, "Off.\r\n");
@@ -276,12 +278,12 @@ static void cmd_config_led_run(BaseSequentialStream *chp, int argc, char *argv[]
   userconfig *config = getConfig();
   uint8_t max_led_patterns;
 
-  if ( config->unlocks & UL_LEDS ) { 
+  if ( config->unlocks & UL_LEDS ) {
     max_led_patterns = LED_PATTERNS_FULL;
   } else {
     max_led_patterns = LED_PATTERNS_LIMITED;
   }
-  
+
   if (argc != 3) {
     chprintf(chp, "No pattern specified\r\n");
     return;
@@ -293,9 +295,14 @@ static void cmd_config_led_run(BaseSequentialStream *chp, int argc, char *argv[]
     return;
   }
 
-  config->led_pattern = pattern-1;
-  
-  chprintf(chp, "Pattern changed to %s.\r\n", fxlist[pattern-1]);
+  config->led_pattern = pattern;
+  ledSetPattern(config->led_pattern);
+
+  chprintf(chp, "Pattern changed to %s.\r\n", fxlist[pattern]);
+
+  if (ledsOff) {
+    ledStart();
+  }
 }
 
 static void cmd_config_led_all(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -331,7 +338,7 @@ static void cmd_config_led_all(BaseSequentialStream *chp, int argc, char *argv[]
 
 static void cmd_config_led_dim(BaseSequentialStream *chp, int argc, char *argv[]) {
 
-  int8_t level;
+  int16_t level;
   userconfig *config = getConfig();
 
   if (argc != 3) {
@@ -341,15 +348,16 @@ static void cmd_config_led_dim(BaseSequentialStream *chp, int argc, char *argv[]
 
   level = strtoul(argv[2], NULL, 0);
 
-  if ((level < 0) || (level > 7)) {
-    chprintf(chp, "Invaild level. Must be 0 to 7.\r\n");
+  if ((level < 0) || (level > 255)) {
+    chprintf(chp, "Invaild level. Must be 0 to 255.\r\n");
     return;
   }
 
   //  ledSetBrightness(level);
   chprintf(chp, "Level now %d.\r\n", level);
 
-  config->led_shift = level;
+  config->led_brightness = level;
+  led_brightness_set(config->led_brightness);
 }
 
 static void cmd_config_led_list(BaseSequentialStream *chp) {
@@ -357,8 +365,8 @@ static void cmd_config_led_list(BaseSequentialStream *chp) {
   userconfig *config = getConfig();
 
   chprintf(chp, "\r\nAvailable LED Patterns\r\n");
-  
-  if ( config->unlocks & UL_LEDS ) { 
+
+  if ( config->unlocks & UL_LEDS ) {
     max_led_patterns = LED_PATTERNS_FULL;
   } else {
     max_led_patterns = LED_PATTERNS_LIMITED;
@@ -369,7 +377,7 @@ static void cmd_config_led_list(BaseSequentialStream *chp) {
     chprintf(chp, "%2d) %s\r\n", i+1, fxlist[i]);
   }
 
-  if ( (config->unlocks & UL_LEDS) == 0) { 
+  if ( (config->unlocks & UL_LEDS) == 0) {
     chprintf(chp, "More can be unlocked!\r\n");
   }
 }
