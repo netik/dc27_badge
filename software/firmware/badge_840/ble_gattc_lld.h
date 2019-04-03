@@ -43,10 +43,7 @@
 
 extern void bleGattcStart (void);
 extern void bleGattcDispatch (ble_evt_t *);
-extern int bleGattcDiscover (bool);
-extern int bleGattcReadStr (uint16_t uuid, uint8_t * str);
-extern int bleGattcReadInt (uint16_t uuid, uint8_t * uint32_t);
-extern int bleGattcWriteStr (uint16_t uuid, uint8_t * str);
-extern int bleGattcWriteInt (uint16_t uuid, uint8_t * uint32_t);
+extern int bleGattcRead (uint16_t handle, uint8_t *, uint16_t *, bool);
+extern int bleGattcWrite (uint16_t handle, uint8_t *, uint16_t, bool);
 
 #endif /* __BLE_GATTC_LLD_H */

@@ -47,6 +47,7 @@
 #include "ble_gap_lld.h"
 #include "ble_l2cap_lld.h"
 #include "ble_gattc_lld.h"
+#include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
 #include "badge.h"
@@ -54,10 +55,59 @@
 static void
 radio_discover (BaseSequentialStream *chp, int argc, char *argv[])
 {
-	if (bleGattcDiscover (TRUE) == NRF_SUCCESS)
+	uint8_t uuid[16];
+	uint16_t len;
+	int r;
+
+	len = sizeof(uuid);
+	r = bleGattcRead (ble_gatts_ides_handle, uuid, &len, TRUE);
+
+	if (r == NRF_SUCCESS) {
+		if (memcmp (uuid, ble_ides_base_uuid.uuid128, 16) == 0)	 
 		printf ("Badge service found\n");
-	else
+	} else
 		printf ("Discovery failed\n");
+	return;
+}
+
+static void
+radio_read (BaseSequentialStream *chp, int argc, char *argv[])
+{
+	uint8_t buf[16];
+	uint16_t handle;
+	uint16_t len;
+	int r;
+
+	handle = atoi (argv[1]);
+	len = sizeof(buf);
+
+	r = bleGattcRead (handle, buf, &len, TRUE);
+
+	if (r == NRF_SUCCESS) {
+		printf ("Read %d bytes\n", len);
+	} else
+		printf ("Read failed\n");
+	return;
+}
+
+static void
+radio_write (BaseSequentialStream *chp, int argc, char *argv[])
+{
+	uint8_t buf[16];
+	uint16_t len;
+	uint16_t handle;
+	int r;
+
+	handle = atoi (argv[1]);
+	strcpy ((char *)buf, argv[2]);
+	len = strlen (argv[2]);
+
+	r = bleGattcRead (handle, buf, &len, TRUE);
+
+	if (r == NRF_SUCCESS) {
+		printf ("Write succeeded\n");
+	} else
+		printf ("Write failed\n");
 	return;
 }
 
@@ -146,6 +196,8 @@ cmd_radio (BaseSequentialStream *chp, int argc, char *argv[])
 		printf ("disable              Disable BLE radio\n");
 		printf ("peerlist             Display nearby peers\n");
 		printf ("discover             Discover GATTC services\n");
+		printf ("read                 Perform GATTC read\n");
+		printf ("write                Perform GATTC write\n");
 		return;
 	}
 
@@ -169,6 +221,10 @@ cmd_radio (BaseSequentialStream *chp, int argc, char *argv[])
 		blePeerShow ();
 	else if (strcmp (argv[0], "discover") == 0)
 		radio_discover (chp, argc, argv);
+	else if (strcmp (argv[0], "read") == 0)
+		radio_read (chp, argc, argv);
+	else if (strcmp (argv[0], "write") == 0)
+		radio_write (chp, argc, argv);
 	else
 		printf ("Unrecognized radio command\n");
 
