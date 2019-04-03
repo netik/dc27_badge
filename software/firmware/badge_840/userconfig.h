@@ -44,7 +44,7 @@ typedef struct userconfig {
   uint8_t led_g;
   uint8_t led_b;
 
-  uint8_t led_shift;
+  uint8_t led_brightness;
   uint8_t sound_enabled;
   uint8_t airplane_mode;
   uint8_t rotate;

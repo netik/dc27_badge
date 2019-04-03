@@ -76,7 +76,7 @@ static const SPIConfig spi4_config = {
 };
 
 static const I2CConfig i2c2_config = {
-	100000,			/* clock */
+	400000,			/* clock */
 	IOPORT1_I2C_SCK,	/* scl_pad */
 	IOPORT1_I2C_SDA		/* sda_pad */
 };
@@ -141,7 +141,7 @@ static const GPTConfig gpt2_config = {
     .resolution = 32,
 };
 
-static THD_WORKING_AREA(shell_wa, 1024);
+static THD_WORKING_AREA(shell_wa, 1280);
 static thread_t *shell_tp = NULL;
 
 static SerialConfig serial_config = {
@@ -533,6 +533,15 @@ int main(void)
 
     /* Init the user configuration */
     configStart();
+
+		/* start the LEDs */
+		if (led_init()) {
+			printf("I2C LED controller found.\r\n");
+			ledStart();
+		} else {
+			printf("I2C LED controller not found. No Bling ;(\r\n");
+		}
+
 #ifdef flash_test
 
     /*

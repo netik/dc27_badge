@@ -1,4 +1,4 @@
-#include "ch.h"
+  #include "ch.h"
 #include "hal.h"
 #include "shell.h"
 #include "chprintf.h"
@@ -64,7 +64,8 @@ void configSave(userconfig *newConfig) {
    */
 
   if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR) {
-    printf ("configSave: Flash Erase Failed!\n");
+    printf ("configSave: Flash Erase Failed!\r\n");
+    osalMutexUnlock(&config_mutex);
     return;
   }
 
@@ -93,7 +94,7 @@ static void init_config(userconfig *config) {
   config->netid = 0; // we will use the bluetooth address instead of this var.
   config->unlocks = 0;
   config->led_pattern = 1;
-  config->led_shift = 4;
+  config->led_brightness = 0xff;
   config->sound_enabled = 1;
   config->airplane_mode = 0;
   config->rotate = 0;
@@ -130,6 +131,9 @@ static void init_config(userconfig *config) {
   config->hp = maxhp(p_notset, 0, config->level);
 
 }
+
+
+#define ENABLE_JOYPAD
 
 void configStart(void) {
   userconfig *config = (userconfig *)CONFIG_FLASH_ADDR;
