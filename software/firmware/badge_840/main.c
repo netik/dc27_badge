@@ -482,18 +482,13 @@ int main(void)
 	    pFlash->address);
     }
 
+    /* Enable I2C controller */
+
     i2cStart (&I2CD2, &i2c2_config);
     printf ("I2C interface enabled\n");
 
-    /* start the LEDs */
-    if (led_init()) {
-      printf("I2C LED controller found.\n");
-      ledStart();
-    } else {
-      printf("I2C LED controller not found. No Bling ;(\n");
-    }
-
     /* Enable I2S controller */
+
     i2sStart ();
     printf ("I2S interface enabled\n");
 
@@ -506,6 +501,7 @@ int main(void)
     }
 
     /* Mount SD card */
+
     if (gfileMount ('F', "0:") == FALSE)
         printf ("No SD card found\n");
     else
@@ -529,18 +525,21 @@ int main(void)
 #endif
 
     /* Enable bluetooth radio */
+
     bleStart ();
 
     /* Init the user configuration */
+
     configStart();
 
-		/* start the LEDs */
-		if (led_init()) {
-			printf("I2C LED controller found.\r\n");
-			ledStart();
-		} else {
-			printf("I2C LED controller not found. No Bling ;(\r\n");
-		}
+    /* start the LEDs */
+
+    if (led_init()) {
+      printf("I2C LED controller found.\r\n");
+      ledStart();
+    } else {
+      printf("I2C LED controller not found. No Bling ;(\r\n");
+    }
 
 #ifdef flash_test
 

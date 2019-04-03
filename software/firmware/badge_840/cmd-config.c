@@ -36,13 +36,16 @@ static void cmd_config_led_list(BaseSequentialStream *chp);
 
 static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
 {
+#ifdef BLACK_BADGE
   tmElements_t dt;
   unsigned long curtime;
   unsigned long delta;
+#endif
   userconfig *config = getConfig();
   (void)argv;
   (void)argc;
 
+#ifdef BLACK_BADGE
   if (rtc != 0) {
     delta = (chVTGetSystemTime() - rtc_set_at);
     curtime = rtc + delta;
@@ -50,6 +53,7 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
 
     chprintf(chp, "%02d/%02d/%02d %02d:%02d:%02d\r\n", 1970+dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
   }
+#endif
 
   chprintf(chp, "name       %s (class now:%d / perm:%d)\r\n", config->name, config->current_type, config->p_type);
   chprintf(chp, "signature  0x%08x\r\n", config->signature);

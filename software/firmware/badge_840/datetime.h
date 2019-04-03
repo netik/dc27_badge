@@ -1,7 +1,10 @@
 #ifndef __DATETIME_H__
 #define __DATETIME_H__
 
-#define time_t                  unsigned long
+/* for time_t */
+
+#include <sys/types.h>
+#include <time.h>
 
 // naive implementation of seconds to datetime. 
 // leap year calulator expects year argument as years offset from 1970
