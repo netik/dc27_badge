@@ -26,8 +26,8 @@
 const PALConfig pal_default_config =
 {
   .pads = {
-        PAL_MODE_UNCONNECTED,         /* P0.0 : XTAL (32MHz)   */
-        PAL_MODE_UNCONNECTED,         /* P0.1 : XTAL (32MHz)   */
+        PAL_MODE_UNCONNECTED,         /* P0.0 : XTAL(32.768KHz)*/
+        PAL_MODE_UNCONNECTED,         /* P0.1 : XTAL(32.768KHz)*/
         PAL_MODE_OUTPUT_PULLUP,       /* P0.2 : Audio shutdown */
         PAL_MODE_OUTPUT_PULLUP,       /* P0.3 : Touch CS       */
         PAL_MODE_OUTPUT_PULLUP,       /* P0.4 : Screen CD      */
