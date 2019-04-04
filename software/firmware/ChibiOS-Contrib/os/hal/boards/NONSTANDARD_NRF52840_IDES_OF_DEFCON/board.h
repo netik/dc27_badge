@@ -37,7 +37,7 @@
  * count. (The BMD-340 module already has a 32MHz crystal inside.)
  */
 
-#define NRF5_LFCLK_SOURCE      2
+#define NRF5_LFCLK_SOURCE      1
 
 /*
  * GPIO pins. 
