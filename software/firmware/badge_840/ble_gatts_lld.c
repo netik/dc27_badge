@@ -136,6 +136,8 @@ bleGattsDispatch (ble_evt_t * evt)
 			printf ("write to handle %x uuid %x\n",
 			    write->handle, write->uuid.uuid);
 #endif
+			orchardAppRadioCallback (gattsWriteEvent,
+			    evt, NULL, 0);
 			break;
 		case BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST:
 #ifdef BLE_GATTS_VERBOSE
@@ -155,6 +157,8 @@ bleGattsDispatch (ble_evt_t * evt)
 				printf ("sent reply: %d\n", r);
 #endif
 			}
+			orchardAppRadioCallback (gattsReadWriteAuthEvent,
+			    evt, NULL, 0);
 			break;
 		case BLE_GATTS_EVT_SYS_ATTR_MISSING:
 #ifdef BLE_GATTS_VERBOSE

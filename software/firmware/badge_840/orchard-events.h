@@ -114,16 +114,18 @@ typedef struct _OrchardAppUgfxEvent {
 } OrchardAppUgfxEvent;
 
 typedef enum _OrchardAppRadioEventType {
-   connectEvent,		/* Connected to peer */
-   disconnectEvent,		/* Disconnected from peer */
-   connectTimeoutEvent,		/* Connection timed out */
+   connectEvent,		/* GAP Connected to peer */
+   disconnectEvent,		/* GAP Disconnected from peer */
+   connectTimeoutEvent,		/* GAP Connection timed out */
+   advertisementEvent,		/* GAP Received advertisement */
    l2capConnectEvent,		/* L2CAP connection successful */
    l2capDisconnectEvent,	/* L2CAP connection closed */
    l2capConnectRefusedEvent,	/* L2CAP connection failed */
    l2capRxEvent,		/* L2CAP data received */
    l2capTxEvent,		/* L2CAP data sent */
    l2capTxDoneEvent,		/* L2CAP data acknowledged */
-   advertisementEvent,		/* Received advertisement */
+   gattsWriteEvent,		/* GATTS attribute write notification */
+   gattsReadWriteAuthEvent,	/* GATTS attribute read/write auth request */
    gattcServiceDiscoverEvent,	/* GATTC service discovery complete */
    gattcCharDiscoverEvent,	/* GATTC characteristic discovery complete */
    gattcAttrDiscoverEvent,	/* GATTC attribute discovery complete */
