@@ -180,6 +180,7 @@ CSRC += main.c \
 	i2s_lld.c \
 	mmc_spi_lld.c \
 	nrf52flash_lld.c \
+	nullprot_lld.c \
 	flash_qspi_lld.c \
 	joypad_lld.c \
 	xpt2046_lld.c \

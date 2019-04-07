@@ -18,6 +18,7 @@
 
 #include "async_io_lld.h"
 #include "joypad_lld.h"
+#include "nullprot_lld.h"
 
 #include "orchard-ui.h"
 #include "orchard-app.h"
@@ -284,6 +285,18 @@ int main(void)
     SCB->VTOR = 0;
     __enable_irq();
 #endif
+
+    /*
+     * Enable NULL pointer protection. We move the vector table to an
+     * alternate location and then use the MPU to make the first 256
+     * bytes of the address space unreadable and unwritable. If someone
+     * tries to dereference a NULL pointer, it will result in a load
+     * or store at that location, and we'll get a memory manager trap
+     * right away instead of possibly dying somewhere else further
+     * on down the line.
+     */
+
+    nullProtStart ();
 
     /*
      * Enable division by 0 traps. We do not enable unaligned access

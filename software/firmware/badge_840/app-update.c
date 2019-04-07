@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2017
+ * Copyright (c) 2016-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,8 @@
 #include "ffconf.h"
 
 #include "ble_lld.h"
+
+#include "nullprot_lld.h"
 
 #include "buildtime.h"
 
@@ -91,13 +93,23 @@ update (VHandles * p)
 
 	/* Stop the gtimer thread */
 
+	chThdSleepMilliseconds (20);
+
 	t = malloc (sizeof(GTimer));
 	gtimerInit (t);
 	gtimerStart (t, gtimerCallback, NULL, FALSE, 1);
 
+	/* Wait for the LED and gtimer threads to exit */
+
 	chThdSleepMilliseconds (20);
 
-	/* Wait for the LED and gtimer threads to exit */
+	/*
+	 * Turn off the NULL pointer protection. The updater code will
+	 * access the vector table to make a copy of it, so we have to
+	 * make it readable.
+	 */
+
+	nullProtStop ();
 
 	gwinClear (p->ghConsole);
 	gwinPrintf (p->ghConsole,
