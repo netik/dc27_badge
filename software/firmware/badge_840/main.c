@@ -506,11 +506,11 @@ int main(void)
     printf ("I2S interface enabled\n");
 
     if (NRF_FICR->INFO.VARIANT == 0x41414141)
-      printf ("Skipping screen setup on broken preview silicon\n");
+        printf ("Skipping screen setup on broken preview silicon\n");
     else {
-      /* Enable display and touch panel */
-      printf ("Main screen turn on\n");
-      gfxInit ();
+        /* Enable display and touch panel */
+        printf ("Main screen turn on\n");
+        gfxInit ();
     }
 
     /* Mount SD card */
@@ -584,12 +584,15 @@ int main(void)
     evtTableHook (orchard_events, unlocks_updated, unlock_update_handler);
     evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
 
+    if (NRF_FICR->INFO.VARIANT == 0x41414141)
+        printf ("Skipping UI setup on broken preview silicon\n");
+    else {
+        uiStart ();
+        orchardAppInit ();
+        orchardAppRestart ();
+    }
 
     shellRestart ();
-
-    uiStart ();
-    orchardAppInit ();
-    orchardAppRestart ();
 
     while (true) {
         chEvtDispatch(evtHandlers(orchard_events), chEvtWaitOne(ALL_EVENTS));
