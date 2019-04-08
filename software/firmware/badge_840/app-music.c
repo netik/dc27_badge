@@ -389,8 +389,12 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
 		gdispCloseFont (font);
 
+		chThdSetPriority (HIGHPRIO - 5);
+
 		if (musicPlay (p, p->listitems[uiContext->selected + 1]) != 0)
 			i2sPlay ("click.snd");
+
+		chThdSetPriority (ORCHARD_APP_PRIO);
 
 		orchardAppExit ();
 	}

@@ -186,6 +186,14 @@ bleGattsDispatch (ble_evt_t * evt)
 			printf ("MTU exchange reply: %x\n", r);
 #endif
 			break;
+		case BLE_GATTS_EVT_TIMEOUT:
+#ifdef BLE_GATTS_VERBOSE
+			printf ("GATTS timeout event\n");
+#endif
+			orchardAppRadioCallback (gattsTimeout, evt, NULL, 0);
+			sd_ble_gap_disconnect (ble_conn_handle,
+			    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+			break;
 		default:
 			printf ("unhandled GATTS event %d (%d)\n",
 			    evt->header.evt_id - BLE_GATTS_EVT_BASE,

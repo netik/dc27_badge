@@ -165,7 +165,8 @@ joyHandle (uint8_t s)
 			/*i2sWait ();*/
 		}
 
-		chEvtBroadcast (&orchard_app_key);
+		if (orchard_app_key.next != NULL)
+			chEvtBroadcast (&orchard_app_key);
 	}
 
 	return;

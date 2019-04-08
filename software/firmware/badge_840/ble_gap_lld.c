@@ -164,6 +164,7 @@ bleGapDispatch (ble_evt_t * evt)
 	ble_gap_evt_conn_param_update_request_t * update;
 	ble_gap_adv_report_type_t rtype;
 #ifdef BLE_GAP_VERBOSE
+	ble_gap_evt_phy_update_request_t * phyreq;
 	ble_gap_evt_conn_sec_update_t * sec;
 	ble_gap_conn_sec_mode_t * secmode;
 #endif
@@ -191,11 +192,26 @@ bleGapDispatch (ble_evt_t * evt)
 			    addr->addr[2], addr->addr[1], addr->addr[0]);
 			printf ("role; %d\n", ble_gap_role);
 #endif
-			sd_ble_gap_tx_power_set (BLE_GAP_TX_POWER_ROLE_CONN,
+			r = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_CONN,
 			    ble_conn_handle, 8);
+
+			if (r != NRF_SUCCESS)
+				printf ("Setting tx power failed: 0x%x\n", r);
+
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
 				bleGapScanStart ();
+
+			/*
+			 * Try to request an upgrade to the coded PHY.
+			 * This should gain us longer range.
+			 */
+
+			phys.rx_phys = BLE_GAP_PHY_CODED;
+			phys.tx_phys = BLE_GAP_PHY_CODED;
+			sd_ble_gap_phy_update (ble_conn_handle, &phys);
+
 			orchardAppRadioCallback (connectEvent, evt, NULL, 0);
+
 			break;
 
 		case BLE_GAP_EVT_DISCONNECTED:
@@ -209,7 +225,7 @@ bleGapDispatch (ble_evt_t * evt)
 #ifdef notdef
 			if (r != NRF_SUCCESS) {
 				printf ("GAP stop advertisement after "
-				    "disconnect failed! 0x%x\n", r);
+				    "disconnect failed! 0x%lx\n", r);
 			}
 #endif
 			r = sd_ble_gap_adv_start (ble_adv_handle,
@@ -369,10 +385,13 @@ bleGapDispatch (ble_evt_t * evt)
 			if (timeout->src == BLE_GAP_TIMEOUT_SRC_SCAN)
 				bleGapScanStart ();
 			if (timeout->src == BLE_GAP_TIMEOUT_SRC_CONN) {
+#ifdef BLE_GAP_VERBOSE
+				printf ("GAP connection timed out\n");
+#endif
 				orchardAppRadioCallback (connectTimeoutEvent,
 			 	     evt, NULL, 0);
 				ble_conn_handle = BLE_CONN_HANDLE_INVALID;
-				bleGapStart ();
+				bleGapScanStart ();
 			}
 			break;
 
@@ -451,6 +470,12 @@ bleGapDispatch (ble_evt_t * evt)
 
 			break;
 		case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
+#ifdef BLE_GAP_VERBOSE
+			phyreq = &evt->evt.gap_evt.params.phy_update_request;
+			printf ("PHY update request RX PHY: %d TX PHY: %d\n",
+			    phyreq->peer_preferred_phys.rx_phys,
+			    phyreq->peer_preferred_phys.tx_phys);
+#endif
 			phys.rx_phys = BLE_GAP_PHY_AUTO;
 			phys.tx_phys = BLE_GAP_PHY_AUTO;
 			sd_ble_gap_phy_update (ble_conn_handle, &phys);
@@ -502,7 +527,7 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 {
 	ble_gap_adv_params_t adv_params;
 	ble_gap_adv_data_t adv_data;
-	uint32_t r;
+	int r;
 	uint8_t * pktrsp;
 	uint8_t sizersp;
 	uint16_t val;
@@ -558,6 +583,7 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_params.duration = MSEC_TO_UNITS(2000, UNIT_10_MS);
 	adv_params.filter_policy =  BLE_GAP_SCAN_FP_ACCEPT_ALL;
 	adv_params.primary_phy = BLE_GAP_PHY_AUTO;
+	adv_params.secondary_phy = BLE_GAP_PHY_CODED;
 	adv_params.set_id = 1;
 #ifdef BLE_GAP_SCAN_VERBOSE
 	adv_params.scan_req_notification = 1;
@@ -566,12 +592,23 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	r = sd_ble_gap_adv_set_configure (&ble_adv_handle,
 	    &adv_data, &adv_params);
 
-	if (r != NRF_SUCCESS)
-            return (r);
+	if (r != NRF_SUCCESS) {
+		printf ("Configuring advertising failed: 0x%x\n", r);
+		return (r);
+	}
+
+	r = sd_ble_gap_tx_power_set (BLE_GAP_TX_POWER_ROLE_ADV,
+	    ble_adv_handle, 8);
+
+	if (r != NRF_SUCCESS) {
+		printf ("Setting TX power failed: 0x%x\n", r);
+		return (r);
+	}
 
 	r = sd_ble_gap_adv_start (ble_adv_handle, BLE_IDES_APP_TAG);
 
-	sd_ble_gap_tx_power_set (BLE_GAP_TX_POWER_ROLE_ADV, ble_adv_handle, 8);
+	if (r != NRF_SUCCESS)
+		printf ("Starting advertising failed: 0x%x\n", r);
 
 	return (r);
 }
