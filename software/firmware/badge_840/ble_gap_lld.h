@@ -47,9 +47,9 @@ extern ble_gap_addr_t ble_peer_addr;
 #define BLE_GAP_ADV_MAX_SIZE BLE_GAP_ADV_SET_DATA_SIZE_MAX
 #endif
 
-#define BLE_IDES_SCAN_TIMEOUT		60
-#define BLE_IDES_ADV_TIMEOUT		30
-#define BLE_IDES_CONNECT_TIMEOUT	5
+#define BLE_IDES_SCAN_TIMEOUT		100
+#define BLE_IDES_ADV_TIMEOUT		100
+#define BLE_IDES_CONNECT_TIMEOUT	500
 
 enum
 {

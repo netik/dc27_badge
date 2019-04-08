@@ -110,6 +110,10 @@ bleGattcDispatch (ble_evt_t * evt)
 #endif
 			orchardAppRadioCallback (gattcCharDiscoverEvent,
 			    evt, NULL, 0);
+			osalSysLock ();
+			bleGattcEvents = BLE_GATTC_CHARACTERISTIC_DISCOVERED;
+			osalThreadResumeS (&bleGattcThreadReference, MSG_OK);
+			osalSysUnlock ();
 			break;
 		case BLE_GATTC_EVT_DESC_DISC_RSP:
 #ifdef BLE_GATTC_VERBOSE
@@ -133,8 +137,7 @@ bleGattcDispatch (ble_evt_t * evt)
 				bleGattcEvents = BLE_GATTC_SERVICE_DISCOVERED;
 			else
 				bleGattcEvents = BLE_GATTC_ERROR;
-			osalThreadResumeS (&bleGattcThreadReference,
-			    MSG_OK);
+			osalThreadResumeS (&bleGattcThreadReference, MSG_OK);
 			osalSysUnlock ();
 			break;
 		case BLE_GATTC_EVT_CHAR_VAL_BY_UUID_READ_RSP:
@@ -156,8 +159,7 @@ bleGattcDispatch (ble_evt_t * evt)
 				bleGattcEvents = BLE_GATTC_CHAR_READ;
 			else
 				bleGattcEvents = BLE_GATTC_ERROR;
-			osalThreadResumeS (&bleGattcThreadReference,
-			    MSG_OK);
+			osalThreadResumeS (&bleGattcThreadReference, MSG_OK);
 			osalSysUnlock ();
 
 			break;
@@ -183,8 +185,7 @@ bleGattcDispatch (ble_evt_t * evt)
 				bleGattcEvents = BLE_GATTC_CHAR_READ;
 			else
 				bleGattcEvents = BLE_GATTC_ERROR;
-			osalThreadResumeS (&bleGattcThreadReference,
-			    MSG_OK);
+			osalThreadResumeS (&bleGattcThreadReference, MSG_OK);
 			osalSysUnlock ();
 
 			break;
@@ -200,8 +201,19 @@ bleGattcDispatch (ble_evt_t * evt)
 				bleGattcEvents = BLE_GATTC_CHAR_WRITTEN;
 			else
 				bleGattcEvents = BLE_GATTC_ERROR;
-			osalThreadResumeS (&bleGattcThreadReference,
-			    MSG_OK);
+			osalThreadResumeS (&bleGattcThreadReference, MSG_OK);
+			osalSysUnlock ();
+			break;
+		case BLE_GATTC_EVT_TIMEOUT:
+#ifdef BLE_GATTC_VERBOSE
+			printf ("GATTC timeout event\n");
+#endif
+			orchardAppRadioCallback (gattcTimeout, evt, NULL, 0);
+			sd_ble_gap_disconnect (ble_conn_handle,
+			    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+			osalSysLock ();
+			bleGattcEvents = BLE_GATTC_ERROR;
+			osalThreadResumeS (&bleGattcThreadReference, MSG_OK);
 			osalSysUnlock ();
 			break;
 		default:
