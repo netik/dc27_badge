@@ -52,21 +52,95 @@
 
 #include "badge.h"
 
+#pragma pack(1)
+struct formatted_uuid {
+	uint32_t	u0;
+	uint16_t	u1;
+	uint16_t	u2;
+	uint16_t	u3;
+	uint8_t		u4[6];
+};
+#pragma pack()
+
+static void
+radio_get_uuid (uint16_t handle)
+{
+	uint8_t uuid[16];
+	struct formatted_uuid fuuid;
+	uint8_t * p;
+	int r;
+	int i;
+	uint16_t len;
+
+	len = sizeof(uuid);
+	r = bleGattcRead (handle, uuid, &len, TRUE);
+
+	if (r == NRF_SUCCESS) {
+		if (len != 16) {
+			printf ("Not a UUID (length %d != 16)\n", len);
+			return;
+		}
+		p = (uint8_t *)&fuuid;
+		for (i = 0; i < 16; i++)
+			p[i] = uuid[15 - i];
+		fuuid.u0 = __builtin_bswap32 (fuuid.u0);
+		fuuid.u1 = __builtin_bswap16 (fuuid.u1);
+		fuuid.u2 = __builtin_bswap16 (fuuid.u2);
+		fuuid.u3 = __builtin_bswap16 (fuuid.u3);
+		printf ("UUID: %04lx-%02x-%02x-%02x-%x%x%x%x%x%x\n",
+		    fuuid.u0, fuuid.u1, fuuid.u2, fuuid.u3,
+		    fuuid.u4[0], fuuid.u4[1], fuuid.u4[2],
+		    fuuid.u4[3], fuuid.u4[4], fuuid.u4[5]);
+		if (memcmp (uuid, ble_ides_base_uuid.uuid128, 16) == 0)	 
+			printf ("Badge service found\n");
+	} else
+		printf ("Reading UUID failed\n");
+}
+
 static void
 radio_discover (BaseSequentialStream *chp, int argc, char *argv[])
 {
-	uint8_t uuid[16];
+	ble_evt_t evt;
+	ble_gattc_evt_prim_srvc_disc_rsp_t * pri;
+	ble_gattc_service_t * s;
+	uint16_t handle;
 	uint16_t len;
 	int r;
+	int i;
 
-	len = sizeof(uuid);
-	r = bleGattcRead (ble_gatts_ides_handle, uuid, &len, TRUE);
+	handle = 1;
+	while (1) {
+		len = sizeof (evt);
 
-	if (r == NRF_SUCCESS) {
-		if (memcmp (uuid, ble_ides_base_uuid.uuid128, 16) == 0)	 
-		printf ("Badge service found\n");
-	} else
-		printf ("Discovery failed\n");
+		r = bleGattcSrvDiscover (handle, (uint8_t *)&evt, &len, TRUE);
+
+		if (r != NRF_SUCCESS) {
+			printf ("Discovery failed\n");
+			return;
+		}
+
+		pri = (ble_gattc_evt_prim_srvc_disc_rsp_t *)&evt;
+
+		if (pri->count == 0) {
+			printf ("End of service list (or none found)\n");
+			break;
+		}
+
+		printf ("Discovered %d services\n", pri->count);
+
+		for (i = 0; i < pri->count; i++) {
+			s = &pri->services[i];
+			printf ("UUID: %x Type: %d ", s->uuid.uuid,
+			    s->uuid.type);
+			printf ("Handle ranges: %d %d\n",
+			    s->handle_range.start_handle,
+			    s->handle_range.end_handle);
+			if (s->uuid.type != BLE_UUID_TYPE_BLE)
+				radio_get_uuid (s->handle_range.start_handle);
+		}
+		handle = s->handle_range.end_handle;
+	}
+
 	return;
 }
 

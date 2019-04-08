@@ -51,7 +51,7 @@
 #include "orchard-app.h"
 
 static thread_reference_t bleGattcThreadReference;
-static uint32_t bleDetectEvents;
+static uint32_t bleGattcEvents;
 static uint8_t * ble_gattc_buf;
 static uint16_t ble_gattc_len;
 
@@ -67,7 +67,6 @@ bleGattcDispatch (ble_evt_t * evt)
 	ble_gattc_service_t * s;
 #endif
 	int i;
-	int next;
 
 	switch (evt->header.evt_id) {
 		case BLE_GATTC_EVT_PRIM_SRVC_DISC_RSP:
@@ -86,25 +85,22 @@ bleGattcDispatch (ble_evt_t * evt)
 			}
 #endif
 
+			i = (sizeof (ble_gattc_evt_prim_srvc_disc_rsp_t) +
+			    sizeof (ble_gattc_service_t) * (pri->count - 1));
+
+			ble_gattc_len = i;
+			if (ble_gattc_len < i)
+				ble_gattc_buf = NULL;
+			else
+				memcpy (ble_gattc_buf, pri, i);
+
 			orchardAppRadioCallback (gattcServiceDiscoverEvent,
 			    evt, NULL, 0);
 
-			if (evt->evt.gattc_evt.gatt_status ==
-			    BLE_GATT_STATUS_SUCCESS) {
-				i = pri->count - 1;
-				next = pri->services[i].handle_range.end_handle;
-				sd_ble_gattc_primary_services_discover (
-				    ble_conn_handle, next, NULL);
-			}
-
-			if (evt->evt.gattc_evt.gatt_status !=
-			    BLE_GATT_STATUS_SUCCESS && pri->count == 0) {
-				osalSysLock ();
-				bleDetectEvents = BLE_GATTC_SERVICE_DISCOVERED;
-				osalThreadResumeS (&bleGattcThreadReference,
-				    MSG_OK);
-				osalSysUnlock ();
-			}
+			osalSysLock ();
+			bleGattcEvents = BLE_GATTC_SERVICE_DISCOVERED;
+			osalThreadResumeS (&bleGattcThreadReference, MSG_OK);
+			osalSysUnlock ();
 			break;
 		case BLE_GATTC_EVT_CHAR_DISC_RSP:
 #ifdef BLE_GATTC_VERBOSE
@@ -134,9 +130,9 @@ bleGattcDispatch (ble_evt_t * evt)
 			    BLE_GATTC_ATTR_INFO_FORMAT_128BIT &&
 			    memcpy (attrs->info.attr_info128[0].uuid.uuid128,
 			        ble_ides_base_uuid.uuid128, 16) == 0)
-				bleDetectEvents = BLE_GATTC_SERVICE_DISCOVERED;
+				bleGattcEvents = BLE_GATTC_SERVICE_DISCOVERED;
 			else
-				bleDetectEvents = BLE_GATTC_ERROR;
+				bleGattcEvents = BLE_GATTC_ERROR;
 			osalThreadResumeS (&bleGattcThreadReference,
 			    MSG_OK);
 			osalSysUnlock ();
@@ -157,9 +153,9 @@ bleGattcDispatch (ble_evt_t * evt)
 			osalSysLock ();
 			if (evt->evt.gattc_evt.gatt_status ==
 			    BLE_GATT_STATUS_SUCCESS)
-				bleDetectEvents = BLE_GATTC_CHAR_READ;
+				bleGattcEvents = BLE_GATTC_CHAR_READ;
 			else
-				bleDetectEvents = BLE_GATTC_ERROR;
+				bleGattcEvents = BLE_GATTC_ERROR;
 			osalThreadResumeS (&bleGattcThreadReference,
 			    MSG_OK);
 			osalSysUnlock ();
@@ -184,9 +180,9 @@ bleGattcDispatch (ble_evt_t * evt)
 			osalSysLock ();
 			if (evt->evt.gattc_evt.gatt_status ==
 			    BLE_GATT_STATUS_SUCCESS)
-				bleDetectEvents = BLE_GATTC_CHAR_READ;
+				bleGattcEvents = BLE_GATTC_CHAR_READ;
 			else
-				bleDetectEvents = BLE_GATTC_ERROR;
+				bleGattcEvents = BLE_GATTC_ERROR;
 			osalThreadResumeS (&bleGattcThreadReference,
 			    MSG_OK);
 			osalSysUnlock ();
@@ -201,9 +197,9 @@ bleGattcDispatch (ble_evt_t * evt)
 			osalSysLock ();
 			if (evt->evt.gattc_evt.gatt_status ==
 			    BLE_GATT_STATUS_SUCCESS)
-				bleDetectEvents = BLE_GATTC_CHAR_WRITTEN;
+				bleGattcEvents = BLE_GATTC_CHAR_WRITTEN;
 			else
-				bleDetectEvents = BLE_GATTC_ERROR;
+				bleGattcEvents = BLE_GATTC_ERROR;
 			osalThreadResumeS (&bleGattcThreadReference,
 			    MSG_OK);
 			osalSysUnlock ();
@@ -224,6 +220,49 @@ bleGattcStart (void)
 }
 
 int
+bleGattcSrvDiscover (uint16_t handle, uint8_t * buf, uint16_t * len,
+    bool blocking)
+{
+	int r;
+	msg_t tr = MSG_OK;
+
+	if (ble_conn_handle == BLE_CONN_HANDLE_INVALID)
+		return (NRF_ERROR_INVALID_STATE);
+
+	bleGattcEvents = 0;
+
+	ble_gattc_len = *len;
+	ble_gattc_buf = buf;
+
+	r = sd_ble_gattc_primary_services_discover (ble_conn_handle,
+	    handle, NULL);
+
+	if (r != NRF_SUCCESS)
+		return (r);
+
+	if (blocking == FALSE)
+		return (NRF_ERROR_BUSY);
+
+	osalSysLock ();
+	if (bleGattcEvents == 0)
+		tr = osalThreadSuspendTimeoutS (&bleGattcThreadReference,
+		    OSAL_MS2I(5000));
+	osalSysUnlock ();
+
+	if (tr == MSG_TIMEOUT)
+		return (NRF_ERROR_TIMEOUT);
+
+	if (bleGattcEvents == BLE_GATTC_SERVICE_DISCOVERED) {
+		if (ble_gattc_buf == NULL)
+			return (NRF_ERROR_RESOURCES);
+		*len = ble_gattc_len;
+		return (NRF_SUCCESS);
+	}
+
+	return (NRF_ERROR_NOT_FOUND);
+}
+
+int
 bleGattcRead (uint16_t handle, uint8_t * buf, uint16_t * len, bool blocking)
 {
 	int r;
@@ -232,7 +271,7 @@ bleGattcRead (uint16_t handle, uint8_t * buf, uint16_t * len, bool blocking)
 	if (ble_conn_handle == BLE_CONN_HANDLE_INVALID)
 		return (NRF_ERROR_INVALID_STATE);
 
-	bleDetectEvents = 0;
+	bleGattcEvents = 0;
 
 	ble_gattc_buf = buf;
 	ble_gattc_len = *len;
@@ -246,7 +285,7 @@ bleGattcRead (uint16_t handle, uint8_t * buf, uint16_t * len, bool blocking)
 		return (NRF_ERROR_BUSY);
 
 	osalSysLock ();
-	if (bleDetectEvents == 0)
+	if (bleGattcEvents == 0)
 		tr = osalThreadSuspendTimeoutS (&bleGattcThreadReference,
 		    OSAL_MS2I(5000));
 	osalSysUnlock ();
@@ -254,7 +293,7 @@ bleGattcRead (uint16_t handle, uint8_t * buf, uint16_t * len, bool blocking)
 	if (tr == MSG_TIMEOUT)
 		return (NRF_ERROR_TIMEOUT);
 
-	if (bleDetectEvents == BLE_GATTC_CHAR_READ) {
+	if (bleGattcEvents == BLE_GATTC_CHAR_READ) {
 		if (ble_gattc_buf == NULL)
 			return (NRF_ERROR_RESOURCES);
 		*len = ble_gattc_len;
@@ -274,7 +313,7 @@ bleGattcWrite (uint16_t handle, uint8_t * buf, uint16_t len, bool blocking)
 	if (ble_conn_handle == BLE_CONN_HANDLE_INVALID)
 		return (NRF_ERROR_INVALID_STATE);
 
-	bleDetectEvents = 0;
+	bleGattcEvents = 0;
 
 	wr.write_op = BLE_GATT_OP_WRITE_REQ;
 	wr.flags = 0;
@@ -292,7 +331,7 @@ bleGattcWrite (uint16_t handle, uint8_t * buf, uint16_t len, bool blocking)
 		return (NRF_ERROR_BUSY);
 
 	osalSysLock ();
-	if (bleDetectEvents == 0)
+	if (bleGattcEvents == 0)
 		tr = osalThreadSuspendTimeoutS (&bleGattcThreadReference,
 		    OSAL_MS2I(5000));
 	osalSysUnlock ();
@@ -300,7 +339,7 @@ bleGattcWrite (uint16_t handle, uint8_t * buf, uint16_t len, bool blocking)
 	if (tr == MSG_TIMEOUT)
 		return (NRF_ERROR_TIMEOUT);
 
-	if (bleDetectEvents == BLE_GATTC_CHAR_WRITTEN)
+	if (bleGattcEvents == BLE_GATTC_CHAR_WRITTEN)
 		return (NRF_SUCCESS);
 
 	return (NRF_ERROR_NOT_FOUND);
