@@ -174,28 +174,6 @@ Text Notes 1900 3350 0    50   ~ 10
 I2S/I2C DAC
 Text Notes 4100 1900 0    50   ~ 10
 Audio Power Filtering\n
-$Comp
-L Connector:Conn_01x02_Female J501
-U 1 1 5C153416
-P 8950 3650
-F 0 "J501" H 8977 3626 50  0000 L CNN
-F 1 "SPK LEFT" H 8977 3535 50  0000 L CNN
-F 2 "Connector_Wire:SolderWirePad_1x02_P3.81mm_Drill0.8mm" H 8950 3650 50  0001 C CNN
-F 3 "~" H 8950 3650 50  0001 C CNN
-	1    8950 3650
-	1    0    0    -1  
-$EndComp
-$Comp
-L Connector:Conn_01x02_Female J502
-U 1 1 5C15346B
-P 8950 4350
-F 0 "J502" H 8977 4326 50  0000 L CNN
-F 1 "SPK_RIGHT" H 8977 4235 50  0000 L CNN
-F 2 "Connector_Wire:SolderWirePad_1x02_P3.81mm_Drill0.8mm" H 8950 4350 50  0001 C CNN
-F 3 "~" H 8950 4350 50  0001 C CNN
-	1    8950 4350
-	1    0    0    -1  
-$EndComp
 Text Notes 8850 4300 0    50   ~ 0
 +\n
 Text Notes 8850 3600 0    50   ~ 0
@@ -248,8 +226,8 @@ F 3 "" H 6350 5150 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	6350 5000 6350 5150
-Text Notes 8850 4050 0    50   ~ 0
-CE20-14M-8 micro speaker x 2\n(0.25W to 0.5W max)\n
+Text Notes 9500 3750 0    50   ~ 0
+AST-01078MRR\n200mW
 $Comp
 L Device:CP1 C504
 U 1 1 5C16A360
@@ -556,4 +534,28 @@ Wire Wire Line
 	4250 3650 4700 3650
 Wire Wire Line
 	5000 3650 5300 3650
+$Comp
+L Device:Speaker LS501
+U 1 1 5CAC1626
+P 8950 3650
+F 0 "LS501" H 9120 3646 50  0000 L CNN
+F 1 "Speaker" H 9120 3555 50  0000 L CNN
+F 2 "" H 8950 3450 50  0001 C CNN
+F 3 "~" H 8940 3600 50  0001 C CNN
+	1    8950 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:Speaker LS502
+U 1 1 5CAC167D
+P 8950 4350
+F 0 "LS502" H 9120 4346 50  0000 L CNN
+F 1 "Speaker" H 9120 4255 50  0000 L CNN
+F 2 "" H 8950 4150 50  0001 C CNN
+F 3 "~" H 8940 4300 50  0001 C CNN
+	1    8950 4350
+	1    0    0    -1  
+$EndComp
+Text Notes 9500 4450 0    50   ~ 0
+AST-01078MRR\n200mW
 $EndSCHEMATC
