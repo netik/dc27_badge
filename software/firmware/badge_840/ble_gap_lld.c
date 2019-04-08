@@ -385,10 +385,13 @@ bleGapDispatch (ble_evt_t * evt)
 			if (timeout->src == BLE_GAP_TIMEOUT_SRC_SCAN)
 				bleGapScanStart ();
 			if (timeout->src == BLE_GAP_TIMEOUT_SRC_CONN) {
+#ifdef BLE_GAP_VERBOSE
+				printf ("GAP connection timed out\n");
+#endif
 				orchardAppRadioCallback (connectTimeoutEvent,
 			 	     evt, NULL, 0);
 				ble_conn_handle = BLE_CONN_HANDLE_INVALID;
-				bleGapStart ();
+				bleGapScanStart ();
 			}
 			break;
 
