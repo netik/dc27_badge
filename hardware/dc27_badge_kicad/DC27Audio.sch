@@ -1,6 +1,6 @@
 EESchema Schematic File Version 4
 LIBS:DC27-badge-cache
-EELAYER 26 0
+EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -227,7 +227,7 @@ $EndComp
 Wire Wire Line
 	6350 5000 6350 5150
 Text Notes 9500 3750 0    50   ~ 0
-AST-01078MRR\n200mW
+AST-01708MRR\n200mW
 $Comp
 L Device:CP1 C504
 U 1 1 5C16A360
@@ -412,8 +412,6 @@ F 3 "" H 6200 3050 50  0001 C CNN
 	1    6200 3050
 	1    0    0    -1  
 $EndComp
-Text Notes 6400 2000 0    50   ~ 0
-TBD- we don’t know what supply voltage to run this at\n
 Wire Wire Line
 	6500 2300 6500 2500
 Wire Wire Line
@@ -540,7 +538,7 @@ U 1 1 5CAC1626
 P 8950 3650
 F 0 "LS501" H 9120 3646 50  0000 L CNN
 F 1 "Speaker" H 9120 3555 50  0000 L CNN
-F 2 "" H 8950 3450 50  0001 C CNN
+F 2 "lib_fp:AST-01708-MRR" H 8950 3450 50  0001 C CNN
 F 3 "~" H 8940 3600 50  0001 C CNN
 	1    8950 3650
 	1    0    0    -1  
@@ -551,11 +549,13 @@ U 1 1 5CAC167D
 P 8950 4350
 F 0 "LS502" H 9120 4346 50  0000 L CNN
 F 1 "Speaker" H 9120 4255 50  0000 L CNN
-F 2 "" H 8950 4150 50  0001 C CNN
+F 2 "lib_fp:AST-01708-MRR" H 8950 4150 50  0001 C CNN
 F 3 "~" H 8940 4300 50  0001 C CNN
 	1    8950 4350
 	1    0    0    -1  
 $EndComp
 Text Notes 9500 4450 0    50   ~ 0
-AST-01078MRR\n200mW
+AST-01708MRR\n200mW
+Text Notes 4850 3350 0    50   ~ 0
+Can drop R502,503 to 15k, \nbut some distortion present.
 $EndSCHEMATC

@@ -6,4 +6,5 @@
   (lib (name DC27-badge-rescue)(type Legacy)(uri ${KIPRJMOD}/DC27-badge-rescue.lib)(options "")(descr ""))
   (lib (name BMD-340-A-R)(type Legacy)(uri ${KIPRJMOD}/lib_fp.pretty/BMD-340-A-R.lib)(options "")(descr ""))
   (lib (name LM4880)(type Legacy)(uri ${KIPRJMOD}/lib_fp.pretty/LM4880.lib)(options "")(descr ""))
+  (lib (name DC27-badge)(type Legacy)(uri ${KIPRJMOD}/lib_sch/DC27-badge.lib)(options "")(descr ""))
 )
