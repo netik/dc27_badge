@@ -56,6 +56,7 @@
 
 #include "ch.h"
 #include "hal.h"
+#include "osal.h"
 
 extern char   __heap_base__; /* Set by linker */
 
@@ -94,6 +95,7 @@ __malloc_lock (struct _reent * ptr)
 	return;
 }
 
+__attribute__((used))
 void
 __malloc_unlock (struct _reent * ptr)
 {
