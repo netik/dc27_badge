@@ -1,6 +1,6 @@
 EESchema Schematic File Version 4
 LIBS:DC27-badge-cache
-EELAYER 26 0
+EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -131,7 +131,7 @@ Wire Wire Line
 Wire Wire Line
 	4950 6150 4950 6400
 $Comp
-L MF_Switches:TACT_4.2MM SW101
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW101
 U 1 1 5BA99567
 P 7800 1600
 F 0 "SW101" H 7800 1333 45  0000 C CNN
@@ -142,7 +142,7 @@ F 3 "" H 7800 1600 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L MF_Switches:TACT_4.2MM SW102
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW102
 U 1 1 5BA995D9
 P 8250 1600
 F 0 "SW102" H 8250 1333 45  0000 C CNN
@@ -153,7 +153,7 @@ F 3 "" H 8250 1600 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L MF_Switches:TACT_4.2MM SW104
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW104
 U 1 1 5BA9965D
 P 9150 1600
 F 0 "SW104" H 9150 1333 45  0000 C CNN
@@ -164,7 +164,7 @@ F 3 "" H 9150 1600 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L MF_Switches:TACT_4.2MM SW105
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW105
 U 1 1 5BA99697
 P 9600 1600
 F 0 "SW105" H 9600 1333 45  0000 C CNN
@@ -186,7 +186,7 @@ F 3 "" H 8850 1950 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L MF_Switches:TACT_4.2MM SW103
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW103
 U 1 1 5BA9B5C7
 P 8750 1600
 F 0 "SW103" H 8750 1333 45  0000 C CNN
@@ -197,7 +197,7 @@ F 3 "" H 8750 1600 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L MF_Switches:TACT_4.2MM SW106
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW106
 U 1 1 5BA9B5F5
 P 10100 1600
 F 0 "SW106" H 10100 1333 45  0000 C CNN
@@ -505,7 +505,7 @@ Wire Notes Line
 NoConn ~ 10350 4600
 NoConn ~ 10350 4500
 $Comp
-L Connector:Conn_ARM_JTAG_SWD_10 J101
+L DC27-badge-rescue:Conn_ARM_JTAG_SWD_10-Connector J101
 U 1 1 5BB15372
 P 1150 4500
 F 0 "J101" H 710 4546 50  0000 R CNN
@@ -560,7 +560,7 @@ Wire Wire Line
 Text Notes 550  3350 0    50   ~ 10
 PROGRAMMING HEADER
 $Comp
-L MF_Switches:TACT_4.2MM SW107
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW107
 U 1 1 5BB3B53E
 P 10550 1600
 F 0 "SW107" H 10550 1250 45  0000 C CNN
@@ -721,14 +721,6 @@ Wire Wire Line
 	4100 4050 4300 4050
 Wire Wire Line
 	4100 4150 4300 4150
-Text GLabel 4100 4250 0    50   BiDi ~ 0
-NFC_ANT0
-Text GLabel 4100 4350 0    50   BiDi ~ 0
-NFC_ANT1
-Wire Wire Line
-	4100 4350 4300 4350
-Wire Wire Line
-	4300 4250 4100 4250
 Text GLabel 3450 4650 0    50   Output ~ 0
 SD_CS
 Wire Wire Line
@@ -964,7 +956,7 @@ Connection ~ 8200 4950
 Wire Wire Line
 	8200 4950 8150 4950
 $Comp
-L MF_Switches:TACT_4.2MM SW108
+L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW108
 U 1 1 5C05F22F
 P 11000 1600
 F 0 "SW108" H 11000 1250 45  0000 C CNN
@@ -1247,4 +1239,8 @@ F 3 "~" H 6700 1050 50  0001 C CNN
 	1    6700 1050
 	1    0    0    -1  
 $EndComp
+NoConn ~ 4300 4350
+NoConn ~ 4300 4250
+Text Notes 3800 4400 0    50   ~ 0
+NFC Antenna\nNot used\n
 $EndSCHEMATC
