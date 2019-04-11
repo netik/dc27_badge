@@ -31,4 +31,6 @@
 #define NRF_FAULT_INFO_MAGIC	0xFEEDFACE
 #define NRF_FAULT_INFO_ADDR	0x20002000
 
+extern void newlibStart (void);
+
 #endif /* _BADGE_H_ */

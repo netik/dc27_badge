@@ -218,7 +218,14 @@ void _gwmDeinit(void)
 
 	static void RedrawTimerFn(void *param) {
 		(void)		param;
-		_gwinFlushRedraws(REDRAW_NOWAIT);
+		/*
+		 * We need to use REDRAW_WAIT here since this will caise
+		 * _gwinFlushRedraws() to take the gwin semaphore. This
+		 * is necessary in case an app thread tries to modify the
+		 * gwin window list at the same time that _gwinFlushRedraws()
+		 * function is running inside the gtimer thread.
+		 */
+		_gwinFlushRedraws(REDRAW_WAIT);
 	}
 #endif
 
