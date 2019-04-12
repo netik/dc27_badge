@@ -87,8 +87,8 @@ P0.10					NFC antenna
 P0.11					BTN1 (~A:up)
 P0.12					BTN2 (~A:down)
 P0.13					LED1 / SD Card CS
-P0.14					LED2
-P0.15					LED3
+P0.14					LED2 (Also routed to Shitty-add-on GPIO1)
+P0.15					LED3 (Also routed to Shitty-add-on GPIO2)
 P0.16					LED4
 P0.17					QSPI CS
 P0.18					RESET
