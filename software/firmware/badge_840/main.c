@@ -321,6 +321,10 @@ int main(void)
     chSysInit();
     shellInit();
 
+    /* Initialize newlib facilities. */
+
+    newlibStart ();
+
     sdStart (&SD1, &serial_config);
     chThdSleepMilliseconds (50);
     printf ("\n");

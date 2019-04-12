@@ -52,11 +52,21 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <malloc.h>
 
 #include "ch.h"
 #include "hal.h"
+#include "osal.h"
 
 extern char   __heap_base__; /* Set by linker */
+
+static mutex_t malloc_mutex;
+
+void
+newlibStart (void)
+{
+	osalMutexObjectInit (&malloc_mutex);
+}
 
 __attribute__((used))
 int
@@ -75,6 +85,22 @@ _write (int file, char * ptr, int len)
 	}
 
 	return (len);
+}
+
+__attribute__((used))
+void
+__malloc_lock (struct _reent * ptr)
+{
+	osalMutexLock (&malloc_mutex);
+	return;
+}
+
+__attribute__((used))
+void
+__malloc_unlock (struct _reent * ptr)
+{
+	osalMutexUnlock (&malloc_mutex);
+	return;
 }
 
 __attribute__((used))
