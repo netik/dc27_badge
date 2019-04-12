@@ -1,0 +1,15 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP MCP73833
+D Stand-Alone Linear Li-Ion / Li-Polymer Charge Management Controller
+K LIPO, CHARGER
+F http://ww1.microchip.com/downloads/en/DeviceDoc/22005b.pdf
+$ENDCMP
+#
+$CMP SKRHAAE010
+D ALPS 4 WAY DIGITAL JOYSTICK WITH CENTER BUTTON
+K SWITCH JOYSTICK
+F https://www.mouser.com/datasheet/2/15/SKRH-1370966.pdf
+$ENDCMP
+#
+#End Doc Library

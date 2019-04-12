@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 7
+Sheet 1 8
 Title ""
 Date ""
 Rev ""
@@ -131,84 +131,16 @@ Wire Wire Line
 Wire Wire Line
 	4950 6150 4950 6400
 $Comp
-L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW101
-U 1 1 5BA99567
-P 7800 1600
-F 0 "SW101" H 7800 1333 45  0000 C CNN
-F 1 "UP" H 7800 1417 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 7830 1750 20  0001 C CNN
-F 3 "" H 7800 1600 50  0001 C CNN
-	1    7800 1600
-	-1   0    0    1   
-$EndComp
-$Comp
-L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW102
-U 1 1 5BA995D9
-P 8250 1600
-F 0 "SW102" H 8250 1333 45  0000 C CNN
-F 1 "DN" H 8250 1417 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 8280 1750 20  0001 C CNN
-F 3 "" H 8250 1600 50  0001 C CNN
-	1    8250 1600
-	-1   0    0    1   
-$EndComp
-$Comp
-L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW104
-U 1 1 5BA9965D
-P 9150 1600
-F 0 "SW104" H 9150 1333 45  0000 C CNN
-F 1 "RIGHT" H 9150 1417 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 9180 1750 20  0001 C CNN
-F 3 "" H 9150 1600 50  0001 C CNN
-	1    9150 1600
-	-1   0    0    1   
-$EndComp
-$Comp
-L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW105
-U 1 1 5BA99697
-P 9600 1600
-F 0 "SW105" H 9600 1333 45  0000 C CNN
-F 1 "A" H 9600 1417 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 9630 1750 20  0001 C CNN
-F 3 "" H 9600 1600 50  0001 C CNN
-	1    9600 1600
-	-1   0    0    1   
-$EndComp
-$Comp
 L power:GND #PWR0103
 U 1 1 5BA99749
-P 8850 1950
-F 0 "#PWR0103" H 8850 1700 50  0001 C CNN
-F 1 "GND" H 8855 1777 50  0000 C CNN
-F 2 "" H 8850 1950 50  0001 C CNN
-F 3 "" H 8850 1950 50  0001 C CNN
-	1    8850 1950
+P 9750 1900
+F 0 "#PWR0103" H 9750 1650 50  0001 C CNN
+F 1 "GND" H 9755 1727 50  0000 C CNN
+F 2 "" H 9750 1900 50  0001 C CNN
+F 3 "" H 9750 1900 50  0001 C CNN
+	1    9750 1900
 	1    0    0    -1  
 $EndComp
-$Comp
-L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW103
-U 1 1 5BA9B5C7
-P 8750 1600
-F 0 "SW103" H 8750 1333 45  0000 C CNN
-F 1 "LEFT" H 8750 1417 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 8780 1750 20  0001 C CNN
-F 3 "" H 8750 1600 50  0001 C CNN
-	1    8750 1600
-	-1   0    0    1   
-$EndComp
-$Comp
-L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW106
-U 1 1 5BA9B5F5
-P 10100 1600
-F 0 "SW106" H 10100 1333 45  0000 C CNN
-F 1 "B" H 10100 1417 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 10130 1750 20  0001 C CNN
-F 3 "" H 10100 1600 50  0001 C CNN
-	1    10100 1600
-	-1   0    0    1   
-$EndComp
-Text Notes 5750 650  0    50   ~ 10
-Dual Shitty Add On’s!
 Wire Wire Line
 	7200 800  7200 1050
 $Comp
@@ -226,156 +158,18 @@ Text GLabel 6150 1050 0    50   Input ~ 0
 I2C_SDA
 Text GLabel 6150 1150 0    50   Input ~ 0
 I2C_SCK
-Wire Wire Line
-	10200 1700 10200 1850
-Wire Wire Line
-	10200 1850 10000 1850
-Wire Wire Line
-	7700 1850 7700 1700
-Wire Wire Line
-	7900 1700 7900 1850
-Connection ~ 7900 1850
-Wire Wire Line
-	7900 1850 7700 1850
-Wire Wire Line
-	8150 1700 8150 1850
-Connection ~ 8150 1850
-Wire Wire Line
-	8150 1850 7900 1850
-Wire Wire Line
-	8350 1700 8350 1850
-Connection ~ 8350 1850
-Wire Wire Line
-	8350 1850 8150 1850
-Wire Wire Line
-	8650 1700 8650 1850
-Connection ~ 8650 1850
-Wire Wire Line
-	8650 1850 8350 1850
-Wire Wire Line
-	8850 1700 8850 1850
-Connection ~ 8850 1850
-Wire Wire Line
-	8850 1850 8650 1850
-Wire Wire Line
-	8850 1850 8850 1950
-Wire Wire Line
-	9050 1700 9050 1850
-Connection ~ 9050 1850
-Wire Wire Line
-	9050 1850 8850 1850
-Wire Wire Line
-	9250 1700 9250 1850
-Connection ~ 9250 1850
-Wire Wire Line
-	9250 1850 9050 1850
-Wire Wire Line
-	9500 1700 9500 1850
-Connection ~ 9500 1850
-Wire Wire Line
-	9500 1850 9250 1850
-Wire Wire Line
-	9700 1700 9700 1850
-Connection ~ 9700 1850
-Wire Wire Line
-	9700 1850 9500 1850
-Wire Wire Line
-	10000 1700 10000 1850
-Connection ~ 10000 1850
-Wire Wire Line
-	10000 1850 9700 1850
-Wire Wire Line
-	7900 1500 7900 1250
-Wire Wire Line
-	7900 1250 7800 1250
-Wire Wire Line
-	7700 1250 7700 1500
-Wire Wire Line
-	8350 1500 8350 1250
-Wire Wire Line
-	8350 1250 8250 1250
-Wire Wire Line
-	8150 1250 8150 1500
-Wire Wire Line
-	8850 1500 8850 1250
-Wire Wire Line
-	8850 1250 8750 1250
-Wire Wire Line
-	8650 1250 8650 1500
-Wire Wire Line
-	9250 1500 9250 1250
-Wire Wire Line
-	9250 1250 9150 1250
-Wire Wire Line
-	9050 1250 9050 1500
-Wire Wire Line
-	9700 1500 9700 1250
-Wire Wire Line
-	9700 1250 9600 1250
-Wire Wire Line
-	9500 1250 9500 1500
-Wire Wire Line
-	10200 1500 10200 1250
-Wire Wire Line
-	10200 1250 10100 1250
-Wire Wire Line
-	10000 1250 10000 1500
-Text GLabel 7800 1050 1    50   Output ~ 0
-~UP
-Wire Wire Line
-	7800 1050 7800 1250
-Connection ~ 7800 1250
-Wire Wire Line
-	7800 1250 7700 1250
-Text GLabel 8250 1050 1    50   Output ~ 0
-~DOWN
-Text GLabel 8750 1050 1    50   Output ~ 0
-~LEFT
-Text GLabel 9150 1050 1    50   Output ~ 0
-~RIGHT
-Text GLabel 9600 1050 1    50   Output ~ 0
-~A
-Text GLabel 10100 1050 1    50   Output ~ 0
-~B
-Wire Wire Line
-	8250 1050 8250 1250
-Connection ~ 8250 1250
-Wire Wire Line
-	8250 1250 8150 1250
-Wire Wire Line
-	8750 1050 8750 1250
-Connection ~ 8750 1250
-Wire Wire Line
-	8750 1250 8650 1250
-Wire Wire Line
-	9150 1050 9150 1250
-Connection ~ 9150 1250
-Wire Wire Line
-	9150 1250 9050 1250
-Wire Wire Line
-	9600 1050 9600 1250
-Connection ~ 9600 1250
-Wire Wire Line
-	9600 1250 9500 1250
-Wire Wire Line
-	10100 1050 10100 1250
-Connection ~ 10100 1250
-Wire Wire Line
-	10100 1250 10000 1250
-Text Notes 7450 600  0    50   ~ 10
-Switches
 Text GLabel 3450 4450 0    50   Input ~ 0
-~UP
+~A_UP
 Text GLabel 3800 4550 0    50   Input ~ 0
-~DOWN
+~A_DOWN
 Wire Wire Line
 	3800 4550 4300 4550
 Text GLabel 6100 5150 2    50   Input ~ 0
-~LEFT
+~A_LEFT
 Wire Wire Line
 	5750 5150 6100 5150
 Text GLabel 6350 5050 2    50   Input ~ 0
-~RIGHT
+~A_RIGHT
 Wire Wire Line
 	5750 5050 6350 5050
 Text GLabel 6200 4850 2    50   Input ~ 0
@@ -559,25 +353,6 @@ Wire Wire Line
 	1750 3650 1150 3650
 Text Notes 550  3350 0    50   ~ 10
 PROGRAMMING HEADER
-$Comp
-L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW107
-U 1 1 5BB3B53E
-P 10550 1600
-F 0 "SW107" H 10550 1250 45  0000 C CNN
-F 1 "ENTER" H 10550 1150 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 10580 1750 20  0001 C CNN
-F 3 "" H 10550 1600 50  0001 C CNN
-	1    10550 1600
-	1    0    0    -1  
-$EndComp
-Text GLabel 10550 1200 1    50   Output ~ 0
-~ENTER
-Wire Wire Line
-	10450 1500 10450 1350
-Wire Wire Line
-	10450 1350 10550 1350
-Wire Wire Line
-	10650 1500 10650 1350
 Text Notes 8900 5100 0    50   Italic 0
 populate with\nsmd flat-mount connector
 Text GLabel 4100 5150 0    50   Input ~ 0
@@ -599,17 +374,6 @@ F 3 "" H 5900 2200 50  0001 C CNN
 	1    5900 2200
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	10650 1850 10650 1700
-Wire Wire Line
-	10450 1700 10450 1850
-Wire Wire Line
-	10450 1850 10650 1850
-Wire Wire Line
-	10550 1200 10550 1350
-Connection ~ 10550 1350
-Wire Wire Line
-	10550 1350 10650 1350
 $Comp
 L Device:Crystal Y101
 U 1 1 5BBB53E8
@@ -743,10 +507,6 @@ Text GLabel 6000 4450 2    50   Output ~ 0
 DISP_CS
 Wire Wire Line
 	5750 4450 6000 4450
-NoConn ~ 5750 4250
-NoConn ~ 5750 4150
-NoConn ~ 5750 4050
-NoConn ~ 5750 3950
 NoConn ~ 5750 3250
 Text GLabel 6150 2850 2    50   Output ~ 0
 I2S_SDOUT
@@ -756,8 +516,6 @@ Text GLabel 6150 3050 2    50   Output ~ 0
 I2S_LRCK
 Text GLabel 6150 3150 2    50   Output ~ 0
 I2S_MCK
-Wire Notes Line
-	7400 500  7400 6550
 Text GLabel 8050 3200 0    50   Output ~ 0
 SDT_SPI_MISO
 Text GLabel 8050 3650 0    50   Input ~ 0
@@ -875,9 +633,9 @@ SDT_SPI_MOSI
 Wire Wire Line
 	5750 3550 6150 3550
 Text GLabel 6000 3650 2    50   Input ~ 0
-~A
+~B_UP
 Text GLabel 6250 3750 2    50   Input ~ 0
-~B
+~B_DOWN
 Wire Wire Line
 	6250 3750 5750 3750
 Wire Wire Line
@@ -958,45 +716,31 @@ Wire Wire Line
 $Comp
 L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW108
 U 1 1 5C05F22F
-P 11000 1600
-F 0 "SW108" H 11000 1250 45  0000 C CNN
-F 1 "RESET" H 11000 1150 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 11030 1750 20  0001 C CNN
-F 3 "" H 11000 1600 50  0001 C CNN
-	1    11000 1600
+P 10050 1550
+F 0 "SW108" H 10050 1200 45  0000 C CNN
+F 1 "RESET" H 10050 1100 45  0000 C CNN
+F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 10080 1700 20  0001 C CNN
+F 3 "" H 10050 1550 50  0001 C CNN
+	1    10050 1550
 	1    0    0    -1  
 $EndComp
-Text GLabel 11000 1200 1    50   Output ~ 0
-~RESET_TGTMCU
 Wire Wire Line
-	10900 1500 10900 1350
+	9950 1450 9950 1300
 Wire Wire Line
-	10900 1350 11000 1350
+	9950 1300 10050 1300
 Wire Wire Line
-	11100 1500 11100 1350
+	10150 1450 10150 1300
 Wire Wire Line
-	11100 1850 11100 1700
+	10150 1800 10150 1650
 Wire Wire Line
-	10900 1700 10900 1850
+	9950 1650 9950 1800
 Wire Wire Line
-	10900 1850 11100 1850
+	9950 1800 10150 1800
+Connection ~ 10050 1300
 Wire Wire Line
-	11000 1200 11000 1350
-Connection ~ 11000 1350
-Wire Wire Line
-	11000 1350 11100 1350
-Wire Wire Line
-	10200 1850 10450 1850
-Connection ~ 10200 1850
-Connection ~ 10450 1850
-Wire Wire Line
-	10650 1850 10900 1850
-Connection ~ 10650 1850
-Connection ~ 10900 1850
-Text GLabel 6450 3850 2    50   Input ~ 0
-~ENTER
-Wire Wire Line
-	5750 3850 6450 3850
+	10050 1300 10150 1300
+Text GLabel 6650 3850 2    50   Input ~ 0
+~B_LEFT
 Wire Wire Line
 	5750 3650 6000 3650
 NoConn ~ 4300 5050
@@ -1243,4 +987,49 @@ NoConn ~ 4300 4350
 NoConn ~ 4300 4250
 Text Notes 3800 4400 0    50   ~ 0
 NFC Antenna\nNot used\n
+Wire Wire Line
+	9750 1800 9750 1900
+Wire Wire Line
+	9950 1800 9750 1800
+Connection ~ 9950 1800
+Text GLabel 10400 1100 2    50   Output ~ 0
+~RESET_TGTMCU
+Wire Notes Line
+	7400 500  7400 6550
+Text Notes 5750 650  0    50   ~ 10
+Dual Shitty Add On’s!
+Text Notes 7450 700  0    50   ~ 10
+Switches
+$Sheet
+S 7500 850  1550 1000
+U 5CBFA8FD
+F0 "DC27Switches" 50
+F1 "DC27_Switches.sch" 50
+$EndSheet
+Text Notes 9450 700  0    50   ~ 10
+Reset\n
+Wire Wire Line
+	10400 1100 10050 1100
+Wire Wire Line
+	10050 1100 10050 1300
+Wire Notes Line
+	9250 2200 9250 500 
+Wire Wire Line
+	5750 3850 6650 3850
+Text GLabel 6000 3950 2    50   Input ~ 0
+~B_RIGHT
+Text GLabel 6800 4150 2    50   Input ~ 0
+~B_SELECT
+Text GLabel 6400 4050 2    50   Input ~ 0
+~A_SELECT
+Wire Wire Line
+	6000 3950 5750 3950
+Wire Wire Line
+	6400 4050 5750 4050
+Wire Wire Line
+	5750 4150 6800 4150
+Text GLabel 6200 4250 2    50   Input ~ 0
+~JOYPAD_INTR
+Wire Wire Line
+	5750 4250 6200 4250
 $EndSCHEMATC

@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 4 7
+Sheet 4 8
 Title ""
 Date ""
 Rev ""
@@ -479,7 +479,7 @@ Wire Wire Line
 	3450 3500 2350 3500
 Wire Wire Line
 	2350 2800 2350 3500
-Text Notes 3900 5400 0    50   ~ 0
+Text Notes 3200 5450 0    50   ~ 0
 10K = 100mA\n5.0K = 200mA\n2.0K = 500mA\n1.0K = 1000mA\n\nREMOVE R404 or R403 TO SET CHARGER TO 500mA. \nWITH BOTH RESISTORS CHARGING IS 1000mA
 $Comp
 L Device:R R406

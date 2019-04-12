@@ -62,6 +62,13 @@ Notes:
   crystal inside the module while the Nordic reference design has
   it on the main board instead.
 
+  Joypads: There are two 5 input joypads. One on the tail section (aka
+  the "A" stick) and one on the "business end" of the bomb, aka the
+  "B" stick. Pushing down on either stick activates SELECT.
+
+  All switches are tied to ~JOYPAD_INTR with Schottky diodes for low
+  forward-voltage loss when activated. 
+
 Port P0
 
 NRF52840 pin desgination		Function
@@ -77,8 +84,8 @@ P0.07					UART_CTS
 P0.08					UART_RX
 P0.09					NFC antenna
 P0.10					NFC antenna
-P0.11					BTN1 (~up)
-P0.12					BTN2 (~down)
+P0.11					BTN1 (~A:up)
+P0.12					BTN2 (~A:down)
 P0.13					LED1 / SD Card CS
 P0.14					LED2
 P0.15					LED3
@@ -90,8 +97,8 @@ P0.20					QSPI DIO0
 P0.21					QSPI DIO1
 P0.22					QSPI DIO2
 P0.23					QSPI DIO3
-P0.24					BTN3 (~left)
-P0.25					BTN4 (~right)
+P0.24					BTN3 (~A:left)
+P0.25					BTN4 (~A:right)
 P0.26					I2C SCK
 P0.27					I2C SDA
 P0.28					SPI SCK (Screen)
@@ -112,13 +119,13 @@ P1.05					<unused>
 P1.06					SPI SCK (SD/touch)
 P1.07					SPI MISO (SD/touch)
 P1.08					SPI MOSI (SD/touch)
-P1.09					BTN5
-P1.10					BTN6
-P1.11					BTN7
-P1.12					<unused>
-P1.13					<unused>
-P1.14					<unused>
-P1.15					<unused>
+P1.09					BTN5 (~B:up)
+P1.10					BTN6 (~B:down)
+P1.11					BTN7 (~B:left)
+P1.12					BTN8 (~B:right)
+P1.13					BTN9 (~A:SELECT)
+P1.14					BTN10 (~B:SELECT)
+P1.15					~JOYPAD_INTR
 
 For the ER-TFTM028-4 screen module
 
