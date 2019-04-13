@@ -1,0 +1,3 @@
+#define BUILDTIME "Built: Sat Apr 13 14:09:00 PDT 2019 (nuc)"
+#define BUILDVER 1555189740
+#define BUILDMAGIC 0xCAFEBABE
