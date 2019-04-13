@@ -174,9 +174,12 @@ static void key_event(eventid_t id) {
 
   (void) id;
 
-  if (instance.context != NULL)
+  if (instance.context != NULL) {
+      if (strcmp (instance.app->name, "Launcher") == 0 &&
+          joyEvent.key.flags == keyPress)
+        i2sPlay ("ping.snd");
       instance.app->event(instance.context, &joyEvent);
-
+  }
   return;
 }
 

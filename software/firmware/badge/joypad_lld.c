@@ -180,11 +180,7 @@ joyHandle (uint8_t s)
 			joyEvent.key.flags = keyPress;
 
 		joyEvent.type = keyEvent;
-#ifdef notyet
-		if (joyEvent.key.flags == keyPress) {
-			i2sPlay("ping.snd");
-		}
-#endif
+
 		if (orchard_app_key.next != NULL)
 			chEvtBroadcast (&orchard_app_key);
 	}
