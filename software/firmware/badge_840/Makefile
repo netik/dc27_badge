@@ -166,6 +166,7 @@ CSRC += main.c \
 	app-update.c \
 	app-email.c \
 	app-ledsign.c \
+	app-notify.c \
 	app-dialer.c \
 	app-music.c \
 	fix_fft.c \
