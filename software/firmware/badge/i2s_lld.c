@@ -211,9 +211,9 @@ i2sStart (void)
 
 	/* Configure pins */
 
-	NRF_I2S->PSEL.SDOUT = 0x20 | IOPORT2_I2S_SDOUT;
-	NRF_I2S->PSEL.LRCK = 0x20 | IOPORT2_I2S_LRCK;
-	NRF_I2S->PSEL.MCK = 0x20 | IOPORT2_I2S_MCK;
+	NRF_I2S->PSEL.SDOUT = IOPORT2_I2S_SDOUT;
+	NRF_I2S->PSEL.LRCK = IOPORT2_I2S_LRCK;
+	NRF_I2S->PSEL.MCK = IOPORT2_I2S_MCK;
 
 	/* Configure NVIC to enable the I2S interrupt vector. */
 
@@ -352,7 +352,7 @@ i2sSamplesPlay (void * buf, int cnt)
 	i2sState = I2S_STATE_BUSY;
 
 	if (i2sRunning == 0) {
-		NRF_I2S->PSEL.SCK = 0x20 | IOPORT2_I2S_SCK;
+		NRF_I2S->PSEL.SCK = IOPORT2_I2S_SCK;
 		i2sRunning = 1;
 	}
 
