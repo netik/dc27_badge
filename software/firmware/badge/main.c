@@ -189,9 +189,8 @@ int main(void)
 #endif
 
     /*
-     * Enable NULL pointer protection. We move the vector table to an
-     * alternate location and then use the MPU to make the first 256
-     * bytes of the address space unreadable and unwritable. If someone
+     * Enable NULL pointer protection. We use the MPU to make the first
+     * 256 bytes of the address space unreadable and unwritable. If someone
      * tries to dereference a NULL pointer, it will result in a load
      * or store at that location, and we'll get a memory manager trap
      * right away instead of possibly dying somewhere else further
