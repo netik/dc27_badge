@@ -109,6 +109,30 @@ include $(CHIBIOS)/os/various/shell/shell.mk
 FLASHINC := $(CHIBIOS)/os/hal/lib/peripherals/flash
 FLASHSRC := $(CHIBIOS)/os/hal/lib/peripherals/flash/hal_flash.c
 
+# Backward compatibilty support for rev 1 prototype
+# The first prototype board has a 7-button joypad implementation,
+# with up/down/left/right/select/A/B controls implemented using
+# separate buttons. The design has been changed for subsequent
+# prototypes and the production boards to instead have two
+# 5-position joypad controls, with up/down/left/right/select
+# positions. The two designs need radically different joypad
+# driver modules, but for the time being, we would like to be
+# able to build the current BSP so that it will still work with
+# the rev 1 prototype. To do this, we maintain a separate "compat"
+# version of the joypad driver. To do a build for the rev 1
+# board, add "JOYPADCOMPAT=y" to the build command, e.g.:
+#
+# % make -j 32 JOYPADCOMPAT=y
+#
+# Without this, the default will be to build for the production
+# joypad layout.
+
+ifeq ($(JOYPADCOMPAT),)
+JOYPADSRC = joypad_lld.c
+else
+JOYPADSRC = joypad_compat_lld.c
+endif
+
 # uGFX includes
 GFXLIB = $(CHIBIOS)/../uGFX
 include $(GFXLIB)/gfx.mk
@@ -177,7 +201,7 @@ CSRC += main.c \
 	mmc_spi_lld.c \
 	nrf52flash_lld.c \
 	nullprot_lld.c \
-	joypad_lld.c \
+	$(JOYPADSRC) \
 	xpt2046_lld.c \
 	video_lld.c \
 	badge_vectors.c \
