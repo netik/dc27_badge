@@ -83,11 +83,11 @@
 #define keyA keyBUp
 #define keyB keyBDown
 
-#define JOY_UP JOY_A_UP
-#define JOY_DOWN JOY_A_UP
-#define JOY_LEFT JOY_A_UP
-#define JOY_RIGHT JOY_A_UP
 #define JOY_ENTER JOY_A_UP
+#define JOY_UP JOY_A_DOWN
+#define JOY_DOWN JOY_A_LEFT
+#define JOY_LEFT JOY_A_RIGHT
+#define JOY_RIGHT JOY_A_ENTER
 #define JOY_A JOY_B_UP
 #define JOY_B JOY_B_DOWN
 
@@ -118,7 +118,7 @@ static const joyInfo joyTbl[7] = {
 static const EXTConfig ext_config = {
 	{
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  (0x20|IOPORT2_BTN5) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		  IOPORT2_BTN5 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
 		  IOPORT1_BTN1 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
@@ -128,9 +128,9 @@ static const EXTConfig ext_config = {
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
 		  IOPORT1_BTN4 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  (0x20|IOPORT2_BTN6) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		  IOPORT2_BTN6 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
-		  (0x20|IOPORT2_BTN7) << EXT_MODE_GPIO_OFFSET, joyInterrupt },
+		  IOPORT2_BTN7 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ 0 , NULL }
 	}
 };
