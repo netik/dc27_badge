@@ -95,4 +95,6 @@ F 3 "~" H 5750 4600 50  0001 C CNN
 $EndComp
 Text Notes 5650 4100 0    50   ~ 0
 Lanyard Holes\n
+Text Notes 6950 4100 0    50   ~ 0
+Artwork\n
 $EndSCHEMATC

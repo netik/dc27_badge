@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 179)
+    (drawings 180)
     (tracks 2423)
     (zones 0)
     (modules 134)
@@ -4956,7 +4956,7 @@
     (tags "LED Cree PLCC-4")
     (path /5BA1B02E/5BB09D12)
     (attr smd)
-    (fp_text reference D222 (at 1.6 -3.7 180) (layer F.SilkS)
+    (fp_text reference D222 (at 1.6 -3.7 180) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value LED_ARGB (at 0 2.65 90) (layer F.Fab)
@@ -4999,7 +4999,7 @@
     (tags "LED Cree PLCC-4")
     (path /5BA1B02E/5BB09D0C)
     (attr smd)
-    (fp_text reference D221 (at 1.7 -3.6 180) (layer F.SilkS)
+    (fp_text reference D221 (at 1.7 -3.6 180) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value LED_ARGB (at 0 2.65 90) (layer F.Fab)
@@ -5386,7 +5386,7 @@
     (tags "LED Cree PLCC-4")
     (path /5BA1B02E/5BCEE7DF)
     (attr smd)
-    (fp_text reference D212 (at -1.7 -3.6) (layer F.SilkS)
+    (fp_text reference D212 (at -1.7 -3.6) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value LED_ARGB (at 0 2.65 270) (layer F.Fab)
@@ -5429,7 +5429,7 @@
     (tags "LED Cree PLCC-4")
     (path /5BA1B02E/5BCEE7D9)
     (attr smd)
-    (fp_text reference D211 (at -1.7 -3.7) (layer F.SilkS)
+    (fp_text reference D211 (at -1.7 -3.7) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value LED_ARGB (at 0 2.65 270) (layer F.Fab)
@@ -5695,7 +5695,7 @@
     (tags resistor)
     (path /5BD866AF/5BDBF4DB)
     (attr smd)
-    (fp_text reference R303 (at 0.6775 1.49) (layer F.SilkS)
+    (fp_text reference R303 (at 0.6775 1.49) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value 10k (at 0 1.43) (layer F.Fab)
@@ -5725,7 +5725,7 @@
     )
   )
 
-  (module Resistor_SMD:R_0603_1608Metric (layer F.Cu) (tedit 5B301BBD) (tstamp 5C7778F6)
+  (module Resistor_SMD:R_0603_1608Metric (layer F.Cu) (tedit 5B301BBD) (tstamp 5CB77ABA)
     (at 108.5125 200)
     (descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator")
     (tags resistor)
@@ -6259,6 +6259,7 @@
     )
   )
 
+  (gr_poly (pts (xy 104.26 39.8) (xy 105.14 39.41) (xy 106.09 39.82) (xy 106.24 40.41) (xy 106.21 67.17) (xy 104.07 67.17) (xy 104.05 40.41)) (layer F.SilkS) (width 0.1))
   (gr_text +3.3V (at 76.22 165.95) (layer F.SilkS)
     (effects (font (size 1.5 1.5) (thickness 0.3)))
   )
@@ -8976,7 +8977,7 @@
   (segment (start 119.176201 108.523423) (end 119.176201 109.076577) (width 0.1524) (layer GND) (net 157))
   (segment (start 118.95 108.297222) (end 119.176201 108.523423) (width 0.1524) (layer GND) (net 157))
   (segment (start 118.95 102.83) (end 118.95 108.297222) (width 0.1524) (layer GND) (net 157))
-  (segment (start 104.238945 211.249543) (end 97.589402 204.6) (width 0.1524) (layer F.Cu) (net 157))
+  (segment (start 104.238945 211.249543) (end 97.589402 204.6) (width 0.1524) (layer F.Cu) (net 157) (tstamp 5CB77A93))
   (segment (start 104.238945 211.498745) (end 104.238945 211.249543) (width 0.1524) (layer F.Cu) (net 157))
   (segment (start 103.690938 212.046752) (end 104.238945 211.498745) (width 0.1524) (layer F.Cu) (net 157) (status 10))
   (segment (start 97.589402 204.6) (end 97.589402 183.760598) (width 0.1524) (layer F.Cu) (net 157))

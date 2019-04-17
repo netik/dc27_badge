@@ -1,4 +1,4 @@
-15830486244154597
+15832041733328597
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -48978,6 +48978,13 @@ AST-01708-MRR
 0
 2
 2
+lib_fp
+bombface
+
+
+0
+0
+0
 lib_fp
 QFN-40-1EP_5x5mm_P0.4mm_EP3.5x3.5mm
 40-Lead Plastic Quad Flat, No Lead Package (MP) - 5x5 mm Body [QFN]; (see Microchip Packaging Specification 00000049BS.pdf)
