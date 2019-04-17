@@ -4,7 +4,7 @@
 #
 
 PLATFORM=NRF5/NRF52840
-BOARD=NONSTANDARD_NRF52840_IDES_OF_DEFCON
+BOARD=NONSTANDARD_NRF52840_IDES_OF_DEFCON_PROTOTYPE
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
@@ -166,6 +166,7 @@ CSRC += main.c \
 	app-update.c \
 	app-email.c \
 	app-ledsign.c \
+	app-notify.c \
 	app-dialer.c \
 	app-music.c \
 	fix_fft.c \

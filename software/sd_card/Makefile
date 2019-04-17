@@ -96,7 +96,7 @@ sdcard: dirs tools_dep images sounds video
 	-cp rgb/*.rgb sdcard
 	-cp rgb/font/led/*.rgb sdcard/font/led
 	-cp ../firmware/updater/updater.bin sdcard
-	-cp ../firmware/badge_840/build/badge.bin sdcard
+	-cp ../firmware/badge/build/badge.bin sdcard
 	-cp dac/*.snd sdcard
 	-cp photos/*.rgb sdcard/photos
 	-cp dac/fight/*.snd sdcard/fight

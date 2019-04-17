@@ -17,6 +17,8 @@ extern OrchardAppEvent joyEvent;
 orchard_app_start();
 orchard_app_end();
 
+void (*app_radio_notify)(void *);
+
 const OrchardApp *orchard_app_list;
 
 /* the one and in fact only instance of any orchard app */
@@ -150,8 +152,21 @@ static void radio_event(eventid_t id) {
     while (queue_cnt) {
 
         r_evt = radio_evt[cons_idx];
-        memcpy (&evt.radio, r_evt, sizeof(OrchardAppRadioEvent));
-        instance.app->event (instance.context, &evt);
+
+        /*
+         * When someone writes to one of our characteristics, it could
+         * be a notification of some kind (e.g. chat request). If no
+	 * other app is running besides the launcher, run the notify
+	 * app to announce what happened.
+	 */
+
+        if (r_evt->type == gattsReadWriteAuthEvent ||
+            r_evt->type == gattsWriteEvent) {
+          app_radio_notify (r_evt);
+        } else {
+          memcpy (&evt.radio, r_evt, sizeof(OrchardAppRadioEvent));
+          instance.app->event (instance.context, &evt);
+        }
 
         free (radio_evt[cons_idx]);
         if (radio_pkt[cons_idx] != NULL)
@@ -174,9 +189,12 @@ static void key_event(eventid_t id) {
 
   (void) id;
 
-  if (instance.context != NULL)
+  if (instance.context != NULL) {
+      if (strcmp (instance.app->name, "Launcher") == 0 &&
+          joyEvent.key.flags == keyPress)
+        i2sPlay ("ping.snd");
       instance.app->event(instance.context, &joyEvent);
-
+  }
   return;
 }
 
