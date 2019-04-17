@@ -43,17 +43,6 @@ F4 "SND_LRCK" I L 4350 1000 50
 F5 "SND_MCLK" I L 4350 1150 50 
 F6 "AMP_SHUTDOWN" I L 4350 1300 50 
 $EndSheet
-$Comp
-L power:GND #PWR0113
-U 1 1 5BB289BF
-P 4950 6400
-F 0 "#PWR0113" H 4950 6150 50  0001 C CNN
-F 1 "GND" H 4955 6227 50  0000 C CNN
-F 2 "" H 4950 6400 50  0001 C CNN
-F 3 "" H 4950 6400 50  0001 C CNN
-	1    4950 6400
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	4500 6150 4600 6150
 Wire Wire Line
@@ -128,35 +117,31 @@ Wire Wire Line
 Connection ~ 5950 5550
 Wire Wire Line
 	5950 5550 5950 5750
-Wire Wire Line
-	4950 6150 4950 6400
 $Comp
 L power:GND #PWR0103
 U 1 1 5BA99749
-P 9750 1900
-F 0 "#PWR0103" H 9750 1650 50  0001 C CNN
-F 1 "GND" H 9755 1727 50  0000 C CNN
-F 2 "" H 9750 1900 50  0001 C CNN
-F 3 "" H 9750 1900 50  0001 C CNN
-	1    9750 1900
+P 9750 1700
+F 0 "#PWR0103" H 9750 1450 50  0001 C CNN
+F 1 "GND" H 9755 1527 50  0000 C CNN
+F 2 "" H 9750 1700 50  0001 C CNN
+F 3 "" H 9750 1700 50  0001 C CNN
+	1    9750 1700
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	7200 800  7200 1050
 $Comp
 L power:GND #PWR0102
 U 1 1 5BA9CA51
-P 7200 1750
-F 0 "#PWR0102" H 7200 1500 50  0001 C CNN
-F 1 "GND" H 7205 1577 50  0000 C CNN
-F 2 "" H 7200 1750 50  0001 C CNN
-F 3 "" H 7200 1750 50  0001 C CNN
-	1    7200 1750
+P 2850 7550
+F 0 "#PWR0102" H 2850 7300 50  0001 C CNN
+F 1 "GND" H 2855 7377 50  0000 C CNN
+F 2 "" H 2850 7550 50  0001 C CNN
+F 3 "" H 2850 7550 50  0001 C CNN
+	1    2850 7550
 	1    0    0    -1  
 $EndComp
-Text GLabel 6150 1050 0    50   Input ~ 0
+Text GLabel 1500 6400 0    50   Input ~ 0
 I2C_SDA
-Text GLabel 6150 1150 0    50   Input ~ 0
+Text GLabel 1500 6500 0    50   Input ~ 0
 I2C_SCK
 Text GLabel 3450 4450 0    50   Input ~ 0
 ~A_UP
@@ -548,7 +533,7 @@ U 1 1 5BE594F0
 P 8200 2550
 F 0 "TP101" H 8258 2670 50  0000 L CNN
 F 1 "SDT_SPI_MOSI" H 8258 2579 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8400 2550 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" H 8400 2550 50  0001 C CNN
 F 3 "~" H 8400 2550 50  0001 C CNN
 	1    8200 2550
 	1    0    0    -1  
@@ -563,7 +548,7 @@ U 1 1 5BE6D4D8
 P 8200 3000
 F 0 "TP102" H 8258 3120 50  0000 L CNN
 F 1 "SDT_SPI_MISO" H 8258 3029 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8400 3000 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" H 8400 3000 50  0001 C CNN
 F 3 "~" H 8400 3000 50  0001 C CNN
 	1    8200 3000
 	1    0    0    -1  
@@ -585,7 +570,7 @@ U 1 1 5BE8BAC1
 P 8200 3500
 F 0 "TP103" H 8258 3620 50  0000 L CNN
 F 1 "SDT_SPI_SCK" H 8258 3529 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8400 3500 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" H 8400 3500 50  0001 C CNN
 F 3 "~" H 8400 3500 50  0001 C CNN
 	1    8200 3500
 	1    0    0    -1  
@@ -661,7 +646,7 @@ U 1 1 5BFC6440
 P 8250 3950
 F 0 "TP104" H 8308 4070 50  0000 L CNN
 F 1 "DISP_SCLK" H 8308 3979 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8450 3950 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" H 8450 3950 50  0001 C CNN
 F 3 "~" H 8450 3950 50  0001 C CNN
 	1    8250 3950
 	1    0    0    -1  
@@ -677,7 +662,7 @@ U 1 1 5BFE1520
 P 8200 4350
 F 0 "TP105" H 8258 4470 50  0000 L CNN
 F 1 "DISP_MISO" H 8258 4379 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8400 4350 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" H 8400 4350 50  0001 C CNN
 F 3 "~" H 8400 4350 50  0001 C CNN
 	1    8200 4350
 	1    0    0    -1  
@@ -695,7 +680,7 @@ U 1 1 5BFFC464
 P 8200 4750
 F 0 "TP106" H 8258 4870 50  0000 L CNN
 F 1 "DISP_MOSI" H 8258 4779 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 8400 4750 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical" H 8400 4750 50  0001 C CNN
 F 3 "~" H 8400 4750 50  0001 C CNN
 	1    8200 4750
 	1    0    0    -1  
@@ -716,29 +701,29 @@ Wire Wire Line
 $Comp
 L DC27-badge-rescue:TACT_4.2MM-MF_Switches SW108
 U 1 1 5C05F22F
-P 10050 1550
-F 0 "SW108" H 10050 1200 45  0000 C CNN
-F 1 "RESET" H 10050 1100 45  0000 C CNN
-F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 10080 1700 20  0001 C CNN
-F 3 "" H 10050 1550 50  0001 C CNN
-	1    10050 1550
+P 10050 1350
+F 0 "SW108" H 10050 1000 45  0000 C CNN
+F 1 "RESET" H 10050 900 45  0000 C CNN
+F 2 "MF_Switches:MF_Switches-TACT4.2MM" H 10080 1500 20  0001 C CNN
+F 3 "" H 10050 1350 50  0001 C CNN
+	1    10050 1350
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	9950 1450 9950 1300
+	9950 1250 9950 1100
 Wire Wire Line
-	9950 1300 10050 1300
+	9950 1100 10050 1100
 Wire Wire Line
-	10150 1450 10150 1300
+	10150 1250 10150 1100
 Wire Wire Line
-	10150 1800 10150 1650
+	10150 1600 10150 1450
 Wire Wire Line
-	9950 1650 9950 1800
+	9950 1450 9950 1600
 Wire Wire Line
-	9950 1800 10150 1800
-Connection ~ 10050 1300
+	9950 1600 10150 1600
+Connection ~ 10050 1100
 Wire Wire Line
-	10050 1300 10150 1300
+	10050 1100 10150 1100
 Text GLabel 6650 3850 2    50   Input ~ 0
 ~B_LEFT
 Wire Wire Line
@@ -772,8 +757,6 @@ F1 "file5C2B533B.sch" 50
 $EndSheet
 Text Notes 2800 5000 0    50   ~ 0
 p0.14 = led 2\np0.15 = led 3\np0.16 = led 4 on dev board\n
-NoConn ~ 4300 4750
-NoConn ~ 4300 4850
 NoConn ~ 4300 4950
 Text GLabel 4100 3550 0    50   Output ~ 0
 AMP_SHUTDOWN
@@ -783,26 +766,22 @@ Text GLabel 4100 1300 0    50   Input ~ 0
 AMP_SHUTDOWN
 Wire Wire Line
 	4100 1300 4350 1300
-Text GLabel 6150 750  0    50   BiDi ~ 0
+Text GLabel 1500 6100 0    50   BiDi ~ 0
 SDA_LED
-Text GLabel 6150 1500 0    50   BiDi ~ 0
+Text GLabel 1500 6850 0    50   BiDi ~ 0
 SCK_LED
 Wire Wire Line
-	6150 1500 6250 1500
+	1500 6850 1600 6850
 Wire Wire Line
-	6250 1500 6250 1150
+	1600 6850 1600 6500
 Wire Wire Line
-	6250 1150 6150 1150
+	1600 6500 1500 6500
 Wire Wire Line
-	6150 750  6250 750 
+	1500 6100 1600 6100
 Wire Wire Line
-	6250 750  6250 1050
+	1600 6100 1600 6400
 Text Notes 7350 7500 0    50   ~ 0
 DC27 BADGE -  CPU, DISPLAY, USER INTERFACE - REV 1
-Wire Notes Line
-	7400 1950 5700 1950
-Wire Notes Line
-	5700 1800 5700 550 
 $Sheet
 S 1800 600  1000 650 
 U 5C660261
@@ -810,56 +789,24 @@ F0 "Mechanicals" 50
 F1 "mechanicals.sch" 50
 $EndSheet
 Wire Wire Line
-	6150 1050 6250 1050
-Connection ~ 6250 1050
-Connection ~ 6250 1150
-Wire Wire Line
-	7000 1150 7200 1150
-Wire Wire Line
-	7000 1050 7050 1050
+	1500 6400 1600 6400
+Connection ~ 1600 6400
+Connection ~ 1600 6500
 $Comp
-L Connector_Generic:Conn_02x02_Odd_Even J103
+L Connector_Generic:Conn_02x03_Odd_Even J103
 U 1 1 5C6EACC2
-P 6700 1600
-F 0 "J103" H 6750 1817 50  0000 C CNN
-F 1 "ShittyAddOnR" H 6750 1726 50  0000 C CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_2x02_P2.54mm_Vertical_SMD" H 6700 1600 50  0001 C CNN
-F 3 "~" H 6700 1600 50  0001 C CNN
-	1    6700 1600
+P 2250 7050
+F 0 "J103" H 2300 6850 50  0000 C CNN
+F 1 "ShittyAddOnR" H 2300 6750 50  0000 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical" H 2250 7050 50  0001 C CNN
+F 3 "~" H 2250 7050 50  0001 C CNN
+	1    2250 7050
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	6250 1050 6450 1050
+	1600 6400 1800 6400
 Wire Wire Line
-	6250 1150 6350 1150
-Wire Wire Line
-	6500 1700 6350 1700
-Wire Wire Line
-	6350 1700 6350 1150
-Connection ~ 6350 1150
-Wire Wire Line
-	6350 1150 6500 1150
-Wire Wire Line
-	6500 1600 6450 1600
-Wire Wire Line
-	6450 1600 6450 1050
-Connection ~ 6450 1050
-Wire Wire Line
-	6450 1050 6500 1050
-Wire Wire Line
-	7000 1600 7050 1600
-Wire Wire Line
-	7050 1600 7050 1050
-Connection ~ 7050 1050
-Wire Wire Line
-	7050 1050 7200 1050
-Wire Wire Line
-	7000 1700 7200 1700
-Wire Wire Line
-	7200 1700 7200 1750
-Wire Wire Line
-	7200 1150 7200 1700
-Connection ~ 7200 1700
+	1600 6500 1700 6500
 Text GLabel 2300 4600 2    50   BiDi ~ 0
 DEBUG_SWO
 Wire Wire Line
@@ -921,30 +868,6 @@ Text GLabel 6150 2750 2    50   BiDi ~ 0
 DEBUG_SWO
 Wire Wire Line
 	5750 2750 6150 2750
-$Comp
-L power:+3.3V #PWR0105
-U 1 1 5C58C1FA
-P 7200 800
-F 0 "#PWR0105" H 7200 650 50  0001 C CNN
-F 1 "+3.3V" H 7215 973 50  0000 C CNN
-F 2 "" H 7200 800 50  0001 C CNN
-F 3 "" H 7200 800 50  0001 C CNN
-	1    7200 800 
-	1    0    0    -1  
-$EndComp
-$Comp
-L DC27-badge-rescue:BMD-340-A-R-DC27-peripheral-cache U100
-U 1 1 5C59EA27
-P 5000 3850
-F 0 "U100" H 5025 5565 50  0000 C CNN
-F 1 "BMD-340-A-R-DC27-peripheral-cache" H 5025 5474 50  0000 C CNN
-F 2 "BMD-340-A-R:RIGADO_BMD-340-A-R" H 5600 1750 50  0001 L BNN
-F 3 "Rigado" H 4550 5700 50  0001 L BNN
-F 4 "Bluetooth Low Energy 5.0 Module" H 4550 5550 50  0001 L BNN "Field4"
-F 5 "BMD-340-A-R" H 4550 5800 50  0001 L BNN "Field6"
-	1    5000 3850
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	1150 3600 1150 3650
 Connection ~ 1150 3650
@@ -973,14 +896,14 @@ F 3 "" H 10650 2650 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Connector_Generic:Conn_02x02_Odd_Even J102
+L Connector_Generic:Conn_02x03_Odd_Even J102
 U 1 1 5C536AAC
-P 6700 1050
-F 0 "J102" H 6750 1267 50  0000 C CNN
-F 1 "ShittyAddOnL" H 6750 1176 50  0000 C CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_2x02_P2.54mm_Vertical_SMD" H 6700 1050 50  0001 C CNN
-F 3 "~" H 6700 1050 50  0001 C CNN
-	1    6700 1050
+P 2250 6500
+F 0 "J102" H 2300 6900 50  0000 C CNN
+F 1 "ShittyAddOnL" H 2300 6750 50  0000 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical" H 2250 6500 50  0001 C CNN
+F 3 "~" H 2250 6500 50  0001 C CNN
+	1    2250 6500
 	1    0    0    -1  
 $EndComp
 NoConn ~ 4300 4350
@@ -988,15 +911,15 @@ NoConn ~ 4300 4250
 Text Notes 3800 4400 0    50   ~ 0
 NFC Antenna\nNot used\n
 Wire Wire Line
-	9750 1800 9750 1900
+	9750 1600 9750 1700
 Wire Wire Line
-	9950 1800 9750 1800
-Connection ~ 9950 1800
-Text GLabel 10400 1100 2    50   Output ~ 0
+	9950 1600 9750 1600
+Connection ~ 9950 1600
+Text GLabel 10400 900  2    50   Output ~ 0
 ~RESET_TGTMCU
 Wire Notes Line
 	7400 500  7400 6550
-Text Notes 5750 650  0    50   ~ 10
+Text Notes 1100 6000 0    50   ~ 10
 Dual Shitty Add On’s!
 Text Notes 7450 700  0    50   ~ 10
 Switches
@@ -1009,9 +932,9 @@ $EndSheet
 Text Notes 9450 700  0    50   ~ 10
 Reset\n
 Wire Wire Line
-	10400 1100 10050 1100
+	10400 900  10050 900 
 Wire Wire Line
-	10050 1100 10050 1300
+	10050 900  10050 1100
 Wire Notes Line
 	9250 2200 9250 500 
 Wire Wire Line
@@ -1032,4 +955,111 @@ Text GLabel 6200 4250 2    50   Input ~ 0
 ~JOYPAD_INTR
 Wire Wire Line
 	5750 4250 6200 4250
+Text GLabel 4100 4750 0    50   BiDi ~ 0
+SAO_GPIO1
+Text GLabel 4100 4850 0    50   BiDi ~ 0
+SAO_GPIO2
+$Comp
+L DC27-badge-rescue:BMD-340-A-R-DC27-peripheral-cache U100
+U 1 1 5C59EA27
+P 5000 3850
+F 0 "U100" H 5025 5565 50  0000 C CNN
+F 1 "BMD-340-A-R-DC27-peripheral-cache" H 5025 5474 50  0000 C CNN
+F 2 "BMD-340-A-R:RIGADO_BMD-340-A-R" H 5600 1750 50  0001 L BNN
+F 3 "Rigado" H 4550 5700 50  0001 L BNN
+F 4 "Bluetooth Low Energy 5.0 Module" H 4550 5550 50  0001 L BNN "Field4"
+F 5 "BMD-340-A-R" H 4550 5800 50  0001 L BNN "Field6"
+	1    5000 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4300 4750 4100 4750
+Wire Wire Line
+	4100 4850 4300 4850
+Wire Wire Line
+	2550 6950 2850 6950
+Wire Wire Line
+	2050 6500 1800 6500
+Wire Wire Line
+	1800 6500 1800 6400
+Wire Wire Line
+	2550 6500 2800 6500
+Wire Wire Line
+	2800 6500 2800 6800
+Wire Wire Line
+	2800 7050 2550 7050
+Wire Wire Line
+	1700 6800 1700 6500
+Connection ~ 2800 6800
+Wire Wire Line
+	2800 6800 2800 7050
+Connection ~ 2850 6950
+Wire Wire Line
+	2800 6800 1700 6800
+Wire Wire Line
+	2850 6400 2850 6950
+Wire Wire Line
+	2550 6400 2850 6400
+$Comp
+L power:+3.3V #PWR0105
+U 1 1 5C58C1FA
+P 1900 6200
+F 0 "#PWR0105" H 1900 6050 50  0001 C CNN
+F 1 "+3.3V" H 1915 6373 50  0000 C CNN
+F 2 "" H 1900 6200 50  0001 C CNN
+F 3 "" H 1900 6200 50  0001 C CNN
+	1    1900 6200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1900 6200 1900 6400
+Wire Wire Line
+	2050 6400 1900 6400
+Connection ~ 1900 6400
+Wire Wire Line
+	1900 6950 2050 6950
+Wire Wire Line
+	1900 6400 1900 6950
+Wire Wire Line
+	2050 7050 1800 7050
+Wire Wire Line
+	1800 7050 1800 6500
+Connection ~ 1800 6500
+Text GLabel 1650 7150 0    50   BiDi ~ 0
+SAO_GPIO1
+Text GLabel 3200 7150 2    50   BiDi ~ 0
+SAO_GPIO2
+Wire Wire Line
+	2050 6600 1950 6600
+Wire Wire Line
+	1950 6600 1950 7150
+Wire Wire Line
+	1950 7150 2050 7150
+Wire Wire Line
+	1950 7150 1650 7150
+Connection ~ 1950 7150
+Wire Wire Line
+	2850 6950 2850 7550
+Wire Wire Line
+	3200 7150 2750 7150
+Wire Wire Line
+	2550 6600 2750 6600
+Wire Wire Line
+	2750 6600 2750 7150
+Connection ~ 2750 7150
+Wire Wire Line
+	2750 7150 2550 7150
+Wire Wire Line
+	4950 6150 4950 6400
+$Comp
+L power:GND #PWR0113
+U 1 1 5CF101F8
+P 4950 6400
+F 0 "#PWR0113" H 4950 6150 50  0001 C CNN
+F 1 "GND" H 4955 6227 50  0000 C CNN
+F 2 "" H 4950 6400 50  0001 C CNN
+F 3 "" H 4950 6400 50  0001 C CNN
+	1    4950 6400
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
