@@ -450,7 +450,7 @@ DRESULT mmc_disk_read (
 	/*
 	 * Always use command 18 (multiple block read). There seem to
 	 * be some SD cards that don't perform quite as well when using
-	 * single the single block read command.
+	 * the single block read command.
 	 */
 	cmd = CMD18;
 #else
