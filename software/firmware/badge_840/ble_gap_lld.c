@@ -219,6 +219,8 @@ bleGapDispatch (ble_evt_t * evt)
 			printf ("GAP disconnected...\n");
 #endif
 			ble_conn_handle = BLE_CONN_HANDLE_INVALID;
+			ble_gap_role = BLE_GAP_ROLE_INVALID;
+
 			orchardAppRadioCallback (disconnectEvent, evt,
 			    NULL, 0);
 			r = sd_ble_gap_adv_stop (ble_adv_handle);
