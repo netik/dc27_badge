@@ -372,12 +372,6 @@ int main(void)
     else
         printf ("SD card detected\n");
 
-#ifdef notyet
-    m25qMemoryUnmap (&FLASHD1);
-    setup_flash ();
-    m25qMemoryMap (&FLASHD1, &memp);
-#endif
-
     /* Enable bluetooth radio */
 
     bleStart ();
@@ -395,25 +389,6 @@ int main(void)
       printf("I2C LED controller not found. No Bling ;(\r\n");
     }
 
-#ifdef flash_test
-
-    /*
-     * Note: we're compiled to use the SoftDevice for flash access,
-     * which means we can only actually perform erase and program
-     * operations on the internal flash after the SoftDevice has
-     * been enabled.
-     */
-
-    if (flashStartEraseSector (&FLASHD2, 255) != FLASH_NO_ERROR)
-      printf ("ERASE FAILED\n");
-
-    flashWaitErase ((void *)&FLASHD2);
-
-    if (flashProgram (&FLASHD2, 0xFF000, 1024, (uint8_t *)0x20002000) !=
-      FLASH_NO_ERROR)
-      printf ("PROGRAM FAILED...\n");
-#endif
-
     NRF_P0->DETECTMODE = 0;
 
     /* Launch shell thread */
@@ -425,13 +400,9 @@ int main(void)
     evtTableHook (orchard_events, unlocks_updated, unlock_update_handler);
     evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
 
-    if (NRF_FICR->INFO.VARIANT == 0x41414141)
-        printf ("Skipping UI setup on broken preview silicon\n");
-    else {
-        uiStart ();
-        orchardAppInit ();
-        orchardAppRestart ();
-    }
+    uiStart ();
+    orchardAppInit ();
+    orchardAppRestart ();
 
     shellRestart ();
 
