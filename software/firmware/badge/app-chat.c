@@ -217,7 +217,7 @@ chat_event (OrchardAppContext *context,
         			peer = blePeerFind (ble_peer_addr.addr);
 
 				if (peer == NULL)
-					snprintf (p->peernames[p->peers],
+					snprintf (p->peernames[p->peer],
 					    MAX_PEERMEM,
 					    "%X:%X:%X:%X:%X:%X",
 					    ble_peer_addr.addr[5],
