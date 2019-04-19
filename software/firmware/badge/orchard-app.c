@@ -17,7 +17,7 @@ extern OrchardAppEvent joyEvent;
 orchard_app_start();
 orchard_app_end();
 
-void (*app_radio_notify)(void *);
+bool (*app_radio_notify)(void *);
 
 const OrchardApp *orchard_app_list;
 
@@ -144,6 +144,7 @@ void orchardAppRadioCallback (OrchardAppRadioEventType type,
 static void radio_event(eventid_t id) {
   OrchardAppEvent evt;
   OrchardAppRadioEvent * r_evt;
+  bool r;
 
   (void) id;
 
@@ -160,10 +161,14 @@ static void radio_event(eventid_t id) {
 	 * app to announce what happened.
 	 */
 
-        if (r_evt->type == gattsReadWriteAuthEvent ||
-            r_evt->type == gattsWriteEvent) {
-          app_radio_notify (r_evt);
-        } else {
+        r = FALSE;
+
+        if (strcmp (instance.app->name, "Launcher") == 0 &&
+            (r_evt->type == gattsReadWriteAuthEvent ||
+            r_evt->type == gattsWriteEvent))
+          r = app_radio_notify (r_evt);
+
+        if (r == FALSE) {
           memcpy (&evt.radio, r_evt, sizeof(OrchardAppRadioEvent));
           instance.app->event (instance.context, &evt);
         }

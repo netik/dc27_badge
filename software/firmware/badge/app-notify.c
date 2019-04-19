@@ -38,6 +38,7 @@
 
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
+#include "ble_gattc_lld.h"
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
@@ -58,22 +59,28 @@ typedef struct _NHandles {
 	font_t	font;
 } NotifyHandles;
 
-static void notify_handler(void * arg)
+static bool notify_handler(void * arg)
 {
 	OrchardAppRadioEvent * evt;
-	ble_gatts_evt_rw_authorize_request_t * req;
+        ble_gatts_evt_rw_authorize_request_t * rw;
+	ble_gatts_evt_write_t * req;
 
 	evt = arg;
 
-	req = &evt->evt.evt.gatts_evt.params.authorize_request;
-	if (req->request.write.handle != ch_handle.value_handle)
-		return;
+	rw = &evt->evt.evt.gatts_evt.params.authorize_request;
+	if (rw->request.write.handle != ch_handle.value_handle)
+		return (FALSE);
+
+	req = &rw->request.write;
+
+	if (req->data[0] != BLE_IDES_CHATREQ_REQUEST)
+		return (FALSE);
 
 	memcpy (&radio_evt, evt, sizeof (radio_evt));
 
-	orchardAppRun (orchardAppByName("Radio notification"));
+	orchardAppRun (orchardAppByName ("Radio notification"));
 
-	return;
+	return (TRUE);
 }
 
 static uint32_t notify_init(OrchardAppContext *context)
@@ -92,7 +99,7 @@ static uint32_t notify_init(OrchardAppContext *context)
 static void notify_start(OrchardAppContext *context)
 {
 	ble_peer_entry * peer;
-	ble_gatts_evt_rw_authorize_request_t * req;
+	ble_gatts_evt_rw_authorize_request_t * rw;
 	NotifyHandles * p;
 	GWidgetInit wi;
 
@@ -105,8 +112,8 @@ static void notify_start(OrchardAppContext *context)
 
 	context->priv = p;
 
-	gdispClear (Black);
-	i2sPlay("alert1.snd");
+	putImageFile ("undrattk.rgb", 0, 0);
+	i2sPlay("klaxon.snd");
 
 	peer = blePeerFind (ble_peer_addr.addr);
 
@@ -120,17 +127,17 @@ static void notify_start(OrchardAppContext *context)
 
 	p->font = gdispOpenFont(FONT_FIXED);
 
-	gdispDrawStringBox (0, (gdispGetHeight() >> 1) -
+	gdispDrawStringBox (0, 50 -
 	    gdispGetFontMetric(p->font, fontHeight),
 	    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
 	    buf, p->font, White, justifyCenter);
 
-	req = &radio_evt.evt.evt.gatts_evt.params.authorize_request;
+	rw = &radio_evt.evt.evt.gatts_evt.params.authorize_request;
 
-	if (req->request.write.handle == ch_handle.value_handle) {
-		gdispDrawStringBox (0, (gdispGetHeight() >> 1), 
+	if (rw->request.write.handle == ch_handle.value_handle) {
+		gdispDrawStringBox (0, 50, 
 		    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
-		    "WANTS TO CHAT", p->font, Green, justifyCenter);
+		    "WANTS TO CHAT", p->font, White, justifyCenter);
 	}
 
 	gwinSetDefaultStyle (&RedButtonStyle, FALSE);
@@ -169,9 +176,16 @@ void notify_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		pe = event->ugfx.pEvent;
 		if (pe->type == GEVENT_GWIN_BUTTON) {
 			be = (GEventGWinButton *)pe;
-			if (be->gwin == p->ghACCEPT)
+			if (be->gwin == p->ghACCEPT) {
+				buf[0] = BLE_IDES_CHATREQ_ACCEPT;
+				bleGattcWrite (ch_handle.value_handle,
+				    (uint8_t *)buf, 1, TRUE);
 				orchardAppRun (orchardAppByName("Radio Chat"));
+			}
 			if (be->gwin == p->ghDECLINE) {
+				buf[0] = BLE_IDES_CHATREQ_DECLINE;
+				bleGattcWrite (ch_handle.value_handle,
+				    (uint8_t *)buf, 1, TRUE);
 				bleGapDisconnect ();
 				orchardAppExit ();
 			}

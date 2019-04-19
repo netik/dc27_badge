@@ -38,11 +38,14 @@
 #include "fontlist.h"
 #include "ides_gfx.h"
 
+#include "ble_lld.h"
 #include "ble_gap_lld.h"
 #include "ble_l2cap_lld.h"
 #include "ble_gattc_lld.h"
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
+
+#include "i2s_lld.h"
 
 #include "badge.h"
 
@@ -171,6 +174,8 @@ static void
 chat_event (OrchardAppContext *context,
 	const OrchardAppEvent *event)
 {
+	ble_gatts_evt_rw_authorize_request_t * rw;
+	ble_gatts_evt_write_t * req;
 	OrchardUiContext * uiContext;
 	OrchardAppRadioEvent * radio;
 	ble_evt_t * evt;
@@ -355,12 +360,9 @@ chat_event (OrchardAppContext *context,
 				orchardAppExit ();
 			}
 
-			p->uuid[0] = 0;
-			p->uuid[1] = 0;
-			p->uuid[2] = 0;
-			p->uuid[3] = 1;
+			p->uuid[0] = BLE_IDES_CHATREQ_REQUEST;
 			bleGattcWrite (ch_handle.value_handle,
-			    p->uuid, 4, FALSE);
+			    p->uuid, 1, FALSE);
 
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
 				if (bleL2CapConnect (BLE_IDES_CHAT_PSM) !=
@@ -386,6 +388,21 @@ chat_event (OrchardAppContext *context,
 			chThdSleepMilliseconds (1000);
 			p->cid = evt->evt.l2cap_evt.local_cid;
 			chat_session_start (context);
+			return;
+		}
+
+		if (radio->type == gattsReadWriteAuthEvent) {
+			rw = &evt->evt.gatts_evt.params.authorize_request;
+			if (rw->type == BLE_GATTS_AUTHORIZE_TYPE_WRITE) {
+				req = &rw->request.write;
+				if (req->data[0] == BLE_IDES_CHATREQ_DECLINE) {
+					screen_alert_draw (TRUE,
+					    "Chat request declined!");
+					i2sPlay ("wilhelm.snd");
+					chThdSleepMilliseconds (1000);
+				} else
+					return;
+			}
 			return;
 		}
 

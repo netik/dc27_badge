@@ -49,7 +49,7 @@ extern void orchardAppUgfxCallback (void * arg, GEvent * pe);
 extern void orchardAppRadioCallback (OrchardAppRadioEventType type,
     ble_evt_t * evt, void * pkt, uint8_t pktlen);
 
-extern void (*app_radio_notify)(void *);
+extern bool (*app_radio_notify)(void *);
 
 #define UI_IDLE_TIME 10 // after 10 seconds, abort to main
 
