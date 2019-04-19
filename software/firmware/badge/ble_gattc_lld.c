@@ -53,7 +53,7 @@
 static thread_reference_t bleGattcThreadReference;
 static uint32_t bleGattcEvents;
 static uint8_t * ble_gattc_buf;
-static uint16_t ble_gattc_len;
+static uint16_t * ble_gattc_len;
 
 void
 bleGattcDispatch (ble_evt_t * evt)
@@ -88,11 +88,11 @@ bleGattcDispatch (ble_evt_t * evt)
 			i = (sizeof (ble_gattc_evt_prim_srvc_disc_rsp_t) +
 			    sizeof (ble_gattc_service_t) * (pri->count - 1));
 
-			ble_gattc_len = i;
-			if (ble_gattc_len < i)
+			if (*ble_gattc_len < i)
 				ble_gattc_buf = NULL;
 			else
 				memcpy (ble_gattc_buf, pri, i);
+			*ble_gattc_len = i;
 
 			orchardAppRadioCallback (gattcServiceDiscoverEvent,
 			    evt, NULL, 0);
@@ -170,11 +170,11 @@ bleGattcDispatch (ble_evt_t * evt)
 			printf ("Handle: %d Offset: %d len: %d\n",
 			   rd->handle, rd->offset, rd->len);
 #endif
-			ble_gattc_len = rd->len;
-			if (rd->len > ble_gattc_len)
+			if (rd->len > *ble_gattc_len)
 				ble_gattc_buf = NULL;
 			else
 				memcpy (ble_gattc_buf, rd->data, rd->len);
+			*ble_gattc_len = rd->len;
 
 			orchardAppRadioCallback (gattcCharReadEvent,
 			    evt, NULL, 0);
@@ -243,7 +243,7 @@ bleGattcSrvDiscover (uint16_t handle, uint8_t * buf, uint16_t * len,
 
 	bleGattcEvents = 0;
 
-	ble_gattc_len = *len;
+	ble_gattc_len = len;
 	ble_gattc_buf = buf;
 
 	r = sd_ble_gattc_primary_services_discover (ble_conn_handle,
@@ -267,7 +267,6 @@ bleGattcSrvDiscover (uint16_t handle, uint8_t * buf, uint16_t * len,
 	if (bleGattcEvents == BLE_GATTC_SERVICE_DISCOVERED) {
 		if (ble_gattc_buf == NULL)
 			return (NRF_ERROR_RESOURCES);
-		*len = ble_gattc_len;
 		return (NRF_SUCCESS);
 	}
 
@@ -286,7 +285,7 @@ bleGattcRead (uint16_t handle, uint8_t * buf, uint16_t * len, bool blocking)
 	bleGattcEvents = 0;
 
 	ble_gattc_buf = buf;
-	ble_gattc_len = *len;
+	ble_gattc_len = len;
 
 	r = sd_ble_gattc_read (ble_conn_handle, handle, 0);
 
@@ -308,7 +307,6 @@ bleGattcRead (uint16_t handle, uint8_t * buf, uint16_t * len, bool blocking)
 	if (bleGattcEvents == BLE_GATTC_CHAR_READ) {
 		if (ble_gattc_buf == NULL)
 			return (NRF_ERROR_RESOURCES);
-		*len = ble_gattc_len;
 		return (NRF_SUCCESS);
 	}
 
