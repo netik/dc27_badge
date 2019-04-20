@@ -1062,4 +1062,6 @@ F 3 "" H 4950 6400 50  0001 C CNN
 	1    4950 6400
 	1    0    0    -1  
 $EndComp
+Text Notes 550  7650 0    50   ~ 0
+Note that the keyed side of the\nSAO connector must face off the board.\nThe left hand side shall be rotated\n-180 degress.
 $EndSCHEMATC
