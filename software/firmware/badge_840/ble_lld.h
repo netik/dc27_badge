@@ -122,6 +122,10 @@
 #define BLE_UUID_IDES_BADGE_CHATREQUEST		0x0003
 #define BLE_UUID_IDES_BADGE_GAMEVAL1		0x0004
 
+#define BLE_IDES_CHATREQ_REQUEST		0x01
+#define BLE_IDES_CHATREQ_ACCEPT			0x02
+#define BLE_IDES_CHATREQ_DECLINE		0x03
+
 extern uint32_t ble_unlocks;
 extern uint32_t ble_chatreq;
 extern char ble_password[32];

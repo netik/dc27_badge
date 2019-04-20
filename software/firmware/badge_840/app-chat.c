@@ -37,9 +37,15 @@
 #include "orchard-ui.h"
 #include "fontlist.h"
 #include "ides_gfx.h"
-#include "chprintf.h"
 
+#include "ble_lld.h"
 #include "ble_gap_lld.h"
+#include "ble_l2cap_lld.h"
+#include "ble_gattc_lld.h"
+#include "ble_gatts_lld.h"
+#include "ble_peer.h"
+
+#include "i2s_lld.h"
 
 #include "badge.h"
 
@@ -60,6 +66,8 @@ typedef struct _ChatHandles {
 	int			peer;
 	ble_gap_addr_t		netid;
 	uint16_t		cid;
+	uint8_t			uuid[16];
+	uint16_t		len;
 } ChatHandles;
 
 extern orchard_app_instance instance;
@@ -107,9 +115,9 @@ insert_peer (OrchardAppContext * context, ble_evt_t * evt,
 	p->peernames[p->peers] = malloc (MAX_PEERMEM);
 
 	if (len)
-		chsnprintf (p->peernames[p->peers], MAX_PEERMEM, "%s", name);
+		snprintf (p->peernames[p->peers], MAX_PEERMEM, "%s", name);
 	else
-		chsnprintf (p->peernames[p->peers], MAX_PEERMEM,
+		snprintf (p->peernames[p->peers], MAX_PEERMEM,
 		    "%02x:%02x:%02x:%02x:%02x:%02x",
 		    addr->addr[5], addr->addr[4], addr->addr[3],
 		    addr->addr[2], addr->addr[1], addr->addr[0]);
@@ -117,6 +125,34 @@ insert_peer (OrchardAppContext * context, ble_evt_t * evt,
 	p->peers++;
 
 	return (0);
+}
+
+static void
+chat_session_start (OrchardAppContext * context)
+{
+	ChatHandles * p;
+	const OrchardUi * ui;
+
+	p = context->priv;
+
+	p->peernames[0] = "Type @ or press button to exit";
+	memset (p->txbuf, 0, sizeof(p->txbuf));
+	p->peernames[1] = p->txbuf;
+
+	/* Terminate the list UI. */
+
+	ui = context->instance->ui;
+	if (ui != NULL)
+		ui->exit (context);
+
+	/* Load the keyboard UI. */
+
+	p->uiCtx.itemlist = (const char **)p->peernames;
+	p->uiCtx.total = BLE_IDES_L2CAP_MTU - 1;
+	context->instance->ui = getUiByName ("keyboard");
+	context->instance->uicontext = &p->uiCtx;
+       	context->instance->ui->start (context);
+	return;
 }
 
 static uint32_t
@@ -130,6 +166,7 @@ static void
 chat_start (OrchardAppContext *context)
 {
 	(void)context;
+
 	return;
 }
 
@@ -137,12 +174,15 @@ static void
 chat_event (OrchardAppContext *context,
 	const OrchardAppEvent *event)
 {
+	ble_gatts_evt_rw_authorize_request_t * rw;
+	ble_gatts_evt_write_t * req;
 	OrchardUiContext * uiContext;
 	OrchardAppRadioEvent * radio;
 	ble_evt_t * evt;
 	const OrchardUi * ui;
 	ChatHandles * p;
 	OrchardAppEvent * e;
+	ble_peer_entry * peer;
 	int i;
 
 	/*
@@ -164,13 +204,41 @@ chat_event (OrchardAppContext *context,
 
 	if (event->type == appEvent) {
 		if (event->app.event == appStart) {
-			p = malloc (sizeof(ChatHandles));
-			memset (p, 0, sizeof(ChatHandles));
-			p->peers = 2;
 #ifdef notdef
 			if (airplane_mode_check() == true)
 				return;
 #endif
+			p = malloc (sizeof(ChatHandles));
+			memset (p, 0, sizeof(ChatHandles));
+			p->cid = BLE_L2CAP_CID_INVALID;
+			p->peers = 2;
+
+			context->priv = p;
+
+			if (ble_gap_role == BLE_GAP_ROLE_PERIPH) {
+				p->peer = 2;
+				p->peers++;
+				p->peernames[p->peer] = malloc (MAX_PEERMEM);
+        			peer = blePeerFind (ble_peer_addr.addr);
+
+				if (peer == NULL)
+					snprintf (p->peernames[p->peer],
+					    MAX_PEERMEM,
+					    "%X:%X:%X:%X:%X:%X",
+					    ble_peer_addr.addr[5],
+					    ble_peer_addr.addr[4],
+					    ble_peer_addr.addr[3],
+					    ble_peer_addr.addr[2],
+					    ble_peer_addr.addr[1],
+					    ble_peer_addr.addr[0]);
+				else
+					strcpy (p->peernames[p->peer],
+					    (char *)peer->ble_peer_name);
+
+				chat_session_start (context);
+				return;
+			}
+
 			p->peernames[0] = "Scanning for users...";
 			p->peernames[1] = "Exit";
 
@@ -180,11 +248,8 @@ chat_event (OrchardAppContext *context,
 			context->instance->ui = getUiByName ("list");
 			context->instance->uicontext = &p->uiCtx;
        			context->instance->ui->start (context);
-
-			p->cid = BLE_L2CAP_CID_INVALID;
-
-			context->priv = p;
 		}
+
 		if (event->app.event == appTerminate) {
 			ui = context->instance->ui;
 			if (ui != NULL)
@@ -230,7 +295,7 @@ chat_event (OrchardAppContext *context,
 		/* A chat message arrived, update the text display. */
 
 		if (radio->type == l2capRxEvent) {
-			chsnprintf (p->rxbuf, sizeof(p->rxbuf), "<%s> %s",
+			snprintf (p->rxbuf, sizeof(p->rxbuf), "<%s> %s",
 			    p->peernames[p->peer], radio->pkt);
 			p->peernames[0] = p->rxbuf;
 			/* Tell the keyboard UI to redraw */
@@ -252,20 +317,52 @@ chat_event (OrchardAppContext *context,
 			return;
 		}
 
+		/*
+		 * Connection was successful. There are two cases where we
+		 * can get a GAP connect event:
+		 *
+		 * 1) we're trying to connect to a peer
+	 	 * 2) we're the peer and we accept a connection
+		 *
+		 * In the first case, our role is "central", and now
+		 * we have to check to see if the peer supports badge
+		 * services by checking for our UUID (since we can't talk
+		 * to anything that's not a badge).
+		 */
+
 		if (radio->type == connectEvent) {
 			screen_alert_draw (FALSE, "Connected to peer...");
+			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
+				p->len = sizeof(p->uuid);
+				bleGattcRead (ble_gatts_ides_handle,
+				     p->uuid, &p->len, FALSE);
+			}
+			return;
+		}
 
-			/*
-			 * There are two cases where we can get a GAP
-			 * connect event:
-			 * 1) we're trying to connect to a peer
-		 	 * 2) we're the peer and we accept a connection
-			 * In the first case, our role is "central"
-			 * and in the second our role is "peripheral."
-			 * Once the GAP connection is made, only one
-			 * side needs to establish an L2CAP connection,
-			 * so we only do that if we're the central.
-			 */
+		/*
+		 * GATTC read was successful. Check the UUID and make sure
+		 * it matches what we expect, otherwise we're not talking
+		 * a badge. If we are talking to a badge, then write to the
+		 * peer's chat request service to notify it of our desire
+		 * to engage them in spirited conversation.
+		 */
+
+		if (radio->type == gattcCharReadEvent) {
+			if (p->len != 16 ||
+			    memcmp (p->uuid, ble_ides_base_uuid.uuid128, 16)) {
+				screen_alert_draw (FALSE,
+				    "Peer is not a badge!");
+				chThdSleepMilliseconds (1000);
+				ui = context->instance->ui;
+				if (ui != NULL)
+					ui->exit (context);
+				orchardAppExit ();
+			}
+
+			p->uuid[0] = BLE_IDES_CHATREQ_REQUEST;
+			bleGattcWrite (ch_handle.value_handle,
+			    p->uuid, 1, FALSE);
 
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
 				if (bleL2CapConnect (BLE_IDES_CHAT_PSM) !=
@@ -290,28 +387,29 @@ chat_event (OrchardAppContext *context,
 			screen_alert_draw (FALSE, "Channel open!");
 			chThdSleepMilliseconds (1000);
 			p->cid = evt->evt.l2cap_evt.local_cid;
-			p->peernames[0] = "Type @ or press button to exit";
-			memset (p->txbuf, 0, sizeof(p->txbuf));
-			p->peernames[1] = p->txbuf;
+			chat_session_start (context);
+			return;
+		}
 
-			/* Terminate the list UI. */
-
-			ui = context->instance->ui;
-			if (ui != NULL)
-				ui->exit (context);
-
-			/* Load the keyboard UI. */
-
-			p->uiCtx.itemlist = (const char **)p->peernames;
-			p->uiCtx.total = BLE_IDES_L2CAP_MTU - 1;
-			context->instance->ui = getUiByName ("keyboard");
-			context->instance->uicontext = &p->uiCtx;
-       			context->instance->ui->start (context);
+		if (radio->type == gattsReadWriteAuthEvent) {
+			rw = &evt->evt.gatts_evt.params.authorize_request;
+			if (rw->type == BLE_GATTS_AUTHORIZE_TYPE_WRITE) {
+				req = &rw->request.write;
+				if (req->data[0] == BLE_IDES_CHATREQ_DECLINE) {
+					screen_alert_draw (TRUE,
+					    "Chat request declined!");
+					i2sPlay ("wilhelm.snd");
+					chThdSleepMilliseconds (1000);
+				} else
+					return;
+			}
 			return;
 		}
 
 		if (radio->type == l2capTxEvent ||
-		    radio->type == l2capTxDoneEvent)
+		    radio->type == l2capTxDoneEvent ||
+		    radio->type == l2capDisconnectEvent ||
+		    radio->type == gattcCharWriteEvent)
 			return;
 
 		if (radio->type == connectTimeoutEvent) {
@@ -322,8 +420,7 @@ chat_event (OrchardAppContext *context,
 			screen_alert_draw (FALSE, "Connection refused!");
 		}
 
-		if (radio->type == disconnectEvent ||
-		    radio->type == l2capDisconnectEvent) {
+		if (radio->type == disconnectEvent) {
 			screen_alert_draw (TRUE, "Connection closed!");
 		}
 

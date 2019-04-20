@@ -30,39 +30,57 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "orchard-app.h"
 #include "orchard-ui.h"
 
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
+#include "ble_gattc_lld.h"
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
 #include "i2s_lld.h"
 #include "fontlist.h"
+#include "ides_gfx.h"
 
-#include <stdio.h>
-#include <string.h>
+#include "ble_lld.h"
+#include "ble_gap_lld.h"
 
 static OrchardAppRadioEvent radio_evt;
 static char buf[128];
 
-static void notify_handler(void * arg)
+typedef struct _NHandles {
+	GListener gl;
+	GHandle	ghACCEPT;
+	GHandle	ghDECLINE;
+	font_t	font;
+} NotifyHandles;
+
+static bool notify_handler(void * arg)
 {
 	OrchardAppRadioEvent * evt;
-	ble_gatts_evt_rw_authorize_request_t * req;
+        ble_gatts_evt_rw_authorize_request_t * rw;
+	ble_gatts_evt_write_t * req;
 
 	evt = arg;
 
-	req = &evt->evt.evt.gatts_evt.params.authorize_request;
-	if (req->request.write.handle != ch_handle.value_handle)
-		return;
+	rw = &evt->evt.evt.gatts_evt.params.authorize_request;
+	if (rw->request.write.handle != ch_handle.value_handle)
+		return (FALSE);
+
+	req = &rw->request.write;
+
+	if (req->data[0] != BLE_IDES_CHATREQ_REQUEST)
+		return (FALSE);
 
 	memcpy (&radio_evt, evt, sizeof (radio_evt));
 
-	orchardAppRun (orchardAppByName("Radio notification"));
+	orchardAppRun (orchardAppByName ("Radio notification"));
 
-	return;
+	return (TRUE);
 }
 
 static uint32_t notify_init(OrchardAppContext *context)
@@ -80,13 +98,22 @@ static uint32_t notify_init(OrchardAppContext *context)
 
 static void notify_start(OrchardAppContext *context)
 {
-	font_t font;
 	ble_peer_entry * peer;
-	ble_gatts_evt_rw_authorize_request_t * req;
+	ble_gatts_evt_rw_authorize_request_t * rw;
+	NotifyHandles * p;
+	GWidgetInit wi;
 
-	(void)context;
+	p = malloc (sizeof (NotifyHandles));
 
-	gdispClear (Black);
+	if (p == NULL) {
+		orchardAppExit ();
+		return;
+	}
+
+	context->priv = p;
+
+	putImageFile ("undrattk.rgb", 0, 0);
+	i2sPlay("klaxon.snd");
 
 	peer = blePeerFind (ble_peer_addr.addr);
 
@@ -98,42 +125,91 @@ static void notify_start(OrchardAppContext *context)
 	else
 		snprintf (buf, 128, "Badge %s", peer->ble_peer_name);
 
-	font = gdispOpenFont(FONT_FIXED);
+	p->font = gdispOpenFont(FONT_FIXED);
 
-	gdispDrawStringBox (0, (gdispGetHeight() >> 1) -
-	    gdispGetFontMetric(font, fontHeight),
-	    gdispGetWidth(), gdispGetFontMetric(font, fontHeight),
-	    buf, font, White, justifyCenter);
+	gdispDrawStringBox (0, 50 -
+	    gdispGetFontMetric(p->font, fontHeight),
+	    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
+	    buf, p->font, White, justifyCenter);
 
-	req = &radio_evt.evt.evt.gatts_evt.params.authorize_request;
+	rw = &radio_evt.evt.evt.gatts_evt.params.authorize_request;
 
-	if (req->request.write.handle == ch_handle.value_handle) {
-		gdispDrawStringBox (0, (gdispGetHeight() >> 1), 
-		    gdispGetWidth(), gdispGetFontMetric(font, fontHeight),
-		    "WANTS TO CHAT", font, Green, justifyCenter);
+	if (rw->request.write.handle == ch_handle.value_handle) {
+		gdispDrawStringBox (0, 50, 
+		    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
+		    "WANTS TO CHAT", p->font, White, justifyCenter);
 	}
 
-	gdispCloseFont (font);	
-	i2sPlay("alert1.snd");
+	gwinSetDefaultStyle (&RedButtonStyle, FALSE);
+	gwinSetDefaultFont (p->font);
+	gwinWidgetClearInit (&wi);
+	wi.g.show = TRUE;
+	wi.g.x = 0;
+	wi.g.y = 210;
+	wi.g.width = 150;
+	wi.g.height = 30;
+	wi.text = "DECLINE";
+	p->ghDECLINE = gwinButtonCreate(0, &wi);
 
-	chThdSleepMilliseconds (5000);
+	wi.g.x = 170;
+	wi.text = "ACCEPT";
+	p->ghACCEPT = gwinButtonCreate(0, &wi);
 
-	orchardAppExit ();
+	gwinSetDefaultStyle (&BlackWidgetStyle, FALSE);
+
+	geventListenerInit (&p->gl);
+	gwinAttachListener (&p->gl);
+	geventRegisterCallback (&p->gl, orchardAppUgfxCallback, &p->gl);
 
 	return;
 }
 
 void notify_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
-	(void)context;
-	(void)event;
+	GEvent * pe;
+	GEventGWinButton * be;
+	NotifyHandles * p;
+
+	p = context->priv;
+
+	if (event->type == ugfxEvent) {
+		pe = event->ugfx.pEvent;
+		if (pe->type == GEVENT_GWIN_BUTTON) {
+			be = (GEventGWinButton *)pe;
+			if (be->gwin == p->ghACCEPT) {
+				buf[0] = BLE_IDES_CHATREQ_ACCEPT;
+				bleGattcWrite (ch_handle.value_handle,
+				    (uint8_t *)buf, 1, TRUE);
+				orchardAppRun (orchardAppByName("Radio Chat"));
+			}
+			if (be->gwin == p->ghDECLINE) {
+				buf[0] = BLE_IDES_CHATREQ_DECLINE;
+				bleGattcWrite (ch_handle.value_handle,
+				    (uint8_t *)buf, 1, TRUE);
+				bleGapDisconnect ();
+				orchardAppExit ();
+			}
+		}
+	}
 
 	return;
 }
 
 static void notify_exit(OrchardAppContext *context)
 {
-	(void)context;
+	NotifyHandles * p;
+
+	p = context->priv;
+	context->priv = NULL;
+
+	gdispCloseFont (p->font);
+	gwinDestroy (p->ghACCEPT);
+	gwinDestroy (p->ghDECLINE);
+
+	geventDetachSource (&p->gl, NULL);
+	geventRegisterCallback (&p->gl, NULL, NULL);
+
+	free (p);
 
 	return;
 }
