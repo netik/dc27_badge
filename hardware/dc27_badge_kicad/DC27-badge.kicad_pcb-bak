@@ -20,9 +20,9 @@
     (34 B.Paste user)
     (35 F.Paste user)
     (36 B.SilkS user)
-    (37 F.SilkS user)
+    (37 F.SilkS user hide)
     (38 B.Mask user)
-    (39 F.Mask user)
+    (39 F.Mask user hide)
     (40 Dwgs.User user hide)
     (41 Cmts.User user)
     (42 Eco1.User user)
@@ -36,7 +36,7 @@
   )
 
   (setup
-    (last_trace_width 0.254)
+    (last_trace_width 0.381)
     (user_trace_width 0.1524)
     (user_trace_width 0.254)
     (user_trace_width 0.381)
