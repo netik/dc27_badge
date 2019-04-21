@@ -138,6 +138,11 @@ update (VHandles * p)
 	spiStop (&SPID1);
 	spiStop (&SPID4);
 
+	/* Turn off the I2C bus and external interrupt module too. */
+
+	i2cStop (&I2CD2);
+	extStop (&EXTD1);
+
 	/*
 	 * If we reached this point, we've loaded an updater image into
 	 * RAM and we're about to run it. Once it starts, it will
