@@ -151,16 +151,8 @@ static void
 joyHandle (uint8_t s)
 {
 	uint16_t pad;
-	int i;
 
-	/*
-	 * The delay loop below adds a bit of debouncing to pin detection.
-	 */
-
-	for (i = 0; i < 3; i++) {
-		chThdSleep (1);
-		pad = palReadPad (joyTbl[s].port, joyTbl[s].pin);
-	}
+	pad = palReadPad (joyTbl[s].port, joyTbl[s].pin);
 
 	pad <<= s;
 
@@ -168,10 +160,12 @@ joyHandle (uint8_t s)
 		joyState &= ~joyTbl[s].bit;
 		joyState |= pad;
 
+#ifdef JOYPAD_VERBOSE
 		if (pad)
 			printf ("button %x released\r\n", joyTbl[s].code);
 		else
 			printf ("button %x pressed\r\n", joyTbl[s].code);
+#endif
 
 		joyEvent.key.code = joyTbl[s].code;
 		if (pad)
@@ -216,6 +210,10 @@ static THD_FUNCTION(joyThread, arg)
 			osalThreadSuspendS (&joyThreadReference);
 		joyService = 0;
 		osalSysUnlock ();
+
+		/* Delay a little bit for debouncing. */
+
+		chThdSleep (1);
 
 		/* Poll all the inputs */
 
