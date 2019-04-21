@@ -11,9 +11,7 @@
 #include "xpt2046_lld.h"
 #include "xpt2046_reg.h"
 
-#ifdef notyet
 #include "userconfig.h"
-#endif
 
 #include <string.h>
 
@@ -43,24 +41,18 @@ static const float calibrationData[] = {
  
 bool_t LoadMouseCalibration(unsigned instance, void *data, size_t sz)
 {
-#ifdef notyet
 	const userconfig * config;
-#endif
 	(void)data;
 
-#ifdef notdef
 	config = getConfig();
-#endif
 
 	if (sz != sizeof(calibrationData) || instance != 0) {
 		return FALSE;
 	}
 
-#ifdef notyet
 	if (config->touch_data_present)
 		memcpy (data, (void*)&config->touch_data, sz);
 	else
-#endif
 		memcpy (data, (void*)&calibrationData, sz);
 
 	return (TRUE);

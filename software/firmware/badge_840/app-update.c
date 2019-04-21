@@ -135,6 +135,7 @@ update (VHandles * p)
 	 * the same time.
 	 */
 
+	spiStop (&SPID1);
 	spiStop (&SPID4);
 
 	/*
