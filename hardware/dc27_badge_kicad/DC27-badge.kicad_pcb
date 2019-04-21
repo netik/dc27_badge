@@ -4891,7 +4891,7 @@
       (net 19 SW3))
     (pad 1 smd rect (at -1.25 -0.7 90) (size 1 0.8) (layers F.Cu F.Paste F.Mask)
       (net 12 CS8))
-    (model ${KISYS3DMOD}/LED_SMD.3dshapes/LED_Cree-PLCC4_3.2x2.8mm_CCW.wrl
+    (model "${KIPRJMOD}/lib_fp.pretty/CLV1AFKB(RGB).STEP"
       (at (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
