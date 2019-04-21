@@ -135,8 +135,10 @@ bleL2CapDispatch (ble_evt_t * evt)
 
 		case BLE_L2CAP_EVT_CH_RX:
 			rx = &evt->evt.l2cap_evt.params.rx;
+#ifdef BLE_L2CAP_VERBOSE
 			printf ("L2CAP SDU received\n");
 			printf ("DATA RECEIVED: [%s]\n", rx->sdu_buf.p_data);
+#endif
 			orchardAppRadioCallback (l2capRxEvent, evt,
 			    rx->sdu_buf.p_data, rx->sdu_buf.len);
 			rx_data.p_data = ble_rx_buf;
