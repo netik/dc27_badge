@@ -435,7 +435,7 @@
     (add_net ~RESET_TGTMCU)
   )
 
-  (module lib_fp:SKRHAAE010 (layer F.Cu) (tedit 5CAFAB55) (tstamp 5CB31FEE)
+  (module lib_fp:SKRHAAE010 (layer F.Cu) (tedit 5CBC1DD3) (tstamp 5CB31FEE)
     (at 105.211218 208.511218 225)
     (path /5CBFA8FD/5CC85D47)
     (fp_text reference SW802 (at 0 -5.89 225) (layer F.SilkS)
@@ -467,6 +467,11 @@
       (net 156 ~B_SELECT))
     (pad 1 smd rect (at -3.575 -1.425 225) (size 1.35 1) (layers F.Cu F.Paste F.Mask)
       (net 154 ~B_UP))
+    (model ${KIPRJMOD}/lib_fp.pretty/SKRHAA.STEP
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
   )
 
   (module lib_fp:SKRHAAE010 (layer F.Cu) (tedit 5CBC1DD3) (tstamp 5CB74432)

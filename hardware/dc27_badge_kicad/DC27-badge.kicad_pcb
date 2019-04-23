@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 180)
+    (drawings 182)
     (tracks 2568)
     (zones 0)
     (modules 135)
@@ -6475,6 +6475,12 @@
     )
   )
 
+  (gr_text "TX\nUART" (at 102.05 112.125) (layer F.SilkS) (tstamp 5CBF6674)
+    (effects (font (size 1 1) (thickness 0.15)) (justify right))
+  )
+  (gr_text "RX\nUART" (at 102.925 112.125) (layer F.SilkS) (tstamp 5CBF6670)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left))
+  )
   (gr_poly (pts (xy 104.26 39.8) (xy 105.14 39.41) (xy 106.09 39.82) (xy 106.24 40.41) (xy 106.21 67.17) (xy 104.07 67.17) (xy 104.05 40.41)) (layer F.SilkS) (width 0.1))
   (gr_text +3.3V (at 81.27 169.29) (layer F.SilkS)
     (effects (font (size 1.5 1.5) (thickness 0.3)))
