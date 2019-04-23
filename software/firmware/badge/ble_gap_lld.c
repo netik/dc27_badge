@@ -201,14 +201,20 @@ bleGapDispatch (ble_evt_t * evt)
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
 				bleGapScanStart ();
 
+#ifdef notyet
 			/*
 			 * Try to request an upgrade to the coded PHY.
 			 * This should gain us longer range.
+			 *
+			 * Can't do this here yet, need some more research.
+			 * It prevents iPhones from establishing a proper
+			 * connection.
 			 */
 
 			phys.rx_phys = BLE_GAP_PHY_CODED;
 			phys.tx_phys = BLE_GAP_PHY_CODED;
 			sd_ble_gap_phy_update (ble_conn_handle, &phys);
+#endif
 
 			orchardAppRadioCallback (connectEvent, evt, NULL, 0);
 

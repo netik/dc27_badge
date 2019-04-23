@@ -109,6 +109,8 @@ radio_discover (BaseSequentialStream *chp, int argc, char *argv[])
 	int i;
 
 	handle = 1;
+	s = NULL;
+
 	while (1) {
 		len = sizeof (evt);
 
