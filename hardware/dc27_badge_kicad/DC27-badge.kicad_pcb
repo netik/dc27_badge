@@ -6187,6 +6187,11 @@
       (solder_mask_margin 0.000003) (clearance 0.000003))
     (pad SLOT thru_hole oval (at 3.3 -1.4 90) (size 0.5 1.2) (drill oval 0.5 1.2) (layers *.Cu *.Mask)
       (solder_mask_margin 0.000003) (clearance 0.000003))
+    (model ${KIPRJMOD}/lib_fp.pretty/10118193.igs
+      (offset (xyz -98 1.5 -0.4))
+      (scale (xyz 1 1 1))
+      (rotate (xyz -90 0 0))
+    )
   )
 
   (module Housings_SSOP:TSSOP-10_3x3mm_Pitch0.5mm (layer B.Cu) (tedit 54130A77) (tstamp 5C612FF8)
