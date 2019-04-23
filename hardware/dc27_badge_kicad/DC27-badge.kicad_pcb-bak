@@ -2944,9 +2944,14 @@
     (pad 40 smd rect (at 24.13 2.826) (size 1.01999 2.22001) (layers F.Cu F.Paste F.Mask)
       (net 138 GND))
     (model ${KIPRJMOD}/lib_fp.pretty/ER-TFTM028-4.STEP
-      (offset (xyz 0 -37.75 8))
+      (offset (xyz 0 -37.75 7.5))
       (scale (xyz 1 1 1))
       (rotate (xyz 90 180 -90))
+    )
+    (model ${KIPRJMOD}/lib_fp.pretty/SSM-120-S-DV-A.stp
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz -90 0 0))
     )
   )
 
