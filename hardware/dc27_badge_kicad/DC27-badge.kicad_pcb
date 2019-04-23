@@ -6110,6 +6110,11 @@
       (net 63 "Net-(C510-Pad1)"))
     (pad 2 smd rect (at 0 2.69748 270) (size 3.19786 1.59766) (layers B.Cu B.Paste B.Mask)
       (net 93 "Net-(C510-Pad2)"))
+    (model ${KISYS3DMOD}/Capacitor_SMD.3dshapes/C_Elec_6.3x5.4.step
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 -90))
+    )
   )
 
   (module MF_Passives:MF_Passives-CP6.3MM (layer B.Cu) (tedit 5C691B03) (tstamp 5CAD15CC)
@@ -6138,6 +6143,11 @@
       (net 55 "Net-(C505-Pad1)"))
     (pad 2 smd rect (at 0 2.69748 270) (size 3.19786 1.59766) (layers B.Cu B.Paste B.Mask)
       (net 92 "Net-(C505-Pad2)"))
+    (model ${KISYS3DMOD}/Capacitor_SMD.3dshapes/C_Elec_6.3x5.4.step
+      (at (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 -90))
+    )
   )
 
   (module MF_Connectors:MF_Connectors-MICROUSB-RIGHT (layer B.Cu) (tedit 57ACEBFB) (tstamp 5CB6C2D6)
