@@ -39,7 +39,7 @@ typedef struct _SetupHandles {
 } SetupHandles;
 
 static uint32_t last_ui_time = 0;
-extern struct FXENTRY fxlist[];
+extern char *fxlist[];
 
 static font_t fontSM;
 static font_t fontXS;
@@ -53,7 +53,7 @@ static void draw_setup_buttons(SetupHandles * p) {
   userconfig *config = getConfig();
   GWidgetInit wi;
   char tmp[40];
-  
+
   gwinSetDefaultFont(fontSM);
   gwinWidgetClearInit(&wi);
 
@@ -136,8 +136,8 @@ static void draw_setup_buttons(SetupHandles * p) {
   p->ghLabel4 = gwinLabelCreate(0, &wi);
   gwinLabelSetBorder(p->ghLabel4, FALSE);
 
-  // dimmer bar 
-  drawProgressBar(10,80,180,20, 8, (8-config->led_shift), false, false);
+  // dimmer bar
+  drawProgressBar(10,80,180,20, 8, (0xff-config->led_brightness), false, false);
 
   // create button widget: ghButtonDimDn
   wi.g.show = TRUE;
@@ -169,7 +169,7 @@ static void draw_setup_buttons(SetupHandles * p) {
   wi.g.y = 150;
   wi.text = "Set Name";
   p->ghButtonSetName = gwinButtonCreate(0, &wi);
-  
+
   // create button widget: ghButtonOK
   wi.g.y = 190;
   wi.text = "Save";
@@ -186,7 +186,7 @@ static void draw_setup_buttons(SetupHandles * p) {
   wi.customStyle = 0;
   p->ghLabelStatus = gwinLabelCreate(0, &wi);
   gwinLabelSetBorder(p->ghLabelStatus, FALSE);
-  
+
 }
 
 static uint32_t setup_init(OrchardAppContext *context) {
@@ -202,11 +202,11 @@ static void setup_start(OrchardAppContext *context) {
 
   gdispClear (Black);
 
-  // fires once a second for updates. 
+  // fires once a second for updates.
   orchardAppTimer(context, 1000, true);
   last_ui_time = chVTGetSystemTime();
 
-  p = chHeapAlloc (NULL, sizeof(SetupHandles));
+  p = malloc (sizeof(SetupHandles));
   draw_setup_buttons(p);
   context->priv = p;
 
@@ -217,32 +217,33 @@ static void setup_start(OrchardAppContext *context) {
 }
 
 static void nextLedPattern(uint8_t max_led_patterns) {
-  userconfig *config = getConfig();
-  config->led_pattern++;
-  ledResetPattern();
-  if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
-  ledSetFunction(fxlist[config->led_pattern].function);
+//  userconfig *config = getConfig();
+//  config->led_pattern++;
+//  ledResetPattern();
+//  if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
+//  ledSetFunction(fxlist[config->led_pattern].function);
 }
 
 static void prevLedPattern(uint8_t max_led_patterns) {
-  userconfig *config = getConfig();
-  config->led_pattern--;
-  ledResetPattern();
-  if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
-  ledSetFunction(fxlist[config->led_pattern].function);
+//  userconfig *config = getConfig();
+//  config->led_pattern--;
+//  ledResetPattern();
+//  if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
+//  ledSetFunction(fxlist[config->led_pattern].function);
 }
 
 static void nextLedBright() {
   userconfig *config = getConfig();
-  config->led_shift--;
-  if (config->led_shift == 255) config->led_shift = 7;
-  ledSetBrightness(config->led_shift);}
+  config->led_brightness -= 25;
+  if (config->led_brightness == 255) config->led_brightness = 250;
+  //ledSetBrightness(config->led_brightness);}
+}
 
 static void prevLedBright() {
   userconfig *config = getConfig();
-  config->led_shift++;
-  if (config->led_shift > 7) config->led_shift = 0;
-  ledSetBrightness(config->led_shift);
+  config->led_brightness += 25;
+  if (config->led_brightness > 250) config->led_brightness = 0;
+  //ledSetBrightness(config->led_brightness);
 }
 
 static void setup_event(OrchardAppContext *context,
@@ -252,16 +253,16 @@ static void setup_event(OrchardAppContext *context,
   SetupHandles * p;
   uint8_t max_led_patterns;
   GMouse * m;
- 
+
   p = context->priv;
 
-  if ( config->unlocks & UL_LEDS ) { 
+  if ( config->unlocks & UL_LEDS ) {
     max_led_patterns = LED_PATTERNS_FULL;
   } else {
     max_led_patterns = LED_PATTERNS_LIMITED;
   }
-       
-  
+
+
   /* handle events */
   if (event->type == timerEvent) {
     if( (chVTGetSystemTime() - last_ui_time) > UI_IDLE_TIME ) {
@@ -269,26 +270,26 @@ static void setup_event(OrchardAppContext *context,
     }
     return;
   }
-  
+
   if (event->type == keyEvent) {
     last_ui_time = chVTGetSystemTime();
-    if ( (event->key.code == keyLeft) &&
+    if ( (event->key.code == keyALeft) &&
          (event->key.flags == keyPress) )  {
       prevLedBright();
     }
-    if ( (event->key.code == keyRight) &&
+    if ( (event->key.code == keyARight) &&
          (event->key.flags == keyPress) )  {
       nextLedBright();
     }
-    if ( (event->key.code == keyUp) &&
+    if ( (event->key.code == keyAUp) &&
          (event->key.flags == keyPress) )  {
       prevLedPattern(max_led_patterns);
     }
-    if ( (event->key.code == keyDown) &&
+    if ( (event->key.code == keyADown) &&
          (event->key.flags == keyPress) )  {
       nextLedPattern(max_led_patterns);
     }
-    if ( (event->key.code == keySelect) &&
+    if ( (event->key.code == keyBSelect) &&
          (event->key.flags == keyPress) )  {
       configSave(config);
       orchardAppExit();
@@ -298,9 +299,9 @@ static void setup_event(OrchardAppContext *context,
   if (event->type == ugfxEvent) {
     pe = event->ugfx.pEvent;
     last_ui_time = chVTGetSystemTime();
-    
+
     switch(pe->type) {
-      
+
     case GEVENT_GWIN_CHECKBOX:
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckSound) {
         // The state of our checkbox has changed
@@ -321,7 +322,7 @@ static void setup_event(OrchardAppContext *context,
           orchardAppExit();
           return;
       }
-      
+
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonCalibrate) {
 
           /* Run the calibration GUI */
@@ -343,38 +344,38 @@ static void setup_event(OrchardAppContext *context,
           orchardAppRun(orchardAppByName("Set your name"));
           return;
       }
-      
+
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonDimDn) {
-	config->led_shift++;
-	if (config->led_shift > 7) config->led_shift = 0;
-	ledSetBrightness(config->led_shift);
+	      config->led_brightness++;
+        if (config->led_brightness > 7) config->led_brightness = 0;
+        led_brightness_set(config->led_brightness);
       }
-      
+
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonDimUp) {
-	config->led_shift--;
-	if (config->led_shift == 255) config->led_shift = 7;
-	ledSetBrightness(config->led_shift);
+      	config->led_brightness--;
+      	if (config->led_brightness == 255) config->led_brightness = 7;
+      	led_brightness_set(config->led_brightness);
       }
-      
+
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonPatDn) {
-	config->led_pattern++;
-	ledResetPattern();
-	if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
-        ledSetFunction(fxlist[config->led_pattern].function);
+      	config->led_pattern++;
+//      	ledResetPattern();
+      	if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
+//        ledSetFunction(fxlist[config->led_pattern].function);
       }
-      
+
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonPatUp) {
-	config->led_pattern--;
-	ledResetPattern();
-	if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
-        ledSetFunction(fxlist[config->led_pattern].function);
+      	config->led_pattern--;
+//      	ledResetPattern();
+      	if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
+//        ledSetFunction(fxlist[config->led_pattern].function);
       }
       break;
     }
   }
   // update ui
-  drawProgressBar(10,80,180,20, 8, (8-config->led_shift), false, false);
-  gwinSetText(p->ghLabelPattern, fxlist[config->led_pattern].name, TRUE);
+  drawProgressBar(10,80,180,20, 8, (8-config->led_brightness), false, false);
+  gwinSetText(p->ghLabelPattern, fxlist[config->led_pattern], TRUE);
   return;
 }
 
@@ -397,14 +398,14 @@ static void setup_exit(OrchardAppContext *context) {
   gwinDestroy(p->ghButtonOK);
   gwinDestroy(p->ghButtonCalibrate);
   gwinDestroy(p->ghButtonSetName);
-  
+
   gdispCloseFont(fontXS);
   gdispCloseFont(fontSM);
-    
+
   geventDetachSource (&p->glSetup, NULL);
   geventRegisterCallback (&p->glSetup, NULL, NULL);
 
-  chHeapFree (context->priv);
+  free (context->priv);
   context->priv = NULL;
 
   return;

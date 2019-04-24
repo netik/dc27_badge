@@ -38,6 +38,7 @@
 #include "ff.h"
 #include "ffconf.h"
 #include "ides_gfx.h"
+#include "chprintf.h"
 
 #include <string.h>
 
@@ -65,7 +66,7 @@ photos_start (OrchardAppContext *context)
 {
 	PhotoHandles * p;
 
-	context->priv = chHeapAlloc (NULL, sizeof(PhotoHandles));
+	context->priv = malloc(sizeof(PhotoHandles));
 	memset (context->priv, 0, sizeof(PhotoHandles));
 
 	p = context->priv;
@@ -85,7 +86,7 @@ photos_event (OrchardAppContext *context,
 	GEventMouse * me;
 	GSourceHandle gs;
 	char str[64];
- 
+
 	p = context->priv;
 
 	if (event->type == ugfxEvent) {
@@ -151,7 +152,7 @@ photos_exit (OrchardAppContext *context)
 	geventRegisterCallback (&p->gl, NULL, NULL);
 	geventDetachSource (&p->gl, NULL);
 
-	chHeapFree (p);
+	free (p);
 
 	return;
 }

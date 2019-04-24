@@ -231,7 +231,7 @@ screen_alert_draw (uint8_t clear, char *msg)
 
 	gdispDrawThickLine (0, middle - 20, 320, middle -20, Red, 2, FALSE);
 	gdispDrawThickLine (0, middle + 20, 320, middle +20, Red, 2, FALSE);
-   
+
 	gdispDrawStringBox (0,
 	    middle - (gdispGetFontMetric(fontFF, fontHeight) >> 1),
 	    gdispGetWidth(), gdispGetFontMetric(fontFF, fontHeight),
@@ -243,3 +243,51 @@ screen_alert_draw (uint8_t clear, char *msg)
 	return;
 }
 
+
+void drawProgressBar(coord_t x, coord_t y, coord_t width, coord_t height, int32_t maxval, int32_t currentval, uint8_t
+		     use_leds, uint8_t reverse) {
+  // draw a bar if reverse is true, we draw right to left vs left to
+  // right
+
+  // WARNING: if x+w > screen_width or y+height > screen_height,
+  // unpredicable things will happen in memory. There is no protection
+  // for overflow here.
+
+  color_t c = Lime;
+  float remain_f;
+
+  if (currentval < 0) { currentval = 0; } // never overflow
+  if (currentval > maxval) {
+    // prevent bar overflow
+    remain_f = 1;
+  } else {
+    remain_f = (float) currentval / (float)maxval;
+  }
+
+  int16_t remain = width * remain_f;
+
+#ifdef notdef
+  if (use_leds == 1) {
+    ledSetFunction(handle_progress);
+    ledSetProgress(100 * remain_f);
+  }
+#endif
+
+  if (remain_f >= 0.8) {
+    c = Lime;
+  } else if (remain_f >= 0.5) {
+    c = Yellow;
+  } else {
+    c = Red;
+  }
+
+  if (reverse) {
+    gdispFillArea(x,y+1,(width - remain)-1,height-2, Black);
+    gdispFillArea((x+width)-remain,y,remain,height, c);
+  } else {
+    gdispFillArea(x + remain,y+1,(width - remain)-1,height-2, Black);
+    gdispFillArea(x,y,remain,height, c);
+  }
+
+  gdispDrawBox(x,y,width,height, c);
+}
