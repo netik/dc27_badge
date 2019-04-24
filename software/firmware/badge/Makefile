@@ -173,6 +173,7 @@ CSRC += main.c \
 	cmd-reset.c \
 	cmd-random.c \
 	cmd-mem.c \
+	cmd-unix.c \
 	orchard-app.c \
 	orchard-ui.c \
 	ui-keyboard.c \
@@ -189,6 +190,8 @@ CSRC += main.c \
 	app-notify.c \
 	app-dialer.c \
 	app-music.c \
+	app-setup.c \
+	app-photos.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \
