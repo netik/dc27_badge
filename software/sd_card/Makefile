@@ -19,7 +19,7 @@
 
 # The tools dir contains our conversion tools and scripts
 TOOLS_DIR = ../tools
-.PHONY: tools_dep
+.PHONY: tools_dep 
 
 tools_dep:
 	$(MAKE) -C $(TOOLS_DIR)
@@ -79,7 +79,7 @@ video/%.vid: video_src/%.mp4
 # When possible, please use TIF images. Aliasing is a real issue on
 # our display and higher quality input is better.
 # images used by the system, app-fight, and the "LED" app.
-images: tools_dep photos \
+images: dirs tools_dep photos \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/*.jpg)))))
