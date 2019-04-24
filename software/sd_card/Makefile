@@ -1,9 +1,9 @@
 #
-# SPQR / Ides of March asset build system
+# daBomb Asset build system
 #
 # John Adams 
 # jna@retina.net
-# 1/2017
+# 4/2019 (originally 1/2017 from Ides of DEF CON badge)
 #
 # Master makefile
 #
@@ -13,7 +13,7 @@
 # ImageMagick, and FFMPeg are required to convert images.
 # the Makefile in the $(TOOLS_DIR)/ subdir will build our required tools (rgbheader, snd
 #
-# videos will not be built by this script. We will only copy .vid
+# Videos will not be built by this script. We will only copy .vid
 # files to the sdcard from the video/ subdir.
 #
 
@@ -129,6 +129,7 @@ clean_images:
 	-rm -fr rgb/*
 
 dirs:
+	-[ -d bin/ ] || mkdir -p bin/
 	-[ -d sdcard/fight ] || mkdir -p sdcard/fight
 	-[ -d sdcard/photos ] || mkdir -p sdcard/photos
 	-[ -d sdcard/font/led ] || mkdir -p sdcard/font/led
@@ -144,6 +145,7 @@ cleansd:
 # remove tools, sounds, images, and video
 clean: clean_images
 	$(MAKE) -C $(TOOLS_DIR) clean
+	-rm -rf bin/
 	-rm -f dac/*.snd
 	-rm -f dac/fight/*.snd
 	-rm -f video/*

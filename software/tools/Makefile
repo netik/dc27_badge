@@ -18,10 +18,14 @@ SOURCE=./src/
 PROG=rgbhdr videomerge sndskip
 LIST=$(addprefix $(BIN)/, $(PROG))
 
-all: $(LIST)
+all: dirs $(LIST)
+
+dirs: 
+	-[ -d bin/ ] || mkdir -p bin/
 
 $(BIN)/%:  $(SOURCE)%.c
 	$(CC) $(INC) $< $(CFLAGS) -o $@ $(LIBS)
 
 clean:
 	rm -f $(LIST)
+
