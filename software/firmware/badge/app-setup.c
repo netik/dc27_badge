@@ -32,7 +32,6 @@ typedef struct _SetupHandles {
   GHandle ghButtonPatDn;
   GHandle ghButtonPatUp;
   GHandle ghLabel4;
-  GHandle ghLabelStatus;
   GHandle ghButtonDimUp;
   GHandle ghButtonDimDn;
   GHandle ghButtonOK;
@@ -139,9 +138,6 @@ static void draw_setup_buttons(SetupHandles * p) {
   p->ghLabel4 = gwinLabelCreate(0, &wi);
   gwinLabelSetBorder(p->ghLabel4, FALSE);
 
-  // dimmer bar
-  drawProgressBar(10,80,180,20,255, config->led_brightness, false, false);
-
   // create button widget: ghButtonDimDn
   wi.g.show = TRUE;
   wi.g.x = 200;
@@ -178,18 +174,7 @@ static void draw_setup_buttons(SetupHandles * p) {
   wi.text = "Save";
   p->ghButtonOK = gwinButtonCreate(0, &wi);
 
-  // Create label widget: ghLabelStatus (network id)
-  chsnprintf(tmp,sizeof(tmp), "Net ID: %08x", config->netid);
-  wi.g.width = 180;
-  wi.g.y = 206;
-  wi.g.x = 10;
-  wi.g.height = 20;
-  wi.text = tmp;
-  wi.customDraw = gwinLabelDrawJustifiedLeft;
-  wi.customStyle = 0;
-  p->ghLabelStatus = gwinLabelCreate(0, &wi);
-  gwinLabelSetBorder(p->ghLabelStatus, FALSE);
-
+  drawProgressBar(10,80,180,20,255, config->led_brightness, false, false);
 }
 
 static uint32_t setup_init(OrchardAppContext *context) {
@@ -246,6 +231,8 @@ static void prevLedBright() {
   }
 
   led_brightness_set(config->led_brightness);
+  drawProgressBar(10,80,180,20,255, config->led_brightness, false, false);
+
 }
 
 static void nextLedBright() {
@@ -261,6 +248,7 @@ static void nextLedBright() {
   }
 
   led_brightness_set(config->led_brightness);
+  drawProgressBar(10,80,180,20,255, config->led_brightness, false, false);
 }
 
 static void setup_event(OrchardAppContext *context,
@@ -287,8 +275,8 @@ static void setup_event(OrchardAppContext *context,
 
   if (event->type == timerEvent) {
     last_ui_time++;
-    if (last_ui_time == UI_IDLE_TIME) {
-      orchardAppRun (orchardAppByName ("Badge"));
+    if (last_ui_time >= UI_IDLE_TIME) {
+      orchardAppRun(orchardAppByName ("Badge"));
     }
     return;
   }
@@ -296,8 +284,6 @@ static void setup_event(OrchardAppContext *context,
   last_ui_time = 0;
 
   if (event->type == keyEvent && event->key.flags == keyRelease) {
-    last_ui_time = chVTGetSystemTime();
-
     switch(event->key.code) {
       case keyALeft:
         prevLedBright();
@@ -322,7 +308,6 @@ static void setup_event(OrchardAppContext *context,
 
   if (event->type == ugfxEvent) {
     pe = event->ugfx.pEvent;
-    last_ui_time = chVTGetSystemTime();
 
     switch(pe->type) {
 
@@ -369,38 +354,26 @@ static void setup_event(OrchardAppContext *context,
       }
 
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonDimDn) {
-	      config->led_brightness++;
-        if (config->led_brightness > 7) config->led_brightness = 0;
-        led_brightness_set(config->led_brightness);
+        prevLedBright();
       }
 
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonDimUp) {
-      	config->led_brightness--;
-      	if (config->led_brightness == 255) config->led_brightness = 7;
-      	led_brightness_set(config->led_brightness);
+        nextLedBright();
       }
 
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonPatDn) {
-      	config->led_pattern++;
-//      	ledResetPattern();
-      	if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
-//        ledSetFunction(fxlist[config->led_pattern].function);
+        nextLedPattern(max_led_patterns);
       }
 
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonPatUp) {
-      	config->led_pattern--;
-//      	ledResetPattern();
-      	if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
-//        ledSetFunction(fxlist[config->led_pattern].function);
+        prevLedPattern(max_led_patterns);
       }
       break;
     }
   }
 
   // update ui
-  drawProgressBar(10,80,180,20,255, config->led_brightness, false, false);
   gwinSetText(p->ghLabelPattern, fxlist[config->led_pattern], TRUE);
-  return;
 }
 
 static void setup_exit(OrchardAppContext *context) {
@@ -416,7 +389,6 @@ static void setup_exit(OrchardAppContext *context) {
   gwinDestroy(p->ghButtonPatDn);
   gwinDestroy(p->ghButtonPatUp);
   gwinDestroy(p->ghLabel4);
-  gwinDestroy(p->ghLabelStatus);
   gwinDestroy(p->ghButtonDimUp);
   gwinDestroy(p->ghButtonDimDn);
   gwinDestroy(p->ghButtonOK);

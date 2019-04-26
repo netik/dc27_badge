@@ -19,6 +19,8 @@
 #include "ff.h"
 
 #include "async_io_lld.h"
+#include "badge.h"
+
 // WidgetStyle: RedButton, the only button we really use
 const GWidgetStyle RedButtonStyle = {
   HTML2COLOR(0xff0000),              // background
@@ -244,8 +246,11 @@ screen_alert_draw (uint8_t clear, char *msg)
 }
 
 
-void drawProgressBar(coord_t x, coord_t y, coord_t width, coord_t height, int32_t maxval, int32_t currentval, uint8_t
-		     use_leds, uint8_t reverse) {
+void drawProgressBar(coord_t x, coord_t y,
+                     coord_t width, coord_t height,
+                     int32_t maxval, int32_t currentval,
+                     uint8_t use_leds, uint8_t reverse) {
+
   // draw a bar if reverse is true, we draw right to left vs left to
   // right
 
@@ -280,6 +285,16 @@ void drawProgressBar(coord_t x, coord_t y, coord_t width, coord_t height, int32_
   } else {
     c = Red;
   }
+
+  /*
+   * Clear the clip variables otherwise
+   * gdispGFillArea() might fail.
+   */
+
+  GDISP->clipx0 = 0;
+	GDISP->clipy0 = 0;
+	GDISP->clipx1 = 320;
+	GDISP->clipy1 = 240;
 
   if (reverse) {
     gdispFillArea(x,y+1,(width - remain)-1,height-2, Black);
