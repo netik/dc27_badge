@@ -20,7 +20,7 @@
 #include "src/ginput/ginput_driver_mouse.h"
 
 /* the amount that we increase or decrease brightness by */
-#define BRIGHT_STEP 20
+#define LED_BRIGHT_STEP 20
 
 // GHandles
 typedef struct _SetupHandles {
@@ -222,11 +222,11 @@ static void prevLedBright() {
   int a;
 
   a = config->led_brightness;
-  if ( (a - BRIGHT_STEP) < 0 ) {
+  if ( (a - LED_BRIGHT_STEP) < 0 ) {
     // underflow
     config->led_brightness = 0;
   } else {
-    config->led_brightness -= BRIGHT_STEP;
+    config->led_brightness -= LED_BRIGHT_STEP;
   }
 
   led_brightness_set(config->led_brightness);
@@ -239,11 +239,11 @@ static void nextLedBright() {
   int a;
 
   a = config->led_brightness;
-  if ( (a + BRIGHT_STEP) > 255 ) {
+  if ( (a + LED_BRIGHT_STEP) > 255 ) {
     // overflow
     config->led_brightness = 255;
   } else {
-    config->led_brightness += BRIGHT_STEP;
+    config->led_brightness += LED_BRIGHT_STEP;
   }
 
   led_brightness_set(config->led_brightness);
@@ -311,16 +311,14 @@ static void setup_event(OrchardAppContext *context,
     switch(pe->type) {
 
     case GEVENT_GWIN_CHECKBOX:
+      /* handle checkbox state changes */
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckSound) {
-        // The state of our checkbox has changed
         config->sound_enabled = ((GEventGWinCheckbox*)pe)->isChecked;
       }
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckAirplane) {
-        // The state of our checkbox has changed
         config->airplane_mode = ((GEventGWinCheckbox*)pe)->isChecked;
       }
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckRotate) {
-        // The state of our checkbox has changed
         config->rotate = ((GEventGWinCheckbox*)pe)->isChecked;
       }
       break;
