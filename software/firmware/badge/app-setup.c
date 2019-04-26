@@ -54,7 +54,6 @@ static void prevLedBright(void);
 static void draw_setup_buttons(SetupHandles * p) {
   userconfig *config = getConfig();
   GWidgetInit wi;
-  char tmp[40];
 
   gwinSetDefaultFont(fontSM);
   gwinWidgetClearInit(&wi);

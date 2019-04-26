@@ -8,6 +8,8 @@
 #include "rand.h"
 
 #define MILLIS() chVTGetSystemTime()
+#define util_random(x,y) randRange(x,y)
+#define M_PI 3.14159265358979323846264338327950288
 
 unsigned char led_memory[ISSI_ADDR_MAX];
 
@@ -27,7 +29,13 @@ void led_pattern_kitt(int8_t*, int8_t*);
 void led_pattern_triangle(int8_t*, int8_t*);
 void led_pattern_sparkle(uint8_t*);
 void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value);
-
+void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep);
+void led_pattern_rainbow(float* p_hue, uint8_t repeat);
+void led_pattern_roller_coaster(uint8_t positions[], color_rgb_t color);
+void led_pattern_running_lights(uint8_t red,
+                                uint8_t green,
+                                uint8_t blue,
+                                uint8_t* p_position);
 /* control vars */
 static thread_t * pThread;
 static uint8_t ledExitRequest = 0;
@@ -98,16 +106,16 @@ const char *fxlist[] = {
   "Sparkle",
   "Double Sweep",
   "Triangle",
-  "xx",
-  "xx",
-  "xx",
-  "xx",
-  "xx",
-  "xx",
-  "xx",
-  "xx",
-  "xx",
-  "xx"
+  "Triple Sweep",
+  "Rainbow",
+  "Red Blip",
+  "Green Blip",
+  "Purple Blip",
+  "Yellow Blip",
+  "Red Spin",
+  "Green Spin",
+  "Blue Spin",
+  "Yellow Spin"
 };
 
 /* Brightness control */
@@ -269,7 +277,7 @@ void led_test() {
 }
 
 /* Threads ------------------------------------------------------ */
-static THD_WORKING_AREA(waBlingThread, 512);
+static THD_WORKING_AREA(waBlingThread, 768);
 static THD_FUNCTION(bling_thread, arg) {
   userconfig *config = getConfig();
   /* animation state vars */
@@ -280,6 +288,27 @@ static THD_FUNCTION(bling_thread, arg) {
   float anim_hue = 100;
   float anim_value = 0;
   uint8_t last_brightness = led_brightness_level;
+  // Positions storage for roller coaster
+	uint8_t positions[LED_PATTERN_ROLLER_COASTER_COUNT];
+	for (uint8_t i = 0; i < LED_PATTERN_ROLLER_COASTER_COUNT; i++)
+	{
+		positions[i] = LED_COUNT - 1 - i;
+	}
+  //Triple sweep data
+	led_triple_sweep_state_t anim_triple = {
+			.direction_red = 1,
+			.direction_green = 1,
+			.direction_blue = -1,
+			.direction_yellow = -1,
+			.index_red = 7,
+			.index_green = 23,
+			.index_blue = 7,
+			.index_yellow = 23,
+			.red = 255,
+			.green = 255,
+			.blue = 255,
+			.yellow = 255,
+	};
 
   (void)arg;
   chRegSetThreadName("LED Bling");
@@ -298,7 +327,7 @@ static THD_FUNCTION(bling_thread, arg) {
       drv_is31fl_gcc_set(led_brightness_level);
       last_brightness = led_brightness_level;
     }
-    
+
     // re-render the internal framebuffer animations
     if (led_current_func != 0) {
       switch (led_current_func) {
@@ -320,7 +349,36 @@ static THD_FUNCTION(bling_thread, arg) {
       case 6:
         led_pattern_triangle(&anim_index, &anim_position);
         break;
-        // ... add more animations here ...
+      case 7:
+        led_pattern_triple_sweep(&anim_triple);
+        break;
+      case 8:
+        led_pattern_rainbow(&anim_hue, 2);
+        break;
+      case 9:
+  			led_pattern_roller_coaster(positions, util_hsv_to_rgb(0, 1, 1));
+  			break;
+  		case 10:
+  			led_pattern_roller_coaster(positions, util_hsv_to_rgb(0.3, 1, 1));
+  			break;
+  		case 11:
+  			led_pattern_roller_coaster(positions, util_hsv_to_rgb(0.7, 1, 1));
+  			break;
+  		case 12:
+  			led_pattern_roller_coaster(positions, util_hsv_to_rgb(0.16, 1, 1));
+  			break;
+      case 13:
+        led_pattern_running_lights(255, 0, 0, &anim_uindex);
+        break;
+      case 14:
+        led_pattern_running_lights(0, 255, 0, &anim_uindex);
+        break;
+      case 15:
+        led_pattern_running_lights(0, 0, 255, &anim_uindex);
+        break;
+      case 16:
+        led_pattern_running_lights(255, 255, 0, &anim_uindex);
+        break;
       }
     }
 
@@ -533,4 +591,142 @@ void led_pattern_triangle(int8_t *fx_index, int8_t *fx_position) {
   if (*fx_position > N3) { *fx_position = 0; }
 
   led_show();
+}
+
+
+void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep) {
+  // Ensure indices are within range
+  while (p_triple_sweep->index_red < 0) {
+    p_triple_sweep->index_red += LED_COUNT;
+  }
+  while (p_triple_sweep->index_green < 0) {
+    p_triple_sweep->index_green += LED_COUNT;
+  }
+  while (p_triple_sweep->index_blue < 0) {
+    p_triple_sweep->index_blue += LED_COUNT;
+  }
+  while (p_triple_sweep->index_yellow < 0) {
+    p_triple_sweep->index_yellow += LED_COUNT;
+  }
+  while (p_triple_sweep->index_red >= LED_COUNT) {
+    p_triple_sweep->index_red -= LED_COUNT;
+  }
+  while (p_triple_sweep->index_green >= LED_COUNT) {
+    p_triple_sweep->index_green -= LED_COUNT;
+  }
+  while (p_triple_sweep->index_blue >= LED_COUNT) {
+    p_triple_sweep->index_blue -= LED_COUNT;
+  }
+  while (p_triple_sweep->index_yellow >= LED_COUNT) {
+    p_triple_sweep->index_yellow -= LED_COUNT;
+  }
+
+  // Apply sweep colors
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_red] = p_triple_sweep->red
+                                                            << 16;
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_green] =
+      p_triple_sweep->green << 8;
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_blue] =
+      p_triple_sweep->blue;
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_yellow] =
+      (p_triple_sweep->yellow << 16) | (p_triple_sweep->yellow << 8);
+
+  led_set_rgb((uint8_t)p_triple_sweep->index_red,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_red]);
+  led_set_rgb((uint8_t)p_triple_sweep->index_green,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_green]);
+  led_set_rgb((uint8_t)p_triple_sweep->index_blue,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_blue]);
+  led_set_rgb((uint8_t)p_triple_sweep->index_yellow,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_yellow]);
+  led_show();
+
+  // Move indices, assume next run around range will be checked
+  p_triple_sweep->index_red += p_triple_sweep->direction_red;
+  p_triple_sweep->index_green += p_triple_sweep->direction_green;
+  p_triple_sweep->index_blue += p_triple_sweep->direction_blue;
+  p_triple_sweep->index_yellow += p_triple_sweep->direction_yellow;
+
+  // Randomly change directions (sometimes) of one sweep color
+  uint8_t r = util_random(0, 100);
+  if (r == 0) {
+    p_triple_sweep->direction_red *= -1;
+    p_triple_sweep->red = util_random(180, 255);
+  } else if (r == 1) {
+    p_triple_sweep->direction_green *= -1;
+    p_triple_sweep->green = util_random(180, 255);
+  } else if (r == 2) {
+    p_triple_sweep->direction_blue *= -1;
+    p_triple_sweep->blue = util_random(180, 255);
+  } else if (r == 3) {
+    p_triple_sweep->direction_yellow *= -1;
+    p_triple_sweep->yellow = util_random(180, 255);
+  }
+}
+
+/**
+ * @brief Rainbow pattern because we can
+ * @param p_hue : Pointer to hue for first LED
+ * @param repeat : How many times to repeat the rainbow
+ */
+void led_pattern_rainbow(float* p_hue, uint8_t repeat) {
+  float hue_step = 1.0 / ((float)LED_COUNT / (float)repeat);
+  for (uint8_t i = 0; i < LED_COUNT; i++) {
+    color_rgb_t rgb = util_hsv_to_rgb(*p_hue + (hue_step * i), 1, 1);
+    led_set_rgb(i, rgb);
+  }
+  led_show();
+
+  *p_hue += 0.05;
+  if (*p_hue > 1) {
+    *p_hue -= 1;
+  }
+}
+
+/**
+ * @brief Run LEDs in a roller coaster pattern (ala Win10)
+ * @param indices : Positions of each LED ball in the pattern
+ */
+void led_pattern_roller_coaster(uint8_t positions[], color_rgb_t color) {
+  led_set_all(0, 0, 0);
+  for (uint8_t i = 0; i < LED_PATTERN_ROLLER_COASTER_COUNT; i++) {
+    float pos = (float)positions[i];
+    float rad = (pos / (float)(LED_COUNT - 1)) * 2 * M_PI;
+    float velocity =
+        (-1.75) * cosf(rad) - 2.25;  // Ensure velocity is between -0.5 and -4.0
+    pos += velocity;
+    if (pos < 0) {
+      pos += LED_COUNT;
+    }
+    positions[i] = (uint8_t)pos;
+
+    led_set_rgb(positions[i], color);
+  }
+
+  led_show();
+}
+
+/**
+ * @brief Do a running lights animation of a specific color, ported from
+ * tweaking4all
+ * @param red : Max Red value
+ * @param green : Max Green value
+ * @param blue : Max blue value
+ */
+void led_pattern_running_lights(uint8_t red,
+                                uint8_t green,
+                                uint8_t blue,
+                                uint8_t* p_position) {
+  for (int i = 0; i < LED_COUNT; i++) {
+    led_set(i, ((sin(i + *p_position) * 127 + 128) / 255) * red,
+            ((sin(i + *p_position) * 127 + 128) / 255) * green,
+            ((sin(i + *p_position) * 127 + 128) / 255) * blue);
+  }
+
+  led_show();
+
+  (*p_position)++;
+  if (*p_position >= LED_COUNT * 2) {
+    *p_position = 0;
+  }
 }

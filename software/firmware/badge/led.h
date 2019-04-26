@@ -8,8 +8,8 @@
 
 // our refresh rate is about 25Hz
 #define EFFECTS_REDRAW_MS 20
-#define LED_PATTERNS_FULL 16
-#define LED_PATTERNS_LIMITED 16
+#define LED_PATTERNS_FULL 17
+#define LED_PATTERNS_LIMITED 17
 
 /* colors */
 #define COL_RED    0
@@ -46,5 +46,21 @@ typedef struct {
   uint32_t clock_since_last_bounce[LED_PATTERN_BALLS_COUNT];
   float dampening[LED_PATTERN_BALLS_COUNT];
 } led_pattern_balls_t;
+
+typedef struct {
+  int8_t direction_red;
+  int8_t direction_green;
+  int8_t direction_blue;
+  int8_t direction_yellow;
+  int8_t index_red;
+  int8_t index_green;
+  int8_t index_blue;
+  int8_t index_yellow;
+  uint8_t red;
+  uint8_t green;
+  uint8_t blue;
+  uint8_t yellow;
+  color_rgb_t rgb[LED_COUNT];
+} led_triple_sweep_state_t;
 
 #endif /* _LED_H_ */
