@@ -298,6 +298,7 @@ static THD_FUNCTION(bling_thread, arg) {
       drv_is31fl_gcc_set(led_brightness_level);
       last_brightness = led_brightness_level;
     }
+    
     // re-render the internal framebuffer animations
     if (led_current_func != 0) {
       switch (led_current_func) {

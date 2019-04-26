@@ -166,6 +166,7 @@ unlock_update_handler(eventid_t id)
 
 	(void)id;
 
+	printf("\nunlocks updated\n");
 	config = getConfig();
 	config->unlocks = __builtin_bswap32 (ble_unlocks);
 	configSave (config);

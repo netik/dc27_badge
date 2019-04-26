@@ -58,7 +58,6 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
   chprintf(chp, "name       %s (class now:%d / perm:%d)\r\n", config->name, config->current_type, config->p_type);
   chprintf(chp, "signature  0x%08x\r\n", config->signature);
   chprintf(chp, "version    %d\r\n", config->version);
-  chprintf(chp, "netid      0x%08x\r\n", config->netid);
   chprintf(chp, "unlocks    0x%04x\r\n", config->unlocks);
   chprintf(chp, "sound      %d\r\n", config->sound_enabled);
   chprintf(chp, "lastdeath  %d\r\n", config->lastdeath);
@@ -240,6 +239,11 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
   }
 
   if (!strcasecmp(argv[0], "led")) {
+    if (argc < 2) {
+      chprintf(chp, "config led ...what?\r\n");
+      return;
+    }
+
     if (!strcasecmp(argv[1], "list")) {
       cmd_config_led_list(chp);
       return;

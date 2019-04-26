@@ -309,7 +309,6 @@ launcher_start (OrchardAppContext *context)
 	geventRegisterCallback (&list->gl, orchardAppUgfxCallback, &list->gl);
 
 	/* set up our idle timer */
-
 	orchardAppTimer (context, 1000000, true);
 	last_ui_time = 0;
 
@@ -342,7 +341,6 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 	unsigned int currapp;
 
 	/* Ignore radio events */
- 
 	if (event->type == radioEvent)
 		return;
 

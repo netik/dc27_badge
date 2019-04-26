@@ -19,6 +19,9 @@
 #include "src/gdriver/gdriver.h"
 #include "src/ginput/ginput_driver_mouse.h"
 
+/* the amount that we increase or decrease brightness by */
+#define BRIGHT_STEP 20
+
 // GHandles
 typedef struct _SetupHandles {
   GHandle ghCheckSound;
@@ -137,7 +140,7 @@ static void draw_setup_buttons(SetupHandles * p) {
   gwinLabelSetBorder(p->ghLabel4, FALSE);
 
   // dimmer bar
-  drawProgressBar(10,80,180,20, 8, (0xff-config->led_brightness), false, false);
+  drawProgressBar(10,80,180,20,255, config->led_brightness, false, false);
 
   // create button widget: ghButtonDimDn
   wi.g.show = TRUE;
@@ -202,9 +205,9 @@ static void setup_start(OrchardAppContext *context) {
 
   gdispClear (Black);
 
-  // fires once a second for updates.
-  orchardAppTimer(context, 1000, true);
-  last_ui_time = chVTGetSystemTime();
+  /* set up our idle timer */
+	orchardAppTimer (context, 1000000, true);
+	last_ui_time = 0;
 
   p = malloc (sizeof(SetupHandles));
   draw_setup_buttons(p);
@@ -217,33 +220,47 @@ static void setup_start(OrchardAppContext *context) {
 }
 
 static void nextLedPattern(uint8_t max_led_patterns) {
-//  userconfig *config = getConfig();
-//  config->led_pattern++;
-//  ledResetPattern();
-//  if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
-//  ledSetFunction(fxlist[config->led_pattern].function);
+  userconfig *config = getConfig();
+  config->led_pattern++;
+  if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
+  ledSetPattern(config->led_pattern);
 }
 
 static void prevLedPattern(uint8_t max_led_patterns) {
-//  userconfig *config = getConfig();
-//  config->led_pattern--;
-//  ledResetPattern();
-//  if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
-//  ledSetFunction(fxlist[config->led_pattern].function);
-}
-
-static void nextLedBright() {
   userconfig *config = getConfig();
-  config->led_brightness -= 25;
-  if (config->led_brightness == 255) config->led_brightness = 250;
-  //ledSetBrightness(config->led_brightness);}
+  config->led_pattern--;
+  if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
+  ledSetPattern(config->led_pattern);
 }
 
 static void prevLedBright() {
   userconfig *config = getConfig();
-  config->led_brightness += 25;
-  if (config->led_brightness > 250) config->led_brightness = 0;
-  //ledSetBrightness(config->led_brightness);
+  int a;
+
+  a = config->led_brightness;
+  if ( (a - BRIGHT_STEP) < 0 ) {
+    // underflow
+    config->led_brightness = 0;
+  } else {
+    config->led_brightness -= BRIGHT_STEP;
+  }
+
+  led_brightness_set(config->led_brightness);
+}
+
+static void nextLedBright() {
+  userconfig *config = getConfig();
+  int a;
+
+  a = config->led_brightness;
+  if ( (a + BRIGHT_STEP) > 255 ) {
+    // overflow
+    config->led_brightness = 255;
+  } else {
+    config->led_brightness += BRIGHT_STEP;
+  }
+
+  led_brightness_set(config->led_brightness);
 }
 
 static void setup_event(OrchardAppContext *context,
@@ -262,37 +279,44 @@ static void setup_event(OrchardAppContext *context,
     max_led_patterns = LED_PATTERNS_LIMITED;
   }
 
-
   /* handle events */
+  if (event->type == radioEvent) {
+    /* Ignore radio events */
+    return;
+  }
+
   if (event->type == timerEvent) {
-    if( (chVTGetSystemTime() - last_ui_time) > UI_IDLE_TIME ) {
-      orchardAppRun(orchardAppByName("Badge"));
+    last_ui_time++;
+    if (last_ui_time == UI_IDLE_TIME) {
+      orchardAppRun (orchardAppByName ("Badge"));
     }
     return;
   }
 
-  if (event->type == keyEvent) {
+  last_ui_time = 0;
+
+  if (event->type == keyEvent && event->key.flags == keyRelease) {
     last_ui_time = chVTGetSystemTime();
-    if ( (event->key.code == keyALeft) &&
-         (event->key.flags == keyPress) )  {
-      prevLedBright();
-    }
-    if ( (event->key.code == keyARight) &&
-         (event->key.flags == keyPress) )  {
-      nextLedBright();
-    }
-    if ( (event->key.code == keyAUp) &&
-         (event->key.flags == keyPress) )  {
-      prevLedPattern(max_led_patterns);
-    }
-    if ( (event->key.code == keyADown) &&
-         (event->key.flags == keyPress) )  {
-      nextLedPattern(max_led_patterns);
-    }
-    if ( (event->key.code == keyBSelect) &&
-         (event->key.flags == keyPress) )  {
-      configSave(config);
-      orchardAppExit();
+
+    switch(event->key.code) {
+      case keyALeft:
+        prevLedBright();
+        break;
+      case keyARight:
+        nextLedBright();
+        break;
+      case keyAUp:
+        prevLedPattern(max_led_patterns);
+        break;
+      case keyADown:
+        nextLedPattern(max_led_patterns);
+        break;
+      case keyBSelect:
+        configSave(config);
+        orchardAppExit();
+        break;
+      default:
+        break; // all other keys ignored
     }
   }
 
@@ -324,7 +348,6 @@ static void setup_event(OrchardAppContext *context,
       }
 
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonCalibrate) {
-
           /* Run the calibration GUI */
           (void)ginputCalibrateMouse (0);
 
@@ -373,8 +396,9 @@ static void setup_event(OrchardAppContext *context,
       break;
     }
   }
+
   // update ui
-  drawProgressBar(10,80,180,20, 8, (8-config->led_brightness), false, false);
+  drawProgressBar(10,80,180,20,255, config->led_brightness, false, false);
   gwinSetText(p->ghLabelPattern, fxlist[config->led_pattern], TRUE);
   return;
 }
