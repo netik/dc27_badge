@@ -47,6 +47,10 @@ rgb/icons/%.rgb : tif/icons/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/icons/
 
+rgb/game/%.rgb : tif/game/%.tif
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
+	mv $(subst rgb/,tif/,$(@)) rgb/game/
+
 rgb/flags/%.rgb : tif/flags/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/flags/
@@ -86,10 +90,15 @@ video/%.vid: video_src/%.mp4
 
 # When possible, please use TIF images. Aliasing is a real issue on
 # our display and higher quality input is better.
+#
 # images used by the system, app-fight, and the "LED" app.
+#
+# if you add subfolders in tif/ you must add a rule here or the
+# Maakefile will not build the subfolder.
 images: dirs tools_dep photos \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/*.tif))))) \
         $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
+        $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/*.jpg)))))
 
@@ -109,6 +118,7 @@ sdcard: dirs tools_dep images sounds video
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
 	-cp dac/*.snd $(STAGING_DIR)/sound
 	-cp photos/*.rgb $(STAGING_DIR)/photos
+	-cp rgb/game/*.rgb $(STAGING_DIR)/game
 	-cp dac/game/*.snd $(STAGING_DIR)/game
 	-cp video/*.vid $(STAGING_DIR)/videos
 	@echo
@@ -147,6 +157,7 @@ dirs:
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
 	-[ -d rgb/icons ] || mkdir -p rgb/icons
 	-[ -d rgb/flags ] || mkdir -p rgb/flags
+	-[ -d rgb/game ] || mkdir -p rgb/game
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
 	-[ -d video ] || mkdir -p video
 
