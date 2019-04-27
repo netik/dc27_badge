@@ -47,6 +47,10 @@ rgb/icons/%.rgb : tif/icons/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/icons/
 
+rgb/flags/%.rgb : tif/flags/%.tif
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
+	mv $(subst rgb/,tif/,$(@)) rgb/flags/
+
 rgb/%.rgb : tif/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/
@@ -134,6 +138,7 @@ clean_images:
 
 dirs:
 	-[ -d bin/ ] || mkdir -p bin/
+	-[ -d photos/ ] || mkdir -p photos/
 	-[ -d $(STAGING_DIR)/game ] || mkdir -p $(STAGING_DIR)/game
 	-[ -d $(STAGING_DIR)/photos ] || mkdir -p $(STAGING_DIR)/photos
 	-[ -d $(STAGING_DIR)/icons ] || mkdir -p $(STAGING_DIR)/icons
@@ -141,6 +146,7 @@ dirs:
 	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
 	-[ -d rgb/icons ] || mkdir -p rgb/icons
+	-[ -d rgb/flags ] || mkdir -p rgb/flags
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
 	-[ -d video ] || mkdir -p video
 
