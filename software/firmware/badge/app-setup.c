@@ -330,6 +330,17 @@ static void setup_event(OrchardAppContext *context,
       }
 
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonCalibrate) {
+          /*
+           * We need to allow some time for the widget redaw
+           * for the "TOUCH CAL" button to complete before we
+           * start the calibrator, otherwise the redraw might
+           * corrupt the display.
+           */
+          chThdSleepMilliseconds (100);
+
+          /* Detach the event handler from the mouse */
+          geventDetachSource (&p->glSetup, NULL);
+          geventRegisterCallback (&p->glSetup, NULL, NULL);
           /* Run the calibration GUI */
           (void)ginputCalibrateMouse (0);
 
