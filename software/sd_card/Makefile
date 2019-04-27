@@ -19,7 +19,7 @@
 
 # The tools dir contains our conversion tools and scripts
 TOOLS_DIR = ../tools
-.PHONY: tools_dep 
+.PHONY: tools_dep
 
 tools_dep:
 	$(MAKE) -C $(TOOLS_DIR)
@@ -135,6 +135,7 @@ dirs:
 	-[ -d sdcard/font/led ] || mkdir -p sdcard/font/led
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
 	-[ -d video ] || mkdir -p video
+	-[ -d photos ] || mkdir -p photos
 	-[ -d tif/mirrored ] || mkdir -p tif/mirrored
 	-[ -d jpg/mirrored ] || mkdir -p jpg/mirrored
 
@@ -149,6 +150,7 @@ clean: clean_images
 	-rm -f dac/*.snd
 	-rm -f dac/fight/*.snd
 	-rm -f video/*
+	-rm -f photos/*
 	-rm -f tif/mirrored/*
 	-rm -fr sdcard/*
 	-rmdir tif/mirrored
