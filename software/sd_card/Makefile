@@ -1,9 +1,8 @@
-#
 # daBomb Asset build system
 #
 # John Adams 
 # jna@retina.net
-# 4/2019 (originally 1/2017 from Ides of DEF CON badge)
+# 4/2019 (originally from our Ides of DEF CON badge)
 #
 # Master makefile
 #
@@ -19,33 +18,38 @@
 
 # The tools dir contains our conversion tools and scripts
 TOOLS_DIR = ../tools
-.PHONY: tools_dep
+
+# where we will stage our build before sdcard copy
+STAGING_DIR = build
+
+# The name of the sdcard to copy to (OSX only)
+VOLNAME= /Volumes/NO\ NAME
+
+.PHONY: tools_dep dirs
+
+all: dirs tools_dep images video sounds photos sdcard
 
 tools_dep:
 	$(MAKE) -C $(TOOLS_DIR)
 
-all: dirs tools_dep images sounds video
-
-# These rules will build the mirrored and standard images only if the
-# jpgs have changed.
+# These rules will build the standard images only if the jpgs have
+# changed.
 
 rgb/font/led/%.rgb : jpg/font/led/%.jpg 
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst .jpg,.rgb,$<) $(@)
 
 rgb/%.rgb : jpg/%.jpg 
-	convert -flop $< $(subst .jpg,r.jpg,$(subst jpg/,jpg/mirrored/,$<))
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,jpg/,$(@)) rgb/
-	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $(subst .jpg,r.jpg,$(subst jpg/,jpg/mirrored/,$<))
-	mv $(subst .jpg,r.rgb,$(subst jpg/,jpg/mirrored/,$<)) rgb/
+
+rgb/icons/%.rgb : tif/icons/%.tif
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
+	mv $(subst rgb/,tif/,$(@)) rgb/icons/
 
 rgb/%.rgb : tif/%.tif
-	convert -flop $< $(subst .tif,r.tif,$(subst tif/,tif/mirrored/,$<))
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/
-	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $(subst .tif,r.tif,$(subst tif/,tif/mirrored/,$<))
-	mv $(subst .tif,r.rgb,$(subst tif/,tif/mirrored/,$<)) rgb/
 
 # User-supplied images
 #
@@ -81,6 +85,7 @@ video/%.vid: video_src/%.mp4
 # images used by the system, app-fight, and the "LED" app.
 images: dirs tools_dep photos \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/*.tif))))) \
+        $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/*.jpg)))))
 
@@ -92,55 +97,55 @@ sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wil
 video: tools_dep $(addprefix video/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/*.mp4)))))
 
 sdcard: dirs tools_dep images sounds video
-	-cp sdcard-readme.txt sdcard/README.txt
-	-cp rgb/*.rgb sdcard
-	-cp rgb/font/led/*.rgb sdcard/font/led
-	-cp ../firmware/updater/updater.bin sdcard
-	-cp ../firmware/badge/build/badge.bin sdcard
-	-cp dac/*.snd sdcard
-	-cp photos/*.rgb sdcard/photos
-	-cp dac/fight/*.snd sdcard/fight
-	-cp video/*.vid sdcard
+	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
+	-cp rgb/*.rgb $(STAGING_DIR)
+	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
+	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
+	-cp ../firmware/updater/updater.bin $(STAGING_DIR)
+	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
+	-cp dac/*.snd $(STAGING_DIR)/sound
+	-cp photos/*.rgb $(STAGING_DIR)/photos
+	-cp dac/game/*.snd $(STAGING_DIR)/game
+	-cp video/*.vid $(STAGING_DIR)/videos
 	@echo
-	@echo 'sdcard built!'
+	@echo 'sdcard built in $(STAGING_DIR)'
 	@echo
 	@echo 'build #'
-	@strings sdcard/badge.bin  | grep -1 gitrev | head -1
-	du -kh sdcard
+	@strings $(STAGING_DIR)/badge.bin  | grep -1 gitrev | head -1
+	du -kh $(STAGING_DIR)
 
 # copy the card to the right folder on my osx box
 osxsd:	sdcard
-	@echo "Copying to /Volumes/SPQR_DC25/"
-	time cp -R sdcard/* /Volumes/SPQR_DC25/
+	@echo "Copying to $(VOLNAME)"
+	time cp -R $(STAGING_DIR)/* $(VOLNAME)/
 	@sync
 
 # copy only binaries and the updater to the card (reduces dev time
 # when needed)
 osxsdfw:	sdcard
 	@echo "Updating binaries on /Volumes/SPQR_DC25"
-	@cp ../updater/updater.bin /Volumes/SPQR_DC25/
-	@cp sdcard/badge.bin /Volumes/SPQR_DC25
+	@cp ../updater/updater.bin $(VOLNAME)/
+	@cp $(STAGING_DIR)/badge.bin $(VOLNAME)/
 	@sync
 
 # cleanups
 clean_images:
-	-rm -f jpg/mirrored/*
-	-rm -f tif/mirrored/*
 	-rm -fr rgb/*
 
 dirs:
 	-[ -d bin/ ] || mkdir -p bin/
-	-[ -d sdcard/fight ] || mkdir -p sdcard/fight
-	-[ -d sdcard/photos ] || mkdir -p sdcard/photos
-	-[ -d sdcard/font/led ] || mkdir -p sdcard/font/led
+	-[ -d $(STAGING_DIR)/game ] || mkdir -p $(STAGING_DIR)/game
+	-[ -d $(STAGING_DIR)/photos ] || mkdir -p $(STAGING_DIR)/photos
+	-[ -d $(STAGING_DIR)/icons ] || mkdir -p $(STAGING_DIR)/icons
+	-[ -d $(STAGING_DIR)/sound ] || mkdir -p $(STAGING_DIR)/sound
+	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos
+	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
+	-[ -d rgb/icons ] || mkdir -p rgb/icons
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
 	-[ -d video ] || mkdir -p video
-	-[ -d photos ] || mkdir -p photos
-	-[ -d tif/mirrored ] || mkdir -p tif/mirrored
-	-[ -d jpg/mirrored ] || mkdir -p jpg/mirrored
 
 cleansd:
-	@if [ -d "sdcard" ]; then rm -rf sdcard; fi; 
+	@if [ -d "$(STAGING_DIR)" ]; then rm -rf $(STAGING_DIR); fi; 
 	@if [ -d "rgb" ]; then rm -rf rgb; fi; 
 
 # remove tools, sounds, images, and video
@@ -150,9 +155,7 @@ clean: clean_images
 	-rm -f dac/*.snd
 	-rm -f dac/fight/*.snd
 	-rm -f video/*
+	-rm -fr $(STAGING_DIR)/*
 	-rm -f photos/*
 	-rm -f tif/mirrored/*
 	-rm -fr sdcard/*
-	-rmdir tif/mirrored
-	-rmdir jpg/mirrored
-	-rmdir video
