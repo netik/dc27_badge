@@ -113,7 +113,7 @@ static void notify_start(OrchardAppContext *context)
 	context->priv = p;
 
 	putImageFile ("undrattk.rgb", 0, 0);
-	i2sPlay("klaxon.snd");
+	i2sPlay("sound/klaxon.snd");
 
 	peer = blePeerFind (ble_peer_addr.addr);
 

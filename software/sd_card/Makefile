@@ -150,7 +150,6 @@ dirs:
 	-[ -d bin/ ] || mkdir -p bin/
 	-[ -d photos/ ] || mkdir -p photos/
 	-[ -d $(STAGING_DIR)/game ] || mkdir -p $(STAGING_DIR)/game
-	-[ -d $(STAGING_DIR)/photos ] || mkdir -p $(STAGING_DIR)/photos
 	-[ -d $(STAGING_DIR)/icons ] || mkdir -p $(STAGING_DIR)/icons
 	-[ -d $(STAGING_DIR)/sound ] || mkdir -p $(STAGING_DIR)/sound
 	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos

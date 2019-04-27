@@ -62,7 +62,7 @@ video_start (OrchardAppContext *context)
 	FILINFO info;
 	int i;
 
-	f_opendir (&d, "\\");
+	f_opendir (&d, "video");
 
 	i = 0;
 
@@ -154,7 +154,7 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		}
 
 		if (videoPlay (p->listitems[uiContext->selected + 1]) != 0)
-			i2sPlay ("click.snd");
+			i2sPlay ("sound/click.snd");
 
 		orchardAppExit ();
 	}
@@ -184,5 +184,5 @@ video_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Play Videos", "video.rgb", 0, video_init, video_start,
+orchard_app("Play Videos", "icons/mask.rgb", 0, video_init, video_start,
     video_event, video_exit, 0);

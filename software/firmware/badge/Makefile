@@ -127,6 +127,9 @@ FLASHSRC := $(CHIBIOS)/os/hal/lib/peripherals/flash/hal_flash.c
 # Without this, the default will be to build for the production
 # joypad layout.
 
+# jna: force this for now
+JOYPADCOMPAT=y
+
 ifeq ($(JOYPADCOMPAT),)
 JOYPADSRC = joypad_lld.c
 else

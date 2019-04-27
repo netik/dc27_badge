@@ -398,7 +398,7 @@ chat_event (OrchardAppContext *context,
 				if (req->data[0] == BLE_IDES_CHATREQ_DECLINE) {
 					screen_alert_draw (TRUE,
 					    "Chat request declined!");
-					i2sPlay ("wilhelm.snd");
+					i2sPlay ("sound/wilhelm.snd");
 					chThdSleepMilliseconds (1000);
 				} else
 					return;
@@ -501,5 +501,5 @@ static void chat_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Radio Chat", "chat.rgb", 0,
+orchard_app("Radio Chat", "icons/lghthous.rgb", 0,
 	chat_init, chat_start, chat_event, chat_exit, 9999);

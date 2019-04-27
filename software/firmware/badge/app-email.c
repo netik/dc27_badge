@@ -59,7 +59,7 @@ email_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	if (event->type == appEvent && event->app.event == appTerminate) {
 		i2sWait ();
 		if (videoPlay ("rickroll.vid") != 0)
-			 i2sPlay ("click.snd");
+			 i2sPlay ("sound/click.snd");
 	}
 
 	return;
@@ -72,5 +72,5 @@ email_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("E-mail", "email.rgb", 0, email_init, email_start,
+orchard_app("E-mail", "icons/search.rgb", 0, email_init, email_start,
     email_event, email_exit, aaaa);

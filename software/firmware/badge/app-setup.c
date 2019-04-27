@@ -415,5 +415,5 @@ static void setup_exit(OrchardAppContext *context) {
   return;
 }
 
-orchard_app("Setup", "setup.rgb", 0, setup_init, setup_start,
+orchard_app("Setup", "icons/wheel.rgb", 0, setup_init, setup_start,
     setup_event, setup_exit, 2);

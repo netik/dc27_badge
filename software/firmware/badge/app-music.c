@@ -392,7 +392,7 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		chThdSetPriority (HIGHPRIO - 5);
 
 		if (musicPlay (p, p->listitems[uiContext->selected + 1]) != 0)
-			i2sPlay ("click.snd");
+			i2sPlay ("sound/click.snd");
 
 		chThdSetPriority (ORCHARD_APP_PRIO);
 
@@ -424,5 +424,5 @@ music_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Play Music", "mplay.rgb", 0, music_init, music_start,
+orchard_app("Play Music", "icons/jelly.rgb", 0, music_init, music_start,
     music_event, music_exit, 9999);

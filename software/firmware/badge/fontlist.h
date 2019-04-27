@@ -1,8 +1,8 @@
 #define FONT_LG_SANS      "DejaVuSans32"
 
-#define FONT_LG           "Jupiter_Pro_2561336"
-#define FONT_SM           "Jupiter_Pro_2561316"
-#define FONT_XS           "UI2"
+#define FONT_LG           "Futura_Medium_0136"
+#define FONT_SM           "Futura_Medium_0120"
+#define FONT_XS           "Futura_Medium_0112"
 
 /* manteka has no lowercase, which sucks.  */
 #define FONT_FIXED        "manteka20"

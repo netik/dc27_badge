@@ -43,7 +43,7 @@
 static void
 audio_play (int argc, char *argv[])
 {
-	i2sPlay ("0:DRWHO.SND");
+	i2sPlay ("sound/0:DRWHO.SND");
 	return;
 }
 

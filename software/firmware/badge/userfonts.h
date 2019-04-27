@@ -5,7 +5,8 @@
  * Be sure to update "fontlist.h" with the short names to keep us sane.
  */
 
-#include "font-jupiterpro16.h"
-#include "font-jupiterpro36.h"
-#include "font-manteka20.h"
+#include "font-futura-medium-36.h" // anti aliased, very large
+#include "font-futura-medium-20.h" // anti aliased, general use
+#include "font-futura-medium-12.h" // anti aliased, small
+#include "font-manteka20.h"        // fixed font, might replace.
 

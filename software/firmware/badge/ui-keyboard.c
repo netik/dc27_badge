@@ -135,7 +135,7 @@ static uint8_t handle_input (char * name, uint8_t max,
 		break;
 	default:
 		if (p->pos == max) {
-			i2sPlay ("wilhelm.snd");
+			i2sPlay ("sound/wilhelm.snd");
 		} else {
 			name[p->pos] = pk->c[0];
 			p->pos++;

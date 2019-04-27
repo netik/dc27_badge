@@ -140,7 +140,7 @@ ledsign_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		gdispClear (Black);
 		scrollCount (0);
 		if (sts != 0)
-			i2sPlay ("click.snd");
+			i2sPlay ("sound/click.snd");
 		orchardAppExit ();
 	}
 
@@ -157,5 +157,5 @@ ledsign_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("LED Sign", "sign.rgb", 0, ledsign_init, ledsign_start,
+orchard_app("LED Sign", "icons/shell.rgb", 0, ledsign_init, ledsign_start,
     ledsign_event, ledsign_exit, 9999);

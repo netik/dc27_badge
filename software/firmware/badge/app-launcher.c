@@ -26,7 +26,7 @@ struct launcher_list_item {
 struct launcher_list {
 	font_t			fontLG;
 	font_t			fontXS;
-	font_t			fontFX;
+	font_t			fontSM;
 	GHandle			ghTitleL;
 	GHandle			ghTitleR;
 	GHandle			ghButtonUp;
@@ -68,7 +68,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	wi.customStyle = &DarkPurpleStyle;
 	list->ghTitleL = gwinLabelCreate(0, &wi);
 	gwinLabelSetBorder (list->ghTitleL, FALSE);
-	gwinSetFont (list->ghTitleL, list->fontFX);
+	gwinSetFont (list->ghTitleL, list->fontSM);
 	gwinRedraw (list->ghTitleL);
 
 	/* Create label widget: ghTitleR */
@@ -84,7 +84,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	wi.text = tmp;
 	wi.customDraw = gwinLabelDrawJustifiedRight;
 	list->ghTitleR = gwinLabelCreate (0, &wi);
-	gwinSetFont (list->ghTitleR, list->fontFX);
+	gwinSetFont (list->ghTitleR, list->fontSM);
 	gwinLabelSetBorder (list->ghTitleR, FALSE);
 	gwinRedraw (list->ghTitleR);
   
@@ -285,7 +285,7 @@ launcher_start (OrchardAppContext *context)
 
 	list->fontXS = gdispOpenFont (FONT_XS);
 	list->fontLG = gdispOpenFont (FONT_LG);
-	list->fontFX = gdispOpenFont (FONT_FIXED);
+	list->fontSM = gdispOpenFont (FONT_SM);
   
 	/* Rebuild the app list */
 	current = orchard_app_list;
@@ -490,7 +490,7 @@ launcher_exit (OrchardAppContext *context)
 
 	gdispCloseFont (list->fontXS);
 	gdispCloseFont (list->fontLG);
-	gdispCloseFont (list->fontFX);
+	gdispCloseFont (list->fontSM);
   
 	gwinDestroy (list->ghTitleL);
 	gwinDestroy (list->ghTitleR);

@@ -101,7 +101,7 @@ photos_event (OrchardAppContext *context,
 	if (event->type == appEvent && event->app.event == appStart) {
 		if (f_opendir (&p->d, "photos") != FR_OK)
 			/* give a helpful message if no photo dir. */
-			putImageFile("nophoto.rgb", 0, 0);
+			putImageFile("nophotos.rgb", 0, 0);
 		else
  			orchardAppTimer (context, 1000, FALSE);
 	}
@@ -127,7 +127,7 @@ photos_event (OrchardAppContext *context,
 			snprintf (str, sizeof(str), "photos/%s", info.fname);
 			geventDetachSource (&p->gl, NULL);
 			if (scrollImage (str, 1) == -1) {
-				i2sPlay ("click.snd");
+				i2sPlay ("sound/click.snd");
 				orchardAppExit ();
 				return;
 			}
@@ -163,5 +163,5 @@ photos_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Photos", "photos.rgb", 0, photos_init,
+orchard_app("Photos", "icons/helmet.rgb", 0, photos_init,
     photos_start, photos_event, photos_exit, 9999);

@@ -55,7 +55,7 @@ credits_start(OrchardAppContext *context)
 
 	scrollAreaSet (0, 0);
 	i2sWait ();
-	i2sPlay ("mario.snd");
+	i2sPlay ("sound/mario.snd");
 	r = scrollImage ("credits.rgb", 15);
 
 	chThdSleepMilliseconds (800);
@@ -67,7 +67,7 @@ credits_start(OrchardAppContext *context)
 	if (r == 0)
 		i2sPlay (NULL);
 	else
-		i2sPlay ("click.snd");
+		i2sPlay ("sound/click.snd");
 
 	orchardAppExit ();
 
@@ -90,5 +90,5 @@ credits_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Credits", "about.rgb", 0, credits_init, credits_start,
+orchard_app("Credits", "icons/captain.rgb", 0, credits_init, credits_start,
     credits_event, credits_exit, 3);

@@ -64,5 +64,5 @@ calibrate_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Touch Cal", "setup.rgb",
+orchard_app("Touch Cal", "icons/starfish.rgb",
     0, calibrate_init, calibrate_start, calibrate_event, calibrate_exit, 1);
