@@ -34,13 +34,14 @@
 #include "orchard-ui.h"
 
 #include "scroll_lld.h"
+#include "i2s_lld.h"
 
 #include "ff.h"
 #include "ffconf.h"
 #include "ides_gfx.h"
-#include "chprintf.h"
 
 #include <string.h>
+#include <stdio.h>
 
 typedef struct _PhotoHandles {
 	DIR		d;
@@ -99,10 +100,10 @@ photos_event (OrchardAppContext *context,
 
 	if (event->type == appEvent && event->app.event == appStart) {
 		if (f_opendir (&p->d, "photos") != FR_OK)
-                  // give a helpful message if no photo dir.
-                  putImageFile("nophoto.rgb", 0, 0);
+			/* give a helpful message if no photo dir. */
+			putImageFile("nophoto.rgb", 0, 0);
 		else
-                  orchardAppTimer (context, 1000, FALSE);
+ 			orchardAppTimer (context, 1000, FALSE);
 	}
 
 	if (event->type == timerEvent) {
@@ -123,10 +124,15 @@ photos_event (OrchardAppContext *context,
 				return;
 			}
 			p->cnt++;
-			chsnprintf (str, sizeof(str),
-			    "photos/%s", info.fname);
+			snprintf (str, sizeof(str), "photos/%s", info.fname);
 			geventDetachSource (&p->gl, NULL);
-			scrollImage (str, 1);
+			if (scrollImage (str, 1) == -1) {
+				i2sPlay ("click.snd");
+				orchardAppExit ();
+				return;
+			}
+			geventRegisterCallback (&p->gl,
+			    orchardAppUgfxCallback, &p->gl);
 			gs = ginputGetMouse (0);
         		geventAttachSource (&p->gl, gs, GLISTEN_MOUSEMETA);
 			orchardAppTimer (context, 5000000, FALSE);
