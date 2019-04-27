@@ -41,6 +41,8 @@
 
 #include <string.h>
 
+#define VIDEODIR "/videos"
+
 typedef struct _VideoHandles {
 	char **			listitems;
 	int			itemcnt;
@@ -62,7 +64,7 @@ video_start (OrchardAppContext *context)
 	FILINFO info;
 	int i;
 
-	f_opendir (&d, "video");
+	f_opendir (&d, VIDEODIR);
 
 	i = 0;
 
@@ -90,7 +92,7 @@ video_start (OrchardAppContext *context)
 	p->listitems[0] = "Choose a video";
 	p->listitems[1] = "Exit";
 
-	f_opendir (&d, "\\");
+	f_opendir (&d, VIDEODIR);
 
 	i = 2;
 
@@ -123,6 +125,7 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	OrchardUiContext * uiContext;
 	const OrchardUi * ui;
 	VideoHandles * p;
+        char videofn[35];
 
 	p = context->priv;
 	ui = context->instance->ui;
@@ -147,13 +150,16 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		context->instance->ui = NULL;
 
 		/* User chose the "EXIT" selection, bail out. */
-
 		if (uiContext->selected == 0) {
 			orchardAppExit ();
 			return;
 		}
 
-		if (videoPlay (p->listitems[uiContext->selected + 1]) != 0)
+                strcpy(videofn, VIDEODIR);
+                strcat(videofn, "/");
+                strcat(videofn, p->listitems[uiContext->selected +1]);
+                
+		if (videoPlay(videofn) != 0)
 			i2sPlay ("sound/click.snd");
 
 		orchardAppExit ();
