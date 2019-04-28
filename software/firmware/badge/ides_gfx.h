@@ -21,5 +21,7 @@ extern char *getAvatarImage(int ptype, char *imgtype, uint8_t frameno, uint8_t r
 extern void screen_alert_draw(uint8_t clear, char *msg);
 extern void getPixelBlock (coord_t x, coord_t y,coord_t cx,
     coord_t cy, pixel_t * buf);
+extern void putPixelBlock (coord_t x, coord_t y,coord_t cx,
+    coord_t cy, pixel_t * buf);
 
 #endif /* __IDEX_GFX_H__ */
