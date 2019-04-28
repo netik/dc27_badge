@@ -306,3 +306,33 @@ void drawProgressBar(coord_t x, coord_t y,
 
   gdispDrawBox(x,y,width,height, c);
 }
+
+/*
+ * Read a block of pixels from the screen
+ * x,y == location of box
+ * cx,cy == dimensions of box
+ * buf == pointer to pixel buffer
+ * Note: buf must be big enough to hold the resulting data
+ *       (cx*cy*sizeof(pixel_t))
+ */
+
+extern void
+getPixelBlock (coord_t x, coord_t y,coord_t cx, coord_t cy, pixel_t * buf)
+{
+  int i;
+
+  GDISP->p.x = x;
+  GDISP->p.y = y;
+  GDISP->p.cx = cx;
+  GDISP->p.cy = cx;
+
+  gdisp_lld_write_start (GDISP);
+
+  for (i = 0; i < 16*16; i++)
+    buf[i] = gdisp_lld_read_color (GDISP);
+
+  gdisp_lld_write_stop (GDISP);
+
+  return;
+}
+
