@@ -84,7 +84,7 @@ music_start (OrchardAppContext *context)
 	FILINFO info;
 	int i;
 
-	f_opendir (&d, "\\");
+	f_opendir (&d, "sound");
 
 	i = 0;
 
@@ -112,7 +112,7 @@ music_start (OrchardAppContext *context)
 	p->listitems[0] = "Choose a song";
 	p->listitems[1] = "Exit";
 
-	f_opendir (&d, "\\");
+	f_opendir (&d, "sound");
 
 	i = 2;
 
