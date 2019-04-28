@@ -56,7 +56,7 @@ credits_start(OrchardAppContext *context)
 	scrollAreaSet (0, 0);
 	i2sWait ();
 	i2sPlay ("sound/mario.snd");
-	r = scrollImage ("credits.rgb", 15);
+	r = scrollImage ("images/credits.rgb", 15);
 
 	chThdSleepMilliseconds (800);
 

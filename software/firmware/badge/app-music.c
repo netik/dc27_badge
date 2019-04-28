@@ -58,7 +58,7 @@
 #define MUSIC_FFT_MAX_AMPLITUDE 128
 
 #define BACKGROUND HTML2COLOR(0x470b67)
-
+#define MUSICDIR "/sound"
 
 typedef struct _MusicHandles {
 	char **			listitems;
@@ -84,7 +84,7 @@ music_start (OrchardAppContext *context)
 	FILINFO info;
 	int i;
 
-	f_opendir (&d, "sound");
+	f_opendir (&d, MUSICDIR);
 
 	i = 0;
 
@@ -112,7 +112,7 @@ music_start (OrchardAppContext *context)
 	p->listitems[0] = "Choose a song";
 	p->listitems[1] = "Exit";
 
-	f_opendir (&d, "sound");
+	f_opendir (&d, MUSICDIR);
 
 	i = 2;
 
@@ -228,7 +228,7 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 
 	/*
 	 * Draw the bar graph. We draw 160 bars that are each one pixel
-	 * wide with one pixel of spacing in between. Each bar contains 3 
+	 * wide with one pixel of spacing in between. Each bar contains 3
 	 * adjacent bins averaged together, which ads up to 480 bins.
 	 * This leaves 32 bins left over. We start from the 16th bin
 	 * so that the lowest and highest 16 bins are ones that are
@@ -339,6 +339,7 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	const OrchardUi * ui;
 	MusicHandles * p;
 	font_t font;
+	char musicfn[35];
 
 	p = context->priv;
 	ui = context->instance->ui;
@@ -370,7 +371,7 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			return;
 		}
 
-		putImageFile ("MUSIC.RGB", 0, 0);
+		putImageFile ("images/music.rgb", 0, 0);
 
 		font = gdispOpenFont (FONT_FIXED);
 
@@ -391,7 +392,11 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
 		chThdSetPriority (HIGHPRIO - 5);
 
-		if (musicPlay (p, p->listitems[uiContext->selected + 1]) != 0)
+		strcpy(musicfn, MUSICDIR);
+    strcat(musicfn, "/");
+    strcat(musicfn, p->listitems[uiContext->selected +1]);
+
+		if (musicPlay (p, musicfn) != 0)
 			i2sPlay ("sound/click.snd");
 
 		chThdSetPriority (ORCHARD_APP_PRIO);
