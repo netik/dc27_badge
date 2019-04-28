@@ -39,7 +39,7 @@ event_source_t orchard_app_key;
 
 static uint8_t ui_override = 0;
 
-#define RADIO_QUEUE_LEN	16
+#define RADIO_QUEUE_LEN	64
 
 static uint8_t prod_idx;
 static uint8_t cons_idx;

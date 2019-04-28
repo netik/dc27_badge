@@ -409,7 +409,9 @@ chat_event (OrchardAppContext *context,
 		if (radio->type == l2capTxEvent ||
 		    radio->type == l2capTxDoneEvent ||
 		    radio->type == l2capDisconnectEvent ||
-		    radio->type == gattcCharWriteEvent)
+		    radio->type == gattcCharWriteEvent ||
+		    radio->type == advertisementEvent ||
+		    radio->type == scanResponseEvent)
 			return;
 
 		if (radio->type == connectTimeoutEvent) {

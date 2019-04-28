@@ -328,12 +328,20 @@ bleGapDispatch (ble_evt_t * evt)
 				    evt, data, datalen);
 			}
 
+#ifdef notdef
+			/*
+			 * Not sure if I want to generate separate events
+			 * for all these. It eats up a lot of radio event
+			 * queue slots.
+			 */
+
 			if (rtype.scan_response)
 				orchardAppRadioCallback (scanResponseEvent,
 				    evt, data, datalen);
 			else
 				orchardAppRadioCallback (advertisementEvent,
 				    evt, data, datalen);
+#endif
 
 			/*
 			 * Ok, this is a little nutty. In BLE, when you
