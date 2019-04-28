@@ -184,7 +184,6 @@ CSRC += main.c \
 	app-battle.c \
 	app-calibrate.c \
 	app-launcher.c \
-	app-test.c \
 	app-video.c \
 	app-chat.c \
 	app-credits.c \
