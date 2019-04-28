@@ -125,7 +125,7 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	OrchardUiContext * uiContext;
 	const OrchardUi * ui;
 	VideoHandles * p;
-        char videofn[35];
+  char videofn[35];
 
 	p = context->priv;
 	ui = context->instance->ui;
@@ -155,10 +155,10 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			return;
 		}
 
-                strcpy(videofn, VIDEODIR);
-                strcat(videofn, "/");
-                strcat(videofn, p->listitems[uiContext->selected +1]);
-                
+    strcpy(videofn, VIDEODIR);
+    strcat(videofn, "/");
+    strcat(videofn, p->listitems[uiContext->selected +1]);
+
 		if (videoPlay(videofn) != 0)
 			i2sPlay ("sound/click.snd");
 

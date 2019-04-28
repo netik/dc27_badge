@@ -15,12 +15,11 @@ Egan Hirvelda (game mechanics)\r\n"
 
 // Remember! Filenames must be in old school dos format (8x3)
 //                         12345678.123
-#define IMG_SPLASH         "SPLASH.RGB"
+#define IMG_SPLASH         "images/splash.rgb"
 
 // images used in the app
-#define IMG_UNLOCKBG       "UNLOCKBG.RGB"
-#define IMG_CHOOSETYPE     "CHOOSE.RGB"
+#define IMG_UNLOCKBG       "images/unlockbg.rgb"
+#define IMG_CHOOSETYPE     "images/choose.rgb"
 
 #define IMG_SPLASH_DISPLAY_TIME          5000 // longer if music playing
 #define IMG_SPLASH_NO_SOUND_DISPLAY_TIME 1000
-

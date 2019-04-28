@@ -39,10 +39,6 @@ rgb/font/led/%.rgb : jpg/font/led/%.jpg
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst .jpg,.rgb,$<) $(@)
 
-rgb/%.rgb : jpg/%.jpg 
-	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
-	mv $(subst rgb/,jpg/,$(@)) rgb/
-
 rgb/icons/%.rgb : tif/icons/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/icons/
@@ -55,9 +51,13 @@ rgb/flags/%.rgb : tif/flags/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/flags/
 
-rgb/%.rgb : tif/%.tif
+rgb/%.rgb : jpg/%.jpg 
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
-	mv $(subst rgb/,tif/,$(@)) rgb/
+	mv $(subst rgb/,jpg/,$(@)) rgb/images
+
+rgb/images/%.rgb : tif/images/%.tif
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
+	mv $(subst rgb/,tif/,$(@)) rgb/images
 
 # User-supplied images
 #
@@ -97,6 +97,7 @@ video/%.vid: video_src/%.mp4
 # Maakefile will not build the subfolder.
 images: dirs tools_dep photos \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/*.tif))))) \
+        $(addprefix rgb/images/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/images/*.tif))))) \
         $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
@@ -111,7 +112,7 @@ video: tools_dep $(addprefix video/, $(notdir  $(addsuffix .vid, $(basename $(wi
 
 sdcard: dirs tools_dep images sounds video
 	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
-	-cp rgb/*.rgb $(STAGING_DIR)
+	-cp rgb/images/*.rgb $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
 	-cp ../firmware/updater/updater.bin $(STAGING_DIR)
@@ -151,9 +152,11 @@ dirs:
 	-[ -d photos/ ] || mkdir -p photos/
 	-[ -d $(STAGING_DIR)/game ] || mkdir -p $(STAGING_DIR)/game
 	-[ -d $(STAGING_DIR)/icons ] || mkdir -p $(STAGING_DIR)/icons
+	-[ -d $(STAGING_DIR)/images ] || mkdir -p $(STAGING_DIR)/images
 	-[ -d $(STAGING_DIR)/sound ] || mkdir -p $(STAGING_DIR)/sound
 	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
+	-[ -d rgb/icons ] || mkdir -p rgb/images
 	-[ -d rgb/icons ] || mkdir -p rgb/icons
 	-[ -d rgb/flags ] || mkdir -p rgb/flags
 	-[ -d rgb/game ] || mkdir -p rgb/game
