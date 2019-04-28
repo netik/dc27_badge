@@ -28,14 +28,19 @@ static void init_board(GDisplay *g) {
 
 	/*
 	 * Set initial pin state.
-	 * Note: since the display is the only slave on the SPI bus
-	 * in our current design, we can set the chip select pin
+	 * Note: Since the display is the only slave on the SPI bus
+	 * in our current design, we could set the chip select pin
 	 * to low and just leave it there so that the screen is always
-	 * selected.
+	 * selected. However we would like to be able to read pixels
+	 * from the screen as well as write, and setting both the chip
+	 * select and command/data select pins the right way is integral
+	 * to getting the chip to handle commands correctly. If we leave
+	 * the CS pin always set, and issue a read command, then subsequent
+	 * pixel write commands will fail.
 	 */
 
 	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
-	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
 
 	return;
 }
@@ -58,6 +63,7 @@ static void acquire_bus(GDisplay *g) {
 	(void) g;
 
 	spiAcquireBus (&SPI_BUS);
+	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
 
 	return;
 }
@@ -65,6 +71,7 @@ static void acquire_bus(GDisplay *g) {
 static void release_bus(GDisplay *g) {
 	(void) g;
 
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
 	spiReleaseBus (&SPI_BUS);
 
 	return;
@@ -128,7 +135,26 @@ static GFXINLINE void setwritemode(GDisplay *g) {
 
 static GFXINLINE uint16_t read_data(GDisplay *g) {
 	(void) g;
+#if NRF5_SPI_USE_SPI3 == TRUE
+	uint16_t b;
+
+	palClearPad (IOPORT1, IOPORT1_SCREEN_CS);
+	__DSB();
+	SPI_BUS.port->INTENCLR = SPIM_INTENSET_END_Msk;
+	(void)SPI_BUS.port->INTENCLR;
+	spi_lld_receive (&SPI_BUS, 2, &b);
+	while (SPI_BUS.port->RXD.MAXCNT != SPI_BUS.port->RXD.AMOUNT)
+		;
+	__DSB();
+	SPI_BUS.port->INTENSET = SPIM_INTENSET_END_Msk;
+	(void)SPI_BUS.port->INTENSET;
+
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
+	__DSB();
+	return (b);
+#else
 	return 0;
+#endif
 }
 
 #endif /* _GDISP_LLD_BOARD_H */

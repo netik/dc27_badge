@@ -9,6 +9,7 @@
 #include "shell.h"
 
 #include "gfx.h"
+#include "src/gdisp/gdisp.h"
 
 #include "ble_lld.h"
 
@@ -182,6 +183,7 @@ int main(void)
     uint8_t * p;
     const flash_descriptor_t * pFlash;
     uint32_t * faultPtr;
+    uint16_t pix1, pix2;
 
 #ifdef CRT0_VTOR_INIT
     __disable_irq();
@@ -363,8 +365,36 @@ int main(void)
 
     /* Enable display and touch panel */
 
-    printf ("Main screen turn on\n");
     gfxInit ();
+
+    /*
+     * Detect if screen is plugged in. We try to write some data to
+     * the display and then read it back from the GRAM. If the data
+     * matches, then a display is present.
+     *
+     * "But Bill," I hear you ask, "the datasheet for the ILI9341 says
+     * that the chip has vendor/device ID registers. Can't you detect
+     * the chip by reading those?"
+     *
+     * Well, see, the data from those registers comes from NVRAM, which
+     * has to be programmed. As it turns out, I don't think the NVRAM is
+     * programmed when the chips leave the factory, and East Rising doesn't
+     * seem to program them either when putting the chips on their
+     * display modules. So reading the vendor/device ID succeeds, but you
+     * get back unset values.
+     *
+     * Hence we fudge it this way instead.
+     */
+
+    gdispDrawPixel (0, 0, 0xCAFE);
+    gdispDrawPixel (1, 0, 0xBABE);
+    pix1 = gdispGetPixelColor (0, 0);
+    pix2 = gdispGetPixelColor (1, 0);
+
+    if (pix1 == 0xCAFE && pix2 == 0xBABE)
+        printf ("Main screen turn on\n");
+    else
+        printf ("No screen found\n");
 
     /* Mount SD card */
 

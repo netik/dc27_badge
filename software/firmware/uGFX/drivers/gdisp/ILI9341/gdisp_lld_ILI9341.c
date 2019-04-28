@@ -25,6 +25,7 @@
 
 #include "board_ILI9341.h"
 
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -306,19 +307,36 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_STREAM_READ
 	LLDSPEC	void gdisp_lld_read_start(GDisplay *g) {
+		uint8_t dummy;
 		acquire_bus(g);
 		set_viewport(g);
 		write_index(g, 0x2E);
 		setreadmode(g);
-		dummy_read(g);
+		spiReceive (&SPI_BUS, 1, &dummy);
 	}
+	/*
+	 * The ILI9341 controller stores pixels in its internal memory
+	 * using 3 bytes (24 bits): one byte each for red, green and blue
+	 * color data. When you write pixels into the display in 16-bit
+	 * RGB565 format, the hardware internally splits out the RGB data
+	 * from that 16-bit block into its internal 24-bit pixel RAM.
+	 * Unfortunately it does not provide a way to read data back out
+	 * with the opposite translation: you can read the pixel RAM,
+	 * but you have to read it in 3-byte RGB format, not 16-bit
+	 * RGB565 format. Once you get the bytes, you then have to
+	 * translate them back into 16-bit RGB565 form in software.
+	 * This is not terribly fast, so you should avoid doing it for
+	 * large display regions.
+	 */
 	LLDSPEC	color_t gdisp_lld_read_color(GDisplay *g) {
+		uint8_t		p[3];
 		uint16_t	data;
-
-		data = read_data(g);
-		return gdispNative2Color(data);
+		spiReceive (&SPI_BUS, 3, p);
+		data = __builtin_bswap16(p[0] << 8 | p[1] << 3 | p[2] >> 3);
+		return (data);
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {
+		/* Restore drawing mode */
 		setwritemode(g);
 		release_bus(g);
 	}
