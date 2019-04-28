@@ -42,11 +42,13 @@
 #define BLE_PEER_LIST_TTL		16
 
 typedef struct _ble_peer_entry {
-	uint8_t		ble_peer_addr[6];
-	uint8_t		ble_peer_name[BLE_PEER_NAME_MAX];
-	int8_t		ble_rssi;
-	uint8_t		ble_ttl;
-	uint8_t		ble_used;
+	uint8_t			ble_peer_addr[6];
+	uint8_t			ble_peer_name[BLE_PEER_NAME_MAX];
+	int8_t			ble_rssi;
+	uint8_t			ble_ttl;
+	bool			ble_isbadge;
+	ble_ides_game_state_t	ble_game_state;
+	uint8_t			ble_used;
 } ble_peer_entry;
 
 extern void blePeerStart (void);

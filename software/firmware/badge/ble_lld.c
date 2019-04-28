@@ -69,6 +69,7 @@
 uint8_t ble_station_addr[6];
 uint32_t ble_unlocks;
 uint32_t ble_chatreq;
+uint32_t ble_gameattack;
 char ble_password[32];
 
 static thread_reference_t sdThreadReference;
@@ -393,7 +394,7 @@ bleEnable (void)
 
 	memset (&cfg, 0, sizeof(cfg));
 
-	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 768;
+	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 1024;
 	r = sd_ble_cfg_set (BLE_GATTS_CFG_ATTR_TAB_SIZE, &cfg, ram_start);
 	
 	/* Enable BLE support in SoftDevice */

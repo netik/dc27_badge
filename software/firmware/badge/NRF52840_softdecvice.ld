@@ -27,7 +27,7 @@ MEMORY
   flash5  : org = 0x00000000, len = 0
   flash6  : org = 0x00000000, len = 0
   flash7  : org = 0x00000000, len = 0
-  ram0    : org = 0x20002B90, len = 0x3D470 /* Reserve ~10K for SoftDevice */
+  ram0    : org = 0x20002C90, len = 0x3D370 /* Reserve ~10K for SoftDevice */
   ram1    : org = 0x00000000, len = 0
   ram2    : org = 0x00000000, len = 0
   ram3    : org = 0x00000000, len = 0

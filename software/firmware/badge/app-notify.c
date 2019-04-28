@@ -57,6 +57,10 @@ typedef struct _NHandles {
 	GHandle	ghACCEPT;
 	GHandle	ghDECLINE;
 	font_t	font;
+	char * app;
+	uint8_t response_accept;
+	uint8_t response_decline;
+	uint8_t handle;
 } NotifyHandles;
 
 static bool notify_handler(void * arg)
@@ -68,12 +72,14 @@ static bool notify_handler(void * arg)
 	evt = arg;
 
 	rw = &evt->evt.evt.gatts_evt.params.authorize_request;
-	if (rw->request.write.handle != ch_handle.value_handle)
-		return (FALSE);
-
 	req = &rw->request.write;
 
-	if (req->data[0] != BLE_IDES_CHATREQ_REQUEST)
+	if (rw->request.write.handle != ch_handle.value_handle &&
+	    req->data[0] != BLE_IDES_CHATREQ_REQUEST)
+		return (FALSE);
+
+	if (rw->request.write.handle != gm_handle.value_handle &&
+	    req->data[0] != BLE_IDES_GAMEATTACK_CHALLENGE)
 		return (FALSE);
 
 	memcpy (&radio_evt, evt, sizeof (radio_evt));
@@ -89,9 +95,8 @@ static uint32_t notify_init(OrchardAppContext *context)
 
 	/* This should only happen for auto-init */
 
-	if (context == NULL) {
+	if (context == NULL)
 		app_radio_notify = notify_handler;
-	}
 
 	return (0);
 }
@@ -138,6 +143,20 @@ static void notify_start(OrchardAppContext *context)
 		gdispDrawStringBox (0, 50, 
 		    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
 		    "WANTS TO CHAT", p->font, White, justifyCenter);
+		p->handle = ch_handle.value_handle;
+		p->app = "Radio Chat";
+		p->response_accept = BLE_IDES_CHATREQ_ACCEPT;
+		p->response_decline = BLE_IDES_CHATREQ_DECLINE;
+	}
+
+	if (rw->request.write.handle == gm_handle.value_handle) {
+		gdispDrawStringBox (0, 50, 
+		    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
+		    "IS CHALLENGING YOU", p->font, White, justifyCenter);
+		p->handle = gm_handle.value_handle;
+		p->app = "Badge Game";
+		p->response_accept = BLE_IDES_GAMEATTACK_ACCEPT;
+		p->response_decline = BLE_IDES_GAMEATTACK_DECLINE;
 	}
 
 	gwinSetDefaultStyle (&RedButtonStyle, FALSE);
@@ -177,15 +196,13 @@ void notify_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		if (pe->type == GEVENT_GWIN_BUTTON) {
 			be = (GEventGWinButton *)pe;
 			if (be->gwin == p->ghACCEPT) {
-				buf[0] = BLE_IDES_CHATREQ_ACCEPT;
-				bleGattcWrite (ch_handle.value_handle,
-				    (uint8_t *)buf, 1, TRUE);
-				orchardAppRun (orchardAppByName("Radio Chat"));
+				bleGattcWrite (p->handle,
+				    (uint8_t *)&p->response_accept, 1, TRUE);
+				orchardAppRun (orchardAppByName(p->app));
 			}
 			if (be->gwin == p->ghDECLINE) {
-				buf[0] = BLE_IDES_CHATREQ_DECLINE;
-				bleGattcWrite (ch_handle.value_handle,
-				    (uint8_t *)buf, 1, TRUE);
+				bleGattcWrite (p->handle,
+				    (uint8_t *)&p->response_decline, 1, TRUE);
 				bleGapDisconnect ();
 				orchardAppExit ();
 			}

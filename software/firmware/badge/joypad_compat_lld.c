@@ -185,10 +185,12 @@ joyHandle (uint8_t s)
 		joyState &= ~joyTbl[s].bit;
 		joyState |= pad;
 
+#ifdef JOYPAD_VERBOSE
 		if (pad)
 			printf ("button %x released\r\n", joyTbl[s].code);
 		else
 			printf ("button %x pressed\r\n", joyTbl[s].code);
+#endif
 
 		joyEvent.key.code = joyTbl[s].code;
 		if (pad)
