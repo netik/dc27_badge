@@ -12,8 +12,8 @@
 #include "ides_gfx.h"
 #include "battle.h"
 #include <stdio.h>
-
-#include "chprintf.h"
+#include <stdlib.h>
+#include <string.h>
 
 /* this is our accleration goal */
 #define VGOAL      0.4 // this should be per-ship.
@@ -23,6 +23,9 @@
 
 /* set this up for testing */
 PLAYER me;
+
+/* Old pixel data */
+static pixel_t pix_old[10 * 10];
 
 static void
 player_init(PLAYER *p) {
@@ -39,6 +42,7 @@ player_init(PLAYER *p) {
 	p->vecGravity.x = VDRAG;
 	p->vecGravity.y = VDRAG;
 
+	memset (pix_old, 0xFF, sizeof(pix_old));
 }
 
 /* approach lets us interpolate smoothly between positions */
@@ -94,16 +98,25 @@ player_update(PLAYER *p, float dt) {
 
 static void
 player_render(PLAYER *p) {
-	gdispFillArea(p->vecPosition.x, p->vecPosition.y,
-	              10,10,
-							  Purple);
+	/* Save what's currently on the screen */
+	getPixelBlock (p->vecPosition.x, p->vecPosition.y, 10, 10, pix_old);
+	/* Draw ship */
+	gdispFillArea (p->vecPosition.x, p->vecPosition.y, 10, 10, Purple);
+	return;
 }
 
 static void
 player_erase(PLAYER *p) {
-	gdispFillArea(p->vecPosition.x, p->vecPosition.y,
-	              10, 10,
-							  Blue);
+	/*
+	 * This test is here because right after the app is launched,
+	 * before we draw the player for the first time, we don't have
+	 * anything to un-draw yet.
+	 */
+	if (pix_old[0] == 0xFFFF)
+		return;
+	/* Put back what was previously on the screen */
+	putPixelBlock (p->vecPosition.x, p->vecPosition.y, 10, 10, pix_old);
+	return;
 }
 
 
@@ -128,7 +141,7 @@ battle_start (OrchardAppContext *context)
 	(void)context;
 	gdispClear (Black);
 
-  draw_initial_map();
+	draw_initial_map();
 
 	/* start the timer - 30 fps */
 	orchardAppTimer(context, 330, true);
@@ -139,11 +152,37 @@ static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
 	(void) context;
+	float oldx, oldy;
+	float newx, newy;
 
 	if (event->type == timerEvent) {
-		player_erase(&me);
+		oldx = me.vecPosition.x;
+		oldy = me.vecPosition.y;
 		player_update(&me, 0.33f);
-		player_render(&me);
+		newx = me.vecPosition.x;
+		newy = me.vecPosition.y;
+		/*
+		 * Redraw player ship if it changed position.
+		 * Note: we cast the coordinates to integer values here
+		 * when doing the comparisson to effectively round down
+		 * the coordinates to whole pixels (doing a redraw for
+		 * fractional pixel changes just wastes cycles without
+		 * making any meaningful screen updates.
+		 * Also note: after the app is first launched, we need
+		 * to draw the player for the first time, but he hasn't
+		 * moved yet. To get around this, check for the old pixel
+		 * buffer to be unused and draw the player if it is.
+		 */
+		if (((coord_t)oldx != (coord_t)newx ||
+		    (coord_t)oldy != (coord_t)newy) ||
+		    pix_old[0] == 0xFFFF) {
+			me.vecPosition.x = oldx;
+			me.vecPosition.y = oldy;
+			player_erase(&me);
+			me.vecPosition.x = newx;
+			me.vecPosition.y = newy;
+			player_render(&me);
+		}
 	}
 
 	if (event->type == keyEvent) {

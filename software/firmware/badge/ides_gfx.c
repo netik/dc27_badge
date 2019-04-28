@@ -320,7 +320,7 @@ void drawProgressBar(coord_t x, coord_t y,
  */
 
 void
-getPixelBlock (coord_t x, coord_t y,coord_t cx, coord_t cy, pixel_t * buf)
+getPixelBlock (coord_t x, coord_t y, coord_t cx, coord_t cy, pixel_t * buf)
 {
   int i;
 
@@ -355,7 +355,7 @@ getPixelBlock (coord_t x, coord_t y,coord_t cx, coord_t cy, pixel_t * buf)
  */
 
 void
-putPixelBlock (coord_t x, coord_t y,coord_t cx, coord_t cy, pixel_t * buf)
+putPixelBlock (coord_t x, coord_t y, coord_t cx, coord_t cy, pixel_t * buf)
 {
   GDISP->p.x = x;
   GDISP->p.y = y;
