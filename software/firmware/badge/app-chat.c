@@ -306,7 +306,7 @@ chat_event (OrchardAppContext *context,
 
 		/* A new advertisement has arrived, update the user list */
 
-		if (radio->type == advertisementEvent) {
+		if (radio->type == advAndScanEvent) {
 			if (ui == getUiByName ("list") &&
 			    insert_peer (context, evt, radio) != -1) {
 				uiContext->selected = p->peers - 1;

@@ -54,10 +54,13 @@ static THD_FUNCTION(peerThread, arg)
 }
 
 void
-blePeerAdd (uint8_t * peer_addr, uint8_t * name, uint8_t len, int8_t rssi)
+blePeerAdd (uint8_t * peer_addr, uint8_t * data, uint8_t len, int8_t rssi)
 {
 	ble_peer_entry * p;
+	ble_ides_game_state_t * s;
 	int firstfree = -1;
+	uint8_t * d;
+	uint8_t l;
 	int i;
 
 	osalMutexLock (&peer_mutex);
@@ -69,17 +72,20 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * name, uint8_t len, int8_t rssi)
 		if (p->ble_used == 0 && firstfree == -1)
 			firstfree = i;
 
+		/*
+		 * If we find a duplicate address, then it means we've
+		 * received an advertisement or scan response for a peer
+		 * That we're already familiar with. That's ok: we can
+		 * just fall through to update its info and reset its TTL.
+		 */
+
 		if (memcmp (peer_addr, p->ble_peer_addr, 6) == 0) {
-			p->ble_ttl = BLE_PEER_LIST_TTL;
-			p->ble_rssi = rssi;
-			if (name != NULL)
-				memcpy (p->ble_peer_name, name, len);
-			osalMutexUnlock (&peer_mutex);
-			return;
+			firstfree = i;
+			break;
 		}
 	}
 
-	/* Not a duplicate, but there's  more room for new peers. :( */
+	/* Not a duplicate, but there's no more room for new peers. :( */
 
 	if (firstfree == -1) {
 		osalMutexUnlock (&peer_mutex);
@@ -91,10 +97,36 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * name, uint8_t len, int8_t rssi)
 	p = &ble_peer_list[firstfree];
 
 	memcpy (p->ble_peer_addr, peer_addr, sizeof(ble_peer_addr));
-	if (name == NULL)
-		memcpy (p->ble_peer_name, "<none>", 7);
+
+	/* Check for name. */
+
+	d = data;
+	l = len;
+
+	memset (p->ble_peer_name, 0, BLE_PEER_NAME_MAX);
+
+	if (bleGapAdvBlockFind (&d, &l,
+	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME) == NRF_SUCCESS)
+		memcpy (p->ble_peer_name, d, l);
 	else
-		memcpy (p->ble_peer_name, name, len);
+		memcpy (p->ble_peer_name, "<none>", 7);
+
+	/* Now check for game state */
+
+	d = data;
+	l = len;
+
+	if (bleGapAdvBlockFind (&d, &l,
+	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME) == NRF_SUCCESS) {
+		s = (ble_ides_game_state_t *)d;
+		if (s->ble_ides_company_id == BLE_COMPANY_ID_IDES) {
+			memcpy (&p->ble_game_state, s,
+			    sizeof(ble_ides_game_state_t));
+			p->ble_isbadge = TRUE;
+		} else
+			p->ble_isbadge = FALSE;
+	}
+
 	p->ble_rssi = rssi;
 	p->ble_ttl = BLE_PEER_LIST_TTL;
 	p->ble_used = 1;

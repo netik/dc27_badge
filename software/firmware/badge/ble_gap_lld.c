@@ -49,7 +49,7 @@
 #include "ble_peer.h"
 
 #include "orchard-app.h"
-
+#include "userconfig.h"
 #include "badge.h"
 
 static ble_gap_lesc_p256_pk_t peer_pk;
@@ -66,6 +66,8 @@ static uint8_t ble_adv_block[BLE_GAP_ADV_MAX_SIZE];
 static uint8_t ble_scan_block[BLE_GAP_ADV_MAX_SIZE];
 static uint8_t ble_scan_buffer[BLE_GAP_SCAN_BUFFER_EXTENDED_MAX];
 static uint8_t ble_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
+
+static ble_ides_game_state_t ble_ides_state;
 
 uint16_t ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 uint8_t ble_gap_role;
@@ -102,11 +104,12 @@ bleGapScanStart (void)
 static int
 bleGapAdvStart (void)
 {
-	ble_uuid128_t	ble_base_uuid = {BLE_IDES_UUID_BASE};
 	uint8_t * pkt;
 	uint8_t size;
 	uint16_t val;
 	int r;
+
+	ble_ides_state.ble_ides_company_id = BLE_COMPANY_ID_IDES;
 
 	pkt = bleGapAdvBlockStart (&size);
 
@@ -138,10 +141,10 @@ bleGapAdvStart (void)
 	if (r != NRF_SUCCESS)
 		return (r);
 
-	/* Advertise our vendor UUID */
+	/* Advertise game state */
 
-	r = bleGapAdvBlockAdd (&ble_base_uuid, sizeof(ble_base_uuid),
-	    BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE, pkt, &size);
+	r = bleGapAdvBlockAdd (&ble_ides_state, sizeof(ble_ides_state),
+	    BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA, pkt, &size);
 
 	if (r != NRF_SUCCESS)
 		return (r);
@@ -302,7 +305,7 @@ bleGapDispatch (ble_evt_t * evt)
 			}
 
 			p = blePeerFind (addr->addr);
-			blePeerAdd (addr->addr, name, len,
+			blePeerAdd (addr->addr, data, datalen,
 			    evt->evt.gap_evt.params.adv_report.rssi);
 
 			/*
@@ -321,9 +324,16 @@ bleGapDispatch (ble_evt_t * evt)
 			if (name != NULL ||
 			    (rtype.scannable == 0) ||
 			    (rtype.scan_response && p != NULL)) {
-				orchardAppRadioCallback (advertisementEvent,
+				orchardAppRadioCallback (advAndScanEvent,
 				    evt, data, datalen);
 			}
+
+			if (rtype.scan_response)
+				orchardAppRadioCallback (scanResponseEvent,
+				    evt, data, datalen);
+			else
+				orchardAppRadioCallback (advertisementEvent,
+				    evt, data, datalen);
 
 			/*
 			 * Ok, this is a little nutty. In BLE, when you
@@ -563,15 +573,6 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	r = bleGapAdvBlockAdd (ble_name, namelen,
 	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, pktrsp, &sizersp);
 
-	/* Advertise device info UUID */
-
-	val = BLE_UUID_DEVICE_INFORMATION_SERVICE;
-	r = bleGapAdvBlockAdd (&val, 2,
-	    BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE, pktrsp, &sizersp);
-
-	if (r != NRF_SUCCESS)
-		return (r);
-
 	/* Set role */
 
 	val = BLE_ADV_ROLE_BOTH_PERIPH_PREFERRED;
@@ -596,6 +597,9 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 #ifdef BLE_GAP_SCAN_VERBOSE
 	adv_params.scan_req_notification = 1;
 #endif
+
+	if (ble_conn_handle != BLE_CONN_HANDLE_INVALID)
+		return (NRF_SUCCESS);
 
 	r = sd_ble_gap_adv_set_configure (&ble_adv_handle,
 	    &adv_data, &adv_params);
@@ -660,9 +664,17 @@ bleGapAdvBlockFind (uint8_t ** pkt, uint8_t * len, uint8_t id)
 void
 bleGapStart (void)
 {
+	userconfig * config;
 	ble_gap_conn_sec_mode_t perm;
-	uint8_t * ble_name = (uint8_t *)BLE_NAME_IDES;
+	uint8_t * ble_name;
 	int r;
+
+	config = getConfig();
+
+	if (strlen (config->name))
+		ble_name = (uint8_t *)config->name;
+	else
+		ble_name = (uint8_t *)BLE_NAME_IDES;
 
 	BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&perm);
 	r = sd_ble_gap_device_name_set (&perm, ble_name,
@@ -735,6 +747,62 @@ bleGapDisconnect (void)
 	if (r != NRF_SUCCESS)
 		printf ("GAP disconnect failed: 0x%x\n", r);
 
+	ble_conn_handle = BLE_CONN_HANDLE_INVALID;
+
 	bleGapAdvStart ();
+
 	return (r);
+}
+
+void
+bleGapUpdateState (uint16_t x, uint16_t y, uint16_t xp, uint8_t rank)
+{
+	ble_ides_state.ble_ides_x = x;
+	ble_ides_state.ble_ides_y = y;
+	ble_ides_state.ble_ides_xp = xp;
+	ble_ides_state.ble_ides_rank = rank;
+
+	/*
+	 * If we're not connected, then we need to turn off
+	 * advertising, reconfigure the advertisement block
+	 * and turn advertisement back on again.
+	 * If we are connected, then calling bleGapAdvStart()
+	 * will only reconfigure the advertisement block, such
+	 * that once we disconnect and start advertising again,
+	 * we should start advertising new data.
+	 */
+
+	if (ble_conn_handle == BLE_CONN_HANDLE_INVALID) {
+		sd_ble_gap_adv_stop (ble_adv_handle);
+		bleGapAdvStart ();
+	} else
+		bleGapAdvStart ();
+
+	return;
+}
+
+void
+bleGapUpdateName (void)
+{
+	ble_gap_conn_sec_mode_t perm;
+	userconfig * config;
+	uint8_t * ble_name;
+
+	/* Note: SoftDevice/radio must be enabled for this to work */
+
+	config = getConfig();
+
+	ble_name = (uint8_t *)config->name;
+
+	BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&perm);
+	sd_ble_gap_device_name_set (&perm, ble_name,
+	    strlen ((char *)ble_name));
+
+	if (ble_conn_handle == BLE_CONN_HANDLE_INVALID) {
+		sd_ble_gap_adv_stop (ble_adv_handle);
+		bleGapAdvStart ();
+	} else
+		bleGapAdvStart ();
+
+	return;
 }

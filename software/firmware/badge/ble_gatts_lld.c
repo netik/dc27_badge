@@ -52,6 +52,7 @@
 ble_gatts_char_handles_t pw_handle;	
 ble_gatts_char_handles_t ul_handle;	
 ble_gatts_char_handles_t ch_handle;	
+ble_gatts_char_handles_t gm_handle;	
 uint16_t ble_gatts_ides_handle;
 const ble_uuid128_t ble_ides_base_uuid = {BLE_IDES_UUID_BASE};
 static ble_gatts_char_handles_t mf_handle;	
@@ -475,6 +476,16 @@ bleGattsStart (void)
  
 	if (r != NRF_SUCCESS)
 		printf ("Adding chat request "
+		    "characteristic failed (%x)\n", r);
+
+	ble_service_uuid.uuid = BLE_UUID_IDES_BADGE_GAMEATTACK;
+
+	r = bleGattsIntCharAdd (ble_gatts_ides_handle, &ble_service_uuid,
+	    BLE_GATTS_AUTHORIZE_TYPE_READ | BLE_GATTS_AUTHORIZE_TYPE_WRITE,
+	    &ble_chatreq, &gm_handle, (uint8_t *)"Game Attack");
+ 
+	if (r != NRF_SUCCESS)
+		printf ("Adding game attack "
 		    "characteristic failed (%x)\n", r);
 
 	return;

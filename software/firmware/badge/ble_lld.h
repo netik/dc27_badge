@@ -120,14 +120,39 @@
 #define BLE_UUID_IDES_BADGE_PASSWORD		0x0001
 #define BLE_UUID_IDES_BADGE_UNLOCKS		0x0002
 #define BLE_UUID_IDES_BADGE_CHATREQUEST		0x0003
-#define BLE_UUID_IDES_BADGE_GAMEVAL1		0x0004
+#define BLE_UUID_IDES_BADGE_GAMEATTACK		0x0004
 
 #define BLE_IDES_CHATREQ_REQUEST		0x01
 #define BLE_IDES_CHATREQ_ACCEPT			0x02
 #define BLE_IDES_CHATREQ_DECLINE		0x03
 
+#define BLE_IDES_GAMEATTACK_CHALLENGE		0x01
+#define BLE_IDES_GAMEATTACK_ACCEPT		0x02
+#define BLE_IDES_GAMEATTACK_DECLINE		0x03
+#define BLE_IDES_GAMEATTACK_ACTION4		0x04
+
+/*
+ * We advertise some game info in a vendor-specific field in
+ * the advertisement packet. This includes our current x/y
+ * map location, XP and rank. Per the BLE spec, we also have
+ * to include our company ID. This takes up 9 bytes, plus
+ * one byte length field and one byte type identifier (0xFF),
+ * for a total of 11 bytes.
+ */
+
+#pragma pack(1)
+typedef struct ble_ides_game_state {
+	uint16_t	ble_ides_company_id;
+	uint16_t	ble_ides_x;
+	uint16_t	ble_ides_y;
+	uint16_t	ble_ides_xp;
+	uint8_t		ble_ides_rank;
+} ble_ides_game_state_t;
+#pragma pack()
+
 extern uint32_t ble_unlocks;
 extern uint32_t ble_chatreq;
+extern uint32_t ble_gameattack;
 extern char ble_password[32];
 extern uint8_t ble_station_addr[];
 extern volatile uint32_t flash_evt;

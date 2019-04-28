@@ -190,6 +190,7 @@ CSRC += main.c \
 	app-update.c \
 	app-email.c \
 	app-ledsign.c \
+	app-name.c \
 	app-notify.c \
 	app-dialer.c \
 	app-music.c \

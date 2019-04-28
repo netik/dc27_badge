@@ -118,6 +118,8 @@ typedef enum _OrchardAppRadioEventType {
    disconnectEvent,		/* GAP Disconnected from peer */
    connectTimeoutEvent,		/* GAP Connection timed out */
    advertisementEvent,		/* GAP Received advertisement */
+   scanResponseEvent,		/* GAP Received scan response */
+   advAndScanEvent,		/* GAP Received adv + scan response */
    l2capConnectEvent,		/* L2CAP connection successful */
    l2capDisconnectEvent,	/* L2CAP connection closed */
    l2capConnectRefusedEvent,	/* L2CAP connection failed */
