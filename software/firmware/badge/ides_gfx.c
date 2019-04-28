@@ -306,3 +306,67 @@ void drawProgressBar(coord_t x, coord_t y,
 
   gdispDrawBox(x,y,width,height, c);
 }
+
+/*
+ * Read a block of pixels from the screen
+ * x,y == location of box
+ * cx,cy == dimensions of box
+ * buf == pointer to pixel buffer
+ * Note: buf must be big enough to hold the resulting data
+ *       (cx x cy x sizeof(pixel_t))
+ * Reading pixels from the display is a bit painful on the ILI9341, because
+ * it returns 24-bit RGB color data instead of 16-bit RGB565 pixel data.
+ * The gdisp_lld_read_color() does conversion in software.
+ */
+
+void
+getPixelBlock (coord_t x, coord_t y, coord_t cx, coord_t cy, pixel_t * buf)
+{
+  int i;
+
+  GDISP->p.x = x;
+  GDISP->p.y = y;
+  GDISP->p.cx = cx;
+  GDISP->p.cy = cy;
+
+  gdisp_lld_read_start (GDISP);
+
+  for (i = 0; i < (cx * cy); i++)
+    buf[i] = gdisp_lld_read_color (GDISP);
+
+  gdisp_lld_read_stop (GDISP);
+
+  return;
+}
+
+/*
+ * Write a block of pixels to the screen
+ * x,y == location of box
+ * cx,cy == dimensions of box
+ * buf == pointer to pixel buffer
+ * Note: buf must be big enough to hold the resulting data
+ *       (cx*cy*sizeof(pixel_t))
+ * This is basically a blitter function, but it's a little more
+ * efficient than the one in uGFX. We bypass the gdisp_lld_write_color()
+ * function and dump the pixels straight into the SPI bus.
+ * Note: Pixel data must be in big endian form, since the Nordic SPI
+ * controller doesn't support 16-bit accesses (like the NXP one did).
+ * This means we're really using RGB565be format.
+ */
+
+void
+putPixelBlock (coord_t x, coord_t y, coord_t cx, coord_t cy, pixel_t * buf)
+{
+  GDISP->p.x = x;
+  GDISP->p.y = y;
+  GDISP->p.cx = cx;
+  GDISP->p.cy = cy;
+
+  gdisp_lld_write_start (GDISP);
+
+  spiSend (&SPID4, cx * cy * sizeof(pixel_t), buf);
+
+  gdisp_lld_write_stop (GDISP);
+
+  return;
+}

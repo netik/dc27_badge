@@ -19,5 +19,9 @@ extern int putImageFile(char *name, int16_t x, int16_t y);
 extern void blinkText (coord_t x, coord_t y,coord_t cx, coord_t cy, char *text, font_t font, color_t color, justify_t justify, uint8_t times, int16_t delay);
 extern char *getAvatarImage(int ptype, char *imgtype, uint8_t frameno, uint8_t reverse);
 extern void screen_alert_draw(uint8_t clear, char *msg);
+extern void getPixelBlock (coord_t x, coord_t y,coord_t cx,
+    coord_t cy, pixel_t * buf);
+extern void putPixelBlock (coord_t x, coord_t y,coord_t cx,
+    coord_t cy, pixel_t * buf);
 
 #endif /* __IDEX_GFX_H__ */

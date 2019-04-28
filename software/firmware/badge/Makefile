@@ -317,6 +317,9 @@ ULIBDIR =
 
 # List all user libraries here
 ULIBS = -L$(CHIBIOS)/../SoftDevice_S140/lib -lsoftdevice -lc_nano -lnosys -lm
+# This enables the use of the versions of printf() and scanf()
+# in newlib that support floating point
+ULIBS += -u _printf_float -u _scanf_float
 
 #
 # End of user defines
