@@ -35,10 +35,10 @@
  * some basic NULL pointer dereference detection. Trying to read or write
  * though a NULL pointer, e.g. address 0x0 or some close offset from it,
  * is a common coding problem. On most OSes running on application processors,
- * it's possible to trap these errors by reserving page 0 in the program's
- * virtual address space and leaving it unmapped. That way if any code tries
- * to execute a load or store to or from address 0, the MMU will trigger a
- * fault right away.
+ * (e.g. Cortex-A), it's possible to trap these errors by reserving page 0
+ * in the program's virtual address space and leaving it unmapped. That way
+ * if any code tries to execute a load or store to or from address 0, the
+ * MMU will trigger a fault right away.
  * 
  * On Cortex-M devices, you don't have an MMU, and address 0 typically the
  * start of on-board flash memory, as well as the default location of the
@@ -48,11 +48,12 @@
  * vector table and try to use it as data. This may result in unstable
  * behavior or crashes at some later point which may be difficult to diagnose.
  *
- * The Cortex-M4 doesn't have an MMU, but it does have an MPU, which we
- * can to set access permissions on page to to trap unexpected loads or
- * stores just like an MMU can. Note that while the CPU vector table is
- * also stored at address 0, exception handling doesn't seem to be negatively
- * impacted by the change in access protection.
+ * But while the Cortex-M4 has no MMU, it does have an MPU, and we can use
+ * it to set the access permissions on address space regions to trap
+ * unexpected loads or stores just like an MMU can. Note that while the
+ * CPU vector table is also stored at address 0, exception handling
+ * doesn't seem to be negatively impacted by the change in access
+ * protection.
  */
  
 #include "ch.h"
