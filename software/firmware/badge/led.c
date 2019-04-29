@@ -11,7 +11,18 @@
 #define util_random(x,y) randRange(x,y)
 #define M_PI 3.14159265358979323846264338327950288
 
-unsigned char led_memory[ISSI_ADDR_MAX];
+/*
+ * We use led_memory[] as a frame buffer. In reality it's
+ * an overlay for the PWM control registers in the LED control
+ * chip, which span from 0x00 to 0xBE on register page 2.
+ * We actually need 0xBF bytes to hold all the values. We
+ * also add one byte because we want to send the whole
+ * buffer in a single I2C transfer, and for that we need
+ * one leading byte to hold the register offset of the
+ * first register. Once we write that, the chip will
+ * autoincrement as it copies in new bytes.
+ */
+unsigned char led_memory[ISSI_ADDR_MAX + 2];
 
 /* prototypes */
 void led_set_all(uint8_t r, uint8_t g, uint8_t b);
@@ -202,9 +213,9 @@ void ledSetPattern(uint8_t patt) {
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
   if (index < LED_COUNT) {
-    led_memory[led_address[index][0]] = g;
-    led_memory[led_address[index][1]] = r;
-    led_memory[led_address[index][2]] = b;
+    led_memory[led_address[index][0] + 1] = g;
+    led_memory[led_address[index][1] + 1] = r;
+    led_memory[led_address[index][2] + 1] = b;
   }
 }
 
@@ -227,12 +238,8 @@ void led_set_all_rgb(color_rgb_t rgb) {
 void led_show() {
   drv_is31fl_set_page(ISSI_PAGE_PWM);
 
-  for (uint8_t i = 0; i < LED_COUNT_INTERNAL; i++) {
-    for (uint8_t ii = 0; ii < 3; ii++) {
-      uint8_t address = led_address[i][ii];
-      hal_i2c_write_reg_byte(LED_I2C_ADDR, address, led_memory[address]);
-    }
-  }
+  i2cMasterTransmitTimeout (&I2CD2, LED_I2C_ADDR, led_memory, sizeof(led_memory),
+    NULL, 0, TIME_INFINITE);
 }
 
 void led_test() {

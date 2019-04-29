@@ -35,6 +35,7 @@ player_init(PLAYER *p) {
 	p->vecVelocityGoal.x = 0;
 	p->vecVelocityGoal.y = 0;
 
+        // we're going to always start in the lower harbor for now.
 	p->vecPosition.x = HARBOR_LWR_X;
 	p->vecPosition.y = HARBOR_LWR_Y;
 
@@ -62,7 +63,7 @@ approach(float flGoal, float flCurrent, float dt) {
 static void
 player_update(PLAYER *p, float dt) {
 
-	p->vecVelocity.x = approach(
+ 	p->vecVelocity.x = approach(
 			p->vecVelocityGoal.x,
 			p->vecVelocity.x,
 			dt * VAPPROACH);
