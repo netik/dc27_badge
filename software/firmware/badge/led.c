@@ -47,6 +47,8 @@ void led_pattern_running_lights(uint8_t red,
                                 uint8_t green,
                                 uint8_t blue,
                                 uint8_t* p_position);
+void led_pattern_kraftwerk(uint8_t* p_index, int8_t* p_position);
+
 /* control vars */
 static thread_t * pThread;
 static uint8_t ledExitRequest = 0;
@@ -126,7 +128,8 @@ const char *fxlist[] = {
   "Red Spin",
   "Green Spin",
   "Blue Spin",
-  "Yellow Spin"
+  "Yellow Spin",
+  "Kraftwerk"
 };
 
 /* Brightness control */
@@ -386,6 +389,9 @@ static THD_FUNCTION(bling_thread, arg) {
       case 16:
         led_pattern_running_lights(255, 255, 0, &anim_uindex);
         break;
+      case 17:
+        led_pattern_kraftwerk(&anim_uindex, &anim_position);
+        break;
       }
     }
 
@@ -480,6 +486,76 @@ void led_pattern_balls(led_pattern_balls_t* p_balls) {
   }
   led_show();
   led_set_all(0, 0, 0);
+}
+
+void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep) {
+  // Ensure indices are within range
+  while (p_triple_sweep->index_red < 0) {
+    p_triple_sweep->index_red += LED_COUNT;
+  }
+  while (p_triple_sweep->index_green < 0) {
+    p_triple_sweep->index_green += LED_COUNT;
+  }
+  while (p_triple_sweep->index_blue < 0) {
+    p_triple_sweep->index_blue += LED_COUNT;
+  }
+  while (p_triple_sweep->index_yellow < 0) {
+    p_triple_sweep->index_yellow += LED_COUNT;
+  }
+  while (p_triple_sweep->index_red >= LED_COUNT) {
+    p_triple_sweep->index_red -= LED_COUNT;
+  }
+  while (p_triple_sweep->index_green >= LED_COUNT) {
+    p_triple_sweep->index_green -= LED_COUNT;
+  }
+  while (p_triple_sweep->index_blue >= LED_COUNT) {
+    p_triple_sweep->index_blue -= LED_COUNT;
+  }
+  while (p_triple_sweep->index_yellow >= LED_COUNT) {
+    p_triple_sweep->index_yellow -= LED_COUNT;
+  }
+
+  // Apply sweep colors
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_red] = p_triple_sweep->red
+                                                           << 16;
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_green] =
+      p_triple_sweep->green << 8;
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_blue] =
+      p_triple_sweep->blue;
+  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_yellow] =
+      (p_triple_sweep->yellow << 16) | (p_triple_sweep->yellow << 8);
+
+  led_set_rgb((uint8_t)p_triple_sweep->index_red,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_red]);
+  led_set_rgb((uint8_t)p_triple_sweep->index_green,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_green]);
+  led_set_rgb((uint8_t)p_triple_sweep->index_blue,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_blue]);
+  led_set_rgb((uint8_t)p_triple_sweep->index_yellow,
+              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_yellow]);
+  led_show();
+
+  // Move indices, assume next run around range will be checked
+  p_triple_sweep->index_red += p_triple_sweep->direction_red;
+  p_triple_sweep->index_green += p_triple_sweep->direction_green;
+  p_triple_sweep->index_blue += p_triple_sweep->direction_blue;
+  p_triple_sweep->index_yellow += p_triple_sweep->direction_yellow;
+
+  // Randomly change directions (sometimes) of one sweep color
+  uint8_t r = util_random(0, 100);
+  if (r == 0) {
+    p_triple_sweep->direction_red *= -1;
+    p_triple_sweep->red = util_random(180, 255);
+  } else if (r == 1) {
+   p_triple_sweep->direction_green *= -1;
+    p_triple_sweep->green = util_random(180, 255);
+  } else if (r == 2) {
+    p_triple_sweep->direction_blue *= -1;
+    p_triple_sweep->blue = util_random(180, 255);
+  } else if (r == 3) {
+    p_triple_sweep->direction_yellow *= -1;
+    p_triple_sweep->yellow = util_random(180, 255);
+  }
 }
 
 /**
@@ -601,75 +677,6 @@ void led_pattern_triangle(int8_t *fx_index, int8_t *fx_position) {
 }
 
 
-void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep) {
-  // Ensure indices are within range
-  while (p_triple_sweep->index_red < 0) {
-    p_triple_sweep->index_red += LED_COUNT;
-  }
-  while (p_triple_sweep->index_green < 0) {
-    p_triple_sweep->index_green += LED_COUNT;
-  }
-  while (p_triple_sweep->index_blue < 0) {
-    p_triple_sweep->index_blue += LED_COUNT;
-  }
-  while (p_triple_sweep->index_yellow < 0) {
-    p_triple_sweep->index_yellow += LED_COUNT;
-  }
-  while (p_triple_sweep->index_red >= LED_COUNT) {
-    p_triple_sweep->index_red -= LED_COUNT;
-  }
-  while (p_triple_sweep->index_green >= LED_COUNT) {
-    p_triple_sweep->index_green -= LED_COUNT;
-  }
-  while (p_triple_sweep->index_blue >= LED_COUNT) {
-    p_triple_sweep->index_blue -= LED_COUNT;
-  }
-  while (p_triple_sweep->index_yellow >= LED_COUNT) {
-    p_triple_sweep->index_yellow -= LED_COUNT;
-  }
-
-  // Apply sweep colors
-  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_red] = p_triple_sweep->red
-                                                            << 16;
-  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_green] =
-      p_triple_sweep->green << 8;
-  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_blue] =
-      p_triple_sweep->blue;
-  p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_yellow] =
-      (p_triple_sweep->yellow << 16) | (p_triple_sweep->yellow << 8);
-
-  led_set_rgb((uint8_t)p_triple_sweep->index_red,
-              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_red]);
-  led_set_rgb((uint8_t)p_triple_sweep->index_green,
-              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_green]);
-  led_set_rgb((uint8_t)p_triple_sweep->index_blue,
-              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_blue]);
-  led_set_rgb((uint8_t)p_triple_sweep->index_yellow,
-              p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_yellow]);
-  led_show();
-
-  // Move indices, assume next run around range will be checked
-  p_triple_sweep->index_red += p_triple_sweep->direction_red;
-  p_triple_sweep->index_green += p_triple_sweep->direction_green;
-  p_triple_sweep->index_blue += p_triple_sweep->direction_blue;
-  p_triple_sweep->index_yellow += p_triple_sweep->direction_yellow;
-
-  // Randomly change directions (sometimes) of one sweep color
-  uint8_t r = util_random(0, 100);
-  if (r == 0) {
-    p_triple_sweep->direction_red *= -1;
-    p_triple_sweep->red = util_random(180, 255);
-  } else if (r == 1) {
-    p_triple_sweep->direction_green *= -1;
-    p_triple_sweep->green = util_random(180, 255);
-  } else if (r == 2) {
-    p_triple_sweep->direction_blue *= -1;
-    p_triple_sweep->blue = util_random(180, 255);
-  } else if (r == 3) {
-    p_triple_sweep->direction_yellow *= -1;
-    p_triple_sweep->yellow = util_random(180, 255);
-  }
-}
 
 /**
  * @brief Rainbow pattern because we can
@@ -736,4 +743,17 @@ void led_pattern_running_lights(uint8_t red,
   if (*p_position >= LED_COUNT * 2) {
     *p_position = 0;
   }
+}
+
+void led_pattern_kraftwerk(uint8_t *fx_index, int8_t *fx_position) {
+  (*fx_index)++;
+  if (*fx_index % 8 == 0) { (*fx_position)++; }
+
+  if (*fx_position > 8) { *fx_position = 0; };
+
+  led_clear();
+  led_set(31-(*fx_position), 255,0,0);
+  led_set(*fx_position, 255,0,0);
+  led_show();
+
 }

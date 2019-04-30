@@ -8,8 +8,8 @@
 
 // our refresh rate is about 25Hz
 #define EFFECTS_REDRAW_MS 20
-#define LED_PATTERNS_FULL 17
-#define LED_PATTERNS_LIMITED 17
+#define LED_PATTERNS_FULL 18
+#define LED_PATTERNS_LIMITED 18
 
 /* colors */
 #define COL_RED    0

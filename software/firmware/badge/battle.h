@@ -10,6 +10,18 @@ typedef struct _player {
   VECTOR vecGravity;
 } PLAYER;
 
+typedef struct _enemy {
+  ble_gap_addr_t addr;
+  char *name;
+  uint8_t level;
+  PLAYER  p;
+} ENEMY;
+
+typedef struct _bullet {
+  uint8_t kind;
+  PLAYER p;
+} BULLET;
+
 #define HARBOR_LWR_X 24
 #define HARBOR_LWR_Y 225
 
