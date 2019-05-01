@@ -16,15 +16,15 @@
 #include <string.h>
 
 /* this is our accleration goal */
-#define VGOAL      8       // this should be per-ship.
+#define VGOAL      8        // this should be per-ship.
 #define VDRAG      -0.01f   // this is constant
 #define VAPPROACH  12       // this is accel/decel rate
 #define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (330mS)
 #define VMULT      8        // on each time step, take this many steps.
 
-// note that if vgoal gets lower and lower vapproach must come down
+// note that if VGOAL is lowered VAPPROACH must come down to match
 
-/* set this up for testing */
+/* single player on this badge */
 PLAYER me;
 
 /* Old pixel data */
@@ -41,7 +41,7 @@ player_init(PLAYER *p) {
 	p->vecVelocityGoal.x = 0;
 	p->vecVelocityGoal.y = 0;
 
-        // we're going to always start in the lower harbor for now.
+  // we're going to always start in the lower harbor for now.
 	p->vecPosition.x = HARBOR_LWR_X;
 	p->vecPosition.y = HARBOR_LWR_Y;
 
@@ -109,8 +109,9 @@ player_check_collision(PLAYER *p) {
   getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, pix_old);
 
 	/* brute force collision detection. You are on the sea, or you are not. */
-	for (int i = 0; i < FB_X * FB_Y; i++) {
-	  if ( pix_old[i] <= 0x9e00 || pix_old[i] >= 0xbf09 ) {
+  for (int i = 0; i < FB_X * FB_Y; i++) {
+     if ( pix_old[i] <= 0x9e00 || pix_old[i] >= 0xbf09 ) {
+
 	    // collision - not in sea
 			printf("collide\n");
 			// stop the ship
