@@ -25,7 +25,9 @@
 PLAYER me;
 
 /* Old pixel data */
-static pixel_t pix_old[10 * 10];
+#define FB_X 10
+#define FB_Y 10
+static pixel_t pix_old[FB_X * FB_Y];
 
 static void
 player_init(PLAYER *p) {
@@ -98,12 +100,27 @@ player_update(PLAYER *p, float dt) {
 }
 
 static void
+player_check_collision(PLAYER *p) {
+  /* Save what's currently on the screen */
+  getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, pix_old);
+
+	/* brute force collision detection. You are on the sea, or you are not. */
+	for (int i = 0; i < FB_X * FB_Y; i++) {
+	  if ( pix_old[i] <= 0x9e00 || pix_old[i] >= 0xbf09 ) {
+	    // collision!
+	    p->vecVelocity.x = 0;
+	    p->vecVelocity.y = 0;
+	    p->vecVelocityGoal.x = 0;
+	    p->vecVelocityGoal.y = 0;
+	  }
+	}
+}
+
+static void
 player_render(PLAYER *p) {
-	/* Save what's currently on the screen */
-	getPixelBlock (p->vecPosition.x, p->vecPosition.y, 10, 10, pix_old);
-	/* Draw ship */
-	gdispFillArea (p->vecPosition.x, p->vecPosition.y, 10, 10, Purple);
-	return;
+  /* Draw ship */
+  gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, Purple);
+  return;
 }
 
 static void
@@ -116,7 +133,7 @@ player_erase(PLAYER *p) {
 	if (pix_old[0] == 0xFFFF)
 		return;
 	/* Put back what was previously on the screen */
-	putPixelBlock (p->vecPosition.x, p->vecPosition.y, 10, 10, pix_old);
+	putPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, pix_old);
 	return;
 }
 
@@ -160,6 +177,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		oldx = me.vecPosition.x;
 		oldy = me.vecPosition.y;
 		player_update(&me, 0.33f);
+
 		newx = me.vecPosition.x;
 		newy = me.vecPosition.y;
 		/*
@@ -182,6 +200,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			player_erase(&me);
 			me.vecPosition.x = newx;
 			me.vecPosition.y = newy;
+
+                        player_check_collision(&me);
 			player_render(&me);
 		}
 	}
