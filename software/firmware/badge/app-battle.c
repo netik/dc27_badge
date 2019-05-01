@@ -255,6 +255,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 				case keyADown:
 					me.vecVelocityGoal.y = VGOAL;
 					break;
+				case keyBUp:
+				  orchardAppExit();
+					break;
 				default:
 				  break;
 			}
