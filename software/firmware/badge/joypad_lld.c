@@ -35,7 +35,7 @@
  *
  * The production board has two 4-position joypads with press-to-select
  * function. That yields 5 GPIO inputs per pad, for a total of 10 pins.
- * The nRF52840 chip more than enough GPIOs for this, however the GPIOTE
+ * The nRF52840 chip has more than enough GPIOs for this, however the GPIOTE
  * module only has 8 channels, meaning we can only trigger interrupt events
  * for at most 8 pins at any given time.
  *
