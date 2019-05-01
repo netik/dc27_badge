@@ -16,9 +16,12 @@
 #include <string.h>
 
 /* this is our accleration goal */
-#define VGOAL      0.4 // this should be per-ship.
-#define VDRAG      -0.001f // this is constant
-#define VAPPROACH  0.005 // this is accel/decel rate
+#define VGOAL      8       // this should be per-ship.
+#define VDRAG      -0.01f   // this is constant
+#define VAPPROACH  12       // this is accel/decel rate
+#define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (330mS)
+#define VMULT      8        // on each time step, take this many steps.
+
 // note that if vgoal gets lower and lower vapproach must come down
 
 /* set this up for testing */
@@ -28,6 +31,7 @@ PLAYER me;
 #define FB_X 10
 #define FB_Y 10
 static pixel_t pix_old[FB_X * FB_Y];
+static int16_t ping_timer = 0;
 
 static void
 player_init(PLAYER *p) {
@@ -75,15 +79,15 @@ player_update(PLAYER *p, float dt) {
 			p->vecVelocity.y,
 			dt * VAPPROACH);
 
-	p->vecPosition.x = p->vecPosition.x + p->vecVelocity.x * dt;
-	p->vecPosition.y = p->vecPosition.y + p->vecVelocity.y * dt;
+	p->vecPosition.x = p->vecPosition.x + p->vecVelocity.x * dt	* VMULT;
+	p->vecPosition.y = p->vecPosition.y + p->vecVelocity.y * dt * VMULT;
 
 	p->vecVelocity.x = p->vecVelocity.x + p->vecGravity.x * dt;
 	p->vecVelocity.y = p->vecVelocity.y + p->vecGravity.y * dt;
 
 	// check bounds
 	if (p->vecPosition.x < 0) {
-		p->vecPosition.x = 0;
+		p->vecPosition.x = 0 ;
 	}
 
 	if (p->vecPosition.y < 0) {
@@ -107,11 +111,22 @@ player_check_collision(PLAYER *p) {
 	/* brute force collision detection. You are on the sea, or you are not. */
 	for (int i = 0; i < FB_X * FB_Y; i++) {
 	  if ( pix_old[i] <= 0x9e00 || pix_old[i] >= 0xbf09 ) {
-	    // collision!
+	    // collision - not in sea
+			printf("collide\n");
+			// stop the ship
 	    p->vecVelocity.x = 0;
 	    p->vecVelocity.y = 0;
 	    p->vecVelocityGoal.x = 0;
 	    p->vecVelocityGoal.y = 0;
+
+			// no damage if in home base or enemy base
+
+			// play the collision sound
+
+			// take some damage
+
+			// update damage / energy
+
 	  }
 	}
 }
@@ -151,6 +166,10 @@ battle_init(OrchardAppContext *context)
 
 static void draw_initial_map(void) {
 	putImageFile("game/world.rgb", 0,0);
+
+	// center the words "avoid land!"
+
+
 }
 
 static void
@@ -162,7 +181,7 @@ battle_start (OrchardAppContext *context)
 	draw_initial_map();
 
 	/* start the timer - 30 fps */
-	orchardAppTimer(context, 330, true);
+	orchardAppTimer(context, FRAME_DELAY * 1000000, true);
 	return;
 }
 
@@ -174,9 +193,20 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	float newx, newy;
 
 	if (event->type == timerEvent) {
+		// sound
+		ping_timer++;
+
+		/* every four seconds (120 frames) */
+		if (ping_timer >= 120) {
+			ping_timer = 0;
+			i2sPlay("sound/map_ping.snd");
+		}
+
+		printf("v: %f,%f %f,%f\n", me.vecVelocity.x, me.vecVelocity.y, me.vecVelocityGoal.x, me.vecVelocity.y);
+
 		oldx = me.vecPosition.x;
 		oldy = me.vecPosition.y;
-		player_update(&me, 0.33f);
+		player_update(&me, FRAME_DELAY);
 
 		newx = me.vecPosition.x;
 		newy = me.vecPosition.y;
@@ -201,7 +231,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			me.vecPosition.x = newx;
 			me.vecPosition.y = newy;
 
-                        player_check_collision(&me);
+      player_check_collision(&me);
+
+			// process bullets if any
+			// player_hitscan(...)
+
 			player_render(&me);
 		}
 	}
@@ -243,8 +277,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 					  break;
 				}
 		}
-	//	configSave(config);
-//		orchardAppExit();
 }
 
 	return;
