@@ -226,13 +226,13 @@ bleL2CapSetupReply (ble_l2cap_evt_ch_setup_request_t * request)
 }
 
 int
-bleL2CapSend (char * str)
+bleL2CapSend (uint8_t * txbuf, uint16_t txlen)
 {
 	ble_data_t data;
 	int r;
 
-	data.p_data = (void *)str;
-	data.len = strlen (str) + 1;
+	data.p_data = txbuf;
+	data.len = txlen;
 
 	r = sd_ble_l2cap_ch_tx (ble_conn_handle, ble_local_cid, &data);
 

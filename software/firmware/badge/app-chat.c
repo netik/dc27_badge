@@ -480,7 +480,8 @@ chat_event (OrchardAppContext *context,
 				orchardAppExit ();
 			} else {
 				p->txbuf[uiContext->selected] = 0x0;
-				if (bleL2CapSend (p->txbuf) != NRF_SUCCESS) {
+				if (bleL2CapSend ((uint8_t *)p->txbuf,
+				    strlen (p->txbuf) + 1) != NRF_SUCCESS) {
 					orchardAppExit ();
 					return;
 				}

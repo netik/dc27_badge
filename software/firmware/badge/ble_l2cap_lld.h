@@ -47,7 +47,7 @@ extern void bleL2CapDispatch (ble_evt_t *);
 
 extern int bleL2CapConnect (uint16_t);
 extern int bleL2CapDisconnect (uint16_t);
-extern int bleL2CapSend (char *);
+extern int bleL2CapSend (uint8_t *, uint16_t);
 
 extern void bleL2CapStart (void);
 

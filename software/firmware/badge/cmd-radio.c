@@ -253,7 +253,7 @@ radio_send (BaseSequentialStream *chp, int argc, char *argv[])
 		return;
 	}
 
-	bleL2CapSend (argv[1]);
+	bleL2CapSend ((uint8_t *)argv[1], strlen (argv[1]) + 1);
 	return;
 }
 
