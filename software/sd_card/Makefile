@@ -81,7 +81,7 @@ dac/%.snd: dac/%.mp3
 dac/%.snd: dac/%.wav
 	$(TOOLS_DIR)/scripts/sndmp3toraw.sh $<
 
-dac/fight/%.snd: dac/fight/%.mp3
+dac/game/%.snd: dac/game/%.wav
 	$(TOOLS_DIR)/scripts/sndmp3toraw.sh $<
 
 # Videos
@@ -106,7 +106,7 @@ images: dirs tools_dep photos \
 # When possible please use .wav files as source material. MP3s already
 # have enough compression and loss.
 sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/*.wav dac/*.mp3))))) \
-	          $(addprefix dac/fight/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/fight/*.mp3)))))
+	          $(addprefix dac/game/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/game/*.wav dac/game/*.mp3)))))
 
 video: tools_dep $(addprefix video/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/*.mp4)))))
 
@@ -172,7 +172,7 @@ clean: clean_images
 	$(MAKE) -C $(TOOLS_DIR) clean
 	-rm -rf bin/
 	-rm -f dac/*.snd
-	-rm -f dac/fight/*.snd
+	-rm -f dac/game/*.snd
 	-rm -f video/*
 	-rm -fr $(STAGING_DIR)/*
 	-rm -f photos/*
