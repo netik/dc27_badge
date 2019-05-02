@@ -12,7 +12,7 @@ typedef struct _player {
 
 typedef struct _enemy {
   ble_gap_addr_t addr;
-  char *name;
+  char name[16];
   uint8_t level;
   PLAYER  p;
 } ENEMY;

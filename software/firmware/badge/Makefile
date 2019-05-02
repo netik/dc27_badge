@@ -181,6 +181,7 @@ CSRC += main.c \
 	orchard-ui.c \
 	ui-keyboard.c \
 	ui-list.c \
+	gll.c \
 	app-battle.c \
 	app-calibrate.c \
 	app-launcher.c \

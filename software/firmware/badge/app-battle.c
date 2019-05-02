@@ -4,6 +4,10 @@
  * J. Adams 4/27/2019
  *
  */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "ch.h"
 #include "hal.h"
 #include "orchard-app.h"
@@ -11,27 +15,30 @@
 #include "i2s_lld.h"
 #include "ides_gfx.h"
 #include "battle.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "gll.h"
 
 /* this is our accleration goal */
 #define VGOAL      8        // this should be per-ship.
 #define VDRAG      -0.01f   // this is constant
 #define VAPPROACH  12       // this is accel/decel rate
-#define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (330mS)
+#define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (33mS)
 #define VMULT      8        // on each time step, take this many steps.
 
 // note that if VGOAL is lowered VAPPROACH must come down to match
 
 /* single player on this badge */
-PLAYER me;
+gll_t *enemies;
+static PLAYER me;
+
+// the current game state */
+enum game_state { WORLD_MAP, BATTLE };
+enum game_state current_state = WORLD_MAP;
 
 /* Old pixel data */
 #define FB_X 10
 #define FB_Y 10
 static pixel_t pix_old[FB_X * FB_Y];
-static int16_t ping_timer = 0;
+static int16_t ping_timer = 120; // so we get one ping at start
 
 static void
 player_init(PLAYER *p) {
@@ -108,7 +115,12 @@ player_check_collision(PLAYER *p) {
   /* Save what's currently on the screen */
   getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, pix_old);
 
-	/* brute force collision detection. You are on the sea, or you are not. */
+	/* linear search for a collision with land.
+	 *
+	 * this is somewhat inefficient, we should be checking edges of pixmap
+	 *  not interior. Edges are 40 pixels, interior is 100 px. maybe we don't
+	 *	 care at such a small size.
+	*/
   for (int i = 0; i < FB_X * FB_Y; i++) {
      if ( pix_old[i] <= 0x9e00 || pix_old[i] >= 0xbf09 ) {
 
@@ -140,6 +152,19 @@ player_render(PLAYER *p) {
 }
 
 static void
+enemy_render(void *e) {
+	ENEMY *en = e;
+
+	gdispFillArea (en->p.vecPosition.x, en->p.vecPosition.y, FB_X, FB_Y, Red);
+}
+
+static void
+enemy_renderall(void) {
+	/* walk our linked list of enemies and render each one */
+	gll_each(enemies, enemy_render);
+}
+
+static void
 player_erase(PLAYER *p) {
 	/*
 	 * This test is here because right after the app is launched,
@@ -158,8 +183,20 @@ static uint32_t
 battle_init(OrchardAppContext *context)
 {
 	(void)context;
+	ENEMY *e;
 
 	player_init(&me);
+
+	// three fake enemies -- we'll get these from BLE later on.
+	enemies = gll_init();
+
+	/* enemy 1 */
+	e = malloc(sizeof(ENEMY));
+	player_init(&(e->p));
+	e->p.vecPosition.x = 90;
+	e->p.vecPosition.y = 90;
+	strcpy(e->name, "enemy1");
+	gll_push(enemies, e);
 
 	// don't allocate any stack space
 	return (0);
@@ -194,16 +231,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	float newx, newy;
 
 	if (event->type == timerEvent) {
-		// sound
 		ping_timer++;
-
 		/* every four seconds (120 frames) */
 		if (ping_timer >= 120) {
 			ping_timer = 0;
 			i2sPlay("sound/map_ping.snd");
 		}
 
-		printf("v: %f,%f %f,%f\n", me.vecVelocity.x, me.vecVelocity.y, me.vecVelocityGoal.x, me.vecVelocity.y);
+//		printf("v: %f,%f %f,%f\n", me.vecVelocity.x, me.vecVelocity.y, me.vecVelocityGoal.x, me.vecVelocity.y);
 
 		oldx = me.vecPosition.x;
 		oldy = me.vecPosition.y;
@@ -239,6 +274,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
 			player_render(&me);
 		}
+
+		enemy_renderall();
 	}
 
 	if (event->type == keyEvent) {
