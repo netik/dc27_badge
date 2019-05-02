@@ -44,7 +44,7 @@
  * rev 1 prototype design. Subsequent designs use dual 5-actuator
  * joypads and use the joypad_lld.c module instead.
  */
- 
+
 #include "ch.h"
 #include "hal.h"
 #include "osal.h"
@@ -224,9 +224,9 @@ static THD_FUNCTION(joyThread, arg)
 	int i;
 
 	(void)arg;
-    
+
 	chRegSetThreadName ("JoyEvent");
-    
+
 	while (1) {
 		osalSysLock ();
 		/* Keep checking for events until we're completely idle. */

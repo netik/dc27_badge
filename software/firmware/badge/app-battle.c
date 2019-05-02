@@ -23,6 +23,7 @@
 #define VAPPROACH  12       // this is accel/decel rate
 #define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (33mS)
 #define VMULT      8        // on each time step, take this many steps.
+#define SEARCH_BB  30       // If enemy is in this bounding box we can engage
 
 // note that if VGOAL is lowered VAPPROACH must come down to match
 
@@ -125,7 +126,7 @@ player_check_collision(PLAYER *p) {
      if ( pix_old[i] <= 0x9e00 || pix_old[i] >= 0xbf09 ) {
 
 	    // collision - not in sea
-			printf("collide\n");
+
 			// stop the ship
 	    p->vecVelocity.x = 0;
 	    p->vecVelocity.y = 0;
@@ -223,6 +224,44 @@ battle_start (OrchardAppContext *context)
 	return;
 }
 
+ENEMY *getNearestEnemy(void) {
+	// given my current position? are there any enemies near me?
+  gll_node_t *currNode = enemies->first;
+
+	while(currNode != NULL) {
+		ENEMY *e = (ENEMY *)currNode->data;
+
+		// does not account for screen edges -- but might be ok?
+		// also does not attempt to sort the enemy list. if two people in same place
+		// we'll have an issue.
+		if ((e->p.vecPosition.x >= (me.vecPosition.x - (SEARCH_BB/2))) &&
+		    (e->p.vecPosition.x <= (me.vecPosition.x + (SEARCH_BB/2))) &&
+				(e->p.vecPosition.y >= (me.vecPosition.y - (SEARCH_BB/2))) &&
+		    (e->p.vecPosition.y <= (me.vecPosition.y + (SEARCH_BB/2)))) {
+				return e;
+		}
+    currNode = currNode->next;
+  }
+
+	return NULL;
+}
+
+static void
+enemy_engage(void) {
+
+	ENEMY *e = getNearestEnemy();
+	if (e == NULL) {
+			// otherwise play an error sound because no one is near by
+			i2sPlay("game/error.snd");
+			return;
+	} else {
+		i2sPlay("game/engage.snd");
+
+	}
+
+	// if so, attempt BLE connection
+}
+
 static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
@@ -235,7 +274,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		/* every four seconds (120 frames) */
 		if (ping_timer >= 120) {
 			ping_timer = 0;
-			i2sPlay("sound/map_ping.snd");
+			i2sPlay("game/map_ping.snd");
 		}
 
 //		printf("v: %f,%f %f,%f\n", me.vecVelocity.x, me.vecVelocity.y, me.vecVelocityGoal.x, me.vecVelocity.y);
@@ -295,6 +334,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 					break;
 				case keyBUp:
 				  orchardAppExit();
+					break;
+				case keyBDown:
+				  enemy_engage();
 					break;
 				default:
 				  break;
