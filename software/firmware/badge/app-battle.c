@@ -119,23 +119,6 @@ entity_update(ENTITY *p, float dt) {
 
 	p->vecVelocity.x = p->vecVelocity.x + p->vecGravity.x * dt;
 	p->vecVelocity.y = p->vecVelocity.y + p->vecGravity.y * dt;
-
-	// check bounds
-	if (p->vecPosition.x < 0) {
-		p->vecPosition.x = 0 ;
-	}
-
-	if (p->vecPosition.y < 0) {
-		p->vecPosition.y = 0;
-	}
-
-	if (p->vecPosition.x > 310 ) {
-		p->vecPosition.x = 310;
-	}
-
-	if (p->vecPosition.y > 230) {
-		p->vecPosition.y = 230;
-	}
 }
 
 static bool
@@ -153,14 +136,6 @@ player_check_collision(ENTITY *p) {
 	    p->vecVelocity.y = 0;
 	    p->vecVelocityGoal.x = 0;
 	    p->vecVelocityGoal.y = 0;
-
-			// no damage if in home base or enemy base
-
-			// play the collision sound
-
-			// take some damage
-
-			// update damage / energy
       return true;
 	  }
 	}
@@ -360,7 +335,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		entity_update(&me, FRAME_DELAY);
     getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
 
-		if (player_check_collision(&me)) {
+		if (player_check_collision(&me) || entity_OOB(&me)) {
       // put the player back and get the pixel again
       me.vecPosition.x = prevme.x;
       me.vecPosition.y = prevme.y;
