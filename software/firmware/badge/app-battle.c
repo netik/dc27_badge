@@ -16,6 +16,7 @@
 #include "ides_gfx.h"
 #include "battle.h"
 #include "gll.h"
+#include "math.h"
 
 /* this is our accleration goal */
 #define VGOAL      8        // this should be per-ship.
@@ -24,25 +25,52 @@
 #define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (33mS)
 #define VMULT      8        // on each time step, take this many steps.
 #define SEARCH_BB  30       // If enemy is in this bounding box we can engage
+#define MAX_BULLETS 3       // duh.
 
+#define SCREEN_W 320
+#define SCREEN_H 240
+
+#define TILE_W 80
+#define TILE_H 60
 // note that if VGOAL is lowered VAPPROACH must come down to match
 
 /* single player on this badge */
+static ENTITY me;
+static ENTITY bullet[MAX_BULLETS];
+
+// enemies -- linked list
 gll_t *enemies;
-static PLAYER me;
 
 // the current game state */
 enum game_state { WORLD_MAP, BATTLE };
 enum game_state current_state = WORLD_MAP;
 
-/* Old pixel data */
-#define FB_X 10
-#define FB_Y 10
-static pixel_t pix_old[FB_X * FB_Y];
 static int16_t ping_timer = 120; // so we get one ping at start
 
+static int getMapforCoord(ENTITY *e) {
+  return floor( e->vecPosition.y / TILE_H ) + floor( e->vecPosition.y / TILE_W );
+}
+
+static void zoomEntity(ENTITY *e) {
+  /* if you are at 10,10 on the world map and we zoom in,
+   * translate that coordinate to the new map
+   *
+   * Your pixel on the world map could represent any of NxM pixels.
+   */
+
+  float scalechange = 0.25;
+  float offsetX = -(e->vecPosition.x * scalechange);
+  float offsetY = -(e->vecPosition.y * scalechange);
+
+	e->vecPosition.x += offsetX;
+	e->vecPosition.y += offsetY;
+
+}
+
 static void
-player_init(PLAYER *p) {
+entity_init(ENTITY *p) {
+	p->visible = false;
+
 	p->vecVelocity.x = 0 ;
 	p->vecVelocity.y = 0 ;
 
@@ -57,7 +85,7 @@ player_init(PLAYER *p) {
 	p->vecGravity.x = VDRAG;
 	p->vecGravity.y = VDRAG;
 
-	memset (pix_old, 0xFF, sizeof(pix_old));
+	memset (p->pix_old, 0xFF, sizeof(p->pix_old));
 }
 
 /* approach lets us interpolate smoothly between positions */
@@ -75,8 +103,7 @@ approach(float flGoal, float flCurrent, float dt) {
 }
 
 static void
-player_update(PLAYER *p, float dt) {
-
+entity_update(ENTITY *p, float dt) {
  	p->vecVelocity.x = approach(
 			p->vecVelocityGoal.x,
 			p->vecVelocity.x,
@@ -111,23 +138,17 @@ player_update(PLAYER *p, float dt) {
 	}
 }
 
-static void
-player_check_collision(PLAYER *p) {
-  /* Save what's currently on the screen */
-  getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, pix_old);
-
+static bool
+player_check_collision(ENTITY *p) {
 	/* linear search for a collision with land.
 	 *
 	 * this is somewhat inefficient, we should be checking edges of pixmap
-	 *  not interior. Edges are 40 pixels, interior is 100 px. maybe we don't
-	 *	 care at such a small size.
-	*/
+	 * not interior. Edges are 40 pixels, interior is 100 px. maybe we don't
+	 * care at such a small size.
+	 */
   for (int i = 0; i < FB_X * FB_Y; i++) {
-     if ( pix_old[i] <= 0x9e00 || pix_old[i] >= 0xbf09 ) {
-
-	    // collision - not in sea
-
-			// stop the ship
+     if ( (p->pix_old[i] <= 0x9e00 || p->pix_old[i] >= 0xbf09) && p->pix_old[i] != 0xffff) {
+			// collide
 	    p->vecVelocity.x = 0;
 	    p->vecVelocity.y = 0;
 	    p->vecVelocityGoal.x = 0;
@@ -140,24 +161,34 @@ player_check_collision(PLAYER *p) {
 			// take some damage
 
 			// update damage / energy
-
+      return true;
 	  }
 	}
+
+  return false;
 }
 
 static void
-player_render(PLAYER *p) {
+player_render(ENTITY *p) {
   /* Draw ship */
   gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, Purple);
   return;
 }
 
 static void
+bullets_render(void) {
+	for (int i=0; i < MAX_BULLETS; i++) {
+		if (bullet[i].visible == true)
+  		gdispFillArea (bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, Black);
+	}
+}
+
+static void
 enemy_render(void *e) {
 	ENEMY *en = e;
-
-	gdispFillArea (en->p.vecPosition.x, en->p.vecPosition.y, FB_X, FB_Y, Red);
+	gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, Red);
 }
+
 
 static void
 enemy_renderall(void) {
@@ -166,19 +197,18 @@ enemy_renderall(void) {
 }
 
 static void
-player_erase(PLAYER *p) {
+entity_erase(ENTITY *p) {
 	/*
 	 * This test is here because right after the app is launched,
 	 * before we draw the player for the first time, we don't have
 	 * anything to un-draw yet.
 	 */
-	if (pix_old[0] == 0xFFFF)
+	if (p->pix_old[0] == 0xFFFF)
 		return;
 	/* Put back what was previously on the screen */
-	putPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, pix_old);
+	putPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
 	return;
 }
-
 
 static uint32_t
 battle_init(OrchardAppContext *context)
@@ -186,16 +216,20 @@ battle_init(OrchardAppContext *context)
 	(void)context;
 	ENEMY *e;
 
-	player_init(&me);
+	entity_init(&me);
+	me.visible = true;
 
-	// three fake enemies -- we'll get these from BLE later on.
+	for (int i=0; i < MAX_BULLETS; i++) {
+		entity_init(&bullet[i]);
+	}
+
+	// fake enemies -- we'll get these from BLE later on.
 	enemies = gll_init();
-
-	/* enemy 1 */
 	e = malloc(sizeof(ENEMY));
-	player_init(&(e->p));
-	e->p.vecPosition.x = 90;
-	e->p.vecPosition.y = 90;
+	entity_init(&(e->e));
+	e->e.visible = true;
+	e->e.vecPosition.x = 90;
+	e->e.vecPosition.y = 90;
 	strcpy(e->name, "enemy1");
 	gll_push(enemies, e);
 
@@ -206,9 +240,8 @@ battle_init(OrchardAppContext *context)
 static void draw_initial_map(void) {
 	putImageFile("game/world.rgb", 0,0);
 
-	// center the words "avoid land!"
-
-
+	// Draw UI
+	// TBD
 }
 
 static void
@@ -225,25 +258,24 @@ battle_start (OrchardAppContext *context)
 }
 
 ENEMY *getNearestEnemy(void) {
-	// given my current position? are there any enemies near me?
+  // given my current position? are there any enemies near me?
   gll_node_t *currNode = enemies->first;
 
-	while(currNode != NULL) {
-		ENEMY *e = (ENEMY *)currNode->data;
+  while(currNode != NULL) {
+    ENEMY *e = (ENEMY *)currNode->data;
 
-		// does not account for screen edges -- but might be ok?
-		// also does not attempt to sort the enemy list. if two people in same place
-		// we'll have an issue.
-		if ((e->p.vecPosition.x >= (me.vecPosition.x - (SEARCH_BB/2))) &&
-		    (e->p.vecPosition.x <= (me.vecPosition.x + (SEARCH_BB/2))) &&
-				(e->p.vecPosition.y >= (me.vecPosition.y - (SEARCH_BB/2))) &&
-		    (e->p.vecPosition.y <= (me.vecPosition.y + (SEARCH_BB/2)))) {
-				return e;
-		}
+    // does not account for screen edges -- but might be ok?
+    // also does not attempt to sort the enemy list. if two people in same place
+    // we'll have an issue.
+    if ((e->e.vecPosition.x >= (me.vecPosition.x - (SEARCH_BB/2))) &&
+				(e->e.vecPosition.x <= (me.vecPosition.x + (SEARCH_BB/2))) &&
+				(e->e.vecPosition.y >= (me.vecPosition.y - (SEARCH_BB/2))) &&
+				(e->e.vecPosition.y <= (me.vecPosition.y + (SEARCH_BB/2)))) {
+			    return e;
+    }
     currNode = currNode->next;
   }
-
-	return NULL;
+  return NULL;
 }
 
 static void
@@ -256,19 +288,49 @@ enemy_engage(void) {
 			return;
 	} else {
 		i2sPlay("game/engage.snd");
-
 	}
 
 	// if so, attempt BLE connection
 }
 
 static void
+fire_bullet(ENTITY *from, int angle) {
+	for (int i=0; i < MAX_BULLETS; i++) {
+		// find the first available bullet structure
+		if (bullet[i].visible == false) {
+			entity_init(&bullet[i]);
+			bullet[i].visible = true;
+			// start the bullet from player position
+			bullet[i].vecPosition.x = from->vecPosition.x;
+			bullet[i].vecPosition.y = from->vecPosition.y;
+			// copy the frame buffer because we need what's under the player.
+			memcpy(&bullet[i].pix_old, from->pix_old, sizeof(from->pix_old));
+			bullet[i].vecVelocityGoal.x = 50;
+			bullet[i].vecVelocityGoal.y = -50;
+			return;
+		}
+	}
+}
+
+bool
+entity_OOB(ENTITY *e) {
+	// returns true if entity is out of bounds
+ 	if ( (e->vecPosition.x >= SCREEN_W - FB_X) ||
+       (e->vecPosition.x < 0) ||
+			 (e->vecPosition.y < 0) ||
+			 (e->vecPosition.y >= SCREEN_H - FB_Y))
+			 return true;
+	return false;
+}
+
+static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
 	(void) context;
-	float oldx, oldy;
-	float newx, newy;
+	uint8_t i;
+  VECTOR prevme;
 
+	/* MAIN GAME EVENT LOOP */
 	if (event->type == timerEvent) {
 		ping_timer++;
 		/* every four seconds (120 frames) */
@@ -277,43 +339,38 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			i2sPlay("game/map_ping.snd");
 		}
 
-//		printf("v: %f,%f %f,%f\n", me.vecVelocity.x, me.vecVelocity.y, me.vecVelocityGoal.x, me.vecVelocity.y);
-
-		oldx = me.vecPosition.x;
-		oldy = me.vecPosition.y;
-		player_update(&me, FRAME_DELAY);
-
-		newx = me.vecPosition.x;
-		newy = me.vecPosition.y;
-		/*
-		 * Redraw player ship if it changed position.
-		 * Note: we cast the coordinates to integer values here
-		 * when doing the comparisson to effectively round down
-		 * the coordinates to whole pixels (doing a redraw for
-		 * fractional pixel changes just wastes cycles without
-		 * making any meaningful screen updates.
-		 * Also note: after the app is first launched, we need
-		 * to draw the player for the first time, but he hasn't
-		 * moved yet. To get around this, check for the old pixel
-		 * buffer to be unused and draw the player if it is.
-		 */
-		if (((coord_t)oldx != (coord_t)newx ||
-		    (coord_t)oldy != (coord_t)newy) ||
-		    pix_old[0] == 0xFFFF) {
-			me.vecPosition.x = oldx;
-			me.vecPosition.y = oldy;
-			player_erase(&me);
-			me.vecPosition.x = newx;
-			me.vecPosition.y = newy;
-
-      player_check_collision(&me);
-
-			// process bullets if any
-			// player_hitscan(...)
-
-			player_render(&me);
+		// handle bullets
+	  for (i=0; i < MAX_BULLETS; i++) {
+			if (bullet[i].visible == true) {
+				entity_erase(&bullet[i]);
+				entity_update(&bullet[i], FRAME_DELAY);
+				if (entity_OOB(&bullet[i])) {
+						// out of bounds, remove.
+						bullet[i].visible = false;
+				}
+				getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
+			}
 		}
 
+		// handle player
+		entity_erase(&me);
+    prevme.x = me.vecPosition.x;
+    prevme.y = me.vecPosition.y;
+
+		entity_update(&me, FRAME_DELAY);
+    getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
+
+		if (player_check_collision(&me)) {
+      // put the player back and get the pixel again
+      me.vecPosition.x = prevme.x;
+      me.vecPosition.y = prevme.y;
+      getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
+    }
+
+  	bullets_render();
+		player_render(&me);
+
+		// render enemies
 		enemy_renderall();
 	}
 
@@ -337,6 +394,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 					break;
 				case keyBDown:
 				  enemy_engage();
+					break;
+				case keyASelect:
+					fire_bullet(&me, 0);
 					break;
 				default:
 				  break;

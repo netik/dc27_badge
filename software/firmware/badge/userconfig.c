@@ -156,9 +156,8 @@ void configStart(void) {
     printf("FACTORY RESET requested\n");
 
     /* play a tone to tell them we're resetting */
-#ifdef notyet
-    playConfigReset();
-#endif
+    i2sPlay("game/ping.snd");
+    
     chThdSleepMilliseconds (200);
     wipeconfig = true;
   }

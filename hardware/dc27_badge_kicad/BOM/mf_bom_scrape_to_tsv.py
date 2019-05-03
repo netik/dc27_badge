@@ -1,6 +1,11 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 
 import csv
+import sys
+
+if sys.argc != 1: 
+  print "Usage: %s filename\n", sys.argv[0]
+  sys.exit(1)
 
 with open("mfbom.tsv","wb") as tsvout, open("mf_bom_scrape.txt","rb") as fin:
     tsvout = csv.writer(tsvout, delimiter='\t')

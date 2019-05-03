@@ -3,23 +3,29 @@
 
 #include "vector.h"
 
-typedef struct _player {
+/* Old pixel data */
+#define FB_X 10
+#define FB_Y 10
+
+typedef struct _entity {
+  bool visible;
   VECTOR vecVelocity;     /* current velocity */
   VECTOR vecVelocityGoal; /* goal velocity */
   VECTOR vecPosition;     /* position */
   VECTOR vecGravity;
-} PLAYER;
+  pixel_t pix_old[FB_X * FB_Y]; /* frame buffer */
+} ENTITY;
 
 typedef struct _enemy {
   ble_gap_addr_t addr;
   char name[16];
   uint8_t level;
-  PLAYER  p;
+  ENTITY e;
 } ENEMY;
 
 typedef struct _bullet {
   uint8_t kind;
-  PLAYER p;
+  ENTITY b;
 } BULLET;
 
 #define HARBOR_LWR_X 24
