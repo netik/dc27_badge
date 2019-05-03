@@ -4,6 +4,9 @@
 # Olimex ARM-USB-OCD-H debugger. This will work with either an nRF528xx DK
 # board or the custom DC27 badge board. For the nRF528xx DK boards, you
 # must connect the debugger to the Debug In plug next to the CPU.
+#
+# Note that you need to set your PATH environment variable to include the
+# location where your openocd binary resides before running this script.
 
 openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
 	-f interface/ftdi/olimex-arm-jtag-swd.cfg	\

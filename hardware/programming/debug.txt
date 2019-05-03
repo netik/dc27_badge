@@ -9,7 +9,7 @@ pretty much all ARM Cortex-M devices. The nRF52840 DK board includes an
 on-board Segger J-Link debugger, which means you can debug and flash the
 reference board without needing to buy any separate hardware. The production
 badge board does not include an on-board debugger. Instead there is only
-a 10-pin mini header, which must be connected to an separate debugger.
+a 10-pin mini header, which must be connected to an off-board debugger.
 
 Our off-board debugger of choice is the Olimex ARM-USB-OCD-H. This is
 a pretty standard debugger based on an FTDI chipset. It supports both
@@ -17,6 +17,13 @@ standard ARM JTAG and SWD. Note that if you use SWD you must also
 purchase the ARM-JTAG-SWD adapter and the ARM-JTAG-20-10 adapter. You
 can use any other debugger that supports SWD. We just happen to like
 this one.
+
+The ARM-USB-OCD-H, ARM-JTAG-SWD and ARM-JTAG-20-10 can be purchased
+directly from Olimex's website (olimex.com) or from Mouser Electronics.
+You should be able to find all 3 products on Mouser's web site at
+the following link:
+
+https://www.mouser.com/Search/Refine?Keyword=Olimex+ARM-USB-OCD-H
 
 For debugging we use a combination of OpenOCD and GDB. Recent versions of
 OpenOCD support the nRF52832 and nRF52840 devices out of the box. You
@@ -47,7 +54,7 @@ A: Yes, you can. See the openocd-nrf52-stlink.sh script. There are a
       any other ports. Some vendors implement custom APs which handle
       vendor-specific commands.
 
-      With the nRF52 parts, there is also a CTRL-AP which, which, among other
+      With the nRF52 parts, there is also a CTRL-AP which, among other
       things, provides an alternate way to issue a mass erase command, which
       blanks the flash. This is similar to from issuing a mass erase using
       the NVMC peripheral block, except it doesn't require going through
@@ -55,7 +62,7 @@ A: Yes, you can. See the openocd-nrf52-stlink.sh script. There are a
       to issue a mass erase is if you set the APPROTECT bit in the
       NVMC to disable DAP access. (You would only do this to lock the
       chip so that nobody can copy/pirate your firmware from deployed
-      devices.) Once you set the APPROTECT bit is set, the DAP is unusable,
+      devices.) Once the APPROTECT bit is set, the DAP is unusable,
       and at that point the ST-LINK v2 can't talk to the chip anymore. To
       recover, you have to issue a mass erase via the CTRL-AP instead, but
       the ST-LINK can't do that.

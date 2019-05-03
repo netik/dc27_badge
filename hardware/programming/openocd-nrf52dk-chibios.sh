@@ -7,6 +7,9 @@
 # This script also enables RTOS support for ChibiOS, which is used on
 # the DC27 IDES badge. This will allow GDB to identify individual ChibiOS
 # thread contexts with the "info threads" command.
+#
+# Note that you need to set your PATH environment variable to include the
+# location where your openocd binary resides before running this script.
 
 openocd -f board/nordic_nrf52_dk.cfg		\
 	-c "gdb_flash_program enable"		\

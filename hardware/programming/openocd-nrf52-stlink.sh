@@ -10,6 +10,9 @@
 # a mass erase via the CTRL-AP port, which is not possible with the
 # ST-LINK. You'll need to use something like the Olimex debugger
 # instead.
+#
+# Note that you need to set your PATH environment variable to include the
+# location where your openocd binary resides before running this script.
 
 openocd -f interface/stlink.cfg				\
 	-f target/nrf52.cfg				\

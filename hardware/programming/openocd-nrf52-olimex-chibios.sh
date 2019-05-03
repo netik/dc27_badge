@@ -6,8 +6,11 @@
 # must connect the debugger to the Debug In plug next to the CPU.
 #
 # This script also enables ChibiOS RTOS support in OpenOCD.
+#
+# Note that you need to set your PATH environment variable to include the
+# location where your openocd binary resides before running this script.
 
-/usr/local/openocd/bin/openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
+openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
 	-f interface/ftdi/olimex-arm-jtag-swd.cfg	\
 	-f target/nrf52.cfg				\
 	-c "gdb_flash_program enable"			\
