@@ -101,6 +101,51 @@ static char * exc_msg[] = {
 
 static char exc_msgbuf[80];
 
+/*
+ * FPU interrupt
+ * Floating point exceptions can occur for things like overflow
+ * and underflow, which are not treated as CPU exceptions like
+ * divide by zero. When they occur, this triggers the FPU interrupt
+ * in the NVIC. Normally this interrupt is not enabled, so we don't
+ * notice when these events occur, but we really should handle them.
+ * For one thing, it's not possible to put the CPU into low power
+ * modes while FPU events are pending.
+ *
+ * We do not set the FPSCR register directly. When an FPU interrupt
+ * occurs, the CPU pushes the current CPU state, including the FPU
+ * context, onto the stack. The FPU context includes an FPSCR word,
+ * and this word will be loaded back into the FPSCR register from
+ * the stack when the interrupt service routine exits. So we need
+ * to modify the stashed FPSCR word on the stack instead of the
+ * FPSCR register itself
+ */
+
+#define FPU_EXCEPTION_MASK 0x0000009F
+
+OSAL_IRQ_HANDLER(VectorD8)
+{
+	EXC_FRAME * exc;
+
+	(void)__get_FPSCR();
+
+	OSAL_IRQ_PROLOGUE();
+
+	/*
+	 * Get the exception stack frame pointer. We can infer
+	 * it from the FPCAR register.
+	 */
+
+	exc = (EXC_FRAME *)(FPU->FPCAR - 0x20);
+
+	/* Clear floating point exceptions */
+
+	exc->exc_FPSCR = exc->exc_FPSCR & ~(FPU_EXCEPTION_MASK);
+
+	OSAL_IRQ_EPILOGUE();
+
+	return;
+}
+
 static void
 _putc (char c)
 {

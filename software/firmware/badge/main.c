@@ -221,6 +221,17 @@ int main(void)
         SCB_SHCSR_BUSFAULTENA_Msk |
         SCB_SHCSR_MEMFAULTENA_Msk;
 
+    /*
+     * Enable FPU interrupts. These signal events like underflow and
+     * overflow. Technically it's safe to ignore them, but we really
+     * should at mimimum clear them when they occur.
+     */
+
+    NVIC_SetPriority (FPU_IRQn, NRF5_FPU_IRQ_PRIORITY);
+    NVIC_EnableIRQ (FPU_IRQn);
+
+    /* Initialize ChibiOS */
+
     halInit();
     chSysInit();
     shellInit();
