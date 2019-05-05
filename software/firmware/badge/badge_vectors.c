@@ -126,8 +126,6 @@ OSAL_IRQ_HANDLER(VectorD8)
 {
 	EXC_FRAME * exc;
 
-	(void)__get_FPSCR();
-
 	OSAL_IRQ_PROLOGUE();
 
 	/*
@@ -140,7 +138,12 @@ OSAL_IRQ_HANDLER(VectorD8)
 
 	exc = (EXC_FRAME *)__get_PSP();
 
-	/* Clear floating point exceptions */
+	/*
+	 * Clear floating point exceptions
+	 * Note: ChibiOS technically already handles this in
+	 * _port_irq_epilogue(), but doing it here too doesn't
+	 * hurt.
+	 */
 
 	exc->exc_FPSCR &= ~(FPU_EXCEPTION_MASK);
 	__set_FPSCR(exc->exc_FPSCR);
