@@ -115,9 +115,9 @@ static char exc_msgbuf[80];
  * occurs, the CPU pushes the current CPU state, including the FPU
  * context, onto the stack. The FPU context includes an FPSCR word,
  * and this word will be loaded back into the FPSCR register from
- * the stack when the interrupt service routine exits. So we need
- * to modify the stashed FPSCR word on the stack instead of the
- * FPSCR register itself
+ * the stack when the interrupt service routine exits. So modify
+ * the stashed FPSCR word on the stack and the FPSCR register instead
+ * of just the FPSCR register itself.
  */
 
 #define FPU_EXCEPTION_MASK 0x0000009F
@@ -131,15 +131,19 @@ OSAL_IRQ_HANDLER(VectorD8)
 	OSAL_IRQ_PROLOGUE();
 
 	/*
-	 * Get the exception stack frame pointer. We can infer
-	 * it from the FPCAR register.
+	 * Get the exception stack frame pointer. Note that using
+	 * the PSP assumes we will only get a floating point exception
+	 * from thread-mode code. This should be true since we
+	 * should never be using floating point instructions in
+	 * an interrupt handler.
 	 */
 
-	exc = (EXC_FRAME *)(FPU->FPCAR - 0x20);
+	exc = (EXC_FRAME *)__get_PSP();
 
 	/* Clear floating point exceptions */
 
-	exc->exc_FPSCR = exc->exc_FPSCR & ~(FPU_EXCEPTION_MASK);
+	exc->exc_FPSCR &= ~(FPU_EXCEPTION_MASK);
+	__set_FPSCR(exc->exc_FPSCR);
 
 	OSAL_IRQ_EPILOGUE();
 
