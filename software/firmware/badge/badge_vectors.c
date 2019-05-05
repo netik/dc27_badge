@@ -128,6 +128,8 @@ OSAL_IRQ_HANDLER(VectorD8)
 
 	OSAL_IRQ_PROLOGUE();
 
+	(void)__get_FPSCR();
+
 	/*
 	 * Get the exception stack frame pointer. Note that using
 	 * the PSP assumes we will only get a floating point exception
