@@ -128,6 +128,30 @@ OSAL_IRQ_HANDLER(VectorD8)
 
 	OSAL_IRQ_PROLOGUE();
 
+	/*
+	 * The Cortex-M4F supports a feature called lazy stacking.
+	 * FPU state is something which should, in some cases,
+	 * be preserved when an interrupt occurs. However saving the
+	 * FPU state to the stack adds some extra overhead which can
+	 * affect interrupt latency. The rule is that if the CPU uses a
+	 * floating point instruction and an interrupt occurs, extra
+	 * space will be reserved on the stack to hold the floating
+	 * point context. However with lazy stacking, that extra
+	 * space is not actually filled with the FPU register state
+	 * right away. (Allocating the extra space takes no extra
+	 * work since all the CPU has to do is set the SP register
+	 * to a slightly different value. Actually writing out the
+	 * FPU register contents to the stack is another matter.)
+	 *
+	 * To force the CPU to write the FPU state, we need to perform
+	 * some kind of floating point operation on entry to the ISR.
+	 * Reading the FPSCR register counts as a "floating point
+	 * operation" and has the added benefit that it doesn't also
+	 * change the the FPU state. So reading it here forces the
+	 * CPU to put the FPU registers onto the stack, including
+	 * the current FPSCR contents itself.
+	 */
+
 	(void)__get_FPSCR();
 
 	/*
@@ -141,10 +165,11 @@ OSAL_IRQ_HANDLER(VectorD8)
 	exc = (EXC_FRAME *)__get_PSP();
 
 	/*
-	 * Clear floating point exceptions
-	 * Note: ChibiOS technically already handles this in
-	 * _port_irq_epilogue(), but doing it here too doesn't
-	 * hurt.
+	 * Clear floating point exceptions. We directly update the
+	 * FPSCR register and the FPSCR word in the exception frame.
+	 * This prevents the FPSCR status bits from possibly being
+	 * changed back to their previous state later when we exit
+	 * the ISR.
 	 */
 
 	exc->exc_FPSCR &= ~(FPU_EXCEPTION_MASK);
