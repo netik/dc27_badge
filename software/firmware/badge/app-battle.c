@@ -36,6 +36,7 @@
 /* single player on this badge */
 static ENTITY me;
 static ENTITY bullet[MAX_BULLETS];
+static bool bullet_pending = false;
 
 // enemies -- linked list
 gll_t *enemies;
@@ -290,7 +291,7 @@ fire_bullet(ENTITY *from, int angle) {
 			// start the bullet from player position
 			bullet[i].vecPosition.x = from->vecPosition.x;
 			bullet[i].vecPosition.y = from->vecPosition.y;
-			// copy the frame buffer because we need what's under the player.
+			// copy the frame buffer from the parent.
 			memcpy(&bullet[i].pix_old, from->pix_old, sizeof(from->pix_old));
 			bullet[i].vecVelocityGoal.x = 50;
 			bullet[i].vecVelocityGoal.y = -50;
@@ -337,6 +338,13 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         entity_erase(&bullet[i]);
       }
     }
+    // we have to update bullets in the game loop, not outside or
+    // we'll have all sorts of artifacts on the screen.
+    // do we need a new bullet?
+    if (bullet_pending) {
+      fire_bullet(&me, 0);
+      bullet_pending = false;
+    };
 
     // update all
     // player
@@ -391,7 +399,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 				  enemy_engage();
 					break;
 				case keyASelect:
-					fire_bullet(&me, 0);
+          bullet_pending = true;
 					break;
 				default:
 				  break;
