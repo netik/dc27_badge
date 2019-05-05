@@ -60,7 +60,8 @@ static void zoomEntity(ENTITY *e) {
   /* if you are at some x,y on the world map and we zoom in to a sub-map
    * translate that coordinate to the new map
    *
-   * Your pixel on the world map could represent any of NxM pixels.
+   * Your point on the world map could represent any of NxM pixels in the
+   * submap.
    */
 
   float scalechange = 0.25;
@@ -74,6 +75,7 @@ static void zoomEntity(ENTITY *e) {
 static void
 entity_init(ENTITY *p) {
 	p->visible = false;
+  p->ttl = -1;
 
 	p->vecVelocity.x = 0 ;
 	p->vecVelocity.y = 0 ;
@@ -108,6 +110,13 @@ approach(float flGoal, float flCurrent, float dt) {
 
 static void
 entity_update(ENTITY *p, float dt) {
+  if ((p->ttl > -1) && (p->visible)) {
+    p->ttl--;
+    if (p->ttl == 0) {
+      p->visible = false;
+    }
+  }
+
  	p->vecVelocity.x = approach(
 			p->vecVelocityGoal.x,
 			p->vecVelocity.x,
@@ -158,7 +167,9 @@ static void
 bullets_render(void) {
 	for (int i=0; i < MAX_BULLETS; i++) {
 		if (bullet[i].visible == true)
-  		gdispFillArea (bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, Black);
+    // circle test
+		gdispFillCircle (bullet[i].vecPosition.x+(FB_X/2), bullet[i].vecPosition.y+(FB_X/2), FB_X/2-1, Black);
+    //  		gdispFillArea (bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, Black);
 	}
 }
 
@@ -288,6 +299,7 @@ fire_bullet(ENTITY *from, int angle) {
 		if (bullet[i].visible == false) {
 			entity_init(&bullet[i]);
 			bullet[i].visible = true;
+      bullet[i].ttl = 30; // about a second
 			// start the bullet from player position
 			bullet[i].vecPosition.x = from->vecPosition.x;
 			bullet[i].vecPosition.y = from->vecPosition.y;
@@ -324,7 +336,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		/* every four seconds (120 frames) */
 		if (ping_timer >= 120) {
 			ping_timer = 0;
-			i2sPlay("game/map_ping.snd");
+	//		i2sPlay("game/map_ping.snd");
 		}
 
     // erase everything.

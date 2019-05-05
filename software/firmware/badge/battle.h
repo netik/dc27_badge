@@ -9,6 +9,7 @@
 
 typedef struct _entity {
   bool visible;
+  int ttl;                /* if -1, always visible, else a number of frames */
   VECTOR vecVelocity;     /* current velocity */
   VECTOR vecVelocityGoal; /* goal velocity */
   VECTOR vecPosition;     /* position */
