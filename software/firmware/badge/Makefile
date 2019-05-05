@@ -183,7 +183,6 @@ CSRC += main.c \
 	ui-list.c \
 	gll.c \
 	app-battle.c \
-	app-calibrate.c \
 	app-launcher.c \
 	app-video.c \
 	app-chat.c \
