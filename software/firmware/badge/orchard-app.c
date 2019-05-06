@@ -67,12 +67,6 @@ static void ugfx_event(eventid_t id) {
 
   (void) id;
 
-  if (ugfx_evt.ugfx.pEvent->type != GEVENT_GWIN_BUTTON_UP) {
-    if (strcmp (instance.app->name, "Launcher") == 0)
-      i2sPlay ("sound/ping.snd");
-    else
-      i2sPlay ("sound/click.snd");
-  }
   instance.app->event (instance.context, &ugfx_evt);
   geventEventComplete (ugfx_evt.ugfx.pListener);
 
@@ -195,9 +189,9 @@ static void key_event(eventid_t id) {
   (void) id;
 
   if (instance.context != NULL) {
-      if (strcmp (instance.app->name, "Launcher") == 0 &&
-          joyEvent.key.flags == keyPress)
-        i2sPlay ("sound/ping.snd");
+    //      if (strcmp (instance.app->name, "Launcher") == 0 &&
+    //          joyEvent.key.flags == keyPress)
+    //        i2sPlay ("sound/ping.snd");
       instance.app->event(instance.context, &joyEvent);
   }
   return;

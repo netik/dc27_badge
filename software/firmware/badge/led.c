@@ -212,6 +212,11 @@ void led_clear() {
 
 void ledSetPattern(uint8_t patt) {
   led_current_func = patt;
+
+  if (ledExitRequest == 1) {
+    // our thread is stopped.
+    ledStart();
+  }
 }
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {

@@ -8,7 +8,8 @@
 #include "ides_gfx.h"
 #include "src/gdisp/gdisp_driver.h"
 #include "src/gwin/gwin_class.h"
-
+#include "userconfig.h"
+#include "i2s_lld.h"
 #include "ble_lld.h"
 
 #define LAUNCHER_COLS 3
@@ -52,7 +53,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	GWidgetInit wi;
 	unsigned int i,j;
 	char tmp[20];
-
+        userconfig *config = getConfig();
 	gwinWidgetClearInit (&wi);
    
 	/* Create label widget: ghTitleL */
@@ -62,7 +63,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	wi.g.y = 0;
 	wi.g.width = 160;
 	wi.g.height = -1;
-	wi.text = "BETA" /*config->name*/;
+	wi.text = config->name;
 	wi.customDraw = gwinLabelDrawJustifiedLeft;
 	wi.customParam = 0;
 	wi.customStyle = &DarkPurpleStyle;
@@ -269,7 +270,8 @@ launcher_start (OrchardAppContext *context)
 	struct launcher_list *list;
 	const OrchardApp *current;
 	unsigned int total_apps = 0;
-
+        userconfig *config = getConfig();
+        
 	/* How many apps do we have? */
 	current = orchard_app_list;
 	while (current->name) {
@@ -312,14 +314,13 @@ launcher_start (OrchardAppContext *context)
 	orchardAppTimer (context, 1000000, true);
 	last_ui_time = 0;
 
-#ifdef notdef
 	/* forcibly run the name app if our name is blank. Sorry. */
 
 	if (strlen(config->name) == 0) { 
 		orchardAppRun (orchardAppByName ("Set your name"));
 		return;
 	}
-
+#ifdef notdef
 	/* if you don't have a type set, force that too. */
 
 	if (config->p_type == 0) { 
@@ -368,59 +369,67 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		return;
 
 	if (event->type == keyEvent) {
-		draw_box (list, Black);
+          
+          if (event->key.flags == keyPress) {
+            if (event->key.code == keyASelect || event->key.code == keyBSelect) {
+              i2sPlay ("sound/ping.snd");
+            } else {
+              i2sPlay ("sound/click.snd");
+            }
+          }
+          draw_box (list, Black);
+          
+          if (event->key.code == keyAUp ||
+              event->key.code == keyBUp)
+            list->selected -= LAUNCHER_COLS;
+          
+          if (event->key.code == keyADown ||
+              event->key.code == keyBDown) {
+            if (list->selected + LAUNCHER_COLS <=
+                (list->total - 1))
+              list->selected += LAUNCHER_COLS;
+          }
+          
+          if (event->key.code == keyALeft ||
+              event->key.code == keyBLeft) {
+            if (list->selected > 0)
+              list->selected--;
+          }
+          
+          if (event->key.code == keyARight ||
+              event->key.code == keyBRight) {
+            if (list->selected < (list->total - 1)) 
+              list->selected++;
+          }
+          
+          if (list->selected > 250)
+            list->selected  = 0;
+          
+          if (list->selected > list->total)
+            list->selected = list->total;
+          
+          if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
+            list->page++;
+            redraw_list (list);
+            return;
+          }
+          
+          if (list->page > 0) {
+            if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
+              list->page--;
+              redraw_list (list);
+              return;
+            }
+          }
+          
+          if (event->key.code == keyASelect ||
+              event->key.code == keyBSelect) {
+            orchardAppRun (list->items[list->selected].entry);
+            return;
+          }
 
-		if (event->key.code == keyAUp ||
-		    event->key.code == keyBUp)
-			list->selected -= LAUNCHER_COLS;
-
-		if (event->key.code == keyADown ||
-		    event->key.code == keyBDown) {
-			if (list->selected + LAUNCHER_COLS <=
-			    (list->total - 1))
-				list->selected += LAUNCHER_COLS;
-		}
-
-		if (event->key.code == keyALeft ||
-		    event->key.code == keyBLeft) {
-			if (list->selected > 0)
-        			list->selected--;
-		}
-
-		if (event->key.code == keyARight ||
-		    event->key.code == keyBRight) {
-			if (list->selected < (list->total - 1)) 
-				list->selected++;
-		}
-
-		if (list->selected > 250)
-			list->selected  = 0;
-
-		if (list->selected > list->total)
-			list->selected = list->total;
-
-		if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
-			list->page++;
-			redraw_list (list);
-			return;
-    		}
-
-		if (list->page > 0) {
-			if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
-				list->page--;
-				redraw_list (list);
-				return;
-			}
-		}
-    
-		if (event->key.code == keyASelect ||
-		    event->key.code == keyBSelect) {
-			orchardAppRun (list->items[list->selected].entry);
-			return;
-    		}
-
-		draw_box (list, Red);
-		return;
+          draw_box (list, Red);
+          return;
 	}
   
 	pe = event->ugfx.pEvent;
