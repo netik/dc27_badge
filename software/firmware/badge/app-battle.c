@@ -4,6 +4,7 @@
  * J. Adams 4/27/2019
  *
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,7 @@
 #include "orchard-ui.h"
 #include "i2s_lld.h"
 #include "ides_gfx.h"
+#include "images.h"
 #include "battle.h"
 #include "gll.h"
 #include "math.h"
@@ -27,9 +29,6 @@
 #define SEARCH_BB  30       // If enemy is in this bounding box we can engage
 #define MAX_BULLETS 3       // duh.
 
-#define SCREEN_W 320
-#define SCREEN_H 240
-
 #define TILE_W 80
 #define TILE_H 60
 // note that if VGOAL is lowered VAPPROACH must come down to match
@@ -37,6 +36,7 @@
 /* single player on this badge */
 static ENTITY me;
 static ENTITY bullet[MAX_BULLETS];
+static bool bullet_pending = false;
 
 // enemies -- linked list
 gll_t *enemies;
@@ -47,29 +47,35 @@ enum game_state current_state = WORLD_MAP;
 
 static int16_t ping_timer = 120; // so we get one ping at start
 
-static int getMapforCoord(ENTITY *e) {
-  return floor( e->vecPosition.y / TILE_H ) + floor( e->vecPosition.y / TILE_W );
+static
+int getMapTile(ENTITY *e) {
+  // we have to cast to int or math will be very wrong
+  int x = (int)e->vecPosition.x;
+  int y = (int)e->vecPosition.y;
+
+  return ( (( y / TILE_H ) * 4) + ( x / TILE_W ));
 }
 
 static void zoomEntity(ENTITY *e) {
-  /* if you are at 10,10 on the world map and we zoom in,
+  /* if you are at some x,y on the world map and we zoom in to a sub-map
    * translate that coordinate to the new map
    *
-   * Your pixel on the world map could represent any of NxM pixels.
+   * Your point on the world map could represent any of NxM pixels in the
+   * submap.
    */
 
   float scalechange = 0.25;
   float offsetX = -(e->vecPosition.x * scalechange);
   float offsetY = -(e->vecPosition.y * scalechange);
 
-	e->vecPosition.x += offsetX;
-	e->vecPosition.y += offsetY;
-
+  e->vecPosition.x += offsetX;
+  e->vecPosition.y += offsetY;
 }
 
 static void
 entity_init(ENTITY *p) {
 	p->visible = false;
+  p->ttl = -1;
 
 	p->vecVelocity.x = 0 ;
 	p->vecVelocity.y = 0 ;
@@ -104,6 +110,13 @@ approach(float flGoal, float flCurrent, float dt) {
 
 static void
 entity_update(ENTITY *p, float dt) {
+  if ((p->ttl > -1) && (p->visible)) {
+    p->ttl--;
+    if (p->ttl == 0) {
+      p->visible = false;
+    }
+  }
+
  	p->vecVelocity.x = approach(
 			p->vecVelocityGoal.x,
 			p->vecVelocity.x,
@@ -154,7 +167,9 @@ static void
 bullets_render(void) {
 	for (int i=0; i < MAX_BULLETS; i++) {
 		if (bullet[i].visible == true)
-  		gdispFillArea (bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, Black);
+    // circle test
+		gdispFillCircle (bullet[i].vecPosition.x+(FB_X/2), bullet[i].vecPosition.y+(FB_X/2), FB_X/2-1, Black);
+    //  		gdispFillArea (bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, Black);
 	}
 }
 
@@ -257,13 +272,22 @@ static void
 enemy_engage(void) {
 
 	ENEMY *e = getNearestEnemy();
-	if (e == NULL) {
+//	if (e == NULL) {
 			// otherwise play an error sound because no one is near by
-			i2sPlay("game/error.snd");
-			return;
-	} else {
-		i2sPlay("game/engage.snd");
-	}
+//			i2sPlay("game/error.snd");
+//			return;
+//	} else {
+    // zoom in
+    char fnbuf[20];
+
+    i2sPlay("game/engage.snd");
+    int newmap = getMapTile(&me);
+    printf("(%f, %f) -> %d\n", me.vecPosition.x, me.vecPosition.y, newmap);
+    sprintf(fnbuf, "game/map-%02d.rgb", newmap);
+    putImageFile(fnbuf, 0,0);
+    zoomEntity(&me);
+    player_render(&me);
+//	}
 
 	// if so, attempt BLE connection
 }
@@ -275,10 +299,11 @@ fire_bullet(ENTITY *from, int angle) {
 		if (bullet[i].visible == false) {
 			entity_init(&bullet[i]);
 			bullet[i].visible = true;
+      bullet[i].ttl = 30; // about a second
 			// start the bullet from player position
 			bullet[i].vecPosition.x = from->vecPosition.x;
 			bullet[i].vecPosition.y = from->vecPosition.y;
-			// copy the frame buffer because we need what's under the player.
+			// copy the frame buffer from the parent.
 			memcpy(&bullet[i].pix_old, from->pix_old, sizeof(from->pix_old));
 			bullet[i].vecVelocityGoal.x = 50;
 			bullet[i].vecVelocityGoal.y = -50;
@@ -311,13 +336,36 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		/* every four seconds (120 frames) */
 		if (ping_timer >= 120) {
 			ping_timer = 0;
-			i2sPlay("game/map_ping.snd");
+	//		i2sPlay("game/map_ping.snd");
 		}
 
-		// handle bullets
+    // erase everything.
+    entity_erase(&me);
+    prevme.x = me.vecPosition.x;
+    prevme.y = me.vecPosition.y;
+
+    // bullets
+    for (i=0; i < MAX_BULLETS; i++) {
+      if (bullet[i].visible == true) {
+        entity_erase(&bullet[i]);
+      }
+    }
+    // we have to update bullets in the game loop, not outside or
+    // we'll have all sorts of artifacts on the screen.
+    // do we need a new bullet?
+    if (bullet_pending) {
+      fire_bullet(&me, 0);
+      bullet_pending = false;
+    };
+
+    // update all
+    // player
+    entity_update(&me, FRAME_DELAY);
+    getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
+
+    // bullets
 	  for (i=0; i < MAX_BULLETS; i++) {
 			if (bullet[i].visible == true) {
-				entity_erase(&bullet[i]);
 				entity_update(&bullet[i], FRAME_DELAY);
 				if (entity_OOB(&bullet[i])) {
 						// out of bounds, remove.
@@ -326,14 +374,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 				getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
 			}
 		}
-
-		// handle player
-		entity_erase(&me);
-    prevme.x = me.vecPosition.x;
-    prevme.y = me.vecPosition.y;
-
-		entity_update(&me, FRAME_DELAY);
-    getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
 
 		if (player_check_collision(&me) || entity_OOB(&me)) {
       // put the player back and get the pixel again
@@ -371,12 +411,13 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 				  enemy_engage();
 					break;
 				case keyASelect:
-					fire_bullet(&me, 0);
+          bullet_pending = true;
 					break;
 				default:
 				  break;
 			}
 		}
+
 		if (event->key.flags == keyRelease) {
 				switch (event->key.code) {
 					case keyALeft:

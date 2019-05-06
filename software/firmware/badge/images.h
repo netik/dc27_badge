@@ -10,8 +10,8 @@ Egan Hirvelda (game mechanics)\r\n"
 
 // defining this here because I don't want to keep looking it up
 // and I want to save calls to getwidth/height
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 240
+#define SCREEN_W 320
+#define SCREEN_H 240
 
 // Remember! Filenames must be in old school dos format (8x3)
 //                         12345678.123
