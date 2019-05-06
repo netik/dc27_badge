@@ -99,11 +99,15 @@ photos_event (OrchardAppContext *context,
 	}
 
 	if (event->type == appEvent && event->app.event == appStart) {
-		if (f_opendir (&p->d, "photos") != FR_OK)
-			/* give a helpful message if no photo dir. */
-			putImageFile("images/nophotos.rgb", 0, 0);
-		else
- 			orchardAppTimer (context, 1000, FALSE);
+          if (f_opendir (&p->d, "photos") != FR_OK) {
+            /* give a helpful message if no photo dir. */
+            putImageFile("images/nophotos.rgb", 0, 0);
+            gs = ginputGetMouse (0);
+            geventAttachSource (&p->gl, gs, GLISTEN_MOUSEMETA);
+            orchardAppTimer (context, 5000000, FALSE);
+          } else {
+            orchardAppTimer (context, 1000, FALSE);
+          }
 	}
 
 	if (event->type == timerEvent) {
