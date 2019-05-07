@@ -23,8 +23,8 @@
 #include "gll.h"
 #include "math.h"
 
-#define ENABLE_MAP_PING  1  // if you want the sonar sounds
-#define VGOAL      8        // ship accleration goal
+#define ENABLE_MAP_PING  1  // if you want the sonar sounds (very annoying during development)
+#define VGOAL      8        // ship accleration goal - note that if VGOAL is lowered VAPPROACH must come down to match
 #define VDRAG      -0.01f   // this is constant
 #define VAPPROACH  12       // this is accel/decel rate
 #define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (33mS)
@@ -35,8 +35,6 @@
 // size of sub-map tiles
 #define TILE_W 80
 #define TILE_H 60
-
-// note that if VGOAL is lowered VAPPROACH must come down to match
 
 /* single player on this badge */
 static ENTITY me;
@@ -81,21 +79,21 @@ static void
 entity_init(ENTITY *p) {
   p->visible = false;
   p->ttl = -1;
-  
+
   p->vecVelocity.x = 0 ;
   p->vecVelocity.y = 0 ;
-  
+
   p->vecVelocityGoal.x = 0;
   p->vecVelocityGoal.y = 0;
-  
+
   // we're going to always start in the lower harbor for now.
   p->vecPosition.x = HARBOR_LWR_X;
   p->vecPosition.y = HARBOR_LWR_Y;
-  
+
   // this is "ocean drag"
   p->vecGravity.x = VDRAG;
   p->vecGravity.y = VDRAG;
-  
+
   memset (p->pix_old, 0xFF, sizeof(p->pix_old));
 }
 
@@ -103,13 +101,13 @@ entity_init(ENTITY *p) {
 static float
 approach(float flGoal, float flCurrent, float dt) {
   float flDifference = flGoal - flCurrent;
-  
+
   if (flDifference > dt)
     return flCurrent + dt;
-  
+
   if (flDifference < -dt)
     return flCurrent - dt;
-  
+
   return flGoal;
 }
 
@@ -122,20 +120,18 @@ entity_update(ENTITY *p, float dt) {
       i2sPlay("game/splash.snd");
     }
   }
-  
-  p->vecVelocity.x = approach(
-                              p->vecVelocityGoal.x,
+
+  p->vecVelocity.x = approach(p->vecVelocityGoal.x,
                               p->vecVelocity.x,
                               dt * VAPPROACH);
-  
-  p->vecVelocity.y = approach(
-                              p->vecVelocityGoal.y,
+
+  p->vecVelocity.y = approach(p->vecVelocityGoal.y,
                               p->vecVelocity.y,
                               dt * VAPPROACH);
-  
+
   p->vecPosition.x = p->vecPosition.x + p->vecVelocity.x * dt	* VMULT;
   p->vecPosition.y = p->vecPosition.y + p->vecVelocity.y * dt * VMULT;
-  
+
   p->vecVelocity.x = p->vecVelocity.x + p->vecGravity.x * dt;
   p->vecVelocity.y = p->vecVelocity.y + p->vecGravity.y * dt;
 }
@@ -158,7 +154,7 @@ player_check_collision(ENTITY *p) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -182,7 +178,6 @@ enemy_render(void *e) {
   ENEMY *en = e;
   gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, Red);
 }
-
 
 static void
 enemy_renderall(void) {
@@ -209,14 +204,14 @@ battle_init(OrchardAppContext *context)
 {
   (void)context;
   ENEMY *e;
-  
+
   entity_init(&me);
   me.visible = true;
-  
+
   for (int i=0; i < MAX_BULLETS; i++) {
 		entity_init(&bullet[i]);
   }
-  
+
   // fake enemies -- we'll get these from BLE later on.
   enemies = gll_init();
   e = malloc(sizeof(ENEMY));
@@ -226,14 +221,14 @@ battle_init(OrchardAppContext *context)
   e->e.vecPosition.y = 90;
   strcpy(e->name, "enemy1");
   gll_push(enemies, e);
-  
+
   // don't allocate any stack space
   return (0);
 }
 
 static void draw_initial_map(void) {
   putImageFile("game/world.rgb", 0,0);
-  
+
   // Draw UI
   // TBD
 }
@@ -243,9 +238,9 @@ battle_start (OrchardAppContext *context)
 {
   (void)context;
   gdispClear (Black);
-  
+
   draw_initial_map();
-  
+
   /* start the timer - 30 fps */
   orchardAppTimer(context, FRAME_DELAY * 1000000, true);
   return;
@@ -287,8 +282,8 @@ enemy_engage(void) {
 
     // attempt connection...
 
-    // if success... 
-    
+    // if success...
+
     int newmap = getMapTile(&me);
     printf("(%f, %f) -> %d\n", me.vecPosition.x, me.vecPosition.y, newmap);
     sprintf(fnbuf, "game/map-%02d.rgb", newmap);
@@ -338,7 +333,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   (void) context;
   uint8_t i;
   VECTOR prevme;
-  
+
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
 #ifdef ENABLE_MAP_PING
@@ -373,7 +368,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     // player
     entity_update(&me, FRAME_DELAY);
     getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
-    
+
     // bullets
     for (i=0; i < MAX_BULLETS; i++) {
       if (bullet[i].visible == true) {
@@ -385,21 +380,21 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
       }
     }
-    
+
     if (player_check_collision(&me) || entity_OOB(&me)) {
       // put the player back and get the pixel again
       me.vecPosition.x = prevme.x;
       me.vecPosition.y = prevme.y;
       getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
     }
-    
+
     bullets_render();
     player_render(&me);
-    
+
     // render enemies
     enemy_renderall();
   }
-  
+
   if (event->type == keyEvent) {
     if (event->key.flags == keyPress)  {
       switch (event->key.code) {
@@ -428,7 +423,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         break;
       }
     }
-    
+
     if (event->key.flags == keyRelease) {
       switch (event->key.code) {
       case keyALeft:
@@ -448,7 +443,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       }
     }
   }
-  
+
   return;
 }
 
