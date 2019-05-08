@@ -22,7 +22,6 @@
 #include "battle.h"
 #include "gll.h"
 #include "math.h"
-<<<<<<< HEAD
 #include "led.h"
 #include "userconfig.h"
 
@@ -31,21 +30,10 @@
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
-#define FPS         30       // ... which represents about 30 FPS. 
+#define FPS         30       // ... which represents about 30 FPS.
 #define VMULT       8        // on each time step, take this many steps.
 #define ENGAGE_BB   30       // If enemy is in this bounding box we can engage
 #define MAX_BULLETS 3        // duh.
-=======
-
-#define ENABLE_MAP_PING  1  // if you want the sonar sounds (very annoying during development)
-#define VGOAL      8        // ship accleration goal - note that if VGOAL is lowered VAPPROACH must come down to match
-#define VDRAG      -0.01f   // this is constant
-#define VAPPROACH  12       // this is accel/decel rate
-#define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (33mS)
-#define VMULT      8        // on each time step, take this many steps.
-#define ENGAGE_BB  30       // If enemy is in this bounding box we can engage
-#define MAX_BULLETS 3       // duh.
->>>>>>> d8ea7e26f75b76de6be771afc61597e18f09e672
 
 // size of sub-map tiles
 #define TILE_W 80
@@ -208,7 +196,7 @@ static void
 enemy_render(void *e) {
   ENEMY *en = e;
   if (en->e.blinking) {
-    // blink this enemy at 2 Hz. 
+    // blink this enemy at 2 Hz.
     if ( (frame_counter % FPS) < (FPS/2) )
       return;
   }
@@ -231,7 +219,7 @@ static void
 enemy_clearall_blink(void) {
   // @brief clear enemy blink state
   gll_each(enemies, enemy_clear_blink);
-}  
+}
 
 static void
 enemy_erase(void *e) {
@@ -248,7 +236,7 @@ static void enemy_update(void *e) {
   ENEMY *en = e;
   // do whatever update here, like get positions from network
   // grab the pixels under the new position
-  getPixelBlock (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, en->e.pix_old); 
+  getPixelBlock (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, en->e.pix_old);
 }
 
 static void
@@ -280,12 +268,9 @@ battle_init(OrchardAppContext *context)
   strcpy(e->name, "enemy1");
   gll_push(enemies, e);
 
-<<<<<<< HEAD
   // turn off the LEDs
   led_clear();
   ledSetPattern(LED_PATTERN_WORLDMAP);
-=======
->>>>>>> d8ea7e26f75b76de6be771afc61597e18f09e672
   // don't allocate any stack space
   return (0);
 }
@@ -335,7 +320,7 @@ static void
 enemy_engage(void) {
 
   ENEMY *e = getNearestEnemy();
-  
+
   if (e == NULL) {
     // play an error sound because no one is near by
     i2sPlay("game/error.snd");
@@ -398,18 +383,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   (void) context;
   uint8_t i;
   VECTOR prevme;
-<<<<<<< HEAD
   ENEMY *nearest;
-  
-=======
 
->>>>>>> d8ea7e26f75b76de6be771afc61597e18f09e672
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
     frame_counter++;
 #ifdef ENABLE_MAP_PING
     /* every four seconds (120 frames) */
-    if (frame_counter % 120 == 0) {
+    if ((frame_counter % 120 == 0) && (game_state == WORLD_MAP)) {
       i2sPlay("game/map_ping.snd");
     }
 #endif
@@ -470,7 +451,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     if (nearest != NULL) {
       nearest->e.blinking = true;
     }
-    
+
     enemy_renderall();
   }
 
