@@ -335,13 +335,12 @@ enemy_engage(void) {
     // if success...
 
     int newmap = getMapTile(&me);
-    printf("(%f, %f) -> %d\n", me.vecPosition.x, me.vecPosition.y, newmap);
     sprintf(fnbuf, "game/map-%02d.rgb", newmap);
     putImageFile(fnbuf, 0,0);
     zoomEntity(&me);
+    enemy_clearall_blink();
     player_render(&me);
   }
-
 }
 
 static void
@@ -446,10 +445,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     player_render(&me);
 
     // render enemies
-    enemy_clearall_blink();
-    nearest = getNearestEnemy();
-    if (nearest != NULL) {
-      nearest->e.blinking = true;
+    if (current_state == WORLD_MAP) {
+      enemy_clearall_blink();
+      nearest = getNearestEnemy();
+      if (nearest != NULL) {
+        nearest->e.blinking = true;
+      }
     }
 
     enemy_renderall();
@@ -524,7 +525,7 @@ battle_exit(OrchardAppContext *context)
 
   // free the enemy list
   gll_destroy(enemies);
-  
+
   // restore the LED pattern from config
   led_clear();
   ledSetPattern(config->led_pattern);
