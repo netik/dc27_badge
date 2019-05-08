@@ -522,6 +522,9 @@ battle_exit(OrchardAppContext *context)
 
   (void) context;
 
+  // free the enemy list
+  gll_destroy(enemies);
+  
   // restore the LED pattern from config
   led_clear();
   ledSetPattern(config->led_pattern);
