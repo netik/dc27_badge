@@ -22,15 +22,18 @@
 #include "battle.h"
 #include "gll.h"
 #include "math.h"
+#include "led.h"
+#include "userconfig.h"
 
-#define ENABLE_MAP_PING  1  // if you want the sonar sounds
-#define VGOAL      8        // ship accleration goal
-#define VDRAG      -0.01f   // this is constant
-#define VAPPROACH  12       // this is accel/decel rate
-#define FRAME_DELAY 0.033f  // timer will be set to this * 1,000,000 (33mS)
-#define VMULT      8        // on each time step, take this many steps.
-#define ENGAGE_BB  30       // If enemy is in this bounding box we can engage
-#define MAX_BULLETS 3       // duh.
+#define ENABLE_MAP_PING  1   // if you want the sonar sounds
+#define VGOAL       8        // ship accleration goal
+#define VDRAG       -0.01f   // this is constant
+#define VAPPROACH   12       // this is accel/decel rate
+#define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
+#define FPS         30       // ... which represents about 30 FPS. 
+#define VMULT       8        // on each time step, take this many steps.
+#define ENGAGE_BB   30       // If enemy is in this bounding box we can engage
+#define MAX_BULLETS 3        // duh.
 
 // size of sub-map tiles
 #define TILE_W 80
@@ -50,7 +53,7 @@ gll_t *enemies;
 enum game_state { WORLD_MAP, BATTLE };
 enum game_state current_state = WORLD_MAP;
 
-static int16_t ping_timer = 120; // so we get one ping at start
+static int16_t frame_counter = 0;
 
 static
 int getMapTile(ENTITY *e) {
@@ -80,6 +83,7 @@ static void zoomEntity(ENTITY *e) {
 static void
 entity_init(ENTITY *p) {
   p->visible = false;
+  p->blinking = false;
   p->ttl = -1;
   
   p->vecVelocity.x = 0 ;
@@ -163,6 +167,21 @@ player_check_collision(ENTITY *p) {
 }
 
 static void
+entity_erase(ENTITY *p) {
+  /*
+   * This test is here because right after the app is launched,
+   * before we draw the player for the first time, we don't have
+   * anything to un-draw yet.
+   */
+  if (p->pix_old[0] == 0xFFFF)
+    return;
+
+  /* Put back what was previously on the screen */
+  putPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+  return;
+}
+
+static void
 player_render(ENTITY *p) {
   /* Draw ship */
   gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, Purple);
@@ -180,29 +199,55 @@ bullets_render(void) {
 static void
 enemy_render(void *e) {
   ENEMY *en = e;
+  if (en->e.blinking) {
+    // blink this enemy at 2 Hz. 
+    if ( (frame_counter % FPS) < (FPS/2) )
+      return;
+  }
   gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, Red);
 }
 
-
 static void
 enemy_renderall(void) {
-  /* walk our linked list of enemies and render each one */
+  // @brief walk our linked list of enemies and render each one
   gll_each(enemies, enemy_render);
 }
 
 static void
-entity_erase(ENTITY *p) {
-  /*
-   * This test is here because right after the app is launched,
-   * before we draw the player for the first time, we don't have
-   * anything to un-draw yet.
-   */
-  if (p->pix_old[0] == 0xFFFF)
-    return;
-  /* Put back what was previously on the screen */
-  putPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
-  return;
+enemy_clear_blink(void *e) {
+  ENEMY *en = e;
+  en->e.blinking = false;
 }
+
+static void
+enemy_clearall_blink(void) {
+  // @brief clear enemy blink state
+  gll_each(enemies, enemy_clear_blink);
+}  
+
+static void
+enemy_erase(void *e) {
+  ENEMY *en = e;
+  entity_erase(&(en->e));
+}
+
+static void
+enemy_erase_all(void) {
+  gll_each(enemies, enemy_erase);
+}
+
+static void enemy_update(void *e) {
+  ENEMY *en = e;
+  // do whatever update here, like get positions from network
+  // grab the pixels under the new position
+  getPixelBlock (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, en->e.pix_old); 
+}
+
+static void
+enemy_update_all(void) {
+  gll_each(enemies, enemy_update);
+}
+
 
 static uint32_t
 battle_init(OrchardAppContext *context)
@@ -226,14 +271,17 @@ battle_init(OrchardAppContext *context)
   e->e.vecPosition.y = 90;
   strcpy(e->name, "enemy1");
   gll_push(enemies, e);
-  
+
+  // turn off the LEDs
+  led_clear();
+  ledSetPattern(LED_PATTERN_WORLDMAP);
   // don't allocate any stack space
   return (0);
 }
 
 static void draw_initial_map(void) {
   putImageFile("game/world.rgb", 0,0);
-  
+
   // Draw UI
   // TBD
 }
@@ -276,6 +324,7 @@ static void
 enemy_engage(void) {
 
   ENEMY *e = getNearestEnemy();
+  
   if (e == NULL) {
     // play an error sound because no one is near by
     i2sPlay("game/error.snd");
@@ -338,14 +387,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   (void) context;
   uint8_t i;
   VECTOR prevme;
+  ENEMY *nearest;
   
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
+    frame_counter++;
 #ifdef ENABLE_MAP_PING
-    ping_timer++;
     /* every four seconds (120 frames) */
-    if (ping_timer >= 120) {
-      ping_timer = 0;
+    if (frame_counter % 120 == 0) {
       i2sPlay("game/map_ping.snd");
     }
 #endif
@@ -361,6 +410,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         entity_erase(&bullet[i]);
       }
     }
+
     // we have to update bullets in the game loop, not outside or
     // we'll have all sorts of artifacts on the screen.
     // do we need a new bullet?
@@ -369,8 +419,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       bullet_pending = false;
     };
 
-    // update all
-    // player
+    // enemy update
+    enemy_erase_all();
+    enemy_update_all();
+
+    // player update
     entity_update(&me, FRAME_DELAY);
     getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
     
@@ -397,6 +450,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     player_render(&me);
     
     // render enemies
+    enemy_clearall_blink();
+    nearest = getNearestEnemy();
+    if (nearest != NULL) {
+      nearest->e.blinking = true;
+    }
+    
     enemy_renderall();
   }
   
@@ -419,10 +478,16 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         orchardAppExit();
         break;
       case keyBDown:
+        current_state = BATTLE;
         enemy_engage();
         break;
       case keyASelect:
-        bullet_pending = true;
+        if (current_state == BATTLE) {
+          // can only fire in battle map.
+          bullet_pending = true;
+        } else {
+          i2sPlay("game/error.snd");
+        }
         break;
       default:
         break;
@@ -455,7 +520,13 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 static void
 battle_exit(OrchardAppContext *context)
 {
+  userconfig *config = getConfig();
+
   (void) context;
+
+  // restore the LED pattern from config
+  led_clear();
+  ledSetPattern(config->led_pattern);
   return;
 }
 

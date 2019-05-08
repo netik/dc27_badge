@@ -62,7 +62,7 @@ static void name_start(OrchardAppContext *context)
 	keyboardUiContext->itemlist = (const char **)malloc (
             sizeof(char *) * 2);
 	keyboardUiContext->itemlist[0] =
-	    "Ahoy! You name, Captain?\nTap ENTER when done.";
+	    "Ahoy! Your name, Captain?\nTap ENTER when done.";
 	keyboardUiContext->itemlist[1] = config->name;
 	keyboardUiContext->total = CONFIG_NAME_MAXLEN;
 

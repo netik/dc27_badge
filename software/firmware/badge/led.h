@@ -11,6 +11,11 @@
 #define LED_PATTERNS_FULL 18
 #define LED_PATTERNS_LIMITED 18
 
+// these are non-user selectable patterns
+// which are used by some apps
+#define LED_PATTERN_WORLDMAP 100
+#define LED_PATTERN_BATTLE   101
+
 /* colors */
 #define COL_RED    0
 #define COL_ORANGE 1
@@ -30,6 +35,7 @@ extern uint8_t ledStop(void);
 extern void ledSetPattern(uint8_t pattern);
 extern uint8_t led_brightness_get(void);
 extern void led_brightness_set(uint8_t brightness);
+extern void led_clear(void);
 
 /* Animation structs */
 #define LED_PATTERN_ROLLER_COASTER_COUNT 5
