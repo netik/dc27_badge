@@ -3,11 +3,11 @@
 import csv
 import sys
 
-if sys.argc != 1: 
+if len(sys.argv) != 2: 
   print "Usage: %s filename\n", sys.argv[0]
   sys.exit(1)
 
-with open("mfbom.tsv","wb") as tsvout, open("mf_bom_scrape.txt","rb") as fin:
+with open("mfbom.tsv","wb") as tsvout, open(sys.argv[1],"rb") as fin:
     tsvout = csv.writer(tsvout, delimiter='\t')
 
     # toss the header
