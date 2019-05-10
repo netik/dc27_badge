@@ -333,7 +333,11 @@ ENEMY *getNearestEnemy(void) {
 static void
 enemy_engage(void) {
 
-  ENEMY *e = getNearestEnemy();
+  char fnbuf[30];
+  int newmap;
+  ENEMY * e;
+
+  e = getNearestEnemy();
 
   if (e == NULL) {
     // play an error sound because no one is near by
@@ -341,14 +345,13 @@ enemy_engage(void) {
     return;
   } else {
     // zoom in
-    char fnbuf[20];
     i2sPlay("game/engage.snd");
 
     // attempt connection...
 
     // if success...
 
-    int newmap = getMapTile(&me);
+    newmap = getMapTile(&me);
     sprintf(fnbuf, "game/map-%02d.rgb", newmap);
     putImageFile(fnbuf, 0,0);
     zoomEntity(&me);
