@@ -37,7 +37,7 @@ typedef struct _DefaultHandles {
 } DefaultHandles;
 
 
-const OrchardAppEventKeyCode konami[] = { keyBUp, keyBUp, keyBDown, 
+const OrchardAppEventKeyCode konami[] = { keyBUp, keyBUp, keyBDown,
                                           keyBDown, keyBLeft, keyBRight,
                                           keyBLeft, keyBRight, keyBSelect };
 static void destroy_buttons(DefaultHandles *p) {
@@ -48,7 +48,7 @@ static void destroy_buttons(DefaultHandles *p) {
 static void draw_buttons(DefaultHandles * p) {
   GWidgetInit wi;
   coord_t totalheight = gdispGetHeight();
-  
+
   // Apply some default values for GWIN
   gwinWidgetClearInit(&wi);
   wi.g.show = TRUE;
@@ -70,32 +70,13 @@ static void redraw_player(DefaultHandles *p) {
   // draw the character during the HP update, it will blink and we
   // don't want that.
   const userconfig *config = getConfig();
-  coord_t totalheight = gdispGetHeight();
   char tmp[20];
   char tmp2[40];
-  char * img;
-  int class;
   uint16_t hpx;
-  
-  if (config->hp < (maxhp(config->current_type, config->unlocks, config->level) * .25)) {
-    if (lastimg != 2) {
-      img = "deth";
-      class = 2;
-   }
-    lastimg = 2;
-  } else {
-    class = 1;
-    if (config->hp < (maxhp(config->current_type, config->unlocks,config->level) * .50)) {
-      // show the whoop'd ass graphic if you're less than 15%
-      if (lastimg != 1)
-        img = "deth";
-      lastimg = 1;
-    } else {
-      if (lastimg != 0) 
-        img = "idla";
-      lastimg = 0;
-    }
-  }
+
+  // TODO: put player ship image based on fleet damage on screen
+
+  // TODO: put player rank based on us navy rank images
 
   //  putImageFile(getAvatarImage(config->current_type, img, class, false),
   //               POS_PLAYER1_X, totalheight - 42 - PLAYER_SIZE_Y);
@@ -104,7 +85,7 @@ static void redraw_player(DefaultHandles *p) {
   hpx = 61;
   gdispDrawThickLine(hpx, 77, 320, 77, Red, 2, FALSE);
   gdispDrawThickLine(hpx, 98, 320, 98, Red, 2, FALSE);
-  
+
   chsnprintf(tmp, sizeof(tmp), "HP");
   chsnprintf(tmp2, sizeof(tmp2), "%d", config->hp);
 
@@ -120,7 +101,7 @@ static void redraw_player(DefaultHandles *p) {
   gdispFillArea( hpx+148, 83,
                  30,gdispGetFontMetric(p->fontXS, fontHeight),
                  Black );
-                       
+
   gdispDrawStringBox (hpx+148,
 		      83,
                       30,
@@ -133,7 +114,7 @@ static void draw_stat (DefaultHandles * p,
                        uint16_t x, uint16_t y,
                        char * str1, char * str2) {
   uint16_t lmargin = 141;
-  
+
   gdispDrawStringBox (lmargin + x,
 		      y,
 		      gdispGetFontMetric(p->fontSM, fontMaxWidth)*strlen(str1),
@@ -151,14 +132,12 @@ static void draw_stat (DefaultHandles * p,
 }
 
 static void redraw_badge(DefaultHandles *p) {
-  // draw the entire background badge image. Shown when the screen is idle. 
+  // draw the entire background badge image. Shown when the screen is idle.
   const userconfig *config = getConfig();
-  coord_t totalheight = gdispGetHeight();
-  coord_t totalwidth = gdispGetWidth();
-  
+
   char tmp[20];
   char tmp2[40];
-  uint16_t ypos = 0; 
+  uint16_t ypos = 0;
 
   redraw_player(p);
 
@@ -170,7 +149,7 @@ static void redraw_badge(DefaultHandles *p) {
 		      p->fontLG, Yellow, justifyRight);
 
   chsnprintf(tmp, sizeof(tmp), "LEVEL %d", config->level);
-  
+
   /* Level */
   ypos = ypos + gdispGetFontMetric(p->fontLG, fontHeight);
   gdispDrawStringBox (0,
@@ -197,7 +176,7 @@ static void redraw_badge(DefaultHandles *p) {
 
   /* MIGHT */
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
-  if (config->unlocks & UL_PLUSMIGHT) 
+  if (config->unlocks & UL_PLUSMIGHT)
     chsnprintf(tmp2, sizeof(tmp2), "%3d", config->might + 1);
   else
     chsnprintf(tmp2, sizeof(tmp2), "%3d", config->might);
@@ -223,7 +202,7 @@ static uint32_t default_init(OrchardAppContext *context) {
   (void)context;
 
   //  orchardAppTimer(context, HEAL_INTERVAL_US, true);
-  
+
   return 0;
 }
 
@@ -233,7 +212,7 @@ static void default_start(OrchardAppContext *context) {
 
   p = malloc(sizeof(DefaultHandles));
   context->priv = p;
-      
+
   p->fontXS = gdispOpenFont (FONT_XS);
   p->fontLG = gdispOpenFont (FONT_LG);
   p->fontSM = gdispOpenFont (FONT_FIXED);
@@ -245,13 +224,13 @@ static void default_start(OrchardAppContext *context) {
   lastimg = -1;
   redraw_badge(p);
   draw_buttons(p);
-  
+
   geventListenerInit(&p->glBadge);
   gwinAttachListener(&p->glBadge);
   geventRegisterCallback (&p->glBadge, orchardAppUgfxCallback, &p->glBadge);
 }
 
-static inline void storeKey(OrchardAppContext *context, OrchardAppEventKeyCode key) { 
+static inline void storeKey(OrchardAppContext *context, OrchardAppEventKeyCode key) {
   /* remember the last pushed keys to enable the konami code */
   DefaultHandles * p;
   p = context->priv;
@@ -259,16 +238,16 @@ static inline void storeKey(OrchardAppContext *context, OrchardAppEventKeyCode k
   for (int i=1; i < KEY_HISTORY; i++) {
     p->last_pushed[i-1] = p->last_pushed[i];
   }
-  
+
   p->last_pushed[KEY_HISTORY-1] = key;
 };
 
-static inline uint8_t testKonami(OrchardAppContext *context) { 
+static inline uint8_t testKonami(OrchardAppContext *context) {
   DefaultHandles * p;
   p = context->priv;
 
   for (int i=0; i < KEY_HISTORY; i++) {
-    if (p->last_pushed[i] != konami[i]) 
+    if (p->last_pushed[i] != konami[i])
       return false;
   }
   return true;
@@ -298,14 +277,14 @@ static void default_event(OrchardAppContext *context,
     if ( (event->key.code == keyBSelect) &&
          (event->key.flags == keyPress) )  {
 
-      if (testKonami(context)) { 
+      if (testKonami(context)) {
         orchardAppRun(orchardAppByName("Unlocks"));
-      } 
+      }
       return;
     }
 
   }
-  
+
   if (event->type == ugfxEvent) {
     pe = event->ugfx.pEvent;
 
@@ -325,25 +304,25 @@ static void default_event(OrchardAppContext *context,
 
   /* timed events (heal, caesar election, etc.) */
   if (event->type == timerEvent) {
-    
+
     gdispFillArea( totalwidth - 100, totalheight - 50,
                    100, gdispGetFontMetric(p->fontXS, fontHeight),
                    Black );
-    
+
     gdispDrawStringBox (0,
                         totalheight - 50,
                         totalwidth,
                         gdispGetFontMetric(p->fontXS, fontHeight),
                         tmp,
                         p->fontXS, White, justifyRight);
-  
+
   }
 }
 
 static void default_exit(OrchardAppContext *context) {
   DefaultHandles * p;
   orchardAppTimer(context, 0, false); // shut down the timer
-  
+
   p = context->priv;
   destroy_buttons(p);
 
@@ -358,9 +337,9 @@ static void default_exit(OrchardAppContext *context) {
   context->priv = NULL;
 
   gdispSetOrientation (GDISP_DEFAULT_ORIENTATION);
-  
+
   return;
 }
 
-orchard_app("Badge", "badge.rgb", 0, default_init, default_start,
+orchard_app("Badge", "icons/anchor.rgb", 0, default_init, default_start,
 	default_event, default_exit, 0);

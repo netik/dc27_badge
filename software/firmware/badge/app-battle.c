@@ -286,6 +286,10 @@ battle_init(OrchardAppContext *context)
   led_clear();
   ledSetPattern(LED_PATTERN_WORLDMAP);
   // don't allocate any stack space
+
+  // send one ping.
+	chThdSleepMilliseconds (1000);
+  i2sPlay("game/map_ping.snd");
   return (0);
 }
 
@@ -489,6 +493,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         me.vecVelocityGoal.y = VGOAL;
         break;
       case keyBUp:
+        // TODO - penalty if in battle
         orchardAppExit();
         break;
       case keyBDown:
@@ -539,6 +544,7 @@ battle_exit(OrchardAppContext *context)
   userconfig *config = getConfig();
 
   (void) context;
+  current_state = WORLD_MAP;
 
   // free the enemy list
   gll_destroy(enemies);
