@@ -48,7 +48,9 @@ void led_pattern_running_lights(uint8_t red,
                                 uint8_t blue,
                                 uint8_t* p_position);
 void led_pattern_kraftwerk(uint8_t* p_index, int8_t* p_position);
-void led_pattern_bgspin(uint8_t* p_index);
+void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
+                          uint8_t r2, uint8_t g2, uint8_t b2,
+                          uint8_t* p_index);
 void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
                            uint8_t *p_position, bool bgpulse);
 void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
@@ -141,10 +143,13 @@ const char *fxlist[] = {
   "Blue Spin",
   "Yellow Spin",
   "Kraftwerk",
-  "B/G Spin",
+  "Dual BG",
+  "Dual Sky",
+  "Dual PurOrg",
+  "Meteor Blu",
+  "Meteor Pur",
   "Red Sparkle",
   "Purple Pulse",
-  "Meteor"
 };
 
 /* Brightness control */
@@ -413,16 +418,31 @@ static THD_FUNCTION(bling_thread, arg) {
         led_pattern_kraftwerk(&anim_uindex, &anim_position);
         break;
       case 18:
-        led_pattern_bgspin(&anim_uindex);
+        led_pattern_dualspin(0, 0, 255,
+                             0, 255, 0,
+                             &anim_uindex);
         break;
       case 19:
-        led_pattern_bgsparkle(255,0,0,&anim_uindex,false);
+        led_pattern_dualspin(0x14, 0x80, 0x33,
+                             0x11, 0x45, 0xff,
+                             &anim_uindex);
         break;
       case 20:
-        led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
+        led_pattern_dualspin(0x81, 0x0D, 0x70,
+                             0xF5, 0x82, 0x25,
+                             &anim_uindex);
         break;
       case 21:
-        led_pattern_meteor(0xff,0x00,0xff, 4, 64, true, &anim_uindex);
+        led_pattern_meteor(0x01,0x0f,0xc2, 2, 100, true, &anim_uindex);
+        break;
+      case 22:
+        led_pattern_meteor(0xff,0x00,0xff, 4, 80, true, &anim_uindex);
+        break;
+      case 23:
+        led_pattern_bgsparkle(255,0,0,&anim_uindex,false);
+        break;
+      case 24:
+        led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
         break;
       }
     }
@@ -835,19 +855,21 @@ void led_add_glitter(int n, uint8_t *pos) {
   }
 };
 
-void led_pattern_bgspin(uint8_t *p_index) {
+void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
+                          uint8_t r2, uint8_t g2, uint8_t b2,
+                          uint8_t *p_index) {
   // Ensure indices are within range
   if ((*p_index) > (LED_COUNT_INTERNAL - 1)) { *p_index = 0; }
 
   // we want to fill half of the display with wraparound
-  led_set_all(0,0,255);
+  led_set_all(r1,g1,b1);
 
   for (int i = (*p_index); i < ((LED_COUNT_INTERNAL / 2) - 1) + (*p_index); i++) {
     int pos = i;
     if (i > LED_COUNT-1) {
       pos = i - LED_COUNT;
     }
-    led_set(pos, 0,255,0);
+    led_set(pos, r2, g2, b2);
   }
 
   led_show();
@@ -892,7 +914,6 @@ void fadeToBlack(int ledNo, uint8_t fadeValue) {
 void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
                         uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay,
                         uint8_t *pos) {
-    led_set_all(0,0,0);
 
     if ((*pos) > LED_COUNT+LED_COUNT) {
       *pos = 0;
