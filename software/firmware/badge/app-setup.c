@@ -19,6 +19,8 @@
 #include "src/gdriver/gdriver.h"
 #include "src/ginput/ginput_driver_mouse.h"
 
+#include "i2s_lld.h"
+
 /* the amount that we increase or decrease brightness by */
 #define LED_BRIGHT_STEP 20
 
@@ -312,10 +314,13 @@ static void setup_event(OrchardAppContext *context,
         break; // all other keys ignored
     }
   }
+  if (event->type == keyEvent && event->key.flags == keyPress) {
+    i2sPlay("sound/click.snd");
+  }
 
   if (event->type == ugfxEvent) {
     pe = event->ugfx.pEvent;
-
+    i2sPlay("sound/click.snd");
     switch(pe->type) {
 
     case GEVENT_GWIN_CHECKBOX:

@@ -50,7 +50,7 @@ void led_pattern_running_lights(uint8_t red,
 void led_pattern_kraftwerk(uint8_t* p_index, int8_t* p_position);
 void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
                           uint8_t r2, uint8_t g2, uint8_t b2,
-                          uint8_t* p_index);
+                          uint8_t glitter, uint8_t* p_index);
 void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
                            uint8_t *p_position, bool bgpulse);
 void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
@@ -420,17 +420,17 @@ static THD_FUNCTION(bling_thread, arg) {
       case 18:
         led_pattern_dualspin(0, 0, 255,
                              0, 255, 0,
-                             &anim_uindex);
+                             0, &anim_uindex);
         break;
       case 19:
         led_pattern_dualspin(0x14, 0x80, 0x33,
                              0x11, 0x45, 0xff,
-                             &anim_uindex);
+                             0, &anim_uindex);
         break;
       case 20:
         led_pattern_dualspin(0x81, 0x0D, 0x70,
                              0xF5, 0x82, 0x25,
-                             &anim_uindex);
+                             0, &anim_uindex);
         break;
       case 21:
         led_pattern_meteor(0x01,0x0f,0xc2, 2, 100, true, &anim_uindex);
@@ -840,10 +840,11 @@ void led_add_glitter(int n, uint8_t *pos) {
 
   // draw all particles in memory.
   for (int i = 0; i < led_used_particles; i++) {
-    led_set(particles[i].led_num,
-            particles[i].level,
-            particles[i].level,
-            particles[i].level);
+    if (particles[i].visible)
+      led_set(particles[i].led_num,
+              particles[i].level,
+              particles[i].level,
+              particles[i].level);
   }
 
   // increment or decrement particle for next round.
@@ -857,7 +858,7 @@ void led_add_glitter(int n, uint8_t *pos) {
 
 void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
                           uint8_t r2, uint8_t g2, uint8_t b2,
-                          uint8_t *p_index) {
+                          uint8_t glitter, uint8_t *p_index) {
   // Ensure indices are within range
   if ((*p_index) > (LED_COUNT_INTERNAL - 1)) { *p_index = 0; }
 
@@ -870,6 +871,10 @@ void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
       pos = i - LED_COUNT;
     }
     led_set(pos, r2, g2, b2);
+  }
+
+  if (glitter > 0) {
+    led_add_glitter(glitter, p_index);
   }
 
   led_show();

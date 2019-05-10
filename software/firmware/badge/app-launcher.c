@@ -46,7 +46,7 @@ struct launcher_list {
 };
 
 static void redraw_list(struct launcher_list *list);
-  
+
 static void
 draw_launcher_buttons(struct launcher_list * list)
 {
@@ -55,7 +55,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	char tmp[20];
         userconfig *config = getConfig();
 	gwinWidgetClearInit (&wi);
-   
+
 	/* Create label widget: ghTitleL */
 
 	wi.g.show = TRUE;
@@ -88,16 +88,16 @@ draw_launcher_buttons(struct launcher_list * list)
 	gwinSetFont (list->ghTitleR, list->fontSM);
 	gwinLabelSetBorder (list->ghTitleR, FALSE);
 	gwinRedraw (list->ghTitleR);
-  
+
 	/* draw the button grid
 	 *
 	 * buttons
 	 * xloc: 0, 90, 180
-	 * yloc: 30, 140 
+	 * yloc: 30, 140
 	 *
 	 * label
 	 * xloc: 0, 90, 180
-	 * yloc: 110, 220 
+	 * yloc: 110, 220
 	 */
 
 	/*
@@ -118,12 +118,12 @@ draw_launcher_buttons(struct launcher_list * list)
 			wi.g.width = 80;
 			wi.g.height = 80;
 			wi.text = "";
-			wi.customDraw = noRender; 
+			wi.customDraw = noRender;
 			wi.customParam = 0;
 			wi.customStyle = 0;
 			list->ghButtons[(i * LAUNCHER_COLS) + j] =
 			    gwinButtonCreate (0, &wi);
-        
+
 			/* Create label widget: ghLabel1 */
 
 			wi.g.x = (j * 90) + 2;
@@ -173,7 +173,7 @@ draw_box (struct launcher_list * list, color_t color)
 	/* row y */
 
 	i = (list->selected % LAUNCHER_PERPAGE) / LAUNCHER_COLS;
-    
+
 	/* col x */
 
 	j = list->selected % LAUNCHER_COLS;
@@ -213,7 +213,7 @@ redraw_list (struct launcher_list * list)
 	 * and set the label.
 	 */
 
-	for (i = 0; i < LAUNCHER_ROWS; i++) { 
+	for (i = 0; i < LAUNCHER_ROWS; i++) {
 		for (j = 0; j < LAUNCHER_COLS; j++) {
 			actualid = (list->page * LAUNCHER_PERPAGE) +
 			    (i * LAUNCHER_COLS) + j;
@@ -258,7 +258,7 @@ static uint32_t
 launcher_init (OrchardAppContext *context)
 {
 	(void)context;
-  
+
 	gdispClear (Black);
 
 	return (0);
@@ -271,7 +271,7 @@ launcher_start (OrchardAppContext *context)
 	const OrchardApp *current;
 	unsigned int total_apps = 0;
         userconfig *config = getConfig();
-        
+
 	/* How many apps do we have? */
 	current = orchard_app_list;
 	while (current->name) {
@@ -288,7 +288,7 @@ launcher_start (OrchardAppContext *context)
 	list->fontXS = gdispOpenFont (FONT_XS);
 	list->fontLG = gdispOpenFont (FONT_LG);
 	list->fontSM = gdispOpenFont (FONT_SM);
-  
+
 	/* Rebuild the app list */
 	current = orchard_app_list;
 	list->total = 0;
@@ -304,7 +304,7 @@ launcher_start (OrchardAppContext *context)
 	list->selected = 0;
 
 	draw_launcher_buttons (list);
-  
+
 	/* set up our local listener */
 	geventListenerInit (&list->gl);
 	gwinAttachListener (&list->gl);
@@ -316,14 +316,14 @@ launcher_start (OrchardAppContext *context)
 
 	/* forcibly run the name app if our name is blank. Sorry. */
 
-	if (strlen(config->name) == 0) { 
+	if (strlen(config->name) == 0) {
 		orchardAppRun (orchardAppByName ("Set your name"));
 		return;
 	}
 #ifdef notdef
 	/* if you don't have a type set, force that too. */
 
-	if (config->p_type == 0) { 
+	if (config->p_type == 0) {
 		orchardAppRun (orchardAppByName ("Choosetype"));
 		return;
 	}
@@ -369,7 +369,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		return;
 
 	if (event->type == keyEvent) {
-          
+
           if (event->key.flags == keyPress) {
             if (event->key.code == keyASelect || event->key.code == keyBSelect) {
               i2sPlay ("sound/ping.snd");
@@ -378,42 +378,42 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
             }
           }
           draw_box (list, Black);
-          
+
           if (event->key.code == keyAUp ||
               event->key.code == keyBUp)
             list->selected -= LAUNCHER_COLS;
-          
+
           if (event->key.code == keyADown ||
               event->key.code == keyBDown) {
             if (list->selected + LAUNCHER_COLS <=
                 (list->total - 1))
               list->selected += LAUNCHER_COLS;
           }
-          
+
           if (event->key.code == keyALeft ||
               event->key.code == keyBLeft) {
             if (list->selected > 0)
               list->selected--;
           }
-          
+
           if (event->key.code == keyARight ||
               event->key.code == keyBRight) {
-            if (list->selected < (list->total - 1)) 
+            if (list->selected < (list->total - 1))
               list->selected++;
           }
-          
+
           if (list->selected > 250)
             list->selected  = 0;
-          
+
           if (list->selected > list->total)
             list->selected = list->total;
-          
+
           if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
             list->page++;
             redraw_list (list);
             return;
           }
-          
+
           if (list->page > 0) {
             if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
               list->page--;
@@ -421,7 +421,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
               return;
             }
           }
-          
+
           if (event->key.code == keyASelect ||
               event->key.code == keyBSelect) {
             orchardAppRun (list->items[list->selected].entry);
@@ -431,20 +431,20 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
           draw_box (list, Red);
           return;
 	}
-  
+
 	pe = event->ugfx.pEvent;
 
 	if (event->type == ugfxEvent && pe->type == GEVENT_GWIN_BUTTON) {
 		w = ((GEventGWinButton*)pe)->gwin;
-
 		draw_box (list, Black);
 
 		for (i = 0; i < 6; i++) {
 			currapp = (list->page * LAUNCHER_PERPAGE) + i;
 			if (w == list->ghButtons[i] &&
-			    currapp < list->total) { 
-				orchardAppRun (list->items[currapp].entry);
-				return;
+			    currapp < list->total) {
+				  i2sPlay ("sound/ping.snd");
+					orchardAppRun (list->items[currapp].entry);
+						return;
 			}
 		}
 
@@ -454,6 +454,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		 */
 
 		if (w == list->ghButtonDn) {
+			i2sPlay ("sound/click.snd");
 			if (((list->page + 1) * LAUNCHER_PERPAGE) <
 			    list->total) {
 				/* remove the box before update  */
@@ -477,12 +478,12 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		}
 		draw_box (list, Red);
 	}
- 
+
 	/* wraparound */
 
 	if (list->selected > 255) // underflow
 		list->selected = list->total-1;
-  
+
 	if (list->selected >= list->total)
 		list->selected = 0;
 
@@ -500,21 +501,21 @@ launcher_exit (OrchardAppContext *context)
 	gdispCloseFont (list->fontXS);
 	gdispCloseFont (list->fontLG);
 	gdispCloseFont (list->fontSM);
-  
+
 	gwinDestroy (list->ghTitleL);
 	gwinDestroy (list->ghTitleR);
 	gwinDestroy (list->ghButtonUp);
 	gwinDestroy (list->ghButtonDn);
 
 	/* nuke the grid */
-	for (i = 0; i < 6; i++) { 
+	for (i = 0; i < 6; i++) {
 		gwinDestroy (list->ghButtons[i]);
 		gwinDestroy (list->ghLabels[i]);
 	}
 
 	geventRegisterCallback (&list->gl, NULL, NULL);
 	geventDetachSource (&list->gl, NULL);
-  
+
 	free (context->priv);
 	context->priv = NULL;
 

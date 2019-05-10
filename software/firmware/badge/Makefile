@@ -182,6 +182,7 @@ CSRC += main.c \
 	ui-keyboard.c \
 	ui-list.c \
 	gll.c \
+	app-badge.c \
 	app-battle.c \
 	app-launcher.c \
 	app-video.c \
