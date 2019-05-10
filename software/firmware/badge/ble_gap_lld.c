@@ -122,15 +122,6 @@ bleGapAdvStart (void)
 	if (r != NRF_SUCCESS)
 		return (r);
 
-	/* Set manufacturer ID */
-
-	val = BLE_COMPANY_ID_IDES;
-	r = bleGapAdvBlockAdd (&val, 2,
-	    BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA, pkt, &size);
-
-	if (r != NRF_SUCCESS)
-		return (r);
-
 	/* Set flags */
 
 	val = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED |
@@ -141,7 +132,7 @@ bleGapAdvStart (void)
 	if (r != NRF_SUCCESS)
 		return (r);
 
-	/* Advertise game state */
+	/* Advertise company ID and game state */
 
 	r = bleGapAdvBlockAdd (&ble_ides_state, sizeof(ble_ides_state),
 	    BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA, pkt, &size);

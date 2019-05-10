@@ -117,7 +117,7 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * data, uint8_t len, int8_t rssi)
 	l = len;
 
 	if (bleGapAdvBlockFind (&d, &l,
-	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME) == NRF_SUCCESS) {
+	    BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA) == NRF_SUCCESS) {
 		s = (ble_ides_game_state_t *)d;
 		if (s->ble_ides_company_id == BLE_COMPANY_ID_IDES) {
 			memcpy (&p->ble_game_state, s,
@@ -161,6 +161,7 @@ void
 blePeerShow (void)
 {
 	ble_peer_entry * p;
+	ble_ides_game_state_t * t;
 	int i;
 
 	osalMutexLock (&peer_mutex);
@@ -176,7 +177,14 @@ blePeerShow (void)
 		    p->ble_peer_addr[1], p->ble_peer_addr[0]);
 		printf ("[%s] ", p->ble_peer_name);
 		printf ("[%d] ", p->ble_rssi);
-		printf ("[%d]\r\n", p->ble_ttl);
+		printf ("[%d] ", p->ble_ttl);
+		if (p->ble_isbadge == TRUE) {
+			t = &p->ble_game_state;
+			printf ("Badge: X/Y: %d/%d XP: %d RANK: %d",
+			    t->ble_ides_x, t->ble_ides_y, t->ble_ides_xp,
+			    t->ble_ides_rank);
+		}
+		printf ("\n");
 	}
 
 	osalMutexUnlock (&peer_mutex);
