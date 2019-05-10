@@ -24,6 +24,8 @@
 #include "math.h"
 #include "led.h"
 #include "userconfig.h"
+#include "ble_lld.h"
+#include "ble_gap_lld.h"
 
 #define ENABLE_MAP_PING  1   // if you want the sonar sounds
 #define VGOAL       8        // ship accleration goal
@@ -181,6 +183,18 @@ static void
 player_render(ENTITY *p) {
   /* Draw ship */
   gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, Purple);
+
+  /*
+   * Broadcast our location.
+   * Ideally we should only do this when we know we've changed location,
+   * however this seems as good a place as any to capture location changes
+   * for now. Note that XP and rank aren't supported yet so for the moment
+   * they're hardcoded to 0.
+   */
+
+  bleGapUpdateState ((uint16_t)p->vecPosition.x,
+    (uint16_t)p->vecPosition.y, 0, 0);
+
   return;
 }
 

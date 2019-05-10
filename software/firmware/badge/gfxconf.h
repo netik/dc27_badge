@@ -110,7 +110,7 @@
 //    #define GDISP_NEED_IMAGE_PNG                     FALSE
 //    #define GDISP_NEED_IMAGE_ACCOUNTING              FALSE
 
-//#define GDISP_NEED_PIXMAP                            FALSE
+#define GDISP_NEED_PIXMAP                            TRUE
 //    #define GDISP_NEED_PIXMAP_IMAGE                  FALSE
 
 #define GDISP_DEFAULT_ORIENTATION                    GDISP_ROTATE_270    // If not defined the native hardware orientation is used.
@@ -129,7 +129,7 @@
 //        #define GDISP_HARDWARE_DRAWPIXEL             FALSE
 //        #define GDISP_HARDWARE_CLEARS                FALSE
 //        #define GDISP_HARDWARE_FILLS                 FALSE
-//        #define GDISP_HARDWARE_BITFILLS              FALSE
+#define GDISP_HARDWARE_BITFILLS              TRUE
 //        #define GDISP_HARDWARE_SCROLL                FALSE
 //        #define GDISP_HARDWARE_PIXELREAD             FALSE
 #define GDISP_HARDWARE_CONTROL              TRUE
