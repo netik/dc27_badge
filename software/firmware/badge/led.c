@@ -48,13 +48,24 @@ void led_pattern_running_lights(uint8_t red,
                                 uint8_t blue,
                                 uint8_t* p_position);
 void led_pattern_kraftwerk(uint8_t* p_index, int8_t* p_position);
-
+void led_pattern_bgspin(uint8_t* p_index);
+void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
+                           uint8_t *p_position, bool bgpulse);
+void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
+                        uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay,
+                        uint8_t *pos);
 /* control vars */
 static thread_t * pThread;
 static uint8_t ledExitRequest = 0;
 uint8_t ledsOff = 1;
 // the current function that updates the LEDs. Override with ledSetFunction();
 static uint8_t led_current_func = 1;
+
+// for tracking "glitter"
+static LED_PARTICLE particles[LED_MAX_PARTICLES];
+static int8_t   led_used_particles = -1;
+static bool     led_particle_fwd = true;
+
 const unsigned char led_address[LED_COUNT_INTERNAL][3] = {
     /* Here LEDs are in Green, Red, Blue order*/
     /* D201-D208 */
@@ -129,7 +140,11 @@ const char *fxlist[] = {
   "Green Spin",
   "Blue Spin",
   "Yellow Spin",
-  "Kraftwerk"
+  "Kraftwerk",
+  "B/G Spin",
+  "Red Sparkle",
+  "Purple Pulse",
+  "Meteor"
 };
 
 /* Brightness control */
@@ -324,7 +339,7 @@ static THD_FUNCTION(bling_thread, arg) {
     .blue = 255,
     .yellow = 255,
   };
-  
+
   (void)arg;
   chRegSetThreadName("LED Bling");
 
@@ -396,6 +411,18 @@ static THD_FUNCTION(bling_thread, arg) {
         break;
       case 17:
         led_pattern_kraftwerk(&anim_uindex, &anim_position);
+        break;
+      case 18:
+        led_pattern_bgspin(&anim_uindex);
+        break;
+      case 19:
+        led_pattern_bgsparkle(255,0,0,&anim_uindex,false);
+        break;
+      case 20:
+        led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
+        break;
+      case 21:
+        led_pattern_meteor(0xff,0x00,0xff, 4, 64, true, &anim_uindex);
         break;
       }
     }
@@ -528,7 +555,7 @@ void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep) {
     p_triple_sweep->blue;
   p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_yellow] =
     (p_triple_sweep->yellow << 16) | (p_triple_sweep->yellow << 8);
-  
+
   led_set_rgb((uint8_t)p_triple_sweep->index_red,
               p_triple_sweep->rgb[(uint8_t)p_triple_sweep->index_red]);
   led_set_rgb((uint8_t)p_triple_sweep->index_green,
@@ -759,5 +786,132 @@ void led_pattern_kraftwerk(uint8_t *fx_index, int8_t *fx_position) {
   led_set(31-(*fx_position), 255,0,0);
   led_set(*fx_position, 255,0,0);
   led_show();
+}
 
+void led_add_glitter(int n, uint8_t *pos) {
+
+  if (led_used_particles < 0) {
+    led_particle_fwd = true;
+  }
+
+  // have we reached n or max yet?
+  if ( (led_particle_fwd && led_used_particles < n) &&
+       (*pos % 3 == 0) ) { // spawn every 200mS only
+    // no, spawn a particle.
+    led_used_particles++;
+    particles[led_used_particles].led_num = util_random(0,LED_COUNT);
+    particles[led_used_particles].visible = true;
+  }
+
+  // despawn
+  if (led_particle_fwd == false &&
+      led_used_particles > 0) {
+    particles[led_used_particles].visible = false;
+    led_used_particles--;
+
+    if (led_used_particles <= 0) {
+      led_particle_fwd = true;
+    }
+  }
+
+  if (led_used_particles >= n) {
+    led_particle_fwd = false;
+  }
+
+  // draw all particles in memory.
+  for (int i = 0; i < led_used_particles; i++) {
+    led_set(particles[i].led_num,
+            particles[i].level,
+            particles[i].level,
+            particles[i].level);
+  }
+
+  // increment or decrement particle for next round.
+  for (int i = 0; i < led_used_particles; i++) {
+    if (particles[i].visible) {
+      // sin here will make the bright lights pulse hard and randomly
+      particles[i].level = 255;
+    }
+  }
+};
+
+void led_pattern_bgspin(uint8_t *p_index) {
+  // Ensure indices are within range
+  if ((*p_index) > (LED_COUNT_INTERNAL - 1)) { *p_index = 0; }
+
+  // we want to fill half of the display with wraparound
+  led_set_all(0,0,255);
+
+  for (int i = (*p_index); i < ((LED_COUNT_INTERNAL / 2) - 1) + (*p_index); i++) {
+    int pos = i;
+    if (i > LED_COUNT-1) {
+      pos = i - LED_COUNT;
+    }
+    led_set(pos, 0,255,0);
+  }
+
+  led_show();
+  (*p_index)++;
+}
+
+void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
+                           uint8_t *p_position, bool bgpulse) {
+
+  if (bgpulse) {
+    led_set_all( ( (sin(*p_position/6) * 127 + 128 ) / 255) * r1,
+                 ( (sin(*p_position/6) * 127 + 128 ) / 255) * g1,
+                 ( (sin(*p_position/6) * 127 + 128 ) / 255) * b1 );
+
+  } else {
+    led_set_all(r1, g1, b1);
+  }
+
+  led_add_glitter(6, p_position);
+
+  (*p_position)++;
+  if (*p_position > 254) { *p_position = 0; }
+
+  led_show();
+
+};
+
+void fadeToBlack(int ledNo, uint8_t fadeValue) {
+  uint8_t r, g, b;
+
+  g = led_memory[led_address[ledNo][0] + 1];
+  r = led_memory[led_address[ledNo][1] + 1];
+  b = led_memory[led_address[ledNo][2] + 1];
+
+  r=(r<=10)? 0 : (int) r-(r*fadeValue/256);
+  g=(g<=10)? 0 : (int) g-(g*fadeValue/256);
+  b=(b<=10)? 0 : (int) b-(b*fadeValue/256);
+
+  led_set(ledNo, r, g, b);
+}
+
+void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
+                        uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay,
+                        uint8_t *pos) {
+    led_set_all(0,0,0);
+
+    if ((*pos) > LED_COUNT+LED_COUNT) {
+      *pos = 0;
+    }
+
+    // fade brightness all LEDs one step
+    for(int j=0; j < LED_COUNT; j++) {
+      if( (!meteorRandomDecay) || (util_random(0,10) > 5) ) {
+        fadeToBlack(j, meteorTrailDecay );
+      }
+    }
+
+    // draw meteor
+    for (int j = 0; j < meteorSize; j++) {
+      if( ( (*pos)-j < LED_COUNT) && ((*pos)-j>=0) ) {
+        led_set((*pos)-j, red, green, blue);
+      }
+    }
+
+    led_show();
+    (*pos)++;
 }
