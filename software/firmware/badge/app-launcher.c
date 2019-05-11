@@ -370,71 +370,73 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 
 	if (event->type == keyEvent) {
 
-          if (event->key.flags == keyPress) {
-            if (event->key.code == keyASelect || event->key.code == keyBSelect) {
-              i2sPlay ("sound/ping.snd");
-            } else {
-              i2sPlay ("sound/click.snd");
-            }
-          }
-          draw_box (list, Black);
+		if (event->key.flags == keyPress) {
+			if (event->key.code == keyASelect ||
+			    event->key.code == keyBSelect) {
+				i2sPlay ("sound/ping.snd");
+			} else {
+				i2sPlay ("sound/click.snd");
+			}
+		}
 
-          if (event->key.code == keyAUp ||
-              event->key.code == keyBUp)
-            list->selected -= LAUNCHER_COLS;
+		draw_box (list, Black);
 
-          if (event->key.code == keyADown ||
-              event->key.code == keyBDown) {
-            if (list->selected + LAUNCHER_COLS <=
-                (list->total - 1))
-              list->selected += LAUNCHER_COLS;
-          }
+		if (event->key.code == keyAUp || event->key.code == keyBUp)
+			list->selected -= LAUNCHER_COLS;
 
-          if (event->key.code == keyALeft ||
-              event->key.code == keyBLeft) {
-            if (list->selected > 0)
-              list->selected--;
-          }
+		if (event->key.code == keyADown ||
+		    event->key.code == keyBDown) {
+			if (list->selected + LAUNCHER_COLS <=
+			   (list->total - 1))
+				list->selected += LAUNCHER_COLS;
+		}
 
-          if (event->key.code == keyARight ||
-              event->key.code == keyBRight) {
-            if (list->selected < (list->total - 1))
-              list->selected++;
-          }
+		if (event->key.code == keyALeft ||
+		    event->key.code == keyBLeft) {
+			if (list->selected > 0)
+				list->selected--;
+		}
 
-          if (list->selected > 250)
-            list->selected  = 0;
+		if (event->key.code == keyARight ||
+		    event->key.code == keyBRight) {
+			if (list->selected < (list->total - 1))
+				list->selected++;
+		}
 
-          if (list->selected > list->total)
-            list->selected = list->total;
+		if (list->selected > 250)
+			list->selected  = 0;
 
-          if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
-            list->page++;
-            redraw_list (list);
-            return;
-          }
+		if (list->selected > list->total)
+			list->selected = list->total;
 
-          if (list->page > 0) {
-            if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
-              list->page--;
-              redraw_list (list);
-              return;
-            }
-          }
+		if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
+			list->page++;
+			redraw_list (list);
+			return;
+		}
 
-          if (event->key.code == keyASelect ||
-              event->key.code == keyBSelect) {
-            orchardAppRun (list->items[list->selected].entry);
-            return;
-          }
+		if (list->page > 0) {
+			if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
+				list->page--;
+				redraw_list (list);
+				return;
+			}
+		}
 
-          draw_box (list, Red);
-          return;
+		if (event->key.code == keyASelect ||
+		    event->key.code == keyBSelect) {
+			orchardAppRun (list->items[list->selected].entry);
+			return;
+		}
+
+		draw_box (list, Red);
+		return;
 	}
 
 	pe = event->ugfx.pEvent;
 
 	if (event->type == ugfxEvent && pe->type == GEVENT_GWIN_BUTTON) {
+
 		w = ((GEventGWinButton*)pe)->gwin;
 		draw_box (list, Black);
 
@@ -442,11 +444,13 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 			currapp = (list->page * LAUNCHER_PERPAGE) + i;
 			if (w == list->ghButtons[i] &&
 			    currapp < list->total) {
-				  i2sPlay ("sound/ping.snd");
-					orchardAppRun (list->items[currapp].entry);
-						return;
+				i2sPlay ("sound/ping.snd");
+				orchardAppRun (list->items[currapp].entry);
+				return;
 			}
 		}
+
+		i2sPlay ("sound/click.snd");
 
 		/*
 		 * only update the location if we're still
@@ -454,7 +458,6 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		 */
 
 		if (w == list->ghButtonDn) {
-			i2sPlay ("sound/click.snd");
 			if (((list->page + 1) * LAUNCHER_PERPAGE) <
 			    list->total) {
 				/* remove the box before update  */
