@@ -3,3 +3,4 @@ video/
 build/
 dac/*.snd
 photos/
+dac/game/*.snd
