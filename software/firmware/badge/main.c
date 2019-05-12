@@ -306,8 +306,25 @@ int main(void)
     /* Check if the reset pin has been set, and update the UICR if not */
 
     if (NRF_UICR->PSELRESET[0] != IOPORT1_RESET) {
+	volatile uint32_t * tmp;
+	int i;
+
+	/* Save customer area */
+
+	/*
+	 * Save the customer area, in case it has the badge access
+	 * password stored in it. Since we haven't turned the
+	 * SoftDevice on yet, we can temporarily use its RAM
+	 * area as scratch space rather than wasting stack or
+	 * heap space of our own.
+	 */
+
+	tmp = (uint32_t *)0x20000400;
+	for (i = 0; i < 32; i++)
+		tmp[i] = NRF_UICR->CUSTOMER[i];
+
         printf ("Reset pin not configured, programming... ");
-        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
         NRF_NVMC->ERASEUICR = 1;
         while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
                 ;
@@ -318,10 +335,15 @@ int main(void)
         NRF_UICR->PSELRESET[0] = IOPORT1_RESET;
         NRF_UICR->PSELRESET[1] = IOPORT1_RESET;
 
+	/* Restore customer area */
+
+	for (i = 0; i < 32; i++)
+		NRF_UICR->CUSTOMER[i] = tmp[i];
+
         while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
                 ;
         NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
-        printf ("Done.\n");
+        printf ("done.\n");
     }
 
     printf("Priority levels %d\n", CORTEX_PRIORITY_LEVELS);
