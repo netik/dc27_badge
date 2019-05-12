@@ -54,7 +54,7 @@ void splash_welcome(void)
     NULL
   };
 
-  while (splash_images[curimg][0] != NULL) {
+  while (splash_images[curimg] != NULL) {
     if (gdispImageOpenFile (&myImage,
                             splash_images[curimg]) == GDISP_IMAGE_ERR_OK) {
       gdispImageDraw (&myImage,
