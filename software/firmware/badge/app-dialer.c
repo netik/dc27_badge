@@ -174,6 +174,70 @@ calc (uint8_t b)
 }
 #endif
 
+static void
+dialer_i2s_init (void)
+{
+	/*
+	 * Drain the I2S controller and prevent anyone else from
+	 * using it until we're done with it.
+	 */ 
+
+	i2sWait ();
+	i2sEnabled = FALSE;
+
+	/* Power up the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_ON);
+
+	/*
+ 	 * Reset the I2S block for an LRCLK frequency of 30303Hz.
+	 * The default setting of 15625Hz is too slow to accurately
+	 * synthesize DTMF tones.
+	 */
+
+	NRF_I2S->ENABLE = 0;
+	NRF_I2S->TASKS_STOP = 1;
+
+	NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV11 <<
+	    I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
+	NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_96X <<
+	    I2S_CONFIG_RATIO_RATIO_Pos;
+
+	NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Left <<
+	    I2S_CONFIG_CHANNELS_CHANNELS_Pos;
+
+	NRF_I2S->ENABLE = 1;
+	NRF_I2S->TASKS_START = 1;
+
+	return;
+}
+
+static void
+dialer_i2s_restore (void)
+{
+	NRF_I2S->ENABLE = 0;
+	NRF_I2S->TASKS_STOP = 1;
+
+	NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV8 <<
+	    I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
+	NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_256X <<
+	    I2S_CONFIG_RATIO_RATIO_Pos;
+
+	NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Stereo <<
+	    I2S_CONFIG_CHANNELS_CHANNELS_Pos;
+
+	NRF_I2S->ENABLE = 1;
+	NRF_I2S->TASKS_START = 1;
+
+	i2sEnabled = TRUE;
+
+	/* Power down the audio amp */
+
+	i2sAudioAmpCtl (I2S_AMP_OFF);
+
+	return;
+}
+
 void
 tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 {
@@ -214,6 +278,8 @@ tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 		buf[i] = ~(buf[i]) + 1;
 	}
 
+	dialer_i2s_init ();
+
 	i = 0;
 	while (1) {
 		i2sSamplesPlay (buf, samples);
@@ -230,6 +296,8 @@ tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 
 	i2sSamplesWait ();
 	i2sSamplesStop ();
+
+	dialer_i2s_restore ();
 
 	free (buf);
 
@@ -322,38 +390,6 @@ static void dialer_start(OrchardAppContext *context)
 
 	gwinSetDefaultFont (p->font);
 
-	/*
-	 * Drain the I2S controller and prevent anyone else from
-	 * using it until we're done with it.
-	 */ 
-
-	i2sWait ();
-	i2sEnabled = FALSE;
-
-	/* Power up the audio amp */
-
-	i2sAudioAmpCtl (I2S_AMP_ON);
-
-	/*
- 	 * Reset the I2S block for an LRCLK frequency of 30303Hz.
-	 * The default setting of 15625Hz is too slow to accurately
-	 * synthesize DTMF tones.
-	 */
-
-	NRF_I2S->ENABLE = 0;
-	NRF_I2S->TASKS_STOP = 1;
-
-	NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV11 <<
-	    I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
-	NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_96X <<
-	    I2S_CONFIG_RATIO_RATIO_Pos;
-
-	NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Left <<
-	    I2S_CONFIG_CHANNELS_CHANNELS_Pos;
-
-	NRF_I2S->ENABLE = 1;
-	NRF_I2S->TASKS_START = 1;
-
 	draw_keypad (context);
   
 	geventListenerInit(&p->glDListener);
@@ -437,26 +473,6 @@ dialer_exit(OrchardAppContext *context)
 
 	geventDetachSource (&p->glDListener, NULL);
 	geventRegisterCallback (&p->glDListener, NULL, NULL);
-
-	NRF_I2S->ENABLE = 0;
-	NRF_I2S->TASKS_STOP = 1;
-
-	NRF_I2S->CONFIG.MCKFREQ = I2S_CONFIG_MCKFREQ_MCKFREQ_32MDIV8 <<
-	    I2S_CONFIG_MCKFREQ_MCKFREQ_Pos;
-	NRF_I2S->CONFIG.RATIO = I2S_CONFIG_RATIO_RATIO_256X <<
-	    I2S_CONFIG_RATIO_RATIO_Pos;
-
-	NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Stereo <<
-	    I2S_CONFIG_CHANNELS_CHANNELS_Pos;
-
-	NRF_I2S->ENABLE = 1;
-	NRF_I2S->TASKS_START = 1;
-
-	i2sEnabled = TRUE;
-
-	/* Power down the audio amp */
-
-	i2sAudioAmpCtl (I2S_AMP_OFF);
 
 	free (p);
 	context->priv = NULL;
