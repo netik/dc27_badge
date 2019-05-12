@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "ch.h"
@@ -76,35 +78,35 @@ static void redraw_player(DefaultHandles *p) {
 
   // TODO: put player ship image based on fleet damage on screen
 
-  // TODO: put player rank based on us navy rank images
+  // Put player rank based on us navy insignia
+  sprintf(tmp2, "game/rank-%d.rgb", config->level);
+  putImageFile(tmp2, 0, 100);
 
   //  putImageFile(getAvatarImage(config->current_type, img, class, false),
   //               POS_PLAYER1_X, totalheight - 42 - PLAYER_SIZE_Y);
 
   /* hit point bar */
-  hpx = 61;
-  gdispDrawThickLine(hpx, 77, 320, 77, Red, 2, FALSE);
-  gdispDrawThickLine(hpx, 98, 320, 98, Red, 2, FALSE);
+  gdispDrawThickLine(0, 76, 240, 75, Blue, 2, FALSE);
+  drawProgressBar(30,80,160,12,maxhp(config->current_type, config->unlocks,config->level), config->hp, 0, false);
+  gdispDrawThickLine(0, 96, 240, 95, Blue, 2, FALSE);
 
   chsnprintf(tmp, sizeof(tmp), "HP");
   chsnprintf(tmp2, sizeof(tmp2), "%d", config->hp);
 
-  gdispDrawStringBox (hpx+1,
-		      83,
-		      30,
+  gdispDrawStringBox (0 ,
+		      78,
+          30,
 		      gdispGetFontMetric(p->fontXS, fontHeight),
 		      tmp,
 		      p->fontXS, White, justifyLeft);
 
-  drawProgressBar(hpx+22,83,120,11,maxhp(config->current_type, config->unlocks,config->level), config->hp, 0, false);
-
-  gdispFillArea( hpx+148, 83,
+  gdispFillArea( hpx+200, 78,
                  30,gdispGetFontMetric(p->fontXS, fontHeight),
                  Black );
 
-  gdispDrawStringBox (hpx+148,
-		      83,
-                      30,
+  gdispDrawStringBox (200,
+		      78,
+          30,
 		      gdispGetFontMetric(p->fontXS, fontHeight),
 		      tmp2,
 		      p->fontXS, White, justifyLeft);
@@ -113,14 +115,14 @@ static void redraw_player(DefaultHandles *p) {
 static void draw_stat (DefaultHandles * p,
                        uint16_t x, uint16_t y,
                        char * str1, char * str2) {
-  uint16_t lmargin = 141;
+  uint16_t lmargin = 120;
 
   gdispDrawStringBox (lmargin + x,
 		      y,
 		      gdispGetFontMetric(p->fontSM, fontMaxWidth)*strlen(str1),
 		      gdispGetFontMetric(p->fontSM, fontHeight),
 		      str1,
-		      p->fontSM, Yellow, justifyLeft);
+		      p->fontSM, Cyan, justifyLeft);
 
   gdispDrawStringBox (lmargin + x + 15,
 		      y,
@@ -146,18 +148,19 @@ static void redraw_badge(DefaultHandles *p) {
 		      gdispGetWidth(),
 		      gdispGetFontMetric(p->fontLG, fontHeight),
 		      config->name,
-		      p->fontLG, Yellow, justifyRight);
+		      p->fontLG, Cyan, justifyLeft);
 
   chsnprintf(tmp, sizeof(tmp), "LEVEL %d", config->level);
 
   /* Level */
+
   ypos = ypos + gdispGetFontMetric(p->fontLG, fontHeight);
   gdispDrawStringBox (0,
 		      ypos,
 		      gdispGetWidth(),
 		      gdispGetFontMetric(p->fontSM, fontHeight),
 		      tmp,
-		      p->fontSM, Yellow, justifyRight);
+		      p->fontSM, Cyan, justifyRight);
 
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 4;
 

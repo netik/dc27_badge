@@ -32,7 +32,7 @@
 #include "i2s_lld.h"
 
 #include "badge.h"
-
+#include "splash.h"
 #include "led.h"
 
 struct evt_table orchard_events;
@@ -409,8 +409,10 @@ int main(void)
 
     /* Mount SD card */
 
-    if (gfileMount ('F', "0:") == FALSE)
+    if (gfileMount ('F', "0:") == FALSE) { 
         printf ("No SD card found\n");
+        splash_SDFail();
+    }        
     else
         printf ("SD card detected\n");
 
@@ -433,6 +435,9 @@ int main(void)
 
     NRF_P0->DETECTMODE = 0;
 
+    /* say hi */
+    splash_welcome();
+    
     /* Launch shell thread */
 
     evtTableInit (orchard_events, 3);

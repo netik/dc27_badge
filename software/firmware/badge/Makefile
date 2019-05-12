@@ -1,4 +1,4 @@
-##############################################################################
+#############################################################################
 # Build global options
 # NOTE: Can be overridden externally.
 #
@@ -182,6 +182,7 @@ CSRC += main.c \
 	ui-keyboard.c \
 	ui-list.c \
 	gll.c \
+	splash.c \
 	app-badge.c \
 	app-battle.c \
 	app-launcher.c \
