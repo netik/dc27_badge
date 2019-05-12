@@ -20,6 +20,7 @@
 
 #include "userconfig.h"
 #include "datetime.h"
+#include "src/gdisp/gdisp_driver.h"
 
 #include "i2s_lld.h"
 
@@ -75,6 +76,12 @@ static void redraw_player(DefaultHandles *p) {
   char tmp[20];
   char tmp2[40];
 
+  // reset clipping
+  GDISP->clipx0 = 0;
+	GDISP->clipy0 = 0;
+	GDISP->clipx1 = gdispGetWidth ();
+	GDISP->clipy1 = gdispGetHeight ();
+
   // TODO: put player ship image based on fleet damage on screen
 
   // Put player rank based on us navy insignia
@@ -99,9 +106,6 @@ static void redraw_player(DefaultHandles *p) {
 		      tmp,
 		      p->fontXS, White, justifyLeft);
 
-  gdispFillArea( 0,78,
-                 30,gdispGetFontMetric(p->fontXS, fontHeight),
-                 Black );
 
   gdispDrawStringBox (200,
 		      78,
@@ -138,22 +142,34 @@ static void redraw_badge(DefaultHandles *p) {
 
   char tmp[20];
   char tmp2[40];
-  uint16_t ypos = 0;
+  coord_t ypos = 0;
+
+  // reset clipping
+  GDISP->clipx0 = 0;
+	GDISP->clipy0 = 0;
+	GDISP->clipx1 = gdispGetWidth ();
+	GDISP->clipy1 = gdispGetHeight ();
 
   putImageFile("images/badge.rgb",0,0);
 
   redraw_player(p);
-
-  gdispDrawStringBox (0,
-		      ypos,
+  // shadow of user's name
+  gdispDrawStringBox (1,
+		      ypos+1,
 		      gdispGetWidth(),
 		      gdispGetFontMetric(p->fontLG, fontHeight),
 		      config->name,
-		      p->fontLG, Cyan, justifyLeft);
-
-  chsnprintf(tmp, sizeof(tmp), "LEVEL %d", config->level);
+		      p->fontLG, Black, justifyLeft);
+          // user's name
+          gdispDrawStringBox (0,
+        		      ypos,
+        		      gdispGetWidth(),
+        		      gdispGetFontMetric(p->fontLG, fontHeight),
+        		      config->name,
+        		      p->fontLG, Cyan, justifyLeft);
 
   /* Level */
+  chsnprintf(tmp, sizeof(tmp), "LEVEL %d", config->level);
 
   ypos = ypos + gdispGetFontMetric(p->fontLG, fontHeight);
   gdispDrawStringBox (0,
@@ -166,12 +182,11 @@ static void redraw_badge(DefaultHandles *p) {
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 4;
 
   /* end hp bar */
-  ypos = ypos + 30;
+  ypos = ypos + 100;
 
   /* XP/WON */
   chsnprintf(tmp2, sizeof(tmp2), "%3d", config->xp);
   draw_stat (p, 0, ypos, "XP", tmp2);
-
 
   /* AGL / LOST */
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
@@ -212,8 +227,6 @@ static uint32_t default_init(OrchardAppContext *context) {
 
 static void default_start(OrchardAppContext *context) {
   DefaultHandles * p;
-  const userconfig *config = getConfig();
-
   p = malloc(sizeof(DefaultHandles));
   context->priv = p;
 
@@ -261,14 +274,9 @@ static void default_event(OrchardAppContext *context,
 	const OrchardAppEvent *event) {
   DefaultHandles * p;
   GEvent * pe;
-  userconfig *config = getConfig();
-  tmElements_t dt;
   char tmp[40];
-  uint16_t lmargin;
   coord_t totalheight = gdispGetHeight();
   coord_t totalwidth = gdispGetWidth();
-
-  lmargin = 61;
 
   p = context->priv;
 
