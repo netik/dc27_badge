@@ -35,6 +35,9 @@
 #include "splash.h"
 #include "led.h"
 
+// Drop dead if the SD Card isn't inserted.
+#define HALT_ON_SDFAIL 1
+
 struct evt_table orchard_events;
 
 /* linker set for command objects */
@@ -428,16 +431,6 @@ int main(void)
         printf ("Main screen turn on\n");
     else
         printf ("No screen found\n");
-
-    /* Mount SD card */
-
-    if (gfileMount ('F', "0:") == FALSE) {
-        printf ("No SD card found\n");
-        splash_SDFail();
-    }
-    else
-        printf ("SD card detected\n");
-
     /* Enable bluetooth radio */
 
     bleStart ();
@@ -456,6 +449,19 @@ int main(void)
     }
 
     NRF_P0->DETECTMODE = 0;
+
+	  /* Mount SD card */
+
+    if (gfileMount ('F', "0:") == FALSE) {
+        printf ("No SD card found\n");
+        splash_SDFail();
+				ledSetPattern(255); // failure mode
+#ifdef HALT_ON_SDFAIL
+		    chThdSleep (TIME_INFINITE);
+#endif
+    }
+    else
+        printf ("SD card detected\n");
 
     /* say hi */
     splash_welcome();

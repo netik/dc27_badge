@@ -74,7 +74,6 @@ static void redraw_player(DefaultHandles *p) {
   const userconfig *config = getConfig();
   char tmp[20];
   char tmp2[40];
-  uint16_t hpx;
 
   // TODO: put player ship image based on fleet damage on screen
 
@@ -100,7 +99,7 @@ static void redraw_player(DefaultHandles *p) {
 		      tmp,
 		      p->fontXS, White, justifyLeft);
 
-  gdispFillArea( hpx+200, 78,
+  gdispFillArea( 0,78,
                  30,gdispGetFontMetric(p->fontXS, fontHeight),
                  Black );
 
@@ -140,6 +139,8 @@ static void redraw_badge(DefaultHandles *p) {
   char tmp[20];
   char tmp2[40];
   uint16_t ypos = 0;
+
+  putImageFile("images/badge.rgb",0,0);
 
   redraw_player(p);
 

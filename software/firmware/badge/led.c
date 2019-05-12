@@ -271,7 +271,6 @@ void led_show() {
 }
 
 void led_test() {
-    printf("LED Test: Red\r\n");
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       led_set(i, 255, 0, 0);
     }
@@ -279,7 +278,6 @@ void led_test() {
     chThdSleepMilliseconds(1000);
     led_clear();
 
-    printf("LED Test: Green\r\n");
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       led_set(i, 0, 255, 0);
     }
@@ -287,28 +285,12 @@ void led_test() {
     chThdSleepMilliseconds(1000);
     led_clear();
 
-    printf("LED Test: Blue\r\n");
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       led_set(i, 0, 0, 255);
     }
     led_show();
     chThdSleepMilliseconds(1000);
     led_clear();
-#ifdef HSV_TEST
-    // HSV cycle
-    for (uint8_t i = 0; i < 3; i++) {
-      for (float h = 0; h < 1; h += 0.01) {
-        color_rgb_t rgb = util_hsv_to_rgb(h, 1.0, 1.0);
-        led_set_all_rgb(rgb);
-        led_show();
-        chThdSleepMilliseconds(500);
-      }
-    }
-
-    led_clear();
-
-    chThdSleepMilliseconds(1000);
-#endif
 }
 
 /* Threads ------------------------------------------------------ */
@@ -443,6 +425,10 @@ static THD_FUNCTION(bling_thread, arg) {
         break;
       case 24:
         led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
+        break;
+
+      case 255:
+        led_test();
         break;
       }
     }
