@@ -431,10 +431,10 @@ int main(void)
 
     /* Mount SD card */
 
-    if (gfileMount ('F', "0:") == FALSE) { 
+    if (gfileMount ('F', "0:") == FALSE) {
         printf ("No SD card found\n");
         splash_SDFail();
-    }        
+    }
     else
         printf ("SD card detected\n");
 
@@ -459,8 +459,8 @@ int main(void)
 
     /* say hi */
     splash_welcome();
-    
-    /* Launch shell thread */
+
+		/* Launch shell thread */
 
     evtTableInit (orchard_events, 3);
     chEvtObjectInit (&orchard_app_terminated);
