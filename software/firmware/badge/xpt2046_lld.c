@@ -32,13 +32,13 @@
 
 /*
  * This module implements support for the Shenzen XPTEK XPT2046 4-wire
- * resistive touch screen controller chip. The XPT2046 provides a SPI
- * 4-wite SPI interface and includes a set of ADC blocks for performing
- * sensing with resistive touch units. It provides X, Y and X axis
- * readings as well as a temperature sensor. Commands are sent as a
- * single 8-bit transaction and responses are received as either an 8
- * bit or 16 bit transaction. Sendsor readings are returned as 12-bit
- * quantities.
+ * resistive touch screen controller chip. The XPT2046 provides a
+ * 4-wire SPI interface and includes a set of ADC blocks for performing
+ * sensing with resistive touch units. It provides X and Y axis readings
+ * readings as well as Z axis presure sense reading and a temperature sensor.
+ * Commands are sent as a single 8-bit transaction and responses are
+ * received as either an 8-bit or 16-bit transaction. Sensor readings are
+ * returned as 12-bit quantities.
  *
  * SEE ALSO:
  * https://ldm-systems.ru/f/doc/catalog/HY-TFT-2,8/XPT2046.pdf
