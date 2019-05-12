@@ -123,12 +123,14 @@ static uint8_t handle_input (char * name, uint8_t max,
 			backspace (p);
 			gwinPutChar (p->ghConsole, '_');
 		}
+		i2sPlay("sound/click.snd");
 		r = 0;
 		break;
 	case GKEY_ENTER:
 		r = 1;
 		backspace (p);
 		gwinPrintf (p->ghConsole, "\n");
+		i2sPlay("sound/click.snd");
 		break;
 	case '@':
 		r = 0xFF;
@@ -141,6 +143,7 @@ static uint8_t handle_input (char * name, uint8_t max,
 			p->pos++;
 			backspace (p);
 			gwinPrintf (p->ghConsole, "%c_", pk->c[0]);
+			i2sPlay("sound/click.snd");
 		}
 		r = 0;
 		break;
