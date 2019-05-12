@@ -51,10 +51,10 @@ void splash_welcome(void)
   const char *splash_images[] = {
     IMG_SPLASH,
     IMG_SPONSOR,
-    "\0"
+    NULL
   };
 
-  while (splash_images[curimg][0] != '\0') {
+  while (splash_images[curimg][0] != NULL) {
     if (gdispImageOpenFile (&myImage,
                             splash_images[curimg]) == GDISP_IMAGE_ERR_OK) {
       gdispImageDraw (&myImage,
