@@ -455,9 +455,9 @@ int main(void)
     if (gfileMount ('F', "0:") == FALSE) {
         printf ("No SD card found\n");
         splash_SDFail();
-				ledSetPattern(255); // failure mode
+        ledSetPattern(255); // failure mode
 #ifdef HALT_ON_SDFAIL
-		    chThdSleep (TIME_INFINITE);
+        chThdSleep (TIME_INFINITE);
 #endif
     }
     else
@@ -466,8 +466,7 @@ int main(void)
     /* say hi */
     splash_welcome();
 
-		/* Launch shell thread */
-
+    /* Launch shell thread */
     evtTableInit (orchard_events, 3);
     chEvtObjectInit (&orchard_app_terminated);
     chEvtObjectInit (&unlocks_updated);

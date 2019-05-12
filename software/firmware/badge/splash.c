@@ -45,19 +45,33 @@ void splash_SDFail(void) {
 void splash_welcome(void)
 {
   gdispImage myImage;
+  int curimg = 0;
 
-  if (gdispImageOpenFile (&myImage,
-			  IMG_SPLASH) == GDISP_IMAGE_ERR_OK) {
-    gdispImageDraw (&myImage,
-		    0, 0,
-		    myImage.width,
-		    myImage.height, 0, 0);
+  // cycle through these images.
+  const char *splash_images[] = {
+    IMG_SPLASH,
+    IMG_SPONSOR,
+    "\0"
+  };
 
-    gdispImageClose (&myImage);
+  while (splash_images[curimg][0] != '\0') {
+    if (gdispImageOpenFile (&myImage,
+                            splash_images[curimg]) == GDISP_IMAGE_ERR_OK) {
+      gdispImageDraw (&myImage,
+                      0, 0,
+                      myImage.width,
+                      myImage.height, 0, 0);
+
+      gdispImageClose (&myImage);
+    }
+
+    // footer only on 1st image.
+    if (curimg == 0) {
+      splash_footer();
+    }
+
+    chThdSleepMilliseconds (IMG_SPLASH_DISPLAY_TIME);
+    curimg++;
   }
-  splash_footer();
-
-  chThdSleepMilliseconds (2000);
-
   return;
 }
