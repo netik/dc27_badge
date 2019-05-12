@@ -278,6 +278,7 @@ tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 		buf[i] = ~(buf[i]) + 1;
 	}
 
+	chThdSetPriority (HIGHPRIO - 5);
 	dialer_i2s_init ();
 
 	i = 0;
@@ -298,6 +299,7 @@ tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration)
 	i2sSamplesStop ();
 
 	dialer_i2s_restore ();
+	chThdSetPriority (ORCHARD_APP_PRIO);
 
 	free (buf);
 
@@ -450,9 +452,7 @@ dialer_event(OrchardAppContext *context, const OrchardAppEvent *event)
 				if (p->mode)
 					b += DIALER_MAXBUTTONS;
 #endif
-				chThdSetPriority (HIGHPRIO - 5);
 				tonePlay (w, b, 0);
-				chThdSetPriority (ORCHARD_APP_PRIO);
 			}
 		}
 	}
