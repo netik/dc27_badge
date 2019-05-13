@@ -319,6 +319,7 @@ static void default_event(OrchardAppContext *context,
       }
 
       if (((GEventGWinButton*)pe)->gwin == p->ghExitButton) {
+        i2sPlay("sound/click.snd");
         orchardAppExit();
         return;
       }

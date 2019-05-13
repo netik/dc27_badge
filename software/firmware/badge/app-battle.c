@@ -35,7 +35,7 @@
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
 #define VMULT       8        // on each time step, take this many steps.
-#define ENGAGE_BB   50       // If enemy is in this bounding box we can engage
+#define ENGAGE_BB   40       // If enemy is in this bounding box we can engage
 #define MAX_BULLETS 3        // duh.
 
 // size of sub-map tiles
