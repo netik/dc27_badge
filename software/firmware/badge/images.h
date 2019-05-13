@@ -1,5 +1,5 @@
 
-#define SHELL_BANNER "\n     _.-^^---....,,--       \n _--                  --_   \n<                        >) \n|                         | \n \._                   _./  \n    ```--. . , ; .--'''     \n          | |   |           \n       .-=||  | |=-.        \n       `-=#$%&%$#=-'        \n          | ;  :|           \n _____.,-#%&$@%#&#~,._____\n"
+#define SHELL_BANNER "\n    _.-^^--.....-^^--._\n _--                   --_\n<                         >     da Bomb!\n|                         |     DEF CON 27\n \\._                   _./      2019\n    ```--. . , ; .--'''         Team Ides\n          | |   |           \n       .-=||  | |=-.            https://ides.team/\n       `-===---===-'        \n          | ;  :|           \n _____.,----------~,._____\n"
 
 #define SHELL_CREDITS "\r\n \
 DEFCON 27 Unofficial Badge Team\r\n \
@@ -14,7 +14,7 @@ Egan Hirvelda (game mechanics)\r\n"
 #define SCREEN_H 240
 
 // Remember! Filenames must be in old school dos format (8x3)
-//                         12345678.123
+//                                 12345678.123
 #define IMG_SPLASH         "images/splash.rgb"
 #define IMG_SPONSOR        "images/sponsor.rgb"
 

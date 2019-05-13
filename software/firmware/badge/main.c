@@ -34,6 +34,7 @@
 #include "badge.h"
 #include "splash.h"
 #include "led.h"
+#include "images.h"
 
 // Drop dead if the SD Card isn't inserted.
 #define HALT_ON_SDFAIL 1
@@ -462,6 +463,8 @@ int main(void)
     }
     else
         printf ("SD card detected\n");
+
+		printf(SHELL_BANNER);
 
 		/* Launch shell thread */
     evtTableInit (orchard_events, 3);
