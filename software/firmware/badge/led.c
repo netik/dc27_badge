@@ -218,7 +218,7 @@ color_rgb_t util_hsv_to_rgb(float H, float S, float V) {
 
 bool led_init() {
   // on exit, the chip is now in the PWM page
-  for (uint8_t i = 0; i < ISSI_ADDR_MAX; i++) {
+  for (uint8_t i = 0; i < ISSI_ADDR_MAX + 2; i++) {
     led_memory[i] = 0;
   }
 
@@ -265,9 +265,10 @@ void led_set_all_rgb(color_rgb_t rgb) {
 
 void led_show() {
   drv_is31fl_set_page(ISSI_PAGE_PWM);
-
+  i2cAcquireBus(&I2CD2);
   i2cMasterTransmitTimeout (&I2CD2, LED_I2C_ADDR, led_memory, sizeof(led_memory),
     NULL, 0, TIME_INFINITE);
+  i2cReleaseBus(&I2CD2);
 }
 
 void led_test() {
@@ -426,7 +427,9 @@ static THD_FUNCTION(bling_thread, arg) {
       case 24:
         led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
         break;
-
+      case 100:
+        led_clear();
+        break;
       case 255:
         led_test();
         break;

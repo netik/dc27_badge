@@ -463,22 +463,21 @@ int main(void)
     else
         printf ("SD card detected\n");
 
-    /* say hi */
-    splash_welcome();
-
-    /* Launch shell thread */
+		/* Launch shell thread */
     evtTableInit (orchard_events, 3);
     chEvtObjectInit (&orchard_app_terminated);
     chEvtObjectInit (&unlocks_updated);
     evtTableHook (orchard_events, shell_terminated, shell_termination_handler);
     evtTableHook (orchard_events, unlocks_updated, unlock_update_handler);
     evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
+		shellRestart ();
 
-    uiStart ();
+    /* say hi */
+		uiStart ();
+    splash_welcome();
+
     orchardAppInit ();
     orchardAppRestart ();
-
-    shellRestart ();
 
     while (true) {
         chEvtDispatch(evtHandlers(orchard_events), chEvtWaitOne(ALL_EVENTS));

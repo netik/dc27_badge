@@ -198,6 +198,7 @@ CSRC += main.c \
 	app-music.c \
 	app-setup.c \
 	app-photos.c \
+	app-unlock.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \

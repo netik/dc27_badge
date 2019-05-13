@@ -110,7 +110,7 @@ const GWidgetStyle DarkPurpleFilledStyle = {
 };
 
 // WidgetStyle: Ivory
-const GWidgetStyle IvoryStyle = {
+const GWidgetStyle DarkGreyStyle = {
   HTML2COLOR(0xffefbe),              // background
   HTML2COLOR(0x2A8FCD),              // focus
 

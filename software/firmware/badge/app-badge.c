@@ -25,7 +25,7 @@
 #include "i2s_lld.h"
 
 /* remember these many last key-pushes (app-default) */
-#define KEY_HISTORY 9
+#define KEY_HISTORY 8
 
 static int8_t lastimg = -1;
 
@@ -39,10 +39,20 @@ typedef struct _DefaultHandles {
   OrchardAppEventKeyCode last_pushed[KEY_HISTORY];
 } DefaultHandles;
 
+// Konami code. The last can be either select button.
+// in final release we will extend this to
+// up, up, down, down, left, right, left, right, B, A.
+// PROD
+// #define KEY_HISTORY 10
+//const OrchardAppEventKeyCode konami[] = { keyAUp, keyAUp, keyADown,
+//                                          keyADown, keyALeft, keyARight,
+//                                          keyALeft, keyARight, keyBLeft, keyBRight };
 
-const OrchardAppEventKeyCode konami[] = { keyBUp, keyBUp, keyBDown,
-                                          keyBDown, keyBLeft, keyBRight,
-                                          keyBLeft, keyBRight, keyBSelect };
+// DEV
+const OrchardAppEventKeyCode konami[KEY_HISTORY] = { keyAUp, keyAUp, keyADown,
+                                          keyADown, keyALeft, keyARight,
+                                          keyALeft, keyARight };
+
 static void destroy_buttons(DefaultHandles *p) {
   gwinDestroy (p->ghFightButton);
   gwinDestroy (p->ghExitButton);
@@ -234,6 +244,10 @@ static void default_start(OrchardAppContext *context) {
   p->fontLG = gdispOpenFont (FONT_LG);
   p->fontSM = gdispOpenFont (FONT_FIXED);
 
+  for (int i=0; i < KEY_HISTORY; i++) {
+    p->last_pushed[i] = 0;
+  }
+
   gdispClear(Black);
 
   gdispSetOrientation (0);
@@ -262,7 +276,6 @@ static inline void storeKey(OrchardAppContext *context, OrchardAppEventKeyCode k
 static inline uint8_t testKonami(OrchardAppContext *context) {
   DefaultHandles * p;
   p = context->priv;
-
   for (int i=0; i < KEY_HISTORY; i++) {
     if (p->last_pushed[i] != konami[i])
       return false;
@@ -281,20 +294,18 @@ static void default_event(OrchardAppContext *context,
   p = context->priv;
 
   if (event->type == keyEvent) {
-    if (event->key.flags == keyPress)
-      storeKey(context, event->key.code);
-
-    /* hitting enter goes into fight, unless konami has been entered,
-       then we send you to the unlock screen! */
-    if ( (event->key.code == keyBSelect) &&
-         (event->key.flags == keyPress) )  {
-
-      if (testKonami(context)) {
-        orchardAppRun(orchardAppByName("Unlocks"));
+    if (event->key.flags == keyPress) {
+      i2sPlay("sound/click.snd");
+      if (event->key.code == keyASelect ||
+			    event->key.code == keyBSelect) {
+          if (testKonami(context)) {
+            orchardAppRun(orchardAppByName("Unlocks"));
+          }
+          return;
       }
-      return;
+      // else store it for later
+      storeKey(context, event->key.code);
     }
-
   }
 
   if (event->type == ugfxEvent) {
@@ -303,7 +314,7 @@ static void default_event(OrchardAppContext *context,
     switch(pe->type) {
     case GEVENT_GWIN_BUTTON:
       if (((GEventGWinButton*)pe)->gwin == p->ghFightButton) {
-        orchardAppRun(orchardAppByName("Fight"));
+        orchardAppRun(orchardAppByName("Sea Battle"));
         return;
       }
 

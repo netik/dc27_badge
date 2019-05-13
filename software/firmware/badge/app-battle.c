@@ -16,6 +16,7 @@
 #include "hal.h"
 #include "orchard-app.h"
 #include "orchard-ui.h"
+#include "fontlist.h"
 #include "i2s_lld.h"
 #include "ides_gfx.h"
 #include "images.h"
@@ -45,6 +46,18 @@
 static ENTITY me;
 static ENTITY bullet[MAX_BULLETS];
 static bool bullet_pending = false;
+
+static ENEMY *last_near = NULL;
+
+/* private memory */
+typedef struct {
+	GListener		gl;
+	font_t			fontLG;
+	font_t			fontXS;
+	font_t			fontSM;
+	GHandle			ghTitleL;
+	GHandle			ghTitleR;
+} battle_ui_t;
 
 // enemies -- linked list
 gll_t *enemies;
@@ -283,30 +296,69 @@ battle_init(OrchardAppContext *context)
   gll_push(enemies, e);
 
   // turn off the LEDs
-  led_clear();
   ledSetPattern(LED_PATTERN_WORLDMAP);
-  // don't allocate any stack space
 
-  // send one ping.
-	chThdSleepMilliseconds (1000);
-  i2sPlay("game/map_ping.snd");
+  // don't allocate any stack space
   return (0);
 }
 
-static void draw_initial_map(void) {
+static void draw_initial_map(OrchardAppContext *context) {
+  const userconfig *config = getConfig();
+	GWidgetInit wi;
+  char tmp[40];
+  battle_ui_t *bh;
+
+  // get private memory
+  bh = (battle_ui_t *)context->priv;
+
+  // draw map
   putImageFile("game/world.rgb", 0,0);
 
   // Draw UI
-  // TBD
+  gwinWidgetClearInit (&wi);
+
+  /* Create label widget: ghTitleL */
+  wi.g.show = TRUE;
+  wi.g.x = 0;
+  wi.g.y = 0;
+  wi.g.width = 160;
+  wi.g.height = gdispGetFontMetric(bh->fontSM, fontHeight) + 2;
+  wi.text = config->name;
+  wi.customDraw = gwinLabelDrawJustifiedLeft;
+  wi.customParam = 0;
+  wi.customStyle = &DarkPurpleStyle;
+  bh->ghTitleL = gwinLabelCreate(0, &wi);
+  gwinLabelSetBorder (bh->ghTitleL, FALSE);
+  gwinSetFont (bh->ghTitleL, bh->fontSM);
+  gwinRedraw (bh->ghTitleL);
+
+  /* Create label widget: ghTitleR */
+  strcpy(tmp, "Find an enemy!");
+  wi.g.show = TRUE;
+  wi.g.x = 150;
+  wi.g.width = 170;
+  wi.text = tmp;
+  wi.customDraw = gwinLabelDrawJustifiedRight;
+  bh->ghTitleR = gwinLabelCreate (0, &wi);
+  gwinSetFont (bh->ghTitleR, bh->fontSM);
+  gwinLabelSetBorder (bh->ghTitleR, FALSE);
+  gwinRedraw (bh->ghTitleR);
+
 }
 
 static void
 battle_start (OrchardAppContext *context)
 {
-  (void)context;
+  battle_ui_t *bh;
+  bh = malloc(sizeof(battle_ui_t));
+  context->priv = bh;
+  bh->fontXS = gdispOpenFont (FONT_XS);
+	bh->fontLG = gdispOpenFont (FONT_LG);
+	bh->fontSM = gdispOpenFont (FONT_SM);
+
   gdispClear (Black);
 
-  draw_initial_map();
+  draw_initial_map(context);
 
   /* start the timer - 30 fps */
   orchardAppTimer(context, FRAME_DELAY * 1000000, true);
@@ -404,6 +456,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   uint8_t i;
   VECTOR prevme;
   ENEMY *nearest;
+  battle_ui_t *bh;
+	char tmp[40];
+
+  bh = (battle_ui_t *) context->priv;
 
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
@@ -469,8 +525,24 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     if (current_state == WORLD_MAP) {
       enemy_clearall_blink();
       nearest = getNearestEnemy();
-      if (nearest != NULL) {
-        nearest->e.blinking = true;
+
+			if (nearest != NULL)
+				nearest->e.blinking = true;
+
+      if (nearest != last_near) {
+				last_near = nearest;
+
+				// if our state has changed, update the UI
+				if (nearest == NULL) {
+					gwinSetText(bh->ghTitleR, "Find an enemy!", TRUE);
+					gwinRedraw(bh->ghTitleR);
+				} else {
+        	// update UI
+					strcpy(tmp, "Engage: ");
+					strcat(tmp, nearest->name);
+        	gwinSetText(bh->ghTitleR, tmp, TRUE);
+        	gwinRedraw(bh->ghTitleR);
+				}
       }
     }
 
@@ -542,6 +614,7 @@ static void
 battle_exit(OrchardAppContext *context)
 {
   userconfig *config = getConfig();
+  battle_ui_t *bh;
 
   (void) context;
   current_state = WORLD_MAP;
@@ -549,8 +622,23 @@ battle_exit(OrchardAppContext *context)
   // free the enemy list
   gll_destroy(enemies);
 
+  // free the UI
+  bh = (battle_ui_t *)context->priv;
+
+  gdispCloseFont (bh->fontXS);
+  gdispCloseFont (bh->fontLG);
+  gdispCloseFont (bh->fontSM);
+
+  gwinDestroy (bh->ghTitleL);
+  gwinDestroy (bh->ghTitleR);
+
+  geventRegisterCallback (&bh->gl, NULL, NULL);
+  geventDetachSource (&bh->gl, NULL);
+
+  free (context->priv);
+	context->priv = NULL;
+
   // restore the LED pattern from config
-  led_clear();
   ledSetPattern(config->led_pattern);
   return;
 }

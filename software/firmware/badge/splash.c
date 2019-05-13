@@ -47,7 +47,7 @@ void splash_welcome(void)
   gdispImage myImage;
   int curimg = 0;
 
-  // cycle through these images.
+  // cycle through these images once
   const char *splash_images[] = {
     IMG_SPLASH,
     IMG_SPONSOR,
