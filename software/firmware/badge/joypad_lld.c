@@ -43,13 +43,13 @@
  * diodes to an 11th pin, which is used as a shared interrupt input. This
  * allows us to use just one GPIOTE channel for input sensing. When a pin
  * is driven low, it will also drive the interrupt pin low, which will
- * trigger an interrupt. The joypad thread will sense the state of all
+ * trigger an interrupt. The joypad thread will sample the state of all
  * joypad pins and signal individual changes.
  *
  * This means we have to keep polling all pins for as long as any one
  * button is pushed down. This is a little inefficient, but once all
- * buttons are released, the joypad thread will go idle. Note that we
- * are also effectively emulating a shared level-triggered active-low
+ * buttons are released, the joypad thread will go idle again. Note that
+ * we are also effectively emulating a shared level-triggered active-low
  * interrupt in software, since the GPIOTE module seems to only want to
  * trigger interrupts on low-to-high or high-to-low edge transitions. 
  */
@@ -59,7 +59,6 @@
 #include "osal.h"
 
 #include "joypad_lld.h"
-#include "i2s_lld.h"
 
 #include "orchard-app.h"
 #include "orchard-events.h"

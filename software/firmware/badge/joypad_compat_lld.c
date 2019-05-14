@@ -50,7 +50,6 @@
 #include "osal.h"
 
 #include "joypad_lld.h"
-#include "i2s_lld.h"
 
 #include "orchard-app.h"
 #include "orchard-events.h"

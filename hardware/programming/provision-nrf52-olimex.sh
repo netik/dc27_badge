@@ -105,8 +105,8 @@ openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
 	-c "mdw 0x10001090"				\
 	-c "mww 0x10001094 0x00000000"			\
 	-c "mdw 0x10001094"				\
-	-c "mdw 0x4001E400"				\
 	-c "mww 0x4001E504 0x00000000"			\
+	-c "mdw 0x4001E400"				\
 	-c "reset init"					\
 	-c "resume"					\
 	-c "exit"
