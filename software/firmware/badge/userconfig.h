@@ -133,6 +133,7 @@ extern void configSave(userconfig *);
 extern userconfig *getConfig(void);
 extern int16_t maxhp(uint16_t, uint8_t);
 
+extern const char *rankname[];
 extern unsigned long rtc;
 extern unsigned long rtc_set_at;
 

@@ -22,7 +22,7 @@
 #include "i2s_lld.h"
 
 /* the amount that we increase or decrease brightness by */
-#define LED_BRIGHT_STEP 20
+#define LED_BRIGHT_STEP 10
 
 // GHandles
 typedef struct _SetupHandles {

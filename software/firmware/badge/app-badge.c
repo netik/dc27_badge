@@ -86,12 +86,6 @@ static void redraw_player(DefaultHandles *p) {
   char tmp[20];
   char tmp2[40];
 
-  // reset clipping
-  GDISP->clipx0 = 0;
-	GDISP->clipy0 = 0;
-	GDISP->clipx1 = gdispGetWidth ();
-	GDISP->clipy1 = gdispGetHeight ();
-
   // TODO: put player ship image based on fleet damage on screen
 
   // Put player rank based on us navy insignia
@@ -154,45 +148,52 @@ static void redraw_badge(DefaultHandles *p) {
   char tmp2[40];
   coord_t ypos = 0;
 
-  // reset clipping
-  GDISP->clipx0 = 0;
-	GDISP->clipy0 = 0;
-	GDISP->clipx1 = gdispGetWidth ();
-	GDISP->clipy1 = gdispGetHeight ();
-
   putImageFile("images/badge.rgb",0,0);
 
   redraw_player(p);
-  // shadow of user's name
+
+  /* Rank */
+  sprintf(tmp, "%s", rankname[config->level-1]);
   gdispDrawStringBox (1,
-		      ypos+1,
+		      ypos,
 		      gdispGetWidth(),
-		      gdispGetFontMetric(p->fontLG, fontHeight),
-		      config->name,
-		      p->fontLG, Black, justifyLeft);
-          // user's name
-          gdispDrawStringBox (0,
-        		      ypos,
-        		      gdispGetWidth(),
-        		      gdispGetFontMetric(p->fontLG, fontHeight),
-        		      config->name,
-        		      p->fontLG, Cyan, justifyLeft);
-
-  /* Level */
-  chsnprintf(tmp, sizeof(tmp), "LEVEL %d", config->level);
-
-  ypos = ypos + gdispGetFontMetric(p->fontLG, fontHeight);
+		      gdispGetFontMetric(p->fontSM, fontHeight),
+		      tmp,
+		      p->fontSM, Black, justifyLeft);
   gdispDrawStringBox (0,
 		      ypos,
 		      gdispGetWidth(),
 		      gdispGetFontMetric(p->fontSM, fontHeight),
 		      tmp,
-		      p->fontSM, Cyan, justifyRight);
+		      p->fontSM, White, justifyLeft);
 
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 4;
 
+  // shadow of user's name
+  gdispDrawStringBox (1,
+		      ypos,
+		      gdispGetWidth(),
+		      gdispGetFontMetric(p->fontLG, fontHeight),
+		      config->name,
+		      p->fontLG, Black, justifyRight);
+
+  // user's name
+  gdispDrawStringBox (0,
+		      ypos,
+		      gdispGetWidth(),
+		      gdispGetFontMetric(p->fontLG, fontHeight),
+		      config->name,
+		      p->fontLG, White, justifyRight);
+
+  ypos = ypos + gdispGetFontMetric(p->fontLG, fontHeight);
+
   /* end hp bar */
-  ypos = ypos + 100;
+  ypos = ypos + 40;
+
+  /* LEVEL */
+  chsnprintf(tmp2, sizeof(tmp2), "%d", config->level);
+  draw_stat (p, 0, ypos, "LEVEL", tmp2);
+  ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
 
   /* XP/WON */
   chsnprintf(tmp2, sizeof(tmp2), "%3d", config->xp);

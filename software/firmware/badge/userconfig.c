@@ -15,6 +15,22 @@
 
 #include <string.h>
 
+const char *rankname[] = {
+  "Ensign",      // 0
+  "Lt. Junior",  // 1
+  "Lieutenant",  // 2
+  "Lt. Commdr",  // 3
+  "Commander",   // 4
+  "Captain",     // 5
+  "Rear Adm.",   // 6
+  "Rear Adm.2",  // 7
+  "Vice Adm.",   // 8
+  "Admiral",     // 9
+  "Flt Admiral", // 10
+  "WOPR"         // 11
+};
+
+
 /* We implement a naive real-time clock protocol like NTP but
  * much worse. The global value rtc contains the current real time
  * clock as a time_t value measured by # seconds since Jan 1, 1970.
