@@ -14,35 +14,23 @@
 
 #define CONFIG_LEDSIGN_MAXLEN	124
 
-typedef enum _player_type {
-  p_notset,
-  p_guard,
-  p_senator,
-  p_gladiatrix,
-  p_caesar,
-  p_bender
-} player_type;
-
 /* WARNING: if you change the userconfig struct, update CONFIG_VERSION
  * above so that the config is automatically init'd with the new
  * else, the config struct will be misaligned and full of garbage.
  */
+
+typedef struct ship_t {
+  char name[16];
+  uint8_t max_bullets;
+  uint8_t velocity;
+} ship_t;
+
 typedef struct userconfig {
   uint32_t signature;
   uint32_t version;
 
-  /* unique network ID determined from use of lower 64 bits of
-     SIM-UID */
-  uint32_t netid;
-  int8_t tempcal; /* temperature calibration +/- some degrees F */
-
   /* hw config */
   uint8_t led_pattern;
-
-  /* used for solid-color */
-  uint8_t led_r;
-  uint8_t led_g;
-  uint8_t led_b;
 
   uint8_t led_brightness;
   uint8_t sound_enabled;
@@ -57,21 +45,20 @@ typedef struct userconfig {
   char led_string[CONFIG_LEDSIGN_MAXLEN];
 
   /* game */
-  player_type current_type;
-  player_type p_type;
   char name[CONFIG_NAME_MAXLEN+1];
-
+  uint8_t level;
   uint16_t lastdeath; // last time you died
   uint8_t in_combat;
   uint32_t unlocks;
-
   int16_t hp;
-  uint16_t xp;
-  uint8_t level;
 
-  uint8_t agl;
-  uint8_t might;
-  uint8_t luck;
+  /* ship configuration -- which ships you possess */
+  uint8_t ships[8]; // integers that point to the ships
+
+  uint16_t xp;
+  uint16_t build_points;
+
+  uint16_t energy; // max energy will be calc'd from level.
 
   /* long-term counters */
   uint16_t won;
@@ -85,10 +72,9 @@ typedef struct _peer {
   /* unique network ID determined from use of lower 64 bits of SIM-UID */
   uint32_t netid;         /* 4 */
   uint8_t opcode;         /* 1 - BATTLE_OPCODE */
+
   /* Player Payload */
   char name[CONFIG_NAME_MAXLEN + 1];  /* 16 */
-  player_type p_type;     /* 1 */
-  player_type current_type;     /* 1 */
   uint8_t in_combat;      /* 1 */
   uint16_t unlocks;       /* 2 */
   /* Player stats */
@@ -121,8 +107,6 @@ typedef struct _fightpkt {
   unsigned long rtc;      /* 4 */
   /* Player Payload */
   char name[CONFIG_NAME_MAXLEN + 1];  /* 16 */
-  player_type p_type;     /* 1 */
-  player_type current_type;     /* 1 */
   uint8_t in_combat;      /* 1 */
   uint16_t unlocks;       /* 2 */
   int16_t hp;             /* 2 */
@@ -147,7 +131,7 @@ typedef struct _fightpkt {
 extern void configStart(void);
 extern void configSave(userconfig *);
 extern userconfig *getConfig(void);
-extern int16_t maxhp(player_type, uint16_t, uint8_t);
+extern int16_t maxhp(uint16_t, uint8_t);
 
 extern unsigned long rtc;
 extern unsigned long rtc_set_at;

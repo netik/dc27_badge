@@ -28,7 +28,6 @@ static void cmd_config_save(BaseSequentialStream *chp, int argc, char *argv[]);
 static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[]);
 static void cmd_config_led_stop(BaseSequentialStream *chp);
 static void cmd_config_led_run(BaseSequentialStream *chp, int argc, char *argv[]);
-static void cmd_config_led_all(BaseSequentialStream *chp, int argc, char *argv[]);
 static void cmd_config_led_dim(BaseSequentialStream *chp, int argc, char *argv[]);
 static void cmd_config_led_list(BaseSequentialStream *chp);
 
@@ -55,29 +54,21 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
   }
 #endif
 
-  chprintf(chp, "name       %s (class now:%d / perm:%d)\r\n", config->name, config->current_type, config->p_type);
+  chprintf(chp, "name       %s\r\n", config->name);
   chprintf(chp, "signature  0x%08x\r\n", config->signature);
   chprintf(chp, "version    %d\r\n", config->version);
   chprintf(chp, "unlocks    0x%04x\r\n", config->unlocks);
   chprintf(chp, "sound      %d\r\n", config->sound_enabled);
   chprintf(chp, "lastdeath  %d\r\n", config->lastdeath);
   chprintf(chp, "incombat   %d\r\n", config->in_combat);
-  chprintf(chp, "tempcal    %d\r\n", config->tempcal);
   chprintf(chp, "led mode   %d:%s power %d/255\r\n", config->led_pattern, fxlist[config->led_pattern], config->led_brightness);
-  chprintf(chp, "led color  %d %d %d\r\n",
-           config->led_r,
-           config->led_g,
-           config->led_b);
 
   chprintf(chp, "won/lost   %d/%d\r\n\r\n",
            config->won,
            config->lost);
 
-  chprintf(chp, "lvl %4d agl %4d might %4d luck %d\r\n",
-           config->level,
-           config->agl,
-           config->might,
-           config->luck);
+  chprintf(chp, "lvl %4d\r\n",
+           config->level);
 
   chprintf(chp, "hp  %4d xp  %4d\r\n",
            config->hp,
@@ -86,9 +77,11 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
 }
 
 static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
-  uint32_t val;
   (void)argv;
   (void)argc;
+#ifdef BLACK_BADGE
+  uint32_t val;
+#endif
 
   userconfig *config = getConfig();
 
@@ -125,26 +118,9 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     return;
   }
 
+#ifdef BLACK_BADGE
   val = strtoul (argv[2], NULL, 0);;
 
-  if (!strcasecmp(argv[1], "ctype")) {
-    config->current_type = val;
-    chprintf(chp, "current class set to %d.\r\n", config->current_type);
-    return;
-  }
-
-  if (!strcasecmp(argv[1], "tempcal")) {
-    config->tempcal = val;
-    chprintf(chp, "temperature calibration set to %d degrees C.\r\n", config->tempcal);
-    return;
-  }
-
-#ifdef BLACK_BADGE
-  if (!strcasecmp(argv[1], "ptype")) {
-    config->p_type = val;
-    chprintf(chp, "perm class set to %d.\r\n", config->p_type);
-    return;
-  }
   if (!strcasecmp(argv[1], "level")) {
     config->level = val;
     chprintf(chp, "level set to %d.\r\n", config->level);
@@ -164,23 +140,6 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
   if (!strcasecmp(argv[1], "xp")) {
     config->xp = val;
     chprintf(chp, "XP set to %d.\r\n", config->xp);
-    return;
-  }
-  if (!strcasecmp(argv[1], "agl")) {
-    config->agl = val;
-    chprintf(chp, "agl set to %d.\r\n", config->agl);
-    return;
-  }
-
-  if (!strcasecmp(argv[1], "luck")) {
-    config->luck = val;
-    chprintf(chp, "luck set to %d.\r\n", config->luck);
-    return;
-  }
-
-  if (!strcasecmp(argv[1], "might")) {
-    config->might = val;
-    chprintf(chp, "might set to %d.\r\n", config->might);
     return;
   }
 
@@ -254,11 +213,6 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
       return;
     }
 
-    if (!strcasecmp(argv[1], "all")) {
-      cmd_config_led_all(chp, argc, argv);
-      return;
-    }
-
     if (!strcasecmp(argv[1], "run")) {
       cmd_config_led_run(chp, argc, argv);
       return;
@@ -311,37 +265,6 @@ static void cmd_config_led_run(BaseSequentialStream *chp, int argc, char *argv[]
   if (ledsOff) {
     ledStart();
   }
-}
-
-static void cmd_config_led_all(BaseSequentialStream *chp, int argc, char *argv[]) {
-
-  int16_t r,g,b;
-  userconfig *config = getConfig();
-
-  if (argc != 5) {
-    chprintf(chp, "Not enough arguments.\r\n");
-    return;
-  }
-
-  r = strtoul(argv[2], NULL, 0);
-  g = strtoul(argv[3], NULL, 0);
-  b = strtoul(argv[4], NULL, 0);
-
-  if ((r < 0) || (r > 255) ||
-      (g < 0) || (g > 255) ||
-      (b < 0) || (b > 255) ) {
-    chprintf(chp, "Invaild value. Must be 0 to 255.\r\n");
-    return;
-  }
-
-  chprintf(chp, "LEDs set.\r\n");
-
-  config->led_r = r;
-  config->led_g = g;
-  config->led_b = b;
-  config->led_pattern = LED_PATTERNS_FULL - 1;
-
-
 }
 
 static void cmd_config_led_dim(BaseSequentialStream *chp, int argc, char *argv[]) {

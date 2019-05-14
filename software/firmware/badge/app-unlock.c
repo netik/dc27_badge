@@ -47,13 +47,13 @@ typedef struct _UnlockHandles {
 #define MAX_ULCODES 11
 static uint8_t unlock_codes[MAX_ULCODES][3] = { { 0x01, 0xde, 0xf1 }, // 0 +10% DEF
                                                 { 0x0d, 0xef, 0xad }, // 1 +10% HP
-                                                { 0x0a, 0x7a, 0xa7 }, // 2 +1 MIGHT
-                                                { 0x07, 0x70, 0x07 }, // 3 +20% LUCK
+                                                { 0x0a, 0x7a, 0xa7 }, // 2 +10% DMG
+                                                { 0x07, 0x70, 0x07 }, // 3 SUBMARINE
                                                 { 0x0a, 0xed, 0x17 }, // 4 FASTER HEAL
                                                 { 0x00, 0x1a, 0xc0 }, // 5 MOAR LEDs
-                                                { 0x0b, 0xae, 0xac }, // 6 CAESAR
-                                                { 0x0d, 0xe0, 0x1a }, // 7 SENATOR
-                                                { 0x0b, 0xbb, 0xbb }, // 8 BENDER
+                                                { 0x0b, 0xae, 0xac }, // 6
+                                                { 0x0d, 0xe0, 0x1a }, // 7
+                                                { 0x0b, 0xbb, 0xbb }, // 8
                                                 { 0x06, 0x07, 0x42 }, // 9 GOD MODE (can issue grants)
                                                 { 0x0a, 0x1a, 0x1a }  // 10 PINGDUMP
 };
@@ -62,16 +62,15 @@ static uint8_t unlock_challenge[] = { 0x16, 0xe1, 0x6a };
 
 static char *unlock_desc[] = { "+10% DEF",
                                "+10% HP",
-                               "+1 MIGHT",
+                               "+10% DMG",
                                "+20% LUCK",
                                "FASTER HEAL",
                                "MOAR LEDs",
-                               "U R CAESAR",
-                               "U R SENATOR",
+                               "",
+                               "",
                                "BENDER",
                                "U R A GOD",
                                "PINGDUMP"};
-
 
 static uint32_t last_ui_time = 0;
 static uint8_t code[5];
@@ -92,22 +91,6 @@ static void unlock_result(UnlockHandles *p, char *msg) {
 		      msg,
 		      p->font_manteka_20, Yellow, justifyCenter);
 
-  if (code[0] == 0x0f) {
-    // Almus / Caezer display
-    gdispDrawStringBox (0,
-                        60,
-                        320,
-                        gdispGetFontMetric(p->font_manteka_20, fontHeight),
-                        "User: badgeinvite",
-                        p->font_manteka_20, Cyan, justifyCenter);
-
-    gdispDrawStringBox (0,
-                        160,
-                        320,
-                        gdispGetFontMetric(p->font_manteka_20, fontHeight),
-                        "http://famwqkizjdga.xyz",
-                        p->font_manteka_20, Cyan, justifyCenter);
-  }
 }
 
 static void init_unlock_ui(UnlockHandles *p) {
@@ -287,11 +270,6 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
         (unlock_codes[i][2] == ((code[3] << 4) + code[4]))) {
       // set bit
       config->unlocks |= (1 << i);
-
-      // if it's the luck upgrade, we set luck directly.
-      if (i == 3) {
-        config->luck = 40;
-      }
 
       strcpy(tmp, unlock_desc[i]);
       strcat(tmp, " unlocked!");

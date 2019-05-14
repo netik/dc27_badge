@@ -1,4 +1,4 @@
-  #include "ch.h"
+#include "ch.h"
 #include "hal.h"
 #include "shell.h"
 #include "chprintf.h"
@@ -32,7 +32,7 @@ static userconfig config_cache;
 
 mutex_t config_mutex;
 
-int16_t maxhp(player_type ctype, uint16_t unlocks, uint8_t level) {
+int16_t maxhp(uint16_t unlocks, uint8_t level) {
   // return maxHP given some unlock data and level
   uint16_t hp;
 
@@ -41,15 +41,6 @@ int16_t maxhp(player_type ctype, uint16_t unlocks, uint8_t level) {
   if (unlocks & UL_PLUSHP) {
     hp = hp * 1.10;
   }
-
-  if (ctype == p_bender) {
-    hp = hp * 1.10;
-  }
-
-  if (ctype == p_caesar) {
-    hp = hp * 3;
-  }
-
 
   return hp;
 }
@@ -86,50 +77,27 @@ static void init_config(userconfig *config) {
    * so it's easier to maintain.  */
   config->signature = CONFIG_SIGNATURE;
   config->version = CONFIG_VERSION;
-  config->tempcal = 99;
-  config->unlocks = 0;
-
-  /* this is a very, very naive approach to uniqueness, but it might work. */
-  /* an alternate approach would be to store all 80 bits, but then our radio */
-  /* packets would be huge. */
-  config->netid = 0; // we will use the bluetooth address instead of this var.
-  config->unlocks = 0;
   config->led_pattern = 1;
-  config->led_brightness = 0xff;
+  config->led_brightness = 0xf0;
   config->sound_enabled = 1;
   config->airplane_mode = 0;
   config->rotate = 0;
-
-  config->current_type = p_notset; // what your current class is (caesear, bender, etc, specials...)
-  config->p_type = p_notset;       // your permanent class, cannot be changed.
   config->touch_data_present = 0;
-
+  // touch_data will be ignored for now.
+  config->unlocks = 0;
   memset(config->led_string, 0, CONFIG_LEDSIGN_MAXLEN);
   memset(config->name, 0, CONFIG_NAME_MAXLEN);
-
-  config->won = 0;
-  config->lost = 0;
-
+  config->level = 1;
   config->lastdeath = 0; // last death time to calc healing
   config->in_combat = 1; // we are incombat until type is set.
-
-  /* stats, dunno if we will use */
+  config->unlocks = 0;
+  config->hp = maxhp(0, config->level);
+  memset(config->ships, 0, sizeof(config->ships));
   config->xp = 0;
-  config->level = 1;
-
-  config->agl = 1;
-  config->luck = 20;
-  config->might = 1;
-
+  config->build_points = 40;
+  config->energy = 100;
   config->won = 0;
-  config->lost = 0;
-
-  /* randomly pick a new color */
-  config->led_r = randByte();
-  config->led_g = randByte();
-  config->led_b = randByte();
-
-  config->hp = maxhp(p_notset, 0, config->level);
+  config->lost= 0;
 
 }
 
@@ -158,7 +126,7 @@ void configStart(void) {
 
     /* play a tone to tell them we're resetting */
     i2sPlay("game/ping.snd");
-    
+
     chThdSleepMilliseconds (200);
     wipeconfig = true;
   }
@@ -178,21 +146,14 @@ void configStart(void) {
     memcpy(&config_cache, config, sizeof(userconfig));
 
     if (config_cache.in_combat != 0) {
-      if (config_cache.p_type > 0) {
-        // we will only release this when type is set
+      if (config_cache.ships[0] != 0) {
+        // we will only release this when you have one ship.
         printf("You were stuck in combat. Fixed.\n");
         config_cache.in_combat = 0;
         configSave(&config_cache);
       }
     }
 
-    if (config->p_type != config->current_type) {
-      // reset class on fight
-      printf("Class reset to %d.\n", config_cache.p_type);
-      config_cache.current_type = config_cache.p_type;
-      config_cache.hp = maxhp(config_cache.p_type, config_cache.unlocks, config_cache.level);
-      configSave(&config_cache);
-    }
   }
 
   return;

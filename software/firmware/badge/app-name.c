@@ -78,7 +78,7 @@ static void name_event(OrchardAppContext *context,
 {
 	const OrchardUi * keyboardUi;
 	userconfig * config;
-	  
+
 	keyboardUi = context->instance->ui;
 	config = getConfig();
 
@@ -93,10 +93,7 @@ static void name_event(OrchardAppContext *context,
 		    (event->ui.flags == uiOK)) {
 			configSave (config);
 			bleGapUpdateName ();
-                        if (config->p_type == p_notset)
-				orchardAppRun (orchardAppByName("Choosetype"));
-			else
-				orchardAppExit ();
+			orchardAppExit ();
 		}
 	}
 
@@ -106,13 +103,13 @@ static void name_event(OrchardAppContext *context,
 static void name_exit(OrchardAppContext *context)
 {
 	const OrchardUi * keyboardUi;
-  
+
 	keyboardUi = context->instance->ui;
 	keyboardUi->exit (context);
 
 	free (context->instance->uicontext->itemlist);
 	free (context->instance->uicontext);
-  
+
 	return;
 }
 

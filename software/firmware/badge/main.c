@@ -457,6 +457,7 @@ int main(void)
         printf ("No SD card found\n");
         splash_SDFail();
         ledSetPattern(255); // failure mode
+				shellRestart ();
 #ifdef HALT_ON_SDFAIL
         chThdSleep (TIME_INFINITE);
 #endif

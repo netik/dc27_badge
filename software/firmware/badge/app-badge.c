@@ -103,7 +103,7 @@ static void redraw_player(DefaultHandles *p) {
 
   /* hit point bar */
   gdispDrawThickLine(0, 76, 240, 75, Blue, 2, FALSE);
-  drawProgressBar(30,80,160,12,maxhp(config->current_type, config->unlocks,config->level), config->hp, 0, false);
+  drawProgressBar(30,80,160,12,maxhp(config->unlocks,config->level), config->hp, 0, false);
   gdispDrawThickLine(0, 96, 240, 95, Blue, 2, FALSE);
 
   chsnprintf(tmp, sizeof(tmp), "HP");
@@ -198,22 +198,10 @@ static void redraw_badge(DefaultHandles *p) {
   chsnprintf(tmp2, sizeof(tmp2), "%3d", config->xp);
   draw_stat (p, 0, ypos, "XP", tmp2);
 
-  /* AGL / LOST */
-  ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
-  chsnprintf(tmp2, sizeof(tmp2), "%3d", config->agl);
-  draw_stat (p, 0, ypos, "AGL", tmp2);
-
-  /* MIGHT */
-  ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
-  if (config->unlocks & UL_PLUSMIGHT)
-    chsnprintf(tmp2, sizeof(tmp2), "%3d", config->might + 1);
-  else
-    chsnprintf(tmp2, sizeof(tmp2), "%3d", config->might);
-  draw_stat (p, 0, ypos, "MIGHT", tmp2);
-
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
   chsnprintf(tmp2, sizeof(tmp2), "%3d", config->won);
   draw_stat (p, 0, ypos, "WON", tmp2);
+
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
   chsnprintf(tmp2, sizeof(tmp2), "%3d", config->lost);
   draw_stat (p, 0, ypos, "LOST", tmp2);
