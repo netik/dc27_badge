@@ -43,7 +43,7 @@
 static void
 audio_play (int argc, char *argv[])
 {
-	i2sPlay ("sound/0:DRWHO.SND");
+	i2sPlay (argv[1]);
 	return;
 }
 
@@ -59,7 +59,7 @@ cmd_audio(BaseSequentialStream *chp, int argc, char *argv[])
 {
 	if (argc == 0) {
 		printf ("Audio commands:\r\n");
-		printf ("play                 Play tune\r\n");
+		printf ("play <filename>      Play tune\r\n");
 		printf ("stop                 Stop playing\r\n");
                 return;
         }
