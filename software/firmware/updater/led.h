@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2017
+ * Copyright (c) 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,57 +30,26 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _ASM
-#include "updater.h"
+#ifndef _LED_H_
+#define _LED_H_
 
-	.cpu		cortex-m4
-	.fpu		fpv4-sp-d16
+#define ISSI_I2C_ADDR		0x50
+#define ISSI_REG_MAX		0xBE
 
-	.thumb
+#define ISSI_PAGE_LED		0x00
+#define ISSI_PAGE_PWM		0x01
+#define ISSI_PAGE_BREATH	0x02
+#define ISSI_PAGE_FUNCTION	0x03
 
-	.file		"entry.S"
-	.text
+#define ISSI_REG_COMMAND	0xFD
+#define ISSI_REG_COMMAND_UNLOCK	0xFE
+#define ISSI_CMDUNLOCK_ENABLE	0xC5
 
-	.section	.text.main,"ax",%progbits
-	.align		1
-	.code		16
-	.thumb_func
-	.type		main, %function
+#define ISSI_LED_COUNT		32
 
-	.globl		main
-	.globl		chMtxObjectInit
-	.globl		chThdResumeI
-	.globl		chThdSuspendS
-	.globl		chMtxLock
-	.globl		chMtxUnlock
-	.globl		chThdSuspendTimeoutS
-	.globl		_port_irq_epilogue
+extern void led_init (void);
+extern void led_error (void);
+extern void led_success (void);
+extern void led_progress (void);
 
-	/* Load an initial stack, then jump to the updater code */
-main:
-	ldr	r0, = #UPDATER_STACK
-	mov	sp, r0
-	bl	updater
-
-/*
- * We're using some ChibiOS drivers in the updater, but not using ChibiOS
- * itself. We're careful to use APIs that don't require the ChibiOS kernel
- * or scheduler, however in a couple of cases we still have some unresolved
- * linker references. We need to stub these routines out. To save space,
- * we can create one routine as a stub and alias all the other functions
- * to it.
- *
- * Note that a few of these only show up when we build without LTO.
- */
-
-chMtxObjectInit:
-chThdResumeI:
-chThdSuspendS:
-chMtxLock:
-chMtxUnlock:
-_port_irq_epilogue:
-	bx	lr
-
-chThdSuspendTimeoutS:
-	wfi
-	bx	lr
+#endif /* _LED_H_ */

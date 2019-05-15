@@ -37,7 +37,7 @@ VPATH= ../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52840 			\
 
 OBJS=	entry.o updater.o nvic.o ff.o diskio.o mmc_spi_lld.o	\
 	flash.o hal_gpt_lld.o hal_spi_lld.o hal_gpt.o hal_spi.o \
-	hal_pal_lld.o board.o
+	hal_i2c.o hal_i2c_lld.o hal_pal_lld.o led.o board.o
 
 CC=	arm-none-eabi-gcc
 LD=	arm-none-eabi-ld

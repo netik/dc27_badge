@@ -44,11 +44,11 @@
  * control of the system.
  *
  * The updater makes use of the FatFs code to access the SD card and the
- * Freescale flash library to write to the NRF52's flash. The FatFs code
- * is set up to use SPI channel 1 using the mmc_kinetis_spi.c module. The
- * one complication is that the mmc_kinetis_spi.c code requires a timer.
- * Normally this is provided using one of the NRF52's internal timers.
- * The trouble is that it that the way the code is written, it depends on
+ * NVMC peripheral to write to the NRF52's flash. The FatFs code is
+ * set up to use SPI channel 0 using the mmc_spi_lld.c module. The
+ * one complication is that the mmc_spi_lld.c code requires a timer.
+ * This is provided using one of the NRF52's internal timers. The
+ * trouble is that it that the way the code is written, it depends on
  * the timer triggering periodic interrupts. On the Cortex-M4 processor,
  * interrupts are routed via the vector table which is stored at page 0
  * in flash, which connects the timer interrupt to a handler in the firmware.
@@ -84,10 +84,10 @@
  *
  * The memory map when the updater runs is shown below:
  *
+ * 0x2000_0100			Start of updater binary
  * 0x2000_4000			stack
  * 0x2000_4400			FatFs structure
  * 0x2000_8000			4096-byte data buffer
- * 0x2000_0100			Start of updater binary
  */
 
 #include "ch.h"
@@ -95,6 +95,7 @@
 #include "updater.h"
 #include "mmc.h"
 #include "flash.h"
+#include "led.h"
 
 #include "ff.h"
 #include "ffconf.h"
@@ -104,7 +105,7 @@
  * boundary.
  */
 
-__attribute__((aligned(0x100))) isr vectors[16 + CORTEX_NUM_VECTORS];
+__attribute__((aligned(0x80))) isr vectors[16 + CORTEX_NUM_VECTORS];
 
 isr * origvectors = (isr *)0;
 
@@ -121,7 +122,9 @@ mmc_callback(GPTDriver *gptp)
 	return;
 }
 
-extern void Vector68 (void);
+extern void Vector4C (void); /* SPI */
+extern void Vector50 (void); /* I2C */
+extern void Vector68 (void); /* TIMER2 */
 
 static const GPTConfig gpt2_config = {
     .frequency  = NRF5_GPT_FREQ_62500HZ,
@@ -129,12 +132,18 @@ static const GPTConfig gpt2_config = {
     .resolution = 32,
 };
 
+static const I2CConfig i2c2_config = {
+	400000,			/* clock */
+	IOPORT1_I2C_SCK,	/* scl_pad */
+	IOPORT1_I2C_SDA		/* sda_pad */
+};
+
 static const SPIConfig spi1_config = {
  	NULL,			/* enc_cp */
 	NRF5_SPI_FREQ_8MBPS,	/* freq */
-	0x20|IOPORT2_SPI_SCK,	/* sckpad */
-	0x20|IOPORT2_SPI_MOSI,	/* mosipad */
-	0x20|IOPORT2_SPI_MISO,	/* misopad */
+	IOPORT2_SPI_SCK,	/* sckpad */
+	IOPORT2_SPI_MOSI,	/* mosipad */
+	IOPORT2_SPI_MISO,	/* misopad */
 	IOPORT1_SDCARD_CS,	/* sspad */
 	FALSE,			/* lsbfirst */
 	2,			/* mode */
@@ -181,6 +190,12 @@ updater (void)
 	for (i = 0; i < CORTEX_NUM_VECTORS; i++)
 		nvicDisableVector (i);
 
+	/* Modify a few vectors to point to our handlers */
+
+	vectors[16 + SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn] = Vector4C;
+	vectors[16 + SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQn] = Vector50;
+	vectors[16 + TIMER2_IRQn] = Vector68;
+
 	/* Now shift the vector table location. */
 
 	SCB->VTOR = (uint32_t)vectors;
@@ -193,20 +208,26 @@ updater (void)
 
         palInit (&pal_default_config);
 
+	/* Initialize I2C */
+
+	i2cInit ();
+	i2cStart (&I2CD2, &i2c2_config);
+
+	/* Initialize LEDs. */
+
+	led_init ();
+
 	/* Enable the SPI driver */
 
 	spiInit ();
 	spiStart (&SPID1, &spi1_config);
 
-	/* Make sure all the SPI bus chip selects are in the right state */
+	/* Make sure all the SPI bus chip select is in the right state */
 
 	palSetPad (IOPORT1, IOPORT1_SDCARD_CS);
-	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
-	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
 
-	/* Enable the PIT (for the fatfs timer) */
+	/* Enable a timer (for the fatfs timer) */
 
-	vectors[26] = Vector68;
 	gptInit ();
 	gptStart (&GPTD3, &gpt2_config);
 
@@ -216,17 +237,23 @@ updater (void)
 
 	/*
 	 * Initialize and mount the SD card
-	 * If this fails, turn on the red LED to signal a problem
+	 * If this fails, turn the LEDs red to signal a problem
 	 * to the user.
 	 */
 
 	if (f_mount (fs, "0:", 1) != FR_OK ||
 	    f_open (&f, "BADGE.BIN", FA_READ) != FR_OK) {
-		/*palClearPad (RED_LED_PORT, RED_LED_PIN);*/
+		led_error ();
 		while (1) {}
 	}
 
-	/* Read data from the SD card and copy it to flash. */
+	/*
+	 * Read data from the SD card and copy it to flash. We
+	 * can't easily write to the screen, so instead we use the
+	 * LED array to signal progress to the user. We keep one
+	 * lit LED cycling through the array as a progress indicator.
+	 * Once flashing is done, we light all the LEDs up green.
+	 */
 
 	while (1) {
 		f_read (&f, src, UPDATE_SIZE, &br);
@@ -235,6 +262,7 @@ updater (void)
 		flashErase (dst);
 		flashProgram (src, dst);
 		dst += br;
+		led_progress ();
 	}
 
 #ifdef notdef
@@ -249,6 +277,8 @@ updater (void)
 	 */
 	f_close (&f);
 #endif
+
+	led_success ();
 
 	/* Reboot and load the new firmware */
 
