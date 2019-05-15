@@ -41,6 +41,9 @@
 	.file		"entry.S"
 	.text
 
+	.arch		armv7e-m
+	.syntax		unified
+
 	.section	.text.main,"ax",%progbits
 	.align		1
 	.code		16
