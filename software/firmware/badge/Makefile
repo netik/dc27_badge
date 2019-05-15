@@ -197,6 +197,7 @@ CSRC += main.c \
 	app-dialer.c \
 	app-music.c \
 	app-setup.c \
+	app-joytest.c \
 	app-photos.c \
 	app-unlock.c \
 	fix_fft.c \
