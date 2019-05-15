@@ -74,13 +74,54 @@ main:
  */
 
 chMtxObjectInit:
-chThdResumeI:
-chThdSuspendS:
 chMtxLock:
 chMtxUnlock:
 _port_irq_epilogue:
 	bx	lr
 
-chThdSuspendTimeoutS:
-	wfi
+/*
+ * Unblock somebody waiting on an interrupt
+ */
+
+chThdResumeI:
+	/* Set variable to 0 */
+	mov	r0, #0
+	ldr	r1, = #blocked
+	strb	r0, [r1]
+
 	bx	lr
+
+/*
+ * Wait on an interrupt.
+ */
+
+chThdSuspendS:
+chThdSuspendTimeoutS:
+	/* Set variable to 1 */
+	mov	r0, #1
+	ldr	r1, = #blocked
+	strb	r0, [r1]
+
+	/* Unmask interrupts */
+	cpsie	i
+
+	/* Loop while checking if variable changes to 0 */
+loop:
+	wfi
+	ldrb	r0, [r1]
+	cmp	r0, #0
+	bne	loop
+
+	/* Remask interrupts */
+	cpsid	i
+
+	bx	lr
+
+/*
+ * Loop variable. We're single-threaded so we only need
+ * one of these.
+ */
+	.data
+
+blocked:
+	.byte
