@@ -32,7 +32,7 @@
 VPATH= ../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52840 			\
 	../ChibiOS-Contrib/os/hal/ports/NRF5/LLD			\
 	../ChibiOS/os/hal/ports/common/ARMCMx				\
-	../ChibiOS/os/hal/src ../FatFs/source ../badge_840		\
+	../ChibiOS/os/hal/src ../FatFs/source ../badge		\
 	../ChibiOS-Contrib/os/hal/boards/NONSTANDARD_NRF52840_IDES_OF_DEFCON			\
 
 OBJS=	entry.o updater.o nvic.o ff.o diskio.o mmc_spi_lld.o	\
@@ -52,7 +52,7 @@ CFLAGS+=  -mcpu=cortex-m4 -Os -ggdb -fomit-frame-pointer		\
 	-DCORTEX_USE_FPU=TRUE -DTHUMB_PRESENT -mno-thumb-interwork	\
 	-D__VTOR_PRESENT=1						\
 	-DTHUMB_NO_INTERWORKING -mthumb -DTHUMB -I.			\
-	-I../badge_840 -I../ChibiOS/os/license				\
+	-I../badge -I../ChibiOS/os/license				\
 	-I../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52840			\
 	-I../ChibiOS-Contrib/os/hal/ports/NRF5/LLD			\
 	-I../ChibiOS-Contrib/os/hal/include				\
