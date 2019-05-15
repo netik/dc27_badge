@@ -126,7 +126,7 @@ extern void Vector4C (void); /* SPI */
 extern void Vector50 (void); /* I2C */
 extern void Vector68 (void); /* TIMER2 */
 
-static const GPTConfig gpt2_config = {
+static const GPTConfig gpt3_config = {
     .frequency  = NRF5_GPT_FREQ_62500HZ,
     .callback   = mmc_callback,
     .resolution = 32,
@@ -229,7 +229,7 @@ updater (void)
 	/* Enable a timer (for the fatfs timer) */
 
 	gptInit ();
-	gptStart (&GPTD3, &gpt2_config);
+	gptStart (&GPTD3, &gpt3_config);
 
 	/* Initalize flash library */
 

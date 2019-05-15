@@ -105,13 +105,13 @@ mmc_callback(GPTDriver *gptp)
  * Resolution: 32 bits
  */
 
-static const GPTConfig gpt1_config = {
+static const GPTConfig gpt2_config = {
     .frequency  = NRF5_GPT_FREQ_16MHZ,
     .callback   = gpt_callback,
     .resolution = 32,
 };
 
-static const GPTConfig gpt2_config = {
+static const GPTConfig gpt3_config = {
     .frequency  = NRF5_GPT_FREQ_62500HZ,
     .callback   = mmc_callback,
     .resolution = 32,
@@ -252,8 +252,8 @@ int main(void)
     printf ("\n");
     chThdSleepMilliseconds (50);
 
-    gptStart (&GPTD2, &gpt1_config);
-    gptStart (&GPTD3, &gpt2_config);
+    gptStart (&GPTD2, &gpt2_config);
+    gptStart (&GPTD3, &gpt3_config);
 
     printf ("SYSTEM START\n");
 
