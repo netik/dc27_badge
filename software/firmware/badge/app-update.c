@@ -42,6 +42,8 @@
 
 #include "nullprot_lld.h"
 
+#include "led.h"
+
 #include "buildtime.h"
 
 #include "../updater/updater.h"
@@ -86,6 +88,10 @@ update (VHandles * p)
 	FIL f;
 	UINT br;
 	GTimer * t;
+
+	/* Stop the LED thread */
+
+	ledStop ();
 
 	/* Stop the radio */
 
