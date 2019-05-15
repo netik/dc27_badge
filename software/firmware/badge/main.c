@@ -41,8 +41,11 @@
 
 struct evt_table orchard_events;
 
-/* linker set for command objects */
+#ifdef HALT_ON_SDFAIL
+extern void tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration);
+#endif
 
+/* linker set for command objects */
 orchard_command_start();
 orchard_command_end();
 
@@ -459,6 +462,18 @@ int main(void)
         ledSetPattern(255); // failure mode
 				shellRestart ();
 #ifdef HALT_ON_SDFAIL
+				// 404, 404, get it? :)
+				tonePlay (NULL, 4, 50);
+				chThdSleepMilliseconds(50);
+				tonePlay (NULL, 0, 50);
+				chThdSleepMilliseconds(50);
+				tonePlay (NULL, 4, 50);
+				chThdSleepMilliseconds(250);
+				tonePlay (NULL, 4, 50);
+				chThdSleepMilliseconds(50);
+				tonePlay (NULL, 0, 50);
+				chThdSleepMilliseconds(50);
+				tonePlay (NULL, 4, 50);
         chThdSleep (TIME_INFINITE);
 #endif
     }

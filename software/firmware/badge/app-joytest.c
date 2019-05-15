@@ -18,7 +18,6 @@ typedef struct {
 	font_t			fontLG;
 	font_t			fontXS;
 	font_t			fontSM;
-	GHandle			ghTitle;
 } test_ui_t;
 
 typedef int16_t joypad_test_t;
@@ -103,7 +102,7 @@ static void draw_test_ui(OrchardAppContext *context) {
 					gdispGetFontMetric(th->fontSM, fontHeight),
 					"TEST MODE",
 					th->fontSM, Cyan, justifyCenter);
-	ypos = ypos + gdispGetFontMetric(th->fontSM, fontHeight) + 2;
+					ypos = ypos + gdispGetFontMetric(th->fontSM, fontHeight) + 2;
 
 	gdispDrawStringBox (0,
 					ypos,
@@ -137,8 +136,6 @@ static void test_start(OrchardAppContext *context)
 static void test_event(OrchardAppContext *context,
 	const OrchardAppEvent *event)
 {
-	userconfig * config;
-	config = getConfig();
 	if (event->type == keyEvent) {
 		if (event->key.flags == keyPress)  {
 			switch (event->key.code) {
@@ -237,6 +234,11 @@ static void test_exit(OrchardAppContext *context)
 {
 	test_ui_t *th;
 	th = context->priv;
+
+	gdispCloseFont (th->fontXS);
+	gdispCloseFont (th->fontLG);
+	gdispCloseFont (th->fontSM);
+
 	free(th);
 	context->priv = NULL;
 	return;
