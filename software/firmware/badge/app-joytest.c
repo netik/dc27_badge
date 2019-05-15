@@ -244,5 +244,5 @@ static void test_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Joypad Test", "icons/ship.rgb", 0,
+orchard_app("Joypad Test", "icons/octo.rgb", 0,
   test_init, test_start, test_event, test_exit, 9999);
