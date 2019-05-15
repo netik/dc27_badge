@@ -222,7 +222,7 @@ updater (void)
 	spiInit ();
 	spiStart (&SPID1, &spi1_config);
 
-	/* Make sure all the SPI bus chip select is in the right state */
+	/* Make sure the SPI bus chip select is in the right state */
 
 	palSetPad (IOPORT1, IOPORT1_SDCARD_CS);
 
