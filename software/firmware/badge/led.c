@@ -461,6 +461,9 @@ void ledStart(void) {
 uint8_t ledStop(void) {
   ledExitRequest = 1;
 
+  if (pThread == NULL)
+    return (1);
+
   chThdWait(pThread);
   pThread = NULL;
 
