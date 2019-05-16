@@ -41,15 +41,21 @@
 #define ISSI_PAGE_BREATH	0x02
 #define ISSI_PAGE_FUNCTION	0x03
 
+#define ISSI_REG_GCC		0x01
+
 #define ISSI_REG_COMMAND	0xFD
 #define ISSI_REG_COMMAND_UNLOCK	0xFE
 #define ISSI_CMDUNLOCK_ENABLE	0xC5
 
 #define ISSI_LED_COUNT		32
 
-extern void led_init (void);
-extern void led_error (void);
-extern void led_success (void);
-extern void led_progress (void);
+/* Set intensity to half PWM duty cycle */
+
+#define LED_INTENSITY		0x80
+
+extern void ledInit (void);
+extern void ledError (void);
+extern void ledSuccess (void);
+extern void ledProgress (void);
 
 #endif /* _LED_H_ */

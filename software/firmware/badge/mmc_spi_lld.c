@@ -118,16 +118,7 @@ BYTE xchg_spi (		/* Returns received data */
 	BYTE dat		/* Data to be sent */
 )
 {
-#ifdef UPDATER
-	SPID1.port->TXD = dat;
-	while (SPID1.port->EVENTS_READY == 0)
-		;
-	SPID1.port->EVENTS_READY = 0;
-	(void)SPID1.port->EVENTS_READY;
-	dat = SPID1.port->RXD;
-#else
 	spiExchange (&SPID1, 1, &dat, &dat);
-#endif
 	return (dat);
 }
 
@@ -138,20 +129,7 @@ void rcvr_spi_multi (
 	UINT cnt	/* Size of data block */
 )
 {
-#ifdef UPDATER
-	UINT i;
-
-	for (i = 0; i < cnt; i++) {
-		SPID1.port->TXD = 0xFF;
-		while (SPID1.port->EVENTS_READY == 0)
-			;
-		SPID1.port->EVENTS_READY = 0;
-		(void)SPID1.port->EVENTS_READY;
-		p[i] = SPID1.port->RXD;
-	}
-#else
 	spiReceive (&SPID1, cnt, p);
-#endif
 	return;
 }
 
@@ -163,19 +141,7 @@ void xmit_spi_multi (
 	UINT cnt		/* Size of data block */
 )
 {
-#ifdef UPDATER
-	UINT i;
-
-	for (i = 0; i < cnt; i++) {
-		SPID1.port->TXD = p[i];
-		while (SPID1.port->EVENTS_READY == 0)
-			;
-		SPID1.port->EVENTS_READY = 0;
-		(void)SPID1.port->EVENTS_READY;
-	}
-#else
 	spiSend (&SPID1, cnt, p);
-#endif
 	return;
 }
 
@@ -305,9 +271,6 @@ BYTE send_cmd (		/* Returns R1 resp (bit7==1:Send failed) */
 {
 	BYTE n, res;
 	BYTE cmdbuf[6];
-#ifdef UPDATER
-	UINT i;
-#endif
 
 	if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
 		cmd &= 0x7F;
@@ -330,12 +293,8 @@ BYTE send_cmd (		/* Returns R1 resp (bit7==1:Send failed) */
 	if (cmd == CMD0) n = 0x95;		/* Valid CRC for CMD0(0) + Stop */
 	if (cmd == CMD8) n = 0x87;		/* Valid CRC for CMD8(0x1AA) Stop */
 	cmdbuf[5] = n;
-#ifdef UPDATER
-	for (i = 0; i < 6; i++)
-		xchg_spi (cmdbuf[i]);
-#else
 	spiSend (&SPID1, 6, cmdbuf);
-#endif
+
 	/* Receive command response */
 	if (cmd == CMD12) xchg_spi(0xFF);		/* Skip a stuff byte when stop reading */
 	n = 10;								/* Wait for a valid response in timeout of 10 attempts */

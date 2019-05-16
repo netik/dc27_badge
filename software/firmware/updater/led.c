@@ -48,8 +48,10 @@
 
 #include <string.h>
 
-static void led_show (void);
-static void led_set (uint8_t, uint8_t, uint8_t, uint8_t);
+static void ledShow (void);
+static void ledSet (uint8_t, uint8_t, uint8_t, uint8_t);
+static void ledPageSet (uint8_t);
+static void ledRegSet (uint8_t, uint8_t);
 
 static const uint8_t led_address[ISSI_LED_COUNT][3] =
 {
@@ -80,50 +82,79 @@ static uint8_t led_memory[ISSI_REG_MAX + 2];
 static uint8_t led_pos;
 
 void
-led_init (void)
+ledInit (void)
 {
-	uint8_t txbuf[2];
+	/* Select function page */
 
-	/* Unlock command register */
+	ledPageSet (ISSI_PAGE_FUNCTION);
 
-	txbuf[0] = ISSI_REG_COMMAND_UNLOCK;
-	txbuf[1] = ISSI_CMDUNLOCK_ENABLE;
+	/* Set global current control to max */
 
-	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR, txbuf, 2,
-	    NULL, 0, TIME_INFINITE);
+	ledRegSet (ISSI_REG_GCC, 0xFF);
 
 	/* Select PWM register page */
 
-	txbuf[0] = ISSI_REG_COMMAND;
-	txbuf[1] = ISSI_PAGE_PWM;
-
-	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR, txbuf, 2,
-	    NULL, 0, TIME_INFINITE);
+	ledPageSet (ISSI_PAGE_PWM);
 
 	/*
 	 * Turn off all the LEDs. The led_memory[] array is in the .bss
 	 * section so it should be initialized to all zeroes.
 	 */
 
-	led_show ();
+	ledShow ();
 
 	return;
 }
 
 static void
-led_show (void)
+ledPageSet (uint8_t page)
+{
+	/* Unlock command register */
+
+	ledRegSet (ISSI_REG_COMMAND_UNLOCK, ISSI_CMDUNLOCK_ENABLE);
+
+	/* Select register page */
+
+	ledRegSet (ISSI_REG_COMMAND, page);
+
+	return;
+}
+
+static void
+ledRegSet (uint8_t reg, uint8_t val)
+{
+	uint8_t txbuf[2];
+
+	txbuf[0] = reg;
+	txbuf[1] = val;
+
+	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
+	    txbuf, 2, NULL, 0, TIME_INFINITE);
+
+	return;
+}
+
+static void
+ledShow (void)
 {
 	/*
 	 * Assume that we're still on the PWM control page.
+	 * Write the whole LED "frame buffer" in one transaction.
+	 * Note: the first element in the led_memory[] array is
+	 * the offset of the first LED PWM duty cycle register,
+	 * which happens to be 0. After that's set, the rest
+	 * of the buffer is written to the PWM duty cycle
+	 * registers in sequence using the autoincrement feature.
 	 */
 
 	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
 	    led_memory, sizeof(led_memory), NULL, 0, TIME_INFINITE);
+
 	return;
 }
 
 static void
-led_set (uint8_t index, uint8_t r, uint8_t g, uint8_t b)
+ledSet (uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 {
 	if (index > ISSI_LED_COUNT)
 		return;
@@ -136,11 +167,11 @@ led_set (uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 }
 
 void
-led_progress (void)
+ledProgress (void)
 {
 	memset (led_memory, 0, sizeof(led_memory));
-	led_set (led_pos, 0, 0, 0x80);
-	led_show ();
+	ledSet (led_pos, 0, 0, LED_INTENSITY);
+	ledShow ();
 	led_pos++;
 	if (led_pos == ISSI_LED_COUNT)
 		led_pos = 0;
@@ -148,21 +179,21 @@ led_progress (void)
 }
 
 void
-led_error (void)
+ledError (void)
 {
 	int i;
 	for (i = 0; i < ISSI_LED_COUNT; i++)
-		led_set (i, 0, 0x80, 0);
-	led_show ();
+		ledSet (i, 0, LED_INTENSITY, 0);
+	ledShow ();
 	return;
 }
 
 void
-led_success (void)
+ledSuccess (void)
 {
 	int i;
 	for (i = 0; i < ISSI_LED_COUNT; i++)
-		led_set (i, 0x80, 0, 0);
-	led_show ();
+		ledSet (i, LED_INTENSITY, 0, 0);
+	ledShow ();
 	return;
 }

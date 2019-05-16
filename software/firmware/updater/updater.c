@@ -215,7 +215,7 @@ updater (void)
 
 	/* Initialize LEDs. */
 
-	led_init ();
+	ledInit ();
 
 	/* Enable the SPI driver */
 
@@ -243,7 +243,7 @@ updater (void)
 
 	if (f_mount (fs, "0:", 1) != FR_OK ||
 	    f_open (&f, "BADGE.BIN", FA_READ) != FR_OK) {
-		led_error ();
+		ledError ();
 		while (1) {}
 	}
 
@@ -262,7 +262,7 @@ updater (void)
 		flashErase (dst);
 		flashProgram (src, dst);
 		dst += br;
-		led_progress ();
+		ledProgress ();
 	}
 
 #ifdef notdef
@@ -278,7 +278,7 @@ updater (void)
 	f_close (&f);
 #endif
 
-	led_success ();
+	ledSuccess ();
 
 	/* Reboot and load the new firmware */
 
