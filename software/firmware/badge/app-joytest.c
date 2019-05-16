@@ -47,9 +47,9 @@ static uint32_t test_init(OrchardAppContext *context)
 	return (0);
 }
 
-static void drawJoyBox(joypad_test_t j, coord_t offsetx, color_t oncolor) {
+static void drawJoyCircle(joypad_test_t j, coord_t offsetx, color_t oncolor) {
 	const coord_t radius = 20;
-
+#
 	// draws a joystick in a 160px x 160 px box
 	// left
 	gdispDrawCircle(offsetx + 40, 120, radius, White);
@@ -65,6 +65,10 @@ static void drawJoyBox(joypad_test_t j, coord_t offsetx, color_t oncolor) {
 
 	// down
 	gdispDrawCircle(offsetx + 80, 160, radius, White);
+}
+
+static void drawJoyBox(joypad_test_t j, coord_t offsetx, color_t oncolor) {
+	const coord_t radius = 20;
 
 	// make them all Green ------------------------------
 	if (j & JOY_LEFT)
@@ -111,8 +115,8 @@ static void draw_test_ui(OrchardAppContext *context) {
 					"HIT RESET TO EXIT",
 					th->fontSM, Blue, justifyCenter);
 
-	drawJoyBox(joya, 0, White);
-	drawJoyBox(joyb, 160, White);
+	drawJoyCircle(joya, 0, White);
+	drawJoyCircle(joyb, 160, White);
 
 	// versioning
 	splash_footer();
