@@ -49,7 +49,7 @@ static uint32_t test_init(OrchardAppContext *context)
 
 static void drawJoyCircle(joypad_test_t j, coord_t offsetx, color_t oncolor) {
 	const coord_t radius = 20;
-#
+
 	// draws a joystick in a 160px x 160 px box
 	// left
 	gdispDrawCircle(offsetx + 40, 120, radius, White);
@@ -72,48 +72,49 @@ static void drawJoyBox(joypad_test_t j, coord_t offsetx, color_t oncolor) {
 
 	// make them all Green ------------------------------
 	if (j & JOY_LEFT)
-  	gdispFillCircle(offsetx + 40, 120, radius / 2, oncolor);
+	  	gdispFillCircle(offsetx + 40, 120, radius / 2, oncolor);
 
 	// mid
 	if (j & JOY_SELECT)
-   	gdispFillCircle(offsetx + 80, 120, radius / 2, oncolor);
+   		gdispFillCircle(offsetx + 80, 120, radius / 2, oncolor);
 
 	// r
 	if (j & JOY_RIGHT)
-  	gdispFillCircle(offsetx + 120, 120, radius / 2, oncolor);
+  		gdispFillCircle(offsetx + 120, 120, radius / 2, oncolor);
 
 	// up
 	if (j & JOY_UP)
-  	gdispFillCircle(offsetx + 80, 80, radius / 2, oncolor);
+  		gdispFillCircle(offsetx + 80, 80, radius / 2, oncolor);
 
 	// down
 	if (j & JOY_DOWN)
-  	gdispFillCircle(offsetx + 80, 160, radius / 2, oncolor);
+  		gdispFillCircle(offsetx + 80, 160, radius / 2, oncolor);
 
 }
 
 static void draw_test_ui(OrchardAppContext *context) {
 	test_ui_t *th;
 	coord_t ypos;
-  // get private memory
-  th = (test_ui_t *)context->priv;
+
+	// get private memory
+	th = (test_ui_t *)context->priv;
 
 	// top
 	ypos = 0 ;
 	gdispDrawStringBox (0,
-					0,
-					320,
-					gdispGetFontMetric(th->fontSM, fontHeight),
-					"TEST MODE",
-					th->fontSM, Cyan, justifyCenter);
-					ypos = ypos + gdispGetFontMetric(th->fontSM, fontHeight) + 2;
+		0,
+		320,
+		gdispGetFontMetric(th->fontSM, fontHeight),
+		"TEST MODE",
+		th->fontSM, Cyan, justifyCenter);
+		ypos = ypos + gdispGetFontMetric(th->fontSM, fontHeight) + 2;
 
 	gdispDrawStringBox (0,
-					ypos,
-					320,
-					gdispGetFontMetric(th->fontSM, fontHeight),
-					"HIT RESET TO EXIT",
-					th->fontSM, Blue, justifyCenter);
+		ypos,
+		320,
+		gdispGetFontMetric(th->fontSM, fontHeight),
+		"TAP SCREEN TO EXIT",
+		th->fontSM, Blue, justifyCenter);
 
 	drawJoyCircle(joya, 0, White);
 	drawJoyCircle(joyb, 160, White);
@@ -126,7 +127,10 @@ static void draw_test_ui(OrchardAppContext *context) {
 static void test_start(OrchardAppContext *context)
 {
 	test_ui_t *th;
+	GSourceHandle gs;
+
 	th = malloc(sizeof(test_ui_t));
+
 	context->priv = th;
 	th->fontXS = gdispOpenFont (FONT_XS);
 	th->fontLG = gdispOpenFont (FONT_LG);
@@ -134,19 +138,27 @@ static void test_start(OrchardAppContext *context)
 
 	gdispClear(Black);
 	draw_test_ui(context);
+
+	gs = ginputGetMouse (0);
+	geventListenerInit (&th->gl);
+	geventAttachSource (&th->gl, gs, GLISTEN_MOUSEMETA);
+	geventRegisterCallback (&th->gl, orchardAppUgfxCallback, &th->gl);
+
 	return;
 }
 
 static void test_event(OrchardAppContext *context,
 	const OrchardAppEvent *event)
 {
+	GEventMouse * me;
+
 	if (event->type == keyEvent) {
 		if (event->key.flags == keyPress)  {
 			switch (event->key.code) {
 				case keyASelect:
-				  joya |= JOY_SELECT;
-			  	joya_tested |= JOY_SELECT;
-			  	break;
+					joya |= JOY_SELECT;
+					joya_tested |= JOY_SELECT;
+			  		break;
 				case keyAUp:
 					joya |= JOY_UP;
 					joya_tested |= JOY_UP;
@@ -231,6 +243,17 @@ static void test_event(OrchardAppContext *context,
 		drawJoyBox(joya, 0, White);
 		drawJoyBox(joyb, 160, White);
 	}
+
+	if (event->type == ugfxEvent) {
+		me = (GEventMouse *)event->ugfx.pEvent;
+ 		if (me->buttons & GMETA_MOUSE_DOWN) {
+			i2sPlay ("sound/click.snd");
+			orchardAppExit ();
+			return;
+		}
+	}
+
+
 	return;
 }
 
@@ -238,6 +261,9 @@ static void test_exit(OrchardAppContext *context)
 {
 	test_ui_t *th;
 	th = context->priv;
+
+	geventRegisterCallback (&th->gl, NULL, NULL);
+	geventDetachSource (&th->gl, NULL);
 
 	gdispCloseFont (th->fontXS);
 	gdispCloseFont (th->fontLG);
