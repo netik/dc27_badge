@@ -2,7 +2,6 @@
 #include <string.h>
 #include "ch.h"
 #include "hal.h"
-#include "chprintf.h"
 #include "orchard-app.h"
 #include "fontlist.h"
 #include "ides_gfx.h"
@@ -53,7 +52,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	GWidgetInit wi;
 	unsigned int i,j;
 	char tmp[20];
-  userconfig *config = getConfig();
+	userconfig *config = getConfig();
 
 	gwinWidgetClearInit (&wi);
 
@@ -73,7 +72,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	gwinRedraw (list->ghTitleL);
 
 	/* Create label widget: ghTitleR */
-	chsnprintf (tmp, sizeof(tmp), "%x:%x:%x:%x:%x:%x",
+	snprintf (tmp, sizeof(tmp), "%x:%x:%x:%x:%x:%x",
 	    ble_station_addr[0], ble_station_addr[1], ble_station_addr[2],
 	    ble_station_addr[3], ble_station_addr[4], ble_station_addr[5]);
 
@@ -269,7 +268,7 @@ launcher_start (OrchardAppContext *context)
 	struct launcher_list *list;
 	const OrchardApp *current;
 	unsigned int total_apps = 0;
-  userconfig *config = getConfig();
+	userconfig *config = getConfig();
 
 	/* How many apps do we have? */
 	current = orchard_app_list;
@@ -518,6 +517,8 @@ launcher_exit (OrchardAppContext *context)
 	geventRegisterCallback (&list->gl, NULL, NULL);
 	geventDetachSource (&list->gl, NULL);
 
+	free (context->priv);
+	context->priv = NULL;
 
 	return;
 }
