@@ -446,55 +446,56 @@ int main(void)
     /* start the LEDs */
 
     if (led_init()) {
-      printf("I2C LED controller found.\r\n");
-      ledStart();
+        printf("I2C LED controller found.\r\n");
+        ledStart();
     } else {
-      printf("I2C LED controller not found. No Bling ;(\r\n");
+        printf("I2C LED controller not found. No Bling ;(\r\n");
     }
 
     NRF_P0->DETECTMODE = 0;
 
-	  /* Mount SD card */
+    /* Mount SD card */
 
     if (gfileMount ('F', "0:") == FALSE) {
         printf ("No SD card found\n");
         splash_SDFail();
         ledSetPattern(255); // failure mode
-				shellRestart ();
+        shellRestart ();
 #ifdef HALT_ON_SDFAIL
-				// 404, 404, get it? :)
-				tonePlay (NULL, 4, 50);
-				chThdSleepMilliseconds(50);
-				tonePlay (NULL, 0, 50);
-				chThdSleepMilliseconds(50);
-				tonePlay (NULL, 4, 50);
-				chThdSleepMilliseconds(250);
-				tonePlay (NULL, 4, 50);
-				chThdSleepMilliseconds(50);
-				tonePlay (NULL, 0, 50);
-				chThdSleepMilliseconds(50);
-				tonePlay (NULL, 4, 50);
+        // 404, 404, get it? :)
+        tonePlay (NULL, 4, 50);
+        chThdSleepMilliseconds(50);
+        tonePlay (NULL, 0, 50);
+        chThdSleepMilliseconds(50);
+        tonePlay (NULL, 4, 50);
+        chThdSleepMilliseconds(250);
+        tonePlay (NULL, 4, 50);
+        chThdSleepMilliseconds(50);
+        tonePlay (NULL, 0, 50);
+        chThdSleepMilliseconds(50);
+        tonePlay (NULL, 4, 50);
         chThdSleep (TIME_INFINITE);
 #endif
-    }
-    else
+    } else
         printf ("SD card detected\n");
 
-		printf(SHELL_BANNER);
+    printf(SHELL_BANNER);
 
-		/* Launch shell thread */
+    /* Launch shell thread */
+
     evtTableInit (orchard_events, 3);
     chEvtObjectInit (&orchard_app_terminated);
     chEvtObjectInit (&unlocks_updated);
     evtTableHook (orchard_events, shell_terminated, shell_termination_handler);
     evtTableHook (orchard_events, unlocks_updated, unlock_update_handler);
     evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
-		shellRestart ();
+    shellRestart ();
 
     /* say hi */
-		uiStart ();
+
     splash_welcome();
 
+    uiStart ();
     orchardAppInit ();
     orchardAppRestart ();
 
