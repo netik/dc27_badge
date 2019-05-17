@@ -462,27 +462,27 @@ int main(void)
         ledSetPattern(255); // failure mode
         shellRestart ();
 #ifdef HALT_ON_SDFAIL
-        // 404, 404, get it? :)
-        tonePlay (NULL, 4, 50);
-        chThdSleepMilliseconds(50);
-        tonePlay (NULL, 0, 50);
-        chThdSleepMilliseconds(50);
-        tonePlay (NULL, 4, 50);
-        chThdSleepMilliseconds(250);
-        tonePlay (NULL, 4, 50);
-        chThdSleepMilliseconds(50);
-        tonePlay (NULL, 0, 50);
-        chThdSleepMilliseconds(50);
-        tonePlay (NULL, 4, 50);
+				for (int i = 0; i < 2; i++) {
+        	// 404, 404, get it? :)
+	        tonePlay (NULL, 4, 50);
+	        chThdSleepMilliseconds(50);
+	        tonePlay (NULL, 0, 50);
+	        chThdSleepMilliseconds(50);
+	        tonePlay (NULL, 4, 50);
+	        chThdSleepMilliseconds(50);
+				}
+
         chThdSleep (TIME_INFINITE);
 #endif
     } else
         printf ("SD card detected\n");
 
+		/* say hi */
+		i2sPlay("sound/start.snd");
+
     printf(SHELL_BANNER);
 
     /* Launch shell thread */
-
     evtTableInit (orchard_events, 3);
     chEvtObjectInit (&orchard_app_terminated);
     chEvtObjectInit (&unlocks_updated);
@@ -490,8 +490,6 @@ int main(void)
     evtTableHook (orchard_events, unlocks_updated, unlock_update_handler);
     evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
     shellRestart ();
-
-    /* say hi */
 
     splash_welcome();
 
