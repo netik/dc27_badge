@@ -38,9 +38,7 @@
 #include "scroll_lld.h"
 #include "i2s_lld.h"
 
-#ifdef notyet
 #include "userconfig.h"
-#endif
 
 #include <stdlib.h>
 
@@ -60,25 +58,16 @@ static void
 ledsign_start(OrchardAppContext *context)
 {
 	OrchardUiContext * keyboardUiContext;
-#ifdef notyet
 	userconfig * config;
 
 	config = getConfig();
-#endif
 	keyboardUiContext = malloc (sizeof(OrchardUiContext));
 	keyboardUiContext->itemlist =
 	    (const char **)malloc (sizeof(char *) * 2); 
 	keyboardUiContext->itemlist[0] =
 		"Type a message,\npress ENTER when done.";
-#ifdef notyet
 	keyboardUiContext->itemlist[1] = config->led_string;
 	keyboardUiContext->total = CONFIG_LEDSIGN_MAXLEN - 1;
-#else
-	context->priv = malloc (MESSAGELEN);
-	memset (context->priv,0, MESSAGELEN);
-	keyboardUiContext->itemlist[1] = context->priv;
-	keyboardUiContext->total = MESSAGELEN - 1;
-#endif
 
 	context->instance->ui = getUiByName("keyboard");
 	context->instance->uicontext = keyboardUiContext;
@@ -93,9 +82,7 @@ ledsign_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	uint8_t i;
 	const OrchardUi * keyboardUi;
 	OrchardUiContext * keyboardUiContext;
-#ifdef notyet
 	userconfig * config;
-#endif
 	const char * str;
 	char fname[48];
 	int sts = 1;
@@ -112,10 +99,8 @@ ledsign_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			keyboardUi->exit (context);
 			context->instance->ui = NULL;
 			gdispClear (Black);
-#ifdef notyet
 			config = getConfig();
 			configSave (config);
-#endif
 			orchardAppTimer (context, 1, FALSE);
 		}
 	}
