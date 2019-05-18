@@ -17,8 +17,8 @@
 
 MYDIR=`dirname "$0"`
 
-FFMPEG=/usr/local/bin/ffmpeg
-IDENTIFY=/usr/local/bin/identify
+FFMPEG=ffmpeg
+IDENTIFY=identify
 RGBHDR=${MYDIR}/../bin/rgbhdr
 
 if [ "$1" == "" ]; then
