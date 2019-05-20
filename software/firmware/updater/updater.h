@@ -39,7 +39,7 @@
 #define UPDATER_BASE		0x20000100	/* Start of updater binary */
 
 #define UPDATER_NAME		"UPDATER.BIN"
-#define UPDATER_SIZE		7168
+#define UPDATER_SIZE		8192
 
 #ifndef _ASM
 typedef void (*isr)(void);

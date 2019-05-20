@@ -204,9 +204,13 @@ updater (void)
 
 	__enable_irq();
 
-	/* Initialize the GPIO subsystem */
+	/*
+	 * Initialize the GPIO subsystem
+	 * Note: boardInit() sets up the second GPIO bank.
+	 */
 
-        palInit (&pal_default_config);
+	palInit (&pal_default_config);
+	boardInit ();
 
 	/* Initialize I2C */
 
