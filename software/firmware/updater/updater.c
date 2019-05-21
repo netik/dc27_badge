@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2018
+ * Copyright (c) 2016-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -204,9 +204,13 @@ updater (void)
 
 	__enable_irq();
 
-	/* Initialize the GPIO subsystem */
+	/*
+	 * Initialize the GPIO subsystem
+	 * Note: boardInit() sets up the second GPIO bank.
+	 */
 
-        palInit (&pal_default_config);
+	palInit (&pal_default_config);
+	boardInit ();
 
 	/* Initialize I2C */
 

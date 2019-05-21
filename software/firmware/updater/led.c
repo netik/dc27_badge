@@ -183,7 +183,7 @@ ledError (void)
 {
 	int i;
 	for (i = 0; i < ISSI_LED_COUNT; i++)
-		ledSet (i, 0, LED_INTENSITY, 0);
+		ledSet (i, LED_INTENSITY, 0, 0);
 	ledShow ();
 	return;
 }
@@ -193,7 +193,7 @@ ledSuccess (void)
 {
 	int i;
 	for (i = 0; i < ISSI_LED_COUNT; i++)
-		ledSet (i, LED_INTENSITY, 0, 0);
+		ledSet (i, 0, LED_INTENSITY, 0);
 	ledShow ();
 	return;
 }

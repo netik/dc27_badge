@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016-2017
+ * Copyright (c) 2016-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,13 @@
 #ifndef _UPDATER_H_
 #define _UPDATER_H_
 
+#define UPDATER_BASE		0x20000100	/* Start of updater binary */
 #define UPDATER_STACK		0x20004000	/* Stack */
 #define UPDATER_FATFS		0x20004400	/* FatFs structure */
 #define UPDATER_DATBUF		0x20008000	/* 4096-byte data buffer */
-#define UPDATER_BASE		0x20000100	/* Start of updater binary */
 
 #define UPDATER_NAME		"UPDATER.BIN"
-#define UPDATER_SIZE		7168
+#define UPDATER_SIZE		8192
 
 #ifndef _ASM
 typedef void (*isr)(void);

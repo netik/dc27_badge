@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2017
+# Copyright (c) 2016-2019
 #      Bill Paul <wpaul@windriver.com>.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,11 @@
 VPATH= ../ChibiOS-Contrib/os/hal/ports/NRF5/NRF52840 			\
 	../ChibiOS-Contrib/os/hal/ports/NRF5/LLD			\
 	../ChibiOS/os/hal/ports/common/ARMCMx				\
-	../ChibiOS/os/hal/src ../FatFs/source ../badge		\
-	../ChibiOS-Contrib/os/hal/boards/NONSTANDARD_NRF52840_IDES_OF_DEFCON			\
+	../ChibiOS/os/hal/src ../FatFs/source ../badge			\
+	../ChibiOS-Contrib/os/hal/boards/NONSTANDARD_NRF52840_IDES_OF_DEFCON
 
-OBJS=	entry.o updater.o nvic.o ff.o diskio.o mmc_spi_lld.o	\
-	flash.o hal_gpt_lld.o hal_spi_lld.o hal_gpt.o hal_spi.o \
+OBJS=	entry.o updater.o nvic.o ff.o diskio.o mmc_spi_lld.o		\
+	flash.o hal_gpt_lld.o hal_spi_lld.o hal_gpt.o hal_spi.o 	\
 	hal_i2c.o hal_i2c_lld.o hal_pal_lld.o led.o board.o
 
 CC=	arm-none-eabi-gcc
