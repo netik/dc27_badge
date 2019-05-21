@@ -97,9 +97,6 @@ static void init_unlock_ui(UnlockHandles *p) {
 
   GWidgetInit wi;
 
-  p->font_jupiterpro_36 = gdispOpenFont("Jupiter_Pro_2561336");
-  p->font_manteka_20 = gdispOpenFont("manteka20");
-
   gwinWidgetClearInit(&wi);
 
   // create button widget: ghNum1

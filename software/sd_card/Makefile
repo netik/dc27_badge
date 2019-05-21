@@ -1,16 +1,16 @@
 # daBomb Asset build system
 #
-# John Adams 
+# John Adams
 # jna@retina.net
 # 4/2019 (originally from our Ides of DEF CON badge)
 #
-# Master makefile
+# Master SD CARD makefile
 #
-# This makefile will build the tools and media that will be placed on
-# the SD cards
+# This Makefile will build the tools and media that will be placed on
+# the microSD cards.
 #
 # ImageMagick, and FFMPeg are required to convert images.
-# the Makefile in the $(TOOLS_DIR)/ subdir will build our required tools (rgbheader, snd
+# the Makefile in the $(TOOLS_DIR)/ subdir will build our required tools
 #
 # Videos will not be built by this script. We will only copy .vid
 # files to the sdcard from the video/ subdir.
@@ -32,10 +32,10 @@ all: dirs tools_dep images video sounds photos sdcard
 tools_dep:
 	$(MAKE) -C $(TOOLS_DIR)
 
-# These rules will build the standard images only if the jpgs have
-# changed.
+# These rules will build the standard images only if the source images
+# have changed.
 
-rgb/font/led/%.rgb : jpg/font/led/%.jpg 
+rgb/font/led/%.rgb : jpg/font/led/%.jpg
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst .jpg,.rgb,$<) $(@)
 
@@ -51,7 +51,7 @@ rgb/flags/%.rgb : tif/flags/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/flags/
 
-rgb/%.rgb : jpg/%.jpg 
+rgb/%.rgb : jpg/%.jpg
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,jpg/,$(@)) rgb/images
 
@@ -93,18 +93,21 @@ video/%.vid: video_src/%.mp4
 #
 # images used by the system, app-fight, and the "LED" app.
 #
-# if you add subfolders in tif/ you must add a rule here or the
-# Maakefile will not build the subfolder.
+# if you add subfolders in tif/ you must add a rule here or make
+# will not build the subfolder.
+
 images: dirs tools_dep photos \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/*.tif))))) \
         $(addprefix rgb/images/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/images/*.tif))))) \
         $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
+        $(addprefix rgb/flags/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/flags/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/*.jpg)))))
 
 # When possible please use .wav files as source material. MP3s already
 # have enough compression and loss.
+
 sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/*.wav dac/*.mp3))))) \
 	          $(addprefix dac/game/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/game/*.wav dac/game/*.mp3)))))
 
@@ -114,6 +117,7 @@ sdcard: dirs tools_dep images sounds video
 	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
 	-cp rgb/images/*.rgb $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
+	-cp rgb/flags/*.rgb $(STAGING_DIR)/flags
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
 	-cp ../firmware/updater/updater.bin $(STAGING_DIR)
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
@@ -138,7 +142,7 @@ osxsd:	sdcard
 # copy only binaries and the updater to the card (reduces dev time
 # when needed)
 osxsdfw:	sdcard
-	@echo "Updating binaries on /Volumes/SPQR_DC25"
+	@echo "Updating binaries on $(VOLNAME)"
 	@cp ../updater/updater.bin $(VOLNAME)/
 	@cp $(STAGING_DIR)/badge.bin $(VOLNAME)/
 	@sync
@@ -164,8 +168,8 @@ dirs:
 	-[ -d video ] || mkdir -p video
 
 cleansd:
-	@if [ -d "$(STAGING_DIR)" ]; then rm -rf $(STAGING_DIR); fi; 
-	@if [ -d "rgb" ]; then rm -rf rgb; fi; 
+	@if [ -d "$(STAGING_DIR)" ]; then rm -rf $(STAGING_DIR); fi;
+	@if [ -d "rgb" ]; then rm -rf rgb; fi;
 
 # remove tools, sounds, images, and video
 clean: clean_images

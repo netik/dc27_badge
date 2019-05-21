@@ -1,4 +1,5 @@
 (sym_lib_table
   (lib (name dc27-sao-extras)(type Legacy)(uri "/Users/jna/Dropbox/Badge Stuff/badge files/badge-kicad/DC27-SAO/dc27-sao-extras.lib")(options "")(descr ""))
   (lib (name OLED)(type Legacy)(uri "/Users/jna/Dropbox/Badge Stuff/badge files/badge-kicad/DC27-SAO/OLED.lib")(options "")(descr ""))
+  (lib (name DC27-SAO-rescue)(type Legacy)(uri ${KIPRJMOD}/DC27-SAO-rescue.lib)(options "")(descr ""))
 )
