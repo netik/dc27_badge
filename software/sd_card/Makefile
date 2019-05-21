@@ -115,6 +115,7 @@ sdcard: dirs tools_dep images sounds video
 	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
 	-cp rgb/images/*.rgb $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
+	-cp rgb/flags/*.rgb $(STAGING_DIR)/flags
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
 	-cp ../firmware/updater/updater.bin $(STAGING_DIR)
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
