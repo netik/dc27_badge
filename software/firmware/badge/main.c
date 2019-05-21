@@ -39,6 +39,9 @@
 // Drop dead if the SD Card isn't inserted.
 #define HALT_ON_SDFAIL 1
 
+// define this to bypass the startup screen, sponsors and song.
+#define FAST_STARTUP 1
+
 struct evt_table orchard_events;
 
 #ifdef HALT_ON_SDFAIL
@@ -435,16 +438,14 @@ int main(void)
         printf ("Main screen turn on\n");
     else
         printf ("No screen found\n");
-    /* Enable bluetooth radio */
 
+    /* Enable bluetooth radio */
     bleStart ();
 
     /* Init the user configuration */
-
     configStart();
 
     /* start the LEDs */
-
     if (led_init()) {
         printf("I2C LED controller found.\r\n");
         ledStart();
@@ -462,24 +463,25 @@ int main(void)
         ledSetPattern(255); // failure mode
         shellRestart ();
 #ifdef HALT_ON_SDFAIL
-				for (int i = 0; i < 2; i++) {
-        	// 404, 404, get it? :)
-	        tonePlay (NULL, 4, 50);
-	        chThdSleepMilliseconds(50);
-	        tonePlay (NULL, 0, 50);
-	        chThdSleepMilliseconds(50);
-	        tonePlay (NULL, 4, 50);
-	        chThdSleepMilliseconds(50);
-				}
-
+        for (int i = 0; i < 2; i++) {
+          // 404, 404, get it? :)
+          tonePlay (NULL, 4, 50);
+          chThdSleepMilliseconds(50);
+          tonePlay (NULL, 0, 50);
+          chThdSleepMilliseconds(50);
+          tonePlay (NULL, 4, 50);
+          chThdSleepMilliseconds(50);
+        }
+        
         chThdSleep (TIME_INFINITE);
 #endif
     } else
-        printf ("SD card detected\n");
+      printf ("SD card detected\n");
 
-		/* say hi */
-		i2sPlay("sound/start.snd");
-
+    /* say hi */
+#ifndef FAST_STARTUP
+    i2sPlay("sound/start.snd");
+#endif /* FAST_STARTUP */
     printf(SHELL_BANNER);
 
     /* Launch shell thread */
@@ -491,7 +493,9 @@ int main(void)
     evtTableHook (orchard_events, orchard_app_terminated, orchard_app_restart);
     shellRestart ();
 
+#ifndef FAST_STARTUP
     splash_welcome();
+#endif
 
     uiStart ();
     orchardAppInit ();
