@@ -32,8 +32,8 @@ all: dirs tools_dep images video sounds photos sdcard
 tools_dep:
 	$(MAKE) -C $(TOOLS_DIR)
 
-# These rules will build the standard images only if the jpgs have
-# changed.
+# These rules will build the standard images only if the source images
+# have changed.
 
 rgb/font/led/%.rgb : jpg/font/led/%.jpg 
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
@@ -100,6 +100,7 @@ images: dirs tools_dep photos \
         $(addprefix rgb/images/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/images/*.tif))))) \
         $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
+        $(addprefix rgb/flags/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/flags/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/*.jpg)))))
 
