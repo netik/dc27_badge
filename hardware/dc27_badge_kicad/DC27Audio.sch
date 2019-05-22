@@ -527,11 +527,11 @@ Wire Wire Line
 Wire Wire Line
 	2700 2350 3000 2350
 Wire Wire Line
-	5000 4100 5300 4100
+	5000 4100 5100 4100
 Wire Wire Line
 	4250 3650 4700 3650
 Wire Wire Line
-	5000 3650 5300 3650
+	5000 3650 5100 3650
 $Comp
 L Device:Speaker LS501
 U 1 1 5CAC1626
@@ -558,4 +558,52 @@ Text Notes 9500 4450 0    50   ~ 0
 AST-01708MRR\n200mW
 Text Notes 4850 3350 0    50   ~ 0
 Can drop R502,503 to 15k, \nbut some distortion present.
+$Comp
+L Connector:TestPoint TP501
+U 1 1 5CEFC925
+P 5100 3000
+F 0 "TP501" H 5158 3118 50  0000 L CNN
+F 1 "DAC_OUT_R" H 5158 3027 50  0000 L CNN
+F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 5300 3000 50  0001 C CNN
+F 3 "~" H 5300 3000 50  0001 C CNN
+	1    5100 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint TP502
+U 1 1 5CEFE6CB
+P 5100 4400
+F 0 "TP502" H 5042 4426 50  0000 R CNN
+F 1 "DAC_OUT_L" H 5042 4517 50  0000 R CNN
+F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 5300 4400 50  0001 C CNN
+F 3 "~" H 5300 4400 50  0001 C CNN
+	1    5100 4400
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	5100 4400 5100 4100
+Connection ~ 5100 4100
+Wire Wire Line
+	5100 4100 5300 4100
+Wire Wire Line
+	5100 3000 5100 3650
+Connection ~ 5100 3650
+Wire Wire Line
+	5100 3650 5300 3650
+$Comp
+L Connector:TestPoint TP503
+U 1 1 5CF0281F
+P 5100 4850
+F 0 "TP503" H 5158 4968 50  0000 L CNN
+F 1 "DAC_GND" H 5158 4877 50  0000 L CNN
+F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 5300 4850 50  0001 C CNN
+F 3 "~" H 5300 4850 50  0001 C CNN
+	1    5100 4850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5100 4850 4500 4850
+Wire Wire Line
+	4500 4850 4500 4550
+Connection ~ 4500 4550
 $EndSCHEMATC

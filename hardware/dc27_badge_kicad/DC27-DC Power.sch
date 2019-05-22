@@ -559,9 +559,9 @@ $Comp
 L DC27-badge-rescue:D_Schottky-Device D404
 U 1 1 5CE7938B
 P 6150 2500
-F 0 "D404" V 6350 2450 50  0000 R CNN
-F 1 "SD0603S040S0R2" V 6450 2450 50  0000 R CNN
-F 2 "Diode_SMD:D_0603_1608Metric" H 6150 2500 50  0001 C CNN
+F 0 "D404" V 6550 2450 50  0000 R CNN
+F 1 "SD0805S020S1R0" V 6450 2450 50  0000 R CNN
+F 2 "Diode_SMD:D_0805_2012Metric" H 6150 2500 50  0001 C CNN
 F 3 "" H 6150 2500 50  0001 C CNN
 	1    6150 2500
 	0    -1   -1   0   
@@ -623,4 +623,16 @@ Wire Wire Line
 Wire Wire Line
 	6500 2250 6150 2250
 Connection ~ 6150 2250
+Text Notes 6200 2050 0    50   ~ 0
+1A 20V Schottky\n
+Text Notes 6800 2550 0    50   ~ 0
+MOSFET\nPulldown
+Text Notes 6200 1900 0    50   ~ 0
+Q401 is used as a charge switch. \nIf VBUS is present, Q401 will bias and\ndisconnect the battery.\n\n
+Text Notes 6100 3200 0    50   ~ 10
+S
+Text Notes 5700 3200 0    50   ~ 10
+D
+Text Notes 5800 2900 0    50   ~ 10
+G
 $EndSCHEMATC
