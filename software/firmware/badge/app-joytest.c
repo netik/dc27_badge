@@ -131,6 +131,11 @@ static void test_start(OrchardAppContext *context)
 
 	th = malloc(sizeof(test_ui_t));
 
+	joya = 0;
+	joyb = 0;
+	joya_tested = 0;
+	joyb_tested = 0;
+
 	context->priv = th;
 	th->fontXS = gdispOpenFont (FONT_XS);
 	th->fontLG = gdispOpenFont (FONT_LG);
