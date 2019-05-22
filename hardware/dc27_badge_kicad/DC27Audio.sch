@@ -23,6 +23,8 @@ Wire Wire Line
 Wire Wire Line
 	4250 3850 4500 3850
 Wire Wire Line
+	4550 4100 4700 4100
+Wire Wire Line
 	4550 3950 4550 4100
 Wire Wire Line
 	4250 3950 4550 3950
@@ -527,7 +529,7 @@ Wire Wire Line
 Wire Wire Line
 	5000 4100 5300 4100
 Wire Wire Line
-	4250 3650 4600 3650
+	4250 3650 4700 3650
 Wire Wire Line
 	5000 3650 5300 3650
 $Comp
@@ -556,38 +558,4 @@ Text Notes 9500 4450 0    50   ~ 0
 AST-01708MRR\n200mW
 Text Notes 4850 3350 0    50   ~ 0
 Can drop R502,503 to 15k, \nbut some distortion present.
-$Comp
-L Connector:TestPoint TP501
-U 1 1 5CE34BE7
-P 4600 3050
-F 0 "TP501" H 4658 3168 50  0000 L CNN
-F 1 "DAC_OUT_R" H 4658 3077 50  0000 L CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 4800 3050 50  0001 C CNN
-F 3 "~" H 4800 3050 50  0001 C CNN
-	1    4600 3050
-	1    0    0    -1  
-$EndComp
-$Comp
-L Connector:TestPoint TP502
-U 1 1 5CE35CF0
-P 4600 4750
-F 0 "TP502" H 4542 4776 50  0000 R CNN
-F 1 "DAC_OUT_L" H 4542 4867 50  0000 R CNN
-F 2 "TestPoint:TestPoint_Pad_D2.0mm" H 4800 4750 50  0001 C CNN
-F 3 "~" H 4800 4750 50  0001 C CNN
-	1    4600 4750
-	-1   0    0    1   
-$EndComp
-Wire Wire Line
-	4600 4750 4600 4100
-Wire Wire Line
-	4550 4100 4600 4100
-Connection ~ 4600 4100
-Wire Wire Line
-	4600 4100 4700 4100
-Wire Wire Line
-	4600 3050 4600 3650
-Connection ~ 4600 3650
-Wire Wire Line
-	4600 3650 4700 3650
 $EndSCHEMATC
