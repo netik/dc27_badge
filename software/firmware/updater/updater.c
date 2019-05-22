@@ -226,9 +226,15 @@ updater (void)
 	spiInit ();
 	spiStart (&SPID1, &spi1_config);
 
-	/* Make sure the SPI bus chip select is in the right state */
+	/* Set up I/O pins. */
 
+	palSetPad (IOPORT1, IOPORT1_SPI_MOSI);
+	palSetPad (IOPORT1, IOPORT1_SPI_MISO);
+	palSetPad (IOPORT1, IOPORT1_SPI_SCK);
 	palSetPad (IOPORT1, IOPORT1_SDCARD_CS);
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CS);
+	palSetPad (IOPORT1, IOPORT1_SCREEN_CD);
+	palSetPad (IOPORT1, IOPORT1_TOUCH_CS);
 
 	/* Enable a timer (for the fatfs timer) */
 
