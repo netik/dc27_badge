@@ -87,11 +87,11 @@
 #define IOPORT2_SPI_MISO       (7U | 0x20)
 #define IOPORT2_SPI_MOSI       (8U | 0x20)
 
-#define IOPORT2_BTN5          (11U | 0x20)
-#define IOPORT2_BTN6          (10U | 0x20)
-#define IOPORT2_BTN7          (13U | 0x20)
-#define IOPORT2_BTN8          (12U | 0x20)
-#define IOPORT2_BTN9           (9U | 0x20)
+#define IOPORT2_BTN5          (13U | 0x20)
+#define IOPORT2_BTN6           (9U | 0x20)
+#define IOPORT2_BTN7          (10U | 0x20)
+#define IOPORT2_BTN8          (11U | 0x20)
+#define IOPORT2_BTN9          (12U | 0x20)
 #define IOPORT2_BTN10         (14U | 0x20)
 #define IOPORT2_JOYINTR       (15U | 0x20)
 
