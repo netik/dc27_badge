@@ -83,6 +83,7 @@
 
 openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
 	-f interface/ftdi/olimex-arm-jtag-swd.cfg	\
+	-f target/nrf52.cfg				\
 	-c "init"					\
 	-c "reset halt"					\
 	-c "nrf5 mass_erase"				\
