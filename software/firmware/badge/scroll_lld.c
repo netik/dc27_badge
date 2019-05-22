@@ -133,9 +133,9 @@ scrollImage (char * file, int delay)
 		chThdSleepMilliseconds (delay);
 	}
 
-	geventDetachSource (&gl, NULL);
-
 out:
+
+	geventDetachSource (&gl, NULL);
 
 	free (buf);
 	f_close (&f);
