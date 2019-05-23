@@ -52,13 +52,13 @@ chThdSuspendS (thread_reference_t *trp)
 
 	blocked = 1;
 
-	__asm__ ("cpsie i");
+	__enable_irq();
 	while (1) {
-		__asm__ ("wfi");
+		__WFI();
 		if (!blocked)
 			break;
 	}
-	__asm__ ("cpsid i");
+	__disable_irq();
 
 	return (MSG_OK);
 }
@@ -72,13 +72,13 @@ chThdSuspendTimeoutS (thread_reference_t *trp, sysinterval_t timeout)
 
 	blocked = 1;
 
-	__asm__ ("cpsie i");
+	__enable_irq();
 	for (t = 0; t < (timeout * 100); t++) {
 		__asm__ ("nop");
 		if (!blocked)
 			break;
 	}
-	__asm__ ("cpsid i");
+	__disable_irq();
 
 	if (t == timeout)
 		return (MSG_TIMEOUT);
