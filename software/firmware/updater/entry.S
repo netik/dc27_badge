@@ -52,11 +52,8 @@
 
 	.globl		main
 	.globl		chMtxObjectInit
-	.globl		chThdResumeI
-	.globl		chThdSuspendS
 	.globl		chMtxLock
 	.globl		chMtxUnlock
-	.globl		chThdSuspendTimeoutS
 	.globl		_port_irq_epilogue
 
 	/* Load an initial stack, then jump to the updater code */
@@ -81,50 +78,3 @@ chMtxLock:
 chMtxUnlock:
 _port_irq_epilogue:
 	bx	lr
-
-/*
- * Unblock somebody waiting on an interrupt
- */
-
-chThdResumeI:
-	/* Set variable to 0 */
-	mov	r0, #0
-	ldr	r1, = #blocked
-	strb	r0, [r1]
-
-	bx	lr
-
-/*
- * Wait on an interrupt.
- */
-
-chThdSuspendS:
-chThdSuspendTimeoutS:
-	/* Set variable to 1 */
-	mov	r0, #1
-	ldr	r1, = #blocked
-	strb	r0, [r1]
-
-	/* Unmask interrupts */
-	cpsie	i
-
-	/* Loop while checking if variable changes to 0 */
-loop:
-	wfi
-	ldrb	r0, [r1]
-	cmp	r0, #0
-	bne	loop
-
-	/* Remask interrupts */
-	cpsid	i
-
-	bx	lr
-
-/*
- * Loop variable. We're single-threaded so we only need
- * one of these.
- */
-	.data
-
-blocked:
-	.byte
