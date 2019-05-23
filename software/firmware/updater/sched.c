@@ -30,43 +30,58 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LED_H_
-#define _LED_H_
+#include "ch.h"
+#include <stdint.h>
 
-#define ISSI_I2C_ADDR		0x50
-#define ISSI_REG_MAX		0xBE
+static volatile uint8_t blocked;
 
-#define ISSI_PAGE_LED		0x00
-#define ISSI_PAGE_PWM		0x01
-#define ISSI_PAGE_BREATH	0x02
-#define ISSI_PAGE_FUNCTION	0x03
+void
+chThdResumeI (thread_reference_t *trp, msg_t msg)
+{
+	(void)trp;
+	(void)msg;
 
-#define ISSI_REG_GCC		0x01
+	blocked = 0;
+	return;
+}
 
-#define ISSI_REG_CONFIG 	0x00
-#define ISSI_REG_RESET	 	0x11
+msg_t
+chThdSuspendS (thread_reference_t *trp)
+{
+	(void)trp;
 
-#define ISSI_REG_COMMAND	0xFD
-#define ISSI_REG_COMMAND_UNLOCK	0xFE
+	blocked = 1;
 
-#define ISSI_CMDUNLOCK_ENABLE	0xC5
+	__asm__ ("cpsie i");
+	while (1) {
+		__asm__ ("wfi");
+		if (!blocked)
+			break;
+	}
+	__asm__ ("cpsid i");
 
-#define ISSI_REG_CONFIG_SSD_ON	0x00    /* Soft shutdown mode enabled */
-#define ISSI_REG_CONFIG_SSD_OFF	0x01    /* Soft shutdown mode disabled */
-#define ISSI_REG_CONFIG_B_EN	0x02
-#define ISSI_REG_CONFIG_OSD	0x04
+	return (MSG_OK);
+}
 
-#define ISSI_LED_COUNT		32
+msg_t
+chThdSuspendTimeoutS (thread_reference_t *trp, sysinterval_t timeout)
+{
+	sysinterval_t t;
 
-#define ISSI_TIMEOUT		1000
+	(void)trp;
 
-/* Set intensity to half PWM duty cycle */
+	blocked = 1;
 
-#define LED_INTENSITY		0x80
+	__asm__ ("cpsie i");
+	for (t = 0; t < (timeout * 100); t++) {
+		__asm__ ("nop");
+		if (!blocked)
+			break;
+	}
+	__asm__ ("cpsid i");
 
-extern void ledInit (void);
-extern void ledError (void);
-extern void ledSuccess (void);
-extern void ledProgress (void);
+	if (t == timeout)
+		return (MSG_TIMEOUT);
 
-#endif /* _LED_H_ */
+	return (MSG_OK);
+}

@@ -46,12 +46,15 @@
 #include "hal.h"
 #include "led.h"
 
+#include "nrf_delay.h"
+
 #include <string.h>
 
 static void ledShow (void);
 static void ledSet (uint8_t, uint8_t, uint8_t, uint8_t);
 static void ledPageSet (uint8_t);
 static void ledRegSet (uint8_t, uint8_t);
+static uint8_t ledRegGet (uint8_t);
 
 static const uint8_t led_address[ISSI_LED_COUNT][3] =
 {
@@ -84,24 +87,38 @@ static uint8_t led_pos;
 void
 ledInit (void)
 {
+	int i;
+
 	/* Select function page */
 
 	ledPageSet (ISSI_PAGE_FUNCTION);
+
+	/* Reset the chip */
+
+	(void) ledRegGet (ISSI_REG_RESET);
+
+	/* Select function page */
+
+	ledPageSet (ISSI_PAGE_FUNCTION);
+
+	/* Set configuration - disable soft shutdown */
+
+	ledRegSet (ISSI_REG_CONFIG, ISSI_REG_CONFIG_SSD_OFF);
 
 	/* Set global current control to max */
 
 	ledRegSet (ISSI_REG_GCC, 0xFF);
 
+	/* Turn on LEDs */
+
+	ledPageSet (ISSI_PAGE_LED);
+
+	for (i = 0; i < 0x18; i++)
+		ledRegSet (i, 0xFF);
+
 	/* Select PWM register page */
 
 	ledPageSet (ISSI_PAGE_PWM);
-
-	/*
-	 * Turn off all the LEDs. The led_memory[] array is in the .bss
-	 * section so it should be initialized to all zeroes.
-	 */
-
-	ledShow ();
 
 	return;
 }
@@ -120,6 +137,20 @@ ledPageSet (uint8_t page)
 	return;
 }
 
+static uint8_t
+ledRegGet (uint8_t reg)
+{
+	uint8_t rxbuf;
+	uint8_t txbuf;
+
+	txbuf = reg;
+
+	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
+	    &txbuf, 1, &rxbuf, 1, ISSI_TIMEOUT);
+
+	return (rxbuf);
+}
+
 static void
 ledRegSet (uint8_t reg, uint8_t val)
 {
@@ -129,7 +160,7 @@ ledRegSet (uint8_t reg, uint8_t val)
 	txbuf[1] = val;
 
 	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
-	    txbuf, 2, NULL, 0, TIME_INFINITE);
+	    txbuf, 2, NULL, 0, ISSI_TIMEOUT);
 
 	return;
 }
@@ -148,7 +179,7 @@ ledShow (void)
 	 */
 
 	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
-	    led_memory, sizeof(led_memory), NULL, 0, TIME_INFINITE);
+	    led_memory, sizeof(led_memory), NULL, 0, ISSI_TIMEOUT);
 
 	return;
 }
@@ -169,9 +200,9 @@ ledSet (uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 void
 ledProgress (void)
 {
-	memset (led_memory, 0, sizeof(led_memory));
 	ledSet (led_pos, 0, 0, LED_INTENSITY);
 	ledShow ();
+	ledSet (led_pos, 0, 0, 0);
 	led_pos++;
 	if (led_pos == ISSI_LED_COUNT)
 		led_pos = 0;
