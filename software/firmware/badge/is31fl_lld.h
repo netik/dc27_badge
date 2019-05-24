@@ -31,6 +31,8 @@
 
 #define ISSI_REG_RESET					0x11
 
+#define ISSI_TIMEOUT				50
+
 /**
  * Initializes the LED driver. Initialization is not required and can be done lazily the first
  * time this driver is used.
@@ -60,5 +62,6 @@ extern void drv_is31fl_set_page(uint8_t page);
 
 /* these are our versions of the write command */
 extern bool hal_i2c_write_reg_byte(uint8_t i2c_address, uint8_t reg, uint8_t value);
+extern uint8_t hal_i2c_read_reg_byte(uint8_t i2c_address, uint8_t reg);
 
 #endif /* COMPONENTS_DRV_IS31FL_H_ */

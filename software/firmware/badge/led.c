@@ -31,6 +31,7 @@ uint8_t led_brightness_get(void);
 bool led_init(void);
 void led_clear(void);
 void led_show(void);
+void led_reset(void);
 void ledSetPattern(uint8_t);
 
 void led_pattern_balls_init(led_pattern_balls_t *);
@@ -263,11 +264,51 @@ void led_set_all_rgb(color_rgb_t rgb) {
   }
 }
 
+void led_reset() {
+  volatile uint32_t * p = (uint32_t *)(NRF_TWI1_BASE + 0xFFC);
+
+  /* Disable the I2C port */
+
+  i2c_lld_stop (&I2CD2);
+  I2CD2.state = I2C_STOP;
+
+  /*
+   * Disabling the I2C controller doesn't always fully reset it.
+   * To be really sure, you need to power cycle it. Apparently
+   * the nRF52 peripherals have a power control register at offset
+   * 0xFFC. I'm not sure if this is common to all devices, but
+   * according to info on the forum, it's at least true for the
+   * I2C block. We're using TWI1, which is at base address
+   * 0x40004000. We cycle power by writing a 0 to the register
+   * to turn it off and then writing a 1 to turn it back on again.
+   */
+
+  *p = 0;
+  (void)p;
+  *p = 1;
+
+  /* Re-enable the I2C port */
+
+  i2c_lld_start (&I2CD2);
+  I2CD2.state = I2C_READY;
+
+  return;
+}
+
 void led_show() {
-  drv_is31fl_set_page(ISSI_PAGE_PWM);
+  msg_t r;
+
   i2cAcquireBus(&I2CD2);
-  i2cMasterTransmitTimeout (&I2CD2, LED_I2C_ADDR, led_memory, sizeof(led_memory),
-    NULL, 0, TIME_INFINITE);
+
+  drv_is31fl_set_page(ISSI_PAGE_PWM);
+
+  r = i2cMasterTransmitTimeout (&I2CD2, LED_I2C_ADDR,
+    led_memory, sizeof(led_memory),
+    NULL, 0, ISSI_TIMEOUT);
+
+  if (r != MSG_OK)
+    led_reset();
+
   i2cReleaseBus(&I2CD2);
 }
 

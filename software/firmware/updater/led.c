@@ -126,10 +126,22 @@ ledInit (void)
 static void
 ledReset (void)
 {
+	volatile uint32_t * p = (uint32_t *)(NRF_TWI1_BASE + 0xFFC);
+
 	/* Stop and restart the I2C bus to clear any errors */
 
 	i2c_lld_stop (&I2CD2);
 	I2CD2.state = I2C_STOP;
+
+	/*
+	 * Power cycle the controller by writing to the magic
+	 * undocumented power control register at offset 0xFFC.
+	 */
+
+	*p = 0;
+ 	(void)p;
+	*p = 1;
+
 	i2c_lld_start (&I2CD2);
 	I2CD2.state = I2C_READY;
 
