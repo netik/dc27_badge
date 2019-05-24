@@ -46,11 +46,11 @@
 #include "hal.h"
 #include "led.h"
 
-#include "nrf_delay.h"
-
 #include <string.h>
+#include <stdio.h>
 
 static void ledShow (void);
+static void ledReset (void);
 static void ledSet (uint8_t, uint8_t, uint8_t, uint8_t);
 static void ledPageSet (uint8_t);
 static void ledRegSet (uint8_t, uint8_t);
@@ -124,6 +124,23 @@ ledInit (void)
 }
 
 static void
+ledReset (void)
+{
+	/* Stop and restart the I2C bus to clear any errors */
+
+	i2c_lld_stop (&I2CD2);
+	I2CD2.state = I2C_STOP;
+	i2c_lld_start (&I2CD2);
+	I2CD2.state = I2C_READY;
+
+	/* Send some data through to resync ourselves with the controller. */
+
+	ledRegSet (0xFF, 0xFF);
+
+	return;
+}
+
+static void
 ledPageSet (uint8_t page)
 {
 	/* Unlock command register */
@@ -145,7 +162,7 @@ ledRegGet (uint8_t reg)
 
 	txbuf = reg;
 
-	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
+	(void)i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
 	    &txbuf, 1, &rxbuf, 1, ISSI_TIMEOUT);
 
 	return (rxbuf);
@@ -159,7 +176,7 @@ ledRegSet (uint8_t reg, uint8_t val)
 	txbuf[0] = reg;
 	txbuf[1] = val;
 
-	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
+	(void)i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
 	    txbuf, 2, NULL, 0, ISSI_TIMEOUT);
 
 	return;
@@ -168,6 +185,8 @@ ledRegSet (uint8_t reg, uint8_t val)
 static void
 ledShow (void)
 {
+	msg_t r;
+
 	/*
 	 * Assume that we're still on the PWM control page.
 	 * Write the whole LED "frame buffer" in one transaction.
@@ -178,8 +197,11 @@ ledShow (void)
 	 * registers in sequence using the autoincrement feature.
 	 */
 
-	i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
+	r = i2cMasterTransmitTimeout (&I2CD2, ISSI_I2C_ADDR,
 	    led_memory, sizeof(led_memory), NULL, 0, ISSI_TIMEOUT);
+
+	if (r != MSG_OK)
+		ledReset ();
 
 	return;
 }
