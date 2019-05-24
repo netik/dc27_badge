@@ -145,10 +145,6 @@ ledReset (void)
 	i2c_lld_start (&I2CD2);
 	I2CD2.state = I2C_READY;
 
-	/* Send some data through to resync ourselves with the controller. */
-
-	ledRegSet (0xFF, 0xFF);
-
 	return;
 }
 
