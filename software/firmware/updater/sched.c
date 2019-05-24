@@ -80,7 +80,7 @@ chThdSuspendTimeoutS (thread_reference_t *trp, sysinterval_t timeout)
 	}
 	__disable_irq();
 
-	if (t == timeout)
+	if (blocked)
 		return (MSG_TIMEOUT);
 
 	return (MSG_OK);

@@ -200,6 +200,7 @@ static void serve_interrupt(I2CDriver *i2cp) {
   if(i2c->EVENTS_ERROR) {
 
     uint32_t err = i2c->ERRORSRC;
+    i2c->ERRORSRC = err;
     i2c->EVENTS_ERROR = 0;
 #if CORTEX_MODEL >= 4
     (void)i2c->EVENTS_ERROR;
