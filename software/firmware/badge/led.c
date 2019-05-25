@@ -7,6 +7,8 @@
 #include "userconfig.h"
 #include "rand.h"
 
+#include <string.h>
+
 #define MILLIS() chVTGetSystemTime()
 #define util_random(x,y) randRange(x,y)
 #define M_PI 3.14159265358979323846264338327950288
@@ -32,6 +34,7 @@ bool led_init(void);
 void led_clear(void);
 void led_show(void);
 void led_reset(void);
+void led_reinit(void);
 void ledSetPattern(uint8_t);
 
 void led_pattern_balls_init(led_pattern_balls_t *);
@@ -267,6 +270,8 @@ void led_set_all_rgb(color_rgb_t rgb) {
 void led_reset() {
   volatile uint32_t * p = (uint32_t *)(NRF_TWI1_BASE + 0xFFC);
 
+  osalSysLock ();
+
   /* Disable the I2C port */
 
   i2c_lld_stop (&I2CD2);
@@ -292,6 +297,26 @@ void led_reset() {
   i2c_lld_start (&I2CD2);
   I2CD2.state = I2C_READY;
 
+  osalSysUnlock ();
+
+  return;
+}
+
+void
+led_reinit (void)
+{
+  while (1) {
+
+    led_reset ();
+
+    /* Reload configuration */
+
+    if (drv_is31fl_init () == true)
+      break;
+  }
+
+  drv_is31fl_gcc_set (led_brightness_level);
+
   return;
 }
 
@@ -307,7 +332,7 @@ void led_show() {
     NULL, 0, ISSI_TIMEOUT);
 
   if (r != MSG_OK)
-    led_reset();
+    led_reinit();
 
   i2cReleaseBus(&I2CD2);
 }
