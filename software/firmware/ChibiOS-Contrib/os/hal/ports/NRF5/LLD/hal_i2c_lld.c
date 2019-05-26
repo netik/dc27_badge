@@ -188,13 +188,15 @@ static void serve_interrupt(I2CDriver *i2cp) {
 #if CORTEX_MODEL >= 4
     (void)i2c->EVENTS_RXDREADY;
 #endif
-    
-    *i2cp->rxptr++ = i2c->RXD;
 
-    if(--i2cp->rxbytes) {
-      i2c_setup_shortcut(i2cp);
-      i2c->TASKS_RESUME = 1;
-      rx_resume_count++;
+    if (i2cp->rxptr != NULL) {
+      *i2cp->rxptr++ = i2c->RXD;
+
+      if(--i2cp->rxbytes) {
+        i2c_setup_shortcut(i2cp);
+        i2c->TASKS_RESUME = 1;
+        rx_resume_count++;
+      }
     }
   }
   if(i2c->EVENTS_ERROR) {

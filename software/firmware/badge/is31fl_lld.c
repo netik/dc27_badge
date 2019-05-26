@@ -45,8 +45,10 @@
 /* Prototypes */
 bool drv_is31fl_init(void);
 
+#ifdef LAZY_INIT
 static bool m_initialized = false;
 static uint32_t m_last_init_attempt = 0;
+#endif
 
 uint8_t hal_i2c_read_reg_byte(uint8_t i2c_address, uint8_t reg) {
   uint8_t txbuf;
@@ -59,7 +61,9 @@ uint8_t hal_i2c_read_reg_byte(uint8_t i2c_address, uint8_t reg) {
 
   r = i2cMasterTransmitTimeout(&I2CD2, LED_I2C_ADDR, &txbuf, 1, &rxbuf, 1, ISSI_TIMEOUT);
   if (r != MSG_OK) {
-    printf("i2cstatus = %ld\r\n", r);
+#ifdef LED_VERBOSE
+    printf("read i2cstatus = %ld\r\n", r);
+#endif
     return 0;
   }
 
@@ -80,7 +84,7 @@ bool hal_i2c_write_reg_byte(uint8_t i2c_address, uint8_t reg, uint8_t value) {
 
 #ifdef LED_VERBOSE
   if (r != MSG_OK) {
-    printf("i2cstatus = %ld\r\n", r);
+    printf("write i2cstatus = %ld\r\n", r);
     e = i2cGetErrors(&I2CD2);
 
     printf("LED write failed = %ld ", i2cGetErrors(&I2CD2));
@@ -102,6 +106,7 @@ bool hal_i2c_write_reg_byte(uint8_t i2c_address, uint8_t reg, uint8_t value) {
 }
 
 bool drv_is31fl_init(void) {
+#ifdef LAZY_INIT
   // Avoid initializing too often
   if (m_last_init_attempt > 0) {
     if (m_initialized ||
@@ -111,6 +116,13 @@ bool drv_is31fl_init(void) {
   }
 
   m_last_init_attempt = chVTGetSystemTime();
+#endif
+
+  /* Issue a reset */
+
+  drv_is31fl_set_page(ISSI_PAGE_FUNCTION);
+  hal_i2c_read_reg_byte(LED_I2C_ADDR, ISSI_REG_RESET);
+  chThdSleepMilliseconds(100);
 
   // disable soft shut down and enable the OSD checks
   drv_is31fl_set_page(ISSI_PAGE_FUNCTION);
@@ -135,7 +147,7 @@ bool drv_is31fl_init(void) {
 
   drv_is31fl_set_page(ISSI_PAGE_FUNCTION);
   if (!hal_i2c_write_reg_byte(LED_I2C_ADDR, ISSI_REG_CONFIG,
-                              ISSI_REG_CONFIG_OSD | ISSI_REG_CONFIG_SSD_OFF)) {
+    ISSI_REG_CONFIG_OSD | ISSI_REG_CONFIG_SSD_OFF)) {
     //post_state_get()->led_driver_ack = false;
     return false;
   }
@@ -174,15 +186,20 @@ bool drv_is31fl_init(void) {
 
   printf("IS31FL3736 driver started.\r\n");
 
+#ifdef LAZY_INIT
   m_initialized = true;
+#endif
+
   //post_state_get()->led_driver_ack = true;
   return true;
 }
 
 void drv_is31fl_gcc_set(uint8_t gcc) {
 #ifndef CONFIG_BADGE_TYPE_STANDALONE
+#ifdef LAZY_INIT
   // Lazy init
   drv_is31fl_init();
+#endif
 
   drv_is31fl_set_page(ISSI_PAGE_FUNCTION);
   hal_i2c_write_reg_byte(LED_I2C_ADDR, ISSI_REG_GCC, gcc);
@@ -192,6 +209,7 @@ void drv_is31fl_gcc_set(uint8_t gcc) {
 
 void drv_is31fl_send_value(uint8_t address, uint8_t value) {
 #ifndef CONFIG_BADGE_TYPE_STANDALONE
+#ifdef LAZY_INIT
   // Lazy init
   drv_is31fl_init();
 
@@ -200,6 +218,9 @@ void drv_is31fl_send_value(uint8_t address, uint8_t value) {
       m_initialized = false;
     }
   }
+#endif
+  hal_i2c_write_reg_byte(LED_I2C_ADDR, address, value);
+
 #endif
 }
 

@@ -31,7 +31,7 @@
 
 #define ISSI_REG_RESET					0x11
 
-#define ISSI_TIMEOUT				50
+#define ISSI_TIMEOUT				OSAL_MS2I(10)
 
 /**
  * Initializes the LED driver. Initialization is not required and can be done lazily the first
