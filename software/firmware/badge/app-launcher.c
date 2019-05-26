@@ -381,7 +381,8 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		if (event->key.code == keyAUp || event->key.code == keyBUp)
 			list->selected -= LAUNCHER_COLS;
 
-		if (event->key.code == keyADown) {
+		if (event->key.code == keyADown ||
+		    event->key.code == keyBDown) {
 			if (list->selected + LAUNCHER_COLS <=
 			   (list->total - 1))
 				list->selected += LAUNCHER_COLS;
