@@ -632,11 +632,14 @@ battle_exit(OrchardAppContext *context)
   gwinDestroy (bh->ghTitleL);
   gwinDestroy (bh->ghTitleR);
 
+#ifdef notyet
+  /* NB: add back if/when ugfx touch panel events are supported */
   geventRegisterCallback (&bh->gl, NULL, NULL);
   geventDetachSource (&bh->gl, NULL);
+#endif
 
   free (context->priv);
-	context->priv = NULL;
+  context->priv = NULL;
 
   // restore the LED pattern from config
   ledSetPattern(config->led_pattern);
