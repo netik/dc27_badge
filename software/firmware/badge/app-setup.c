@@ -191,10 +191,6 @@ static void setup_start(OrchardAppContext *context) {
 
   gdispClear (Black);
 
-  /* set up our idle timer */
-	orchardAppTimer (context, 1000000, true);
-	last_ui_time = 0;
-
   p = malloc (sizeof(SetupHandles));
   draw_setup_buttons(p);
   context->priv = p;

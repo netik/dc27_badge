@@ -57,6 +57,8 @@ void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
 void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
                         uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay,
                         uint8_t *pos);
+void led_pattern_unlock(uint8_t* p_index);
+
 /* control vars */
 static thread_t * pThread;
 static uint8_t ledExitRequest = 0;
@@ -147,6 +149,7 @@ const char *fxlist[] = {
   "Dual BG",
   "Dual Sky",
   "Dual PurOrg",
+  "Meteor Red",
   "Meteor Blu",
   "Meteor Pur",
   "Red Sparkle",
@@ -457,19 +460,25 @@ static THD_FUNCTION(bling_thread, arg) {
                              0, &anim_uindex);
         break;
       case 21:
-        led_pattern_meteor(0x01,0x0f,0xc2, 2, 100, true, &anim_uindex);
+        led_pattern_meteor(0xff,0x00,0x00, 2, 100, true, &anim_uindex);
         break;
       case 22:
-        led_pattern_meteor(0xff,0x00,0xff, 4, 80, true, &anim_uindex);
+        led_pattern_meteor(0x01,0x0f,0xc2, 2, 100, true, &anim_uindex);
         break;
       case 23:
-        led_pattern_bgsparkle(255,0,0,&anim_uindex,false);
+        led_pattern_meteor(0xff,0x00,0xff, 4, 80, true, &anim_uindex);
         break;
       case 24:
+        led_pattern_bgsparkle(255,0,0,&anim_uindex,false);
+        break;
+      case 25:
         led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
         break;
-      case 100:
+      case LED_PATTERN_WORLDMAP:
         led_clear();
+        break;
+      case LED_PATTERN_UNLOCK:
+	      led_pattern_unlock(&anim_uindex);
         break;
       case 255:
         led_test();
@@ -477,7 +486,7 @@ static THD_FUNCTION(bling_thread, arg) {
       }
     }
 
-    if( ledExitRequest ) {
+    if ( ledExitRequest ) {
       // force one full cycle through an update on request to force LEDs off
       led_set_all(0,0,0);
       led_show();
@@ -973,4 +982,30 @@ void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
 
     led_show();
     (*pos)++;
+}
+
+void led_pattern_unlock(uint8_t *p_position) {
+  userconfig *config = getConfig();
+
+  // pulse the first 16 LEDs to show unlock state.
+  for (int i = 0; i < 16; i++) {
+    uint8_t red = 255;
+    uint8_t green = 127;
+    uint8_t blue = 50;
+
+    // pulse the ones that we have enabled.
+    if (config->unlocks & ( 1 << i )) {
+      led_set(i, ((sin(*p_position) * 127 + 128) / 255) * red,
+	      ((sin(*p_position) * 127 + 128) / 255) * green,
+	      ((sin(*p_position) * 127 + 128) / 255) * blue);
+    } else {
+      // grey
+      led_set(i, 30, 30, 30);
+    }
+  }
+
+  p_position++;
+
+  led_show();
+
 }

@@ -125,10 +125,10 @@ void configStart(void) {
   uint8_t wipeconfig = false;
   osalMutexObjectInit(&config_mutex);
 
-  /* if the user is holding down UP and DOWN, then we will wipe the configuration */
+  /* if the user is holding down BOTH SELECTS, then we will wipe the configuration */
 #ifdef ENABLE_JOYPAD
-  if ((palReadPad (BUTTON_A_UP_PORT, BUTTON_A_UP_PIN) == 0) &&
-      (palReadPad (BUTTON_A_DOWN_PORT, BUTTON_A_DOWN_PIN) == 0)) {
+  if ((palReadPad (BUTTON_A_ENTER_PORT, BUTTON_A_ENTER_PIN) == 0) &&
+      (palReadPad (BUTTON_B_ENTER_PORT, BUTTON_B_ENTER_PIN) == 0)) {
 #else
   /*
    * On the Freescale/NXP reference boards, we don't have a joypad,

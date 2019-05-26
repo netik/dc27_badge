@@ -628,7 +628,7 @@ Text Notes 6200 2050 0    50   ~ 0
 Text Notes 6800 2550 0    50   ~ 0
 MOSFET\nPulldown
 Text Notes 6200 1900 0    50   ~ 0
-Q401 is used as a charge switch. \nIf VBUS is present, Q401 will bias and\ndisconnect the battery.\n\n
+Q401 is used as a charge switch. \nIf VBUS is present, Q401 cannot bias and\nwill disconnect the battery.
 Text Notes 6100 3200 0    50   ~ 10
 S
 Text Notes 5700 3200 0    50   ~ 10

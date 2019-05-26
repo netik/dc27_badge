@@ -16,6 +16,7 @@
 #include "led.h"
 #include "unlocks.h"
 #include "i2s_lld.h"
+#include "fontlist.h"
 
 #define ALERT_DELAY 3000
 
@@ -37,8 +38,8 @@ typedef struct _UnlockHandles {
   GHandle ghUnlock;
 
   // Fonts
-  font_t font_jupiterpro_36;
-  font_t font_manteka_20;
+  font_t font_futara_12;
+  font_t font_futara_36;
 
 } UnlockHandles;
 
@@ -58,17 +59,15 @@ static uint8_t unlock_codes[MAX_ULCODES][3] = { { 0x01, 0xde, 0xf1 }, // 0 +10% 
                                                 { 0x0a, 0x1a, 0x1a }  // 10 PINGDUMP
 };
 
-static uint8_t unlock_challenge[] = { 0x16, 0xe1, 0x6a };
-
 static char *unlock_desc[] = { "+10% DEF",
                                "+10% HP",
                                "+10% DMG",
                                "+20% LUCK",
                                "FASTER HEAL",
                                "MOAR LEDs",
-                               "",
-                               "",
-                               "BENDER",
+                               "SUBMARINE!",
+                               "YYY",
+                               "XX",
                                "U R A GOD",
                                "PINGDUMP"};
 
@@ -84,12 +83,31 @@ static void destroy_unlock_ui(OrchardAppContext *);
 
 static void unlock_result(UnlockHandles *p, char *msg) {
   gdispClear(Black);
+  // lines around text
+  gdispDrawThickLine(0,
+    (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) - 10,
+    gdispGetWidth(),
+    (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) - 10,
+    Blue,
+    4,
+    false
+  );
+
   gdispDrawStringBox (0,
-		      (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_manteka_20, fontHeight) / 2),
-		      gdispGetWidth(),
-		      gdispGetFontMetric(p->font_manteka_20, fontHeight),
-		      msg,
-		      p->font_manteka_20, Yellow, justifyCenter);
+          (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2),
+          gdispGetWidth(),
+          gdispGetFontMetric(p->font_futara_36, fontHeight),
+          msg,
+          p->font_futara_36, Yellow, justifyCenter);
+
+  gdispDrawThickLine(0,
+    (gdispGetHeight() / 2) + (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) + 10,
+    gdispGetWidth(),
+    (gdispGetHeight() / 2) + (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) + 10,
+    Blue,
+    4,
+    false
+  );
 
 }
 
@@ -98,67 +116,63 @@ static void init_unlock_ui(UnlockHandles *p) {
   GWidgetInit wi;
 
   gwinWidgetClearInit(&wi);
+  gwinSetDefaultFont(p->font_futara_12);
 
   // create button widget: ghNum1
   wi.g.show = TRUE;
-  wi.g.x = 40;
+  wi.g.x = 15;
   wi.g.y = 40;
-  wi.g.width = 40;
-  wi.g.height = 40;
+  wi.g.width = 50;
+  wi.g.height = 50;
   wi.text = "0";
-  wi.customDraw = gwinButtonDraw_Normal;
+  wi.customDraw = noRender;
   wi.customParam = 0;
-  wi.customStyle = &DarkPurpleStyle;
+
+  // the buttons are not exactly buttons, they are just areas which we can
+  // receieve clicks in
   p->ghNum1 = gwinButtonCreate(0, &wi);
-  gwinSetFont(p->ghNum1, p->font_jupiterpro_36);
-  gwinRedraw(p->ghNum1);
 
   // create button widget: ghNum2
   wi.g.show = TRUE;
-  wi.g.x = 90;
+  wi.g.x = 75;
   p->ghNum2 = gwinButtonCreate(0, &wi);
-  gwinSetFont(p->ghNum2, p->font_jupiterpro_36);
-  gwinRedraw(p->ghNum2);
 
   // create button widget: ghNum3
-  wi.g.x = 140;
+  wi.g.x = 135;
   p->ghNum3 = gwinButtonCreate(0, &wi);
-  gwinSetFont(p->ghNum3, p->font_jupiterpro_36);
-  gwinRedraw(p->ghNum3);
 
   // create button widget: ghNum4
-  wi.g.x = 190;
+  wi.g.x = 195;
   p->ghNum4 = gwinButtonCreate(0, &wi);
-  gwinSetFont(p->ghNum4, p->font_jupiterpro_36);
-  gwinRedraw(p->ghNum4);
 
   // create button widget: ghNum5
-  wi.g.x = 240;
+  wi.g.x = 255;
   p->ghNum5 = gwinButtonCreate(0, &wi);
-  gwinSetFont(p->ghNum5,  p->font_jupiterpro_36);
-  gwinRedraw(p->ghNum5);
 
   // create button widget: ghBack
   wi.g.x = 10;
   wi.g.y = 100;
   wi.g.width = 110;
   wi.g.height = 30;
+  wi.customDraw = gwinButtonDraw_Normal;
+  wi.customParam = 0;
+  wi.customStyle = &DarkPurpleFilledStyle;
   wi.text = "<-";
   p->ghBack = gwinButtonCreate(0, &wi);
-  gwinSetFont(p->ghBack,  p->font_manteka_20);
   gwinRedraw(p->ghBack);
 
   // create button widget: ghUnlock
   wi.g.x = 200;
   wi.text = "UNLOCK";
-  wi.customDraw = 0;
+  wi.customDraw = gwinButtonDraw_Normal;
+  wi.customParam = 0;
+  wi.customStyle = &DarkPurpleFilledStyle;
   p->ghUnlock = gwinButtonCreate(0, &wi);
-  gwinSetFont(p->ghUnlock, p->font_manteka_20);
   gwinRedraw(p->ghUnlock);
 
   // reset focus
   focused = 0;
-  gwinSetFocus(p->ghNum1);
+
 }
 
 
@@ -174,26 +188,60 @@ static uint32_t unlock_init(OrchardAppContext *context)
   return (0);
 }
 
+static void update_focus(void) {
+  color_t c;
+
+  for (int i = 0; i < 5; i++)
+  {
+    if (i == focused) {
+      c = Yellow;
+    } else {
+      c = Black;
+    }
+
+    // draw a slightly bigger box around the flags
+    gdispDrawBox(14 + (i*60), 39, 52, 52, c);
+    gdispDrawBox(13 + (i*60), 38, 53, 53, c);
+  }
+}
+
+static void redraw_flags(void) {
+  for (int i = 0; i < 5; i++)
+  {
+    char tmp[30];
+    sprintf(tmp, "flags/flag-%x.rgb", code[i]);
+    putImageFile(tmp, 15 + (i*60), 40);
+  }
+  update_focus();
+}
+
 static void unlock_start(OrchardAppContext *context)
 {
   UnlockHandles *p;
 
-  // clear the screen
-  gdispClear (Black);
+  gdispClear(Black);
 
-  // aha, you found us!
-  i2sPlay("fight/leveiup.raw");
+  // aha, you found us! make some noise.
+  i2sPlay("sound/levelup.snd");
 
-  /* background */
+  // fill background
   putImageFile(IMG_UNLOCKBG, 0, 0);
+  // draw flags for first time
+  redraw_flags();
+
+  // draw UI
+  /* starting code */
+  memset(&code, 0, 5);
+
+  p = (UnlockHandles *)malloc (sizeof(UnlockHandles));
+  p->font_futara_12 = gdispOpenFont (FONT_XS);
+  p->font_futara_36 = gdispOpenFont (FONT_LG);
+  init_unlock_ui(p);
+  context->priv = p;
 
   // idle ui timer (10s)
   orchardAppTimer(context, 10000000, true);
   last_ui_time = chVTGetSystemTime();
-
-  p = malloc (sizeof(UnlockHandles));
-  init_unlock_ui(p);
-  context->priv = p;
 
   geventListenerInit(&p->glUnlockListener);
   gwinAttachListener(&p->glUnlockListener);
@@ -201,10 +249,10 @@ static void unlock_start(OrchardAppContext *context)
                           orchardAppUgfxCallback,
                           &p->glUnlockListener);
 
-  /* starting code */
-  memset(&code, 0, 5);
-  //  ledSetFunction(leds_show_unlocks);
-  orchardAppTimer(context, 1000, true);
+
+
+  // display the current unlocks on the LEDs
+  ledSetPattern(LED_PATTERN_UNLOCK);
 }
 
 static void updatecode(OrchardAppContext *context, uint8_t position, int8_t direction) {
@@ -253,6 +301,9 @@ static void updatecode(OrchardAppContext *context, uint8_t position, int8_t dire
   tmp[1] = '\0';
 
   gwinSetText(wi, tmp, TRUE);
+
+  // redraw the flags
+  redraw_flags();
 }
 
 static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
@@ -298,33 +349,16 @@ static void do_unlock(OrchardAppContext *context) {
 
   if (validate_code(context, config)) {
     return;
-  } else {
-    if (code[0] == 0x0f) {
-      char tmp[20];
-      // note that we used code[1] here twice to add in some entropy
-      // else first unit of password would always be 0x0f & code[0]
-      chsnprintf(tmp, sizeof(tmp),
-                 "PW: %02x%02x%02x\n",
-                 (( code[0] << 4 ) + code[1]) ^ unlock_challenge[0],
-                 (( code[1] << 4 ) + code[2]) ^ unlock_challenge[1],
-                 (( code[3] << 4 ) + code[4]) ^ unlock_challenge[2]);
-
-      unlock_result(p, tmp);
-      i2sPlay("alert1.raw");
-      // give ane extra 10ms to write down the url
-      chThdSleepMilliseconds(10000);
-    } else {
-      // no match
-      //      ledSetFunction(leds_all_strobered);
-      unlock_result(p, "unlock failed.");
-      i2sPlay("fight/pathtic.raw");
-    }
-
-    chThdSleepMilliseconds(ALERT_DELAY);
-    orchardAppRun(orchardAppByName("Badge"));
-    return;
   }
+
+  // no match
+  //      ledSetFunction(leds_all_strobered);
+  unlock_result(p, "Unlock Failed.");
+  i2sPlay("fight/pathtic.raw");
+  chThdSleepMilliseconds(ALERT_DELAY);
+  orchardAppRun(orchardAppByName("Badge"));
 }
+
 static void unlock_event(OrchardAppContext *context,
                        const OrchardAppEvent *event)
 {
@@ -371,7 +405,6 @@ static void unlock_event(OrchardAppContext *context,
       if ( ((GEventGWinButton*)pe)->gwin == p->ghNum5)
         updatecode(context,4,1);
     }
-
   }
 
   // keyboard support
@@ -396,30 +429,9 @@ static void unlock_event(OrchardAppContext *context,
       if (focused > 4) focused = 0;
     }
 
-    // set focus
-    gwinSetFocus(NULL);
-    switch(focused) {
-    case 0:
-      gwinSetFocus(p->ghNum1);
-      break;
-    case 1:
-      gwinSetFocus(p->ghNum2);
-      break;
-    case 2:
-      gwinSetFocus(p->ghNum3);
-      break;
-    case 3:
-      gwinSetFocus(p->ghNum4);
-      break;
-    case 4:
-      gwinSetFocus(p->ghNum5);
-      break;
-    default:
-      break;
-    }
+    update_focus();
 
-    if ( ((event->key.code == keyBSelect) ||
-          (event->key.code == keyASelect)) &&
+    if ( (event->key.code == keyBSelect) &&
          (event->key.flags == keyPress) ) {
         do_unlock(context);
     }
@@ -444,27 +456,26 @@ static void destroy_unlock_ui(OrchardAppContext *context) {
 
 static void unlock_exit(OrchardAppContext *context) {
   UnlockHandles * p;
+  userconfig *config = getConfig();
 
   p = context->priv;
-
   if (p->ghUnlock != NULL) {
     destroy_unlock_ui(context);
   }
 
-  gdispCloseFont (p->font_manteka_20);
-  gdispCloseFont (p->font_jupiterpro_36);
-
+  gdispCloseFont (p->font_futara_12);
+  gdispCloseFont (p->font_futara_36);
   geventDetachSource (&p->glUnlockListener, NULL);
   geventRegisterCallback (&p->glUnlockListener, NULL, NULL);
 
   free(context->priv);
   context->priv = NULL;
 
-  //  ledSetFunction(NULL);
-
+  // put the LEDs back
+  ledSetPattern(config->led_pattern);
 }
 
 /* We are a hidden app, only accessible through the konami code on the
    badge screen. */
-orchard_app("Unlocks", NULL, APP_FLAG_HIDDEN, unlock_init,
+orchard_app("Unlocks", "icons/bell.rgb", 0, unlock_init,
     unlock_start, unlock_event, unlock_exit, 9999);

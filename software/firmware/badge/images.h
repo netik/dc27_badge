@@ -19,8 +19,7 @@ Egan Hirvelda (game mechanics)\r\n"
 #define IMG_SPONSOR        "images/sponsor.rgb"
 
 // images used in the app
-#define IMG_UNLOCKBG       "images/unlockbg.rgb"
-#define IMG_CHOOSETYPE     "images/choose.rgb"
+#define IMG_UNLOCKBG       "images/unlock.rgb"
 
 #define IMG_SPLASH_DISPLAY_TIME          3000 // longer if music playing
 #define IMG_SPLASH_NO_SOUND_DISPLAY_TIME 1000

@@ -60,7 +60,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	wi.g.show = TRUE;
 	wi.g.x = 0;
 	wi.g.y = 0;
-	wi.g.width = 160;
+	wi.g.width = 140;
 	wi.g.height = -1;
 	wi.text = config->name;
 	wi.customDraw = gwinLabelDrawJustifiedLeft;
@@ -77,7 +77,7 @@ draw_launcher_buttons(struct launcher_list * list)
 	    ble_station_addr[3], ble_station_addr[4], ble_station_addr[5]);
 
 	wi.g.show = TRUE;
-	wi.g.x = 150;
+	wi.g.x = 141;
 	wi.g.width = 170;
 	wi.g.height = -1;
 	wi.text = tmp;
@@ -369,8 +369,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 	if (event->type == keyEvent) {
 
 		if (event->key.flags == keyPress) {
-			if (event->key.code == keyASelect ||
-			    event->key.code == keyBSelect) {
+			if (event->key.code == keyBSelect) {
 				i2sPlay ("sound/ping.snd");
 			} else {
 				i2sPlay ("sound/click.snd");
@@ -382,8 +381,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		if (event->key.code == keyAUp || event->key.code == keyBUp)
 			list->selected -= LAUNCHER_COLS;
 
-		if (event->key.code == keyADown ||
-		    event->key.code == keyBDown) {
+		if (event->key.code == keyADown) {
 			if (list->selected + LAUNCHER_COLS <=
 			   (list->total - 1))
 				list->selected += LAUNCHER_COLS;
@@ -421,8 +419,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 			}
 		}
 
-		if (event->key.code == keyASelect ||
-		    event->key.code == keyBSelect) {
+		if (event->key.code == keyBSelect) {
 			orchardAppRun (list->items[list->selected].entry);
 			return;
 		}

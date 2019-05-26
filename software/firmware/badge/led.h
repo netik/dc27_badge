@@ -8,22 +8,14 @@
 
 // our refresh rate is about 25Hz
 #define EFFECTS_REDRAW_MS 20
-#define LED_PATTERNS_FULL 25
-#define LED_PATTERNS_LIMITED 25
+#define LED_PATTERNS_FULL 26
+#define LED_PATTERNS_LIMITED 26
 
 // these are non-user selectable patterns
 // which are used by some apps
 #define LED_PATTERN_WORLDMAP 100
 #define LED_PATTERN_BATTLE   101
-
-/* colors */
-#define COL_RED    0
-#define COL_ORANGE 1
-#define COL_YELLOW 2
-#define COL_GREEN  3
-#define COL_BLUE   4
-#define COL_INDIGO 5
-#define COL_VIOLET 6
+#define LED_PATTERN_UNLOCK   102
 
 typedef uint32_t color_rgb_t;
 
@@ -71,7 +63,7 @@ typedef struct {
 
 #define LED_MAX_PARTICLES LED_COUNT
 
-// used for add_glitter 
+// used for add_glitter
 typedef struct {
   bool visible;
   uint8_t led_num;
