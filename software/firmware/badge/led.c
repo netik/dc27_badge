@@ -374,7 +374,7 @@ static THD_FUNCTION(bling_thread, arg) {
   int8_t anim_position = 0;
   float anim_hue = 100;
   float anim_value = 0;
-  uint8_t last_brightness = led_brightness_level;
+  uint8_t last_brightness;
   // Positions storage for roller coaster
   uint8_t positions[LED_PATTERN_ROLLER_COASTER_COUNT];
   for (uint8_t i = 0; i < LED_PATTERN_ROLLER_COASTER_COUNT; i++) {
@@ -400,6 +400,8 @@ static THD_FUNCTION(bling_thread, arg) {
   (void)arg;
   chRegSetThreadName("LED Bling");
 
+  led_brightness_level = config->led_brightness;
+  last_brightness = led_brightness_level;
   drv_is31fl_gcc_set(led_brightness_level);
   led_pattern_balls_init(&anim_balls);
   led_current_func = config->led_pattern;
