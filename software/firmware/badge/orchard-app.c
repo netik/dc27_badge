@@ -157,7 +157,8 @@ static void radio_event(eventid_t id) {
 
         r = FALSE;
 
-        if (strcmp (instance.app->name, "Launcher") == 0 &&
+        if ((strcmp (instance.app->name, "Badge") == 0 ||
+            strcmp (instance.app->name, "Launcher") == 0) &&
             (r_evt->type == gattsReadWriteAuthEvent ||
             r_evt->type == gattsWriteEvent))
           r = app_radio_notify (r_evt);
