@@ -285,7 +285,8 @@ chat_event (OrchardAppContext *context,
 		}
 	}
 
-	if (event->type == ugfxEvent || event->type == keyEvent)
+	if (ui != NULL &&
+	    (event->type == ugfxEvent || event->type == keyEvent))
 		ui->event (context, event);
 
 	if (event->type == radioEvent) {
