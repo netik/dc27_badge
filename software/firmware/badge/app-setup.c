@@ -354,7 +354,7 @@ static void setup_event(OrchardAppContext *context,
            * start the calibrator, otherwise the redraw might
            * corrupt the display.
            */
-          chThdSleepMilliseconds (100);
+          chThdSleepMilliseconds (200);
 
           /* Detach the event handler from the mouse */
           geventDetachSource (&p->glSetup, NULL);
