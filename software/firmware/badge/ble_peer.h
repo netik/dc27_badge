@@ -51,9 +51,13 @@ typedef struct _ble_peer_entry {
 	uint8_t			ble_used;
 } ble_peer_entry;
 
+extern ble_peer_entry ble_peer_list[BLE_PEER_LIST_SIZE];
+
 extern void blePeerStart (void);
 extern void blePeerAdd (uint8_t *, uint8_t *, uint8_t, int8_t);
 extern ble_peer_entry * blePeerFind (uint8_t *);
 extern void blePeerShow (void);
+extern void blePeerLock (void);
+extern void blePeerUnlock (void);
 
 #endif /* __BLE_PEER_H */

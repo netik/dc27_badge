@@ -193,6 +193,20 @@ blePeerShow (void)
 }
 
 void
+blePeerLock (void)
+{
+	osalMutexLock (&peer_mutex);
+	return;
+}
+
+void
+blePeerUnlock (void)
+{
+	osalMutexUnlock (&peer_mutex);
+	return;
+}
+
+void
 blePeerStart (void)
 {
 	memset (ble_peer_list, 0, sizeof(ble_peer_list));
