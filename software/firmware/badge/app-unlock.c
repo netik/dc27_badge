@@ -354,7 +354,7 @@ static void do_unlock(OrchardAppContext *context) {
   // no match
   //      ledSetFunction(leds_all_strobered);
   unlock_result(p, "Unlock Failed.");
-  i2sPlay("fight/pathtic.raw");
+  i2sPlay("sound/wilhelm.snd");
   chThdSleepMilliseconds(ALERT_DELAY);
   orchardAppRun(orchardAppByName("Badge"));
 }

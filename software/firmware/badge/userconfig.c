@@ -141,7 +141,7 @@ void configStart(void) {
     printf("FACTORY RESET requested\n");
 
     /* play a tone to tell them we're resetting */
-    i2sPlay("game/map_ping.snd");
+    i2sPlay("sound/ping.snd");
     i2sWait ();
 
     chThdSleepMilliseconds (200);
