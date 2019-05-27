@@ -20,6 +20,7 @@
 #include "src/ginput/ginput_driver_mouse.h"
 
 #include "i2s_lld.h"
+#include "ble_lld.h"
 
 /* the amount that we increase or decrease brightness by */
 #define LED_BRIGHT_STEP 10
@@ -323,9 +324,17 @@ static void setup_event(OrchardAppContext *context,
       /* handle checkbox state changes */
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckSound) {
         config->sound_enabled = ((GEventGWinCheckbox*)pe)->isChecked;
+        if (config->sound_enabled)
+          i2sEnabled = TRUE;
+        else
+          i2sEnabled = FALSE;
       }
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckAirplane) {
         config->airplane_mode = ((GEventGWinCheckbox*)pe)->isChecked;
+        if (config->airplane_mode)
+          bleDisable ();
+        else
+          bleEnable (); 
       }
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckRotate) {
         config->rotate = ((GEventGWinCheckbox*)pe)->isChecked;

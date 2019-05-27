@@ -194,6 +194,7 @@ int main(void)
     const flash_descriptor_t * pFlash;
     uint32_t * faultPtr;
     uint16_t pix1, pix2;
+    userconfig * config;
 
 #ifdef CRT0_VTOR_INIT
     __disable_irq();
@@ -396,6 +397,9 @@ int main(void)
 	    pFlash->address);
     }
 
+    /* Init the user configuration */
+    configStart();
+
     /* Enable I2C controller */
 
     i2cStart (&I2CD2, &i2c2_config);
@@ -439,11 +443,22 @@ int main(void)
     else
         printf ("No screen found\n");
 
-    /* Enable bluetooth radio */
+    /* Enable bluetooth subsystem */
+
     bleStart ();
 
-    /* Init the user configuration */
-    configStart();
+    /* Disable the radio if airplane node is on */
+
+    config = getConfig ();
+    if (config->airplane_mode)
+        bleDisable ();
+
+    /* Set default sound behavior */
+
+    if (config->sound_enabled)
+        i2sEnabled = TRUE;
+    else
+        i2sEnabled = FALSE;
 
     /* start the LEDs */
     if (led_init()) {
@@ -472,7 +487,6 @@ int main(void)
           tonePlay (NULL, 4, 50);
           chThdSleepMilliseconds(50);
         }
-
         chThdSleep (TIME_INFINITE);
 #endif
     } else

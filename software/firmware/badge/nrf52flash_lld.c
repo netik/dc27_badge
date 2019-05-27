@@ -35,7 +35,7 @@
  * using the ChibiOS flash API. We support two access modes: direct NVMC
  * access and SoftDevice access. Since we use the SoftDevice for BLE
  * connectivity, SoftDevice mode is typically used by default (the user
- * is required to use SoftDevice mode whenever it's enabled.
+ * is required to use SoftDevice mode whenever it's enabled).
  */
 
 #include <stdlib.h>
@@ -44,10 +44,9 @@
 #include "hal.h"
 #include "nrf52flash_lld.h"
 
-#if (HAL_USE_SOFTDEVICE == TRUE)
 #include "nrf_soc.h"
+#include "nrf_sdm.h"
 #include "ble_lld.h"
-#endif
 
 static const flash_descriptor_t *nrf52_get_descriptor(void *instance);
 static flash_error_t nrf52_read(void *instance, flash_offset_t offset,
@@ -123,11 +122,9 @@ static flash_error_t
 nrf52_start_erase_sector (void *instance, flash_sector_t sector)
 {
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
-#if (HAL_USE_SOFTDEVICE == TRUE)
-	int r;
-#else
 	flash_offset_t offset = (flash_offset_t)(sector * FLASH_PAGE_SIZE);
-#endif
+	uint8_t sdenabled = 0;
+	int r = FLASH_ERROR_ERASE;
 
 	if (sector > (nrf52_descriptor.sectors_count - 1))
 		return (FLASH_ERROR_ERASE);
@@ -141,33 +138,31 @@ nrf52_start_erase_sector (void *instance, flash_sector_t sector)
 
 	devp->state = FLASH_ERASE;
 
-#if (HAL_USE_SOFTDEVICE == TRUE)
-	flash_evt = 0;
-	r = sd_flash_page_erase (sector);
-#else
-	devp->port->CONFIG = NVMC_CONFIG_WEN_Een;
-        devp->port->ERASEPAGE = offset;
-#endif
+	sd_softdevice_is_enabled (&sdenabled);
+
+	if (sdenabled) {
+		flash_evt = 0;
+		r = sd_flash_page_erase (sector);
+		if (r == NRF_SUCCESS)
+			r = FLASH_NO_ERROR;
+	} else {
+		devp->port->CONFIG = NVMC_CONFIG_WEN_Een;
+        	devp->port->ERASEPAGE = offset;
+		r = FLASH_NO_ERROR;
+	}
 
 	osalMutexUnlock (&devp->mutex);
 
-#if (HAL_USE_SOFTDEVICE == TRUE)
-	if (r == NRF_SUCCESS)
-		return (FLASH_NO_ERROR);
-
-	return (FLASH_ERROR_ERASE);
-#else
-	return (FLASH_NO_ERROR);
-#endif
+	return (r);
 }
 
 static flash_error_t
 nrf52_query_erase (void *instance, uint32_t *msec)
 {
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
-#if (HAL_USE_SOFTDEVICE == TRUE)
 	enum NRF_SOC_EVTS evt;
-#endif
+	uint8_t sdenabled = 0;
+	int r = FLASH_ERROR_ERASE;
 
 	osalMutexLock (&devp->mutex);
 
@@ -176,37 +171,37 @@ nrf52_query_erase (void *instance, uint32_t *msec)
 		return (FLASH_ERROR_PROGRAM);
 	}
 
-#if (HAL_USE_SOFTDEVICE == TRUE)
-	if (flash_evt == 0) {
-		if (msec != NULL)
-			*msec = 1U;
-		osalMutexUnlock (&devp->mutex);
-		return (FLASH_BUSY_ERASING);
-	}
-	evt = flash_evt;
-	flash_evt = 0;
-	if (NRF_EVT_FLASH_OPERATION_SUCCESS)
-		devp->state = FLASH_READY;
-#else
-	if (devp->port->READY == NVMC_READY_READY_Busy) {
-		if (msec != NULL)
-			*msec = 1U;
-		osalMutexUnlock (&devp->mutex);
-		return (FLASH_BUSY_ERASING);
+	sd_softdevice_is_enabled (&sdenabled);
+
+	if (sdenabled) {
+		if (flash_evt == 0) {
+			if (msec != NULL)
+				*msec = 1U;
+			r = FLASH_BUSY_ERASING;
+		} else {
+			evt = flash_evt;
+			flash_evt = 0;
+			if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS) {
+				devp->state = FLASH_READY;
+				r = FLASH_NO_ERROR;
+				nrf52_descriptor.attributes = 0;
+			}
+		}
+	} else {
+		if (devp->port->READY == NVMC_READY_READY_Busy) {
+			if (msec != NULL)
+				*msec = 1U;
+			r = FLASH_BUSY_ERASING;
+		} else {
+        		devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
+			devp->state = FLASH_READY;
+			r = FLASH_NO_ERROR;
+		}
 	}
 
-        devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
-	devp->state = FLASH_READY;
-#endif
 	osalMutexUnlock (&devp->mutex);
 
-#if (HAL_USE_SOFTDEVICE == TRUE)
-	if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
-		return (FLASH_NO_ERROR);
-	return (FLASH_ERROR_ERASE);
-#else
-	return (FLASH_NO_ERROR);
-#endif
+	return (r);
 }
 
 static flash_error_t
@@ -231,14 +226,12 @@ nrf52_program (void *instance, flash_offset_t offset,
 {
 	NRF52FLASHDriver *devp = (NRF52FLASHDriver *)instance;
 	uint8_t * p;
-#if (HAL_USE_SOFTDEVICE == TRUE)
 	enum NRF_SOC_EVTS evt;
-	int r;
-#else
+	uint8_t sdenabled = 0;
+	int r = FLASH_ERROR_PROGRAM;
 	uint32_t * s;
 	uint32_t * d;
 	unsigned i;
-#endif
 
 	/*
          * Check that the size is always a multiple of 4 bytes, since
@@ -260,42 +253,38 @@ nrf52_program (void *instance, flash_offset_t offset,
 
 	p = (uint8_t *)nrf52_descriptor.address;
 
-#if (HAL_USE_SOFTDEVICE == TRUE)
-	flash_evt = 0;
-	r = sd_flash_write ((uint32_t *)(p + offset),
-	    (const uint32_t *)pp, n / sizeof(uint32_t));
-	if (r != NRF_SUCCESS) {
-		osalMutexUnlock (&devp->mutex);
-		return (FLASH_ERROR_PROGRAM);
+	sd_softdevice_is_enabled (&sdenabled);
+
+	if (sdenabled) {
+		flash_evt = 0;
+		r = sd_flash_write ((uint32_t *)(p + offset),
+		    (const uint32_t *)pp, n / sizeof(uint32_t));
+		if (r == NRF_SUCCESS) {
+			while (flash_evt == 0)
+				__WFI();
+			evt = flash_evt;
+			flash_evt = 0;
+			if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
+				r = FLASH_NO_ERROR;
+		}
+	} else {
+		s = (uint32_t *)pp;
+		d = (uint32_t *)(p + offset);
+
+		devp->port->CONFIG = NVMC_CONFIG_WEN_Wen;
+
+		for (i = 0; i < (n / sizeof(uint32_t)); i++)
+			d[i] = s[i];
+
+		while (devp->port->READY == NVMC_READY_READY_Busy)
+                	;
+		devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
+		r = FLASH_NO_ERROR;
 	}
-	while (flash_evt == 0)
-		__WFE();
-	evt = flash_evt;
-	flash_evt = 0;
-#else
-	s = (uint32_t *)pp;
-	d = (uint32_t *)(p + offset);
-
-	devp->port->CONFIG = NVMC_CONFIG_WEN_Wen;
-
-	for (i = 0; i < (n / sizeof(uint32_t)); i++)
-		d[i] = s[i];
-
-	while (devp->port->READY == NVMC_READY_READY_Busy)
-                ;
-	devp->port->CONFIG = NVMC_CONFIG_WEN_Ren;
-#endif
 
 	osalMutexUnlock (&devp->mutex);
 
-#if (HAL_USE_SOFTDEVICE == TRUE)
-	if (evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
-		return (FLASH_NO_ERROR);
-
-	return (FLASH_ERROR_PROGRAM);
-#else
-	return (FLASH_NO_ERROR);
-#endif
+	return (r);
 }
 
 void

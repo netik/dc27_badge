@@ -112,7 +112,6 @@ typedef struct _DHandles {
 	font_t			font;
 
 	orientation_t		o;
-	uint8_t			sound;
 } DHandles;
 
 #ifdef CALIBRATION

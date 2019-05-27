@@ -40,12 +40,11 @@
 #include "shell.h"
 
 #include "nrf_soc.h"
+#include "nrf_sdm.h"
 
 #include "badge.h"
 #include "math.h"
 #include "rand.h"
-
-#define NRF5_RAND_SOFTDEVICE
 
 /*
  * Command Random
@@ -60,39 +59,41 @@ cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 	uint8_t size = 16;
 	uint16_t i    = 0;
 	uint8_t  nl   = 0;
-#ifdef NRF5_RAND_SOFTDEVICE
 	uint8_t	sd_size;
-#endif
+ 	uint8_t sdenabled;
 
 	if (argc > 0)
 		size = atoi(argv[0]);
 
-#ifdef NRF5_RAND_SOFTDEVICE
-	sd_rand_application_bytes_available_get (&sd_size);
+	sd_softdevice_is_enabled (&sdenabled);
 
-	if (sd_size > RANDOM_BUFFER_SIZE)
-		sd_size = RANDOM_BUFFER_SIZE;
+	if (sdenabled) {
+		sd_rand_application_bytes_available_get (&sd_size);
 
-	if (size > sd_size) {
-		printf ("random: maximum size is %d.\r\n", sd_size);
-		return;
+		if (sd_size > RANDOM_BUFFER_SIZE)
+			sd_size = RANDOM_BUFFER_SIZE;
+
+		if (size > sd_size) {
+			printf ("random: maximum size is %d.\r\n", sd_size);
+			return;
+		}
+
+		printf ("Fetching %d random byte(s):\r\n", size);
+
+		sd_rand_application_vector_get (random_buffer, size);
+	} else {
+		if (size > RANDOM_BUFFER_SIZE) {
+			printf ("random: maximum size is %d.\r\n",
+			    RANDOM_BUFFER_SIZE);
+			return;
+		}
+
+		printf ("Fetching %d random byte(s):\r\n", size);
+
+		rngStart (&RNGD1, NULL);
+		rngWrite (&RNGD1, random_buffer, size, TIME_INFINITE);
+ 		rngStop (&RNGD1);
 	}
-
-	printf ("Fetching %d random byte(s):\r\n", size);
-
-	sd_rand_application_vector_get (random_buffer, size);
-#else
-	if (size > RANDOM_BUFFER_SIZE) {
-		printf ("random: maximum size is %d.\r\n", RANDOM_BUFFER_SIZE);
-		return;
-	}
-
-	printf ("Fetching %d random byte(s):\r\n", size);
-
-	rngStart (&RNGD1, NULL);
-	rngWrite (&RNGD1, random_buffer, size, TIME_INFINITE);
- 	rngStop (&RNGD1);
-#endif
 
 	for (i = 0 ; i < size ; i++) {
 		printf ("%02x ", random_buffer[i]);
@@ -102,8 +103,9 @@ cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 	if (!nl)
 		printf ("\r\n");
 
-  printf("range-random: %d \r\n", randRange(0,100));
-  printf("rand(): %d\r\n", randByte());
+  	printf("range-random: %d \r\n", randRange(0,100));
+  	printf("rand(): %d\r\n", randByte());
+
 	return;
 }
 

@@ -35,11 +35,7 @@
  * @brief   Enables the community subsystem.
  */
 #if !defined(HAL_USE_RNG) || defined(__DOXYGEN__)
-#if HAL_USE_SOFTDEVICE == TRUE
-#define HAL_USE_RNG                 FALSE
-#else
 #define HAL_USE_RNG                 TRUE
-#endif
 #endif
 
 #define HAL_USE_QEI                 FALSE

@@ -261,8 +261,10 @@ musicPlay (MusicHandles * p, char * fname)
 	GSourceHandle gs;
 	GListener gl;
 	int r = 0;
+	uint8_t enb;
 
 	i2sPlay (NULL);
+	enb = i2sEnabled;
 	i2sEnabled = FALSE;
 
 	/* Initialize some of the display write window info. */
@@ -322,7 +324,7 @@ musicPlay (MusicHandles * p, char * fname)
 	/* Power down the audio amp */
 
 	i2sAudioAmpCtl (I2S_AMP_ON);
-	i2sEnabled = TRUE;
+	i2sEnabled = enb;
 
 	f_close (&f);
 	free (i2sBuf);
