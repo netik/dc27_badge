@@ -182,6 +182,8 @@ unlock_update_handler(eventid_t id)
 	config->unlocks = __builtin_bswap32 (ble_unlocks);
 	configSave (config);
 
+	i2sPlay("sound/levelup.snd");
+
 	return;
 }
 
@@ -397,9 +399,6 @@ int main(void)
 	    pFlash->address);
     }
 
-    /* Init the user configuration */
-    configStart();
-
     /* Enable I2C controller */
 
     i2cStart (&I2CD2, &i2c2_config);
@@ -443,6 +442,32 @@ int main(void)
     else
         printf ("No screen found\n");
 
+    /* Mount SD card */
+
+    if (gfileMount ('F', "0:") == FALSE) {
+        printf ("No SD card found\n");
+        splash_SDFail();
+        ledSetPattern(255); // failure mode
+        shellRestart ();
+#ifdef HALT_ON_SDFAIL
+        for (int i = 0; i < 2; i++) {
+          // 404, 404, get it? :)
+          tonePlay (NULL, 4, 50);
+          chThdSleepMilliseconds(50);
+          tonePlay (NULL, 0, 50);
+          chThdSleepMilliseconds(50);
+          tonePlay (NULL, 4, 50);
+          chThdSleepMilliseconds(50);
+        }
+        chThdSleep (TIME_INFINITE);
+#endif
+    } else
+      printf ("SD card detected\n");
+
+    /* Init the user configuration */
+
+    configStart();
+
     /* Enable bluetooth subsystem */
 
     bleStart ();
@@ -469,28 +494,6 @@ int main(void)
     }
 
     NRF_P0->DETECTMODE = 0;
-
-    /* Mount SD card */
-
-    if (gfileMount ('F', "0:") == FALSE) {
-        printf ("No SD card found\n");
-        splash_SDFail();
-        ledSetPattern(255); // failure mode
-        shellRestart ();
-#ifdef HALT_ON_SDFAIL
-        for (int i = 0; i < 2; i++) {
-          // 404, 404, get it? :)
-          tonePlay (NULL, 4, 50);
-          chThdSleepMilliseconds(50);
-          tonePlay (NULL, 0, 50);
-          chThdSleepMilliseconds(50);
-          tonePlay (NULL, 4, 50);
-          chThdSleepMilliseconds(50);
-        }
-        chThdSleep (TIME_INFINITE);
-#endif
-    } else
-      printf ("SD card detected\n");
 
     /* say hi */
 #ifndef FAST_STARTUP
