@@ -37,6 +37,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "i2s_lld.h"
 #include "fontlist.h"
 
 typedef struct _ListHandles {
@@ -121,6 +122,7 @@ static void list_event(OrchardAppContext *context,
 				selected++;
 			gwinListSetSelected (p->ghList, selected ,TRUE);
 			gwinListViewItem (p->ghList, selected);
+			i2sPlay ("sound/click.snd");
 		}
 		if (event->key.code == keyAUp ||
 		    event->key.code == keyBUp) {
@@ -129,10 +131,12 @@ static void list_event(OrchardAppContext *context,
 				selected--;
 			gwinListSetSelected (p->ghList, selected ,TRUE);
 			gwinListViewItem (p->ghList, selected);
+			i2sPlay ("sound/click.snd");
 		}
 		if (event->key.code == keyASelect ||
 		    event->key.code == keyBSelect) {
 			ctx->selected = gwinListGetSelected (p->ghList);
+			i2sPlay ("sound/click.snd");
 			chEvtBroadcast (&ui_completed);
 		}
 	}
@@ -144,6 +148,7 @@ static void list_event(OrchardAppContext *context,
 
 	if (pe->type == GEVENT_GWIN_LIST) {
 		ple = (GEventGWinList *)pe;
+		i2sPlay ("sound/click.snd");
 		ctx->selected = ple->item;
 		chEvtBroadcast (&ui_completed);
 	}
