@@ -159,6 +159,7 @@ dirs:
 	-[ -d $(STAGING_DIR)/images ] || mkdir -p $(STAGING_DIR)/images
 	-[ -d $(STAGING_DIR)/sound ] || mkdir -p $(STAGING_DIR)/sound
 	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos
+	-[ -d $(STAGING_DIR)/flags ] || mkdir -p $(STAGING_DIR)/flags
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
 	-[ -d rgb/icons ] || mkdir -p rgb/images
 	-[ -d rgb/icons ] || mkdir -p rgb/icons
