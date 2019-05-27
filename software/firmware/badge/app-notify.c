@@ -117,7 +117,7 @@ static void notify_start(OrchardAppContext *context)
 
 	context->priv = p;
 
-	putImageFile ("undrattk.rgb", 0, 0);
+	putImageFile ("images/undrattk.rgb", 0, 0);
 	i2sPlay("sound/klaxon.snd");
 
 	peer = blePeerFind (ble_peer_addr.addr);
@@ -154,7 +154,7 @@ static void notify_start(OrchardAppContext *context)
 		    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
 		    "IS CHALLENGING YOU", p->font, White, justifyCenter);
 		p->handle = gm_handle.value_handle;
-		p->app = "Badge Game";
+		p->app = "Sea Battle";
 		p->response_accept = BLE_IDES_GAMEATTACK_ACCEPT;
 		p->response_decline = BLE_IDES_GAMEATTACK_DECLINE;
 	}
