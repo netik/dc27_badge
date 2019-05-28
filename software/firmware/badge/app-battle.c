@@ -45,9 +45,10 @@
 /* single player on this badge */
 static ENTITY me;
 static ENTITY bullet[MAX_BULLETS];
-static bool bullet_pending = false;
+static VECTOR bullet_pending = {0,0};
 
 static ENEMY *last_near = NULL;
+static ENEMY current_enemy;
 
 /* private memory */
 typedef struct {
@@ -63,7 +64,19 @@ typedef struct {
 gll_t *enemies;
 
 // the current game state */
-enum game_state { WORLD_MAP, BATTLE };
+enum game_state {
+	WORLD_MAP, // lobby...
+	CONNECTING,
+	CONNECT_FAILED,
+	CONNECTED,
+	BATTLE_ACCEPTED,
+	BATTLE_DECLINED,
+	BATTLE,
+	BATTLE_DEAD,
+	BATTLE_UDEAD,
+	BATTLE_EXITING
+};
+
 enum game_state current_state = WORLD_MAP;
 
 static int16_t frame_counter = 0;
@@ -387,7 +400,40 @@ ENEMY *getNearestEnemy(void) {
 }
 
 static void
-enemy_engage(void) {
+draw_hud(OrchardAppContext *context) {
+	userconfig *config = getConfig();
+	battle_ui_t *bh;
+
+  // get private memory
+  bh = (battle_ui_t *)context->priv;
+
+	// top bar
+	gdispDrawStringBox (0, 0,
+											105, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+											config->name,
+			                bh->fontSM,
+											White,
+											justifyLeft);
+
+
+	gdispDrawStringBox (0, 0,
+											215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+										  "00:60",
+			                bh->fontSM,
+											Yellow,
+											justifyCenter);
+
+
+	gdispDrawStringBox (0, 0,
+											215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+										  current_enemy.name,
+			                bh->fontSM,
+											White,
+											justifyRight);
+}
+
+static void
+enemy_engage(OrchardAppContext *context) {
 
   char fnbuf[30];
   int newmap;
@@ -411,13 +457,16 @@ enemy_engage(void) {
     sprintf(fnbuf, "game/map-%02d.rgb", newmap);
     putImageFile(fnbuf, 0,0);
     zoomEntity(&me);
+		// remember this guy.
+		memcpy(&current_enemy, e, sizeof(ENEMY));
+		draw_hud(context);
     enemy_clearall_blink();
     player_render(&me);
   }
 }
 
 static void
-fire_bullet(ENTITY *from, int angle) {
+fire_bullet(ENTITY *from, VECTOR *bullet_pending) {
   for (int i=0; i < MAX_BULLETS; i++) {
     // find the first available bullet structure
     if (bullet[i].visible == false) {
@@ -429,8 +478,9 @@ fire_bullet(ENTITY *from, int angle) {
       bullet[i].vecPosition.y = from->vecPosition.y;
       // copy the frame buffer from the parent.
       memcpy(&bullet[i].pix_old, from->pix_old, sizeof(from->pix_old));
-      bullet[i].vecVelocityGoal.x = 50;
-      bullet[i].vecVelocityGoal.y = -50;
+      bullet[i].vecVelocityGoal.x = bullet_pending->x * 50;
+      bullet[i].vecVelocityGoal.y = bullet_pending->y * 50;
+			bullet_pending->x = bullet_pending->y = 0;
       i2sPlay("game/shot.snd");
       return;
     }
@@ -486,9 +536,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     // we have to update bullets in the game loop, not outside or
     // we'll have all sorts of artifacts on the screen.
     // do we need a new bullet?
-    if (bullet_pending) {
-      fire_bullet(&me, 0);
-      bullet_pending = false;
+    if (bullet_pending.x != 0 || bullet_pending.y != 0) {
+      fire_bullet(&me, &bullet_pending);
+			bullet_pending.x = bullet_pending.y = 0;
     };
 
     // enemy update
@@ -507,6 +557,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           // out of bounds, remove.
           bullet[i].visible = false;
         }
+
+				// do we have an impact?
+				// ...
+
         getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
       }
     }
@@ -549,63 +603,77 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     enemy_renderall();
   }
 
-  if (event->type == keyEvent) {
-    if (event->key.flags == keyPress)  {
-      switch (event->key.code) {
-      case keyALeft:
-        me.vecVelocityGoal.x = -VGOAL;
-        break;
-      case keyARight:
-        me.vecVelocityGoal.x = VGOAL;
-        break;
-      case keyAUp:
-        me.vecVelocityGoal.y = -VGOAL;
-        break;
-      case keyADown:
-        me.vecVelocityGoal.y = VGOAL;
-        break;
-      case keyBUp:
-        // TODO - penalty if in battle
-        orchardAppExit();
-        break;
-      case keyBDown:
-        if (current_state != BATTLE) {
-          current_state = BATTLE;
-          enemy_engage();
-        }
-        break;
-      case keyASelect:
-        if (current_state == BATTLE) {
-          // can only fire in battle map.
-          bullet_pending = true;
-        } else {
-          i2sPlay("game/error.snd");
-        }
-        break;
-      default:
-        break;
-      }
-    }
+	// we cheat a bit here and read pins directly to see if
+	// the joystick is in a corner.
+	if (current_state == BATTLE) {
+		if (event->type == keyEvent) {
+    	if (event->key.flags == keyPress) {
+				// we need to figure out if the key is still held
+				// and if so, we will fire a bullet.
+				if (bullet_pending.x == 0 && bullet_pending.y == 0) {
+					if (palReadPad (BUTTON_B_UP_PORT, BUTTON_B_UP_PIN) == 0)
+					  bullet_pending.y = -1;
 
-    if (event->key.flags == keyRelease) {
-      switch (event->key.code) {
-      case keyALeft:
-        me.vecVelocityGoal.x = 0;
-        break;
-      case keyARight:
-        me.vecVelocityGoal.x = 0;
-        break;
-      case keyAUp:
-        me.vecVelocityGoal.y = 0;
-        break;
-      case keyADown:
-        me.vecVelocityGoal.y = 0;
-        break;
-      default:
-        break;
-      }
-    }
-  }
+					if (palReadPad (BUTTON_B_DOWN_PORT, BUTTON_B_DOWN_PIN) == 0)
+					  bullet_pending.y = 1;
+
+					if (palReadPad (BUTTON_B_LEFT_PORT, BUTTON_B_LEFT_PIN) == 0)
+					  bullet_pending.x = -1;
+
+					if (palReadPad (BUTTON_B_RIGHT_PORT, BUTTON_B_RIGHT_PIN) == 0)
+					  bullet_pending.x = 1;
+				}
+			}
+		}
+	}
+
+	// movement works in both modes
+	if (current_state == WORLD_MAP || current_state == BATTLE)
+  	if (event->type == keyEvent) {
+    	if (event->key.flags == keyPress)  {
+	      switch (event->key.code) {
+	      case keyALeft:
+	        me.vecVelocityGoal.x = -VGOAL;
+	        break;
+	      case keyARight:
+	        me.vecVelocityGoal.x = VGOAL;
+	        break;
+	      case keyAUp:
+	        me.vecVelocityGoal.y = -VGOAL;
+	        break;
+	      case keyADown:
+	        me.vecVelocityGoal.y = VGOAL;
+	        break;
+	      case keyBSelect:
+	        if (current_state != BATTLE) {
+	          current_state = BATTLE;
+	          enemy_engage(context);
+	        }
+	        break;
+	      default:
+	        break;
+	      }
+			}
+
+	    if (event->key.flags == keyRelease) {
+	      switch (event->key.code) {
+	      case keyALeft:
+	        me.vecVelocityGoal.x = 0;
+	        break;
+	      case keyARight:
+	        me.vecVelocityGoal.x = 0;
+	        break;
+	      case keyAUp:
+	        me.vecVelocityGoal.y = 0;
+	        break;
+	      case keyADown:
+	        me.vecVelocityGoal.y = 0;
+	        break;
+	      default:
+	        break;
+	      }
+     }
+	}
 
   return;
 }
