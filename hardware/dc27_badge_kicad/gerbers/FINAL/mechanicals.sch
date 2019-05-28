@@ -97,4 +97,15 @@ Text Notes 5650 4100 0    50   ~ 0
 Lanyard Holes\n
 Text Notes 6950 4100 0    50   ~ 0
 Artwork\n
+$Comp
+L DC27-badge-rescue:MountingHole-Mechanical H701
+U 1 1 5CF4D8F1
+P 7000 4300
+F 0 "H701" H 7100 4346 50  0000 L CNN
+F 1 "Bomb Face" H 7100 4255 50  0000 L CNN
+F 2 "lib_fp:bombface-moved" H 7000 4300 50  0001 C CNN
+F 3 "" H 7000 4300 50  0001 C CNN
+	1    7000 4300
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
