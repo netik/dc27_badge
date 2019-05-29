@@ -34,9 +34,15 @@
 #define _BLE_L2CAP_LLD_H_
 
 #define BLE_IDES_PSM		0x1234
-#define BLE_IDES_CHAT_PSM	0x0001
-#define BLE_IDES_SHOUT_PSM	0x0002
-#define BLE_IDES_BATTLE_PSM	0x0003
+#define BLE_IDES_CHAT_PSM	BLE_IDES_PSM + 1
+#define BLE_IDES_SHOUT_PSM	BLE_IDES_PSM + 2
+#define BLE_IDES_BATTLE_PSM	BLE_IDES_PSM + 3
+
+/* These values are defined by the BLE SIG */
+
+#define BLE_PSM_SDP		0x0001
+#define BLE_PSM_RFCOMM		0x0003
+#define BLE_PSM_IPSP		0x0023
 
 #define BLE_IDES_L2CAP_MTU	128
 #define BLE_IDES_L2CAP_MPS	128
