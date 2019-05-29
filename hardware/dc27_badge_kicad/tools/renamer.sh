@@ -17,6 +17,10 @@
 # drill file
 mv DC27-badge.drl DC27-badge.xln
 
+# middle layers
+mv DC27-badge-GND.g2 DC27-badge-GND.g2l
+mv DC27-badge-PWR.g3 DC27-badge-PWR.g3l
+
 # edge
 mv DC27-badge-Edge_Cuts.gm1 DC27-badge-Edge_Cuts.bor
 
