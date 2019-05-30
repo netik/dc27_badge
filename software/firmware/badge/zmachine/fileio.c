@@ -1,4 +1,3 @@
-
 /* $Id: fileio.c,v 1.3 2000/07/05 15:20:34 jholder Exp $   
  * --------------------------------------------------------------------
  * see doc/License.txt for License Information   
@@ -31,14 +30,11 @@
  *
  */
 
-#include <SPI.h>
-#include <Adafruit_SPIFlash.h>
-#include <Adafruit_SPIFlash_FatFs.h>
-
 #include "ztypes.h"
 #include "jzexe.h"              /* mol 951115 */
 
-extern Adafruit_M0_Express_CircuitPython spiffs;
+#include "ff.h"
+#include "ffconf.h"
 
 /* Static data */
 

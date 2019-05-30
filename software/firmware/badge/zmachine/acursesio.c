@@ -1,15 +1,15 @@
-
 /* 
- * Arduino version of curses library
+ * ChibiOS version of curses library
  */
 
+#include <stdio.h>
 #include "ztypes.h"
-
-#include <mcurses.h>
-
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
+
+#include "hal.h"
+#include "mcurses.h"
 
 ztheme_t themes[6] = {
   {"TRS-80 Black", (F_BLACK|B_WHITE), (F_WHITE|B_BLACK)},
@@ -19,12 +19,12 @@ ztheme_t themes[6] = {
   {"Amiga Blue", (F_BLUE|B_WHITE), (F_WHITE|B_BLUE)},
   //{"Blue and Gold", (F_YELLOW|B_BLUE|A_BOLD), (F_YELLOW|B_BLACK|A_BOLD)}
 };
+
 int themecount = 5;
 
 extern int theme;
 #define EXTENDED 1
 #define PLAIN    2
-
 
 #ifdef HARD_COLORS
 static ZINT16 current_fg;
@@ -71,32 +71,37 @@ extern ZINT16 default_bg;
 static void display_string( char * );
 static int read_char( void );
 
-void Arduino_putchar(uint8_t c)
+void ChibiOS_putchar(uint8_t c)
 {
-  Serial.write(c);
+  printf("%c",c);
 }
 
-char Arduino_getchar()
+char ChibiOS_getchar()
 {
+  // performs a blocking 1-byte read of the serial port.
+  //  while (!Serial.available());
+  //  return Serial.read();
   char c;
-  while (!Serial.available());
-  return Serial.read();
+  c = sdGet(&SD1);
+
+  return c;
 }
 
 static int inc( void )
 {
-   //int c = getchar(  );
+   int c = sdGet(&SD1);
 
-   while(!Serial.available());
-   int c = Serial.read();
    if ( c == -1 )
    {
       fatal("acursesio inc: error in Serial.read!");
    }
+
    if((int) c != 127) // is this a backspace key? will print it later
-    printf((char) c);
+     printf((char) c);
+
    if(c == '\r')
-    printf((char) '\n');
+     printf((char) '\n');
+
    return c;
 }
 
@@ -108,16 +113,16 @@ static int uninc( int c )
 
 static int outc( int c )
 {
-   printf((char) c);
-   return c;
+  printf("%c",c);
+  return c;
 }
 
 void initialize_screen(  )
 {
    int row, col;
-
-   setFunction_putchar(Arduino_putchar); // tell the library which output channel shall be used
-   setFunction_getchar(Arduino_getchar); // tell the library which input channel shall be used
+   
+   setFunction_putchar(ChibiOS_putchar); // tell the library which output channel shall be used
+   setFunction_getchar(ChibiOS_getchar); // tell the library which input channel shall be used
 
    /* initialize the command buffer */
    cmbufp = cmbuf;

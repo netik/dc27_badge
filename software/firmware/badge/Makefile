@@ -227,6 +227,29 @@ CSRC += main.c \
         $(GFXSRC) \
 	$(FATFSSRC)
 
+# if we want the zmachine we need these files too.
+CSRC += zmachine/acursesio.c \
+	zmachine/control.c \
+	zmachine/extern.c \
+	zmachine/fileio.c \
+	zmachine/getopt.c \
+	zmachine/input.c \
+	zmachine/interpre.c \
+	zmachine/jzip.c \
+	zmachine/license.c \
+	zmachine/main.c \
+	zmachine/math.c \
+	zmachine/mcurses.c \
+	zmachine/memory.c \
+	zmachine/object.c \
+	zmachine/operand.c \
+	zmachine/osdepend.c \
+	zmachine/property.c \
+	zmachine/quetzal.c \
+	zmachine/screen.c \
+	zmachine/text.c \
+	zmachine/variable.c
+
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC =

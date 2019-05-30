@@ -19,10 +19,10 @@ static char **storyfilelist;
 extern ztheme_t themes[];
 static int theme = 2; // default theme
 
-static int selectTheme(void);
-static int selectStory(void);
+static int selectTheme(BaseSequentialStream *);
+static int selectStory(BaseSequentialStream *);
 
-static int selectTheme()
+static int selectTheme(BaseSequentialStream *chp)
 {
   int buflen = 100;
   char buf[buflen];
@@ -55,7 +55,7 @@ static int selectTheme()
   return theme - 1;
 }
 
-static int selectStory()
+static int selectStory(BaseSequentialStream *chp)
 {
   static int storynum = 1;
   int count = 0;
@@ -97,33 +97,38 @@ char **getDirectory(char *dirname)
   char *filebuffptr = filebuff;
   static char* dirlist[MAXFILELIST]; // max file list size
   int dirlistcount = 0;
-  
+
+  DIR d;
+  FILINFO info;
+
   //clear previous filelist
   for(int i = 0; i < MAXFILELIST; i++)
     {
       dirlist[i] = NULL;
     }
 
+  f_opendir(&d, dirname);
+
   while (true)
     {
-      File entry = dir.openNextFile();
-      if (! entry)
-	{
-	  break;
-	}
-      if (! entry.isDirectory())
+      if (f_readdir (&d, &info) != FR_OK || info.fname[0] == 0)
+	break;
+
+      if (! (info.fattrib & AM_DIR))
 	{
 	  dirlist[dirlistcount++] = filebuffptr;
-	  strcpy(filebuffptr,entry.name());
-	  filebuffptr += strlen(entry.name()) + 1;
+	  strcpy(filebuffptr, info.fname);
+	  filebuffptr += strlen(info.fname) + 1;
+
 	  if (dirlistcount > MAXFILELIST)
 	    {
 	      // no more files
 	      break;
 	    }
 	}
-      entry.close();
     }
+  
+  f_closedir (&d);
 
   return dirlist;
 }
@@ -197,11 +202,38 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
 {
   (void)argv;
   int storynum;
+  char storyfile[200];
 
   // handle arg here if necessary
   printf("\nzmachine!\n\n");
+
+  // prompt for theme
+  theme = selectTheme(chp);
+
+  //initialize_screen();
+
+  // prompt for story file
   storyfilelist = getDirectory(GAMEPATH);
-  selectStory();
+  storynum = selectStory(chp);
+
+  sprintf(storyfile,"%s/%s",GAMEPATH, storyfilelist[storynum]);
+
+  printf("\nOpening story...\n");
+
+  open_story(storyfile);
+  configure((zbyte_t) V1, (zbyte_t) V8 );
+  /*
+  initialize_screen(  );
+  load_cache();
+  z_restart(  );
+  ( void ) interpret(  );
+  unload_cache(  );
+  close_story(  );
+  close_script(  );
+  reset_screen(  );
+  printf("Thanks for playing!\n");
+  */
+
   return;
 }
 
