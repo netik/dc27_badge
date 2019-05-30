@@ -30,7 +30,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  USE_LDOPT =
 endif
 
 # Enable this if you want link time optimizations (LTO)
@@ -178,6 +178,7 @@ CSRC += main.c \
 	cmd-random.c \
 	cmd-mem.c \
 	cmd-unix.c \
+	cmd-xyzzy.c \
 	orchard-app.c \
 	orchard-ui.c \
 	ui-keyboard.c \
@@ -298,7 +299,7 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Define C warning options here
-CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes  -Wno-unused-parameter 
+CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes  -Wno-unused-parameter
 
 # Define C++ warning options here
 CPPWARN = -Wall -Wextra -Wundef
@@ -312,7 +313,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = 
+UDEFS =
 
 # Define ASM defines here
 UADEFS =
@@ -358,4 +359,3 @@ flash: all jlink-flash
 debug: gdb-debug
 erase-all: jlink-erase-all
 debug-server: jlink-debug-server
-
