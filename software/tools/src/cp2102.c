@@ -79,7 +79,6 @@ CP2102N_CONFIG config;
 
 static int cp210x_open (uint16_t, uint16_t, libusb_device_handle **);
 static void cp210x_close (libusb_device_handle *);
-static int cp210x_ee_read (libusb_device_handle *, uint8_t *);
 static int cp210x_read (libusb_device_handle *,
     uint16_t, uint8_t *, uint16_t *);
 static int cp210x_write (libusb_device_handle *,
