@@ -30,11 +30,46 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This program is used to customize the configuration data of the Silicon
+ * Image Labs CP2102N USB to RS232 chip on the Ides of DEF CON 27 badge.
+ * It works by issuing vendor-specific control commands to the device over
+ * USB. Note that this works with the CP2102N _ONLY_. It does not work
+ * with the CP2102 or other chips in the CP210x family. Sadly, programming
+ * interface varies wildly across the different parts.
+ *
+ * For the CP2102N, there are two main commands: read configuration block
+ * (0x000E) and write configuration block (0x370F). These can be used to
+ * obtain a manipulate a block of 678 bytes, which contain the vendor
+ * string, product string, serial number string, USB vendor/device ID,
+ * GPIO configuration, power configuration, and various other settings.
+ * Some of these (like the USB vendor and device ID) should _never_ be
+ * changed, as doing so might adversely affect the operation of the chip,
+ * and restoring them might be tricky.
+ *
+ * The CP2102N configuration block is documented in the following
+ * application note:
+ *
+ * https://www.silabs.com/documents/public/application-notes/AN978-cp210x-usb-to-uart-api-specification.pdf
+ *
+ * The programming interface can be gleaned by examining the source code
+ * in the USBXpressHostSDK for Linux, which can be found here:
+ *
+ * https://www.silabs.com/documents/public/software/USBXpressHostSDK-Linux.tar
+ *
+ * A set of default configuration files for all CP210x devices can be
+ * found here:
+ *
+ * https://www.silabs.com/content/usergenerated/asi/cloud/attachments/siliconlabs/en/community/groups/interface/forum/_jcr_content/content/primary/qna/cp2102n_command_line-s0yh/i_ve_attached_a_zip-Rn9F/cp21xxsmt_default_configurations.zip
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <libusb.h>
 
@@ -74,6 +109,11 @@ cp210x_ucode_to_ascii (uint16_t * in, char * out)
 	return;
 }
 
+/*
+ * The CP2102N configuration block must be checksummed. This function
+ * generates a fletcher16 checksum for a given data block.
+ */
+
 static uint16_t
 cp210x_csum (uint8_t * data, uint16_t len)
 {
@@ -97,6 +137,10 @@ cp210x_csum (uint8_t * data, uint16_t len)
 
 	return (sum2 << 8 | sum1);
 }
+
+/*
+ * Scan for a CP2102 device.
+ */
 
 static int
 cp210x_open (uint16_t vid, uint16_t did, libusb_device_handle ** d)
@@ -157,12 +201,20 @@ cp210x_open (uint16_t vid, uint16_t did, libusb_device_handle ** d)
 	return (sts);
 }
 
+/*
+ * Close an open device handle.
+ */
+
 static void
 cp210x_close (libusb_device_handle * d)
 {
 	libusb_close (d);
 	return;
 }
+
+/*
+ * Perform a vendor-specific read request on the control endpoint.
+ */
 
 static int
 cp210x_read (libusb_device_handle * d, uint16_t req,
@@ -190,6 +242,10 @@ cp210x_read (libusb_device_handle * d, uint16_t req,
 	return (CP210X_OK);
 }
 
+/*
+ * Perform a vendor-specific write request on the control endpoint.
+ */
+
 static int
 cp210x_write (libusb_device_handle * d, uint16_t req,
     uint8_t * buf, uint16_t len)
@@ -211,8 +267,18 @@ cp210x_write (libusb_device_handle * d, uint16_t req,
 	return (CP210X_OK);
 }
 
-#define PRODUCT_IDES "DC27 IDES of DEF CON"
+#define PRODUCT_IDES "DC27 Ides of DEF CON"
 #define VENDOR_IDES "Team Ides"
+
+static void
+cp210x_usage (char * progname)
+{
+	fprintf (stderr, "%s: [-d file] [-l file] [-m mfgr string] " \
+	    "[-p product string] [-s serial # string] [-g gpio]\n",
+	    progname);
+
+	return;
+}
 
 int
 main (int argc, char * argv[])
@@ -220,17 +286,58 @@ main (int argc, char * argv[])
 	int i;
 	uint16_t csum;
 	uint16_t len;
+	uint16_t total;
+	unsigned long scan;
 	char buf[256];
 	uint8_t part;
 	uint8_t * p;
-
 	libusb_device_handle * dev = NULL;
+	int c;
+	char * dfile = NULL;
+	char * lfile = NULL;
+	char * mstr = NULL;
+	char * pstr = NULL;
+	char * sstr = NULL;
+	FILE * fp;
+
+	if (argc < 2) {
+		cp210x_usage (argv[0]);
+		exit (0);
+	}
+
+	while ((c = getopt (argc, argv, "d:l:m:p:s:g:")) != -1) {
+		switch (c) {
+			case 'd':
+				dfile = optarg;
+				break;
+			case 'l':
+				lfile = optarg;
+				break;
+			case 'm':
+				mstr = optarg;
+				break;
+			case 'p':
+				pstr = optarg;
+				break;
+			case 's':
+				sstr = optarg;
+				break;
+			case 'g':
+				break;
+			default:
+				cp210x_usage (argv[0]);
+				exit (0);
+				break;
+		}
+	}
 
 	if (cp210x_open (CP210X_VENDOR_ID,
 	    CP210X_DEVICE_ID, &dev) == CP210X_ERROR) {
 		fprintf (stderr, "CP210x not found\n");
 		exit (-1);
 	}
+
+	/* Check that the device is actually a CP2102N */
 
 	part = 0;
 	len = 1;
@@ -241,41 +348,135 @@ main (int argc, char * argv[])
 		exit (-1);
 	}
 
+
+	/* Read the entire configuration block */
+
 	len = sizeof(config);
-	cp210x_read (dev, CP210X_CFG_2102N_READ_CONFIG,
-	    (uint8_t *)&config, &len);
+	if (cp210x_read (dev, CP210X_CFG_2102N_READ_CONFIG,
+	    (uint8_t *)&config, &len) != CP210X_OK) {
+		fprintf (stderr, "reading config block failed\n");
+		cp210x_close (dev);
+		exit (-1);
+	}
+
 	memset (buf, 0, sizeof(buf));
 	cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_manstr, buf);
 	printf ("Vendor: %s\n", buf);
+
 	memset (buf, 0, sizeof(buf));
 	cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_prodstr, buf);
 	printf ("Product: %s\n", buf);
+
+	memset (buf, 0, sizeof(buf));
+	cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_serstr, buf);
+	printf ("Serial: %s\n", buf);
+
+	if (dfile != NULL) {
+		fp = fopen (dfile, "wb+");
+		if (fp == NULL) {
+			perror ("Opening dump file failed");
+			exit (-1);
+		}
+		p = (uint8_t *)&config;
+		for (i = 0; i < len; i++)
+			fprintf (fp, "0x%02X ", p[i]);
+		fprintf (fp, "\n");
+		fclose (fp);
+		goto out;
+	}
+
+	if (lfile != NULL) {
+		fp = fopen (lfile, "r");
+		if (fp == NULL) {
+			perror ("Opening load file failed");
+			exit (-1);
+		}
+
+		p = (uint8_t *)&config;
+		total = 0;
+		for (i = 0; i < len; i++) {
+			memset (buf, 0, sizeof(buf));
+			csum = fread (buf, 1, 5, fp);
+			total++;
+			if (csum < 4)
+				break;
+			scan = strtoul (buf, NULL, 16);
+			p[i] = scan & 0xFF;
+		}
+
+		if (total != len) {
+			fprintf (stderr,
+			    "wrong number of config bytes (%d != %d)\n",
+			    total, len);
+			fclose (fp);
+			cp210x_close (dev);
+			exit (-1);
+		}
+
+		fclose (fp);
+
+		/* Validate checksum */
+
+		csum = cp210x_csum ((uint8_t *)&config,
+		    sizeof(config) - 2);
+		if (csum != (config.cp2102n_csum[0] << 8 |
+		    config.cp2102n_csum[1])) {
+			fprintf (stderr, "bad checksum (0x%x != 0x%x)\n",
+			    csum, config.cp2102n_csum[0] << 8 |
+			    config.cp2102n_csum[1]);
+			cp210x_close (dev);
+			exit (-1);
+		}
+
+		/* Looks ok, write the new data */
+
+		goto save;
+	}
 
 	/* Reset vendor */
 
-	memset (config.cp2102n_manstr, 0,
-	    sizeof(config.cp2102n_manstr));
-	memset (buf, 0, sizeof(buf));
-	csum = (strlen (VENDOR_IDES) + 1) * 2;
-	cp210x_ascii_to_ucode (VENDOR_IDES,
-	    (uint16_t *)config.cp2102n_manstr);
-	cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_manstr, buf);
-	config.cp2102n_manstr_desc.cp2102n_len[0] = csum >> 8;
-	config.cp2102n_manstr_desc.cp2102n_len[1] = csum & 0xFF;
-	printf ("Vendor: %s\n", buf);
+	if (mstr != NULL) {
+		memset (config.cp2102n_manstr, 0,
+		    sizeof(config.cp2102n_manstr));
+		memset (buf, 0, sizeof(buf));
+		cp210x_ascii_to_ucode (mstr,
+		    (uint16_t *)config.cp2102n_manstr);
+		cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_manstr, buf);
+		csum = (strlen (mstr) + 1) * 2;
+		config.cp2102n_manstr_desc.cp2102n_len[0] = csum >> 8;
+		config.cp2102n_manstr_desc.cp2102n_len[1] = csum & 0xFF;
+		printf ("New vendor: %s\n", buf);
+	}
 
 	/* Reset product */
 
-	memset (config.cp2102n_prodstr, 0,
-	    sizeof(config.cp2102n_prodstr));
-	memset (buf, 0, sizeof(buf));
-	csum = (strlen (PRODUCT_IDES) + 1) * 2;
-	cp210x_ascii_to_ucode (PRODUCT_IDES,
-	    (uint16_t *)config.cp2102n_prodstr);
-	cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_prodstr, buf);
-	config.cp2102n_prodstr_desc.cp2102n_len[0] = csum >> 8;
-	config.cp2102n_prodstr_desc.cp2102n_len[1] = csum & 0xFF;
-	printf ("Product: %s\n", buf);
+	if (pstr != NULL) {
+		memset (config.cp2102n_prodstr, 0,
+		    sizeof(config.cp2102n_prodstr));
+		memset (buf, 0, sizeof(buf));
+		cp210x_ascii_to_ucode (pstr,
+		    (uint16_t *)config.cp2102n_prodstr);
+		cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_prodstr, buf);
+		csum = (strlen (pstr) + 1) * 2;
+		config.cp2102n_prodstr_desc.cp2102n_len[0] = csum >> 8;
+		config.cp2102n_prodstr_desc.cp2102n_len[1] = csum & 0xFF;
+		printf ("New product: %s\n", buf);
+	}
+
+	/* Reset serial number */
+
+	if (sstr != NULL) {
+		memset (config.cp2102n_serstr, 0,
+		    sizeof(config.cp2102n_serstr));
+		memset (buf, 0, sizeof(buf));
+		cp210x_ascii_to_ucode (sstr,
+		    (uint16_t *)config.cp2102n_serstr);
+		cp210x_ucode_to_ascii ((uint16_t *)config.cp2102n_serstr, buf);
+		csum = (strlen (sstr) + 1) * 2;
+		config.cp2102n_serstr_desc.cp2102n_len[0] = csum >> 8;
+		config.cp2102n_serstr_desc.cp2102n_len[1] = csum & 0xFF;
+		printf ("New serial: %s\n", buf);
+	}
 
 	/* Update checksum */
 
@@ -283,9 +484,12 @@ main (int argc, char * argv[])
 	config.cp2102n_csum[0] = csum >> 8;
 	config.cp2102n_csum[1] = csum & 0xFF;
 
+save:
+
 	len = sizeof(config);
 	cp210x_write (dev, CP210X_CFG_2102N_WRITE_CONFIG,
 	    (uint8_t *)&config, len);
+out:
 
 	cp210x_close (dev);
 
