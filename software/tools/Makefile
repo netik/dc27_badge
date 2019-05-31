@@ -15,8 +15,10 @@ CC=cc
 BIN=./bin
 SOURCE=./src/
 
-PROG=rgbhdr videomerge sndskip
+PROG=rgbhdr videomerge sndskip cp2102
 LIST=$(addprefix $(BIN)/, $(PROG))
+CFLAGS= -I$(SOURCE)
+LIBS= -lusb
 
 all: dirs $(LIST)
 
