@@ -267,9 +267,6 @@ cp210x_write (libusb_device_handle * d, uint16_t req,
 	return (CP210X_OK);
 }
 
-#define PRODUCT_IDES "DC27 Ides of DEF CON"
-#define VENDOR_IDES "Team Ides"
-
 static void
 cp210x_usage (char * progname)
 {
