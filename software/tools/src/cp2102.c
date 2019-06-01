@@ -269,8 +269,9 @@ cp210x_write (libusb_device_handle * d, uint16_t req,
 static void
 cp210x_usage (char * progname)
 {
-	fprintf (stderr, "%s: [-d file] [-l file] [-m mfgr string] " \
-	    "[-p product string] [-s serial # string] [-g gpio]\n",
+	fprintf (stderr, "%s: [-d file] [-l file] [-m mfgr string]\n"
+	    "\t[-p product string] [-s serial # string]\n"
+	    "\t[-g on|off] [-x usb power]\n",
 	    progname);
 
 	return;
@@ -294,6 +295,9 @@ main (int argc, char * argv[])
 	char * mstr = NULL;
 	char * pstr = NULL;
 	char * sstr = NULL;
+	char * gpio = NULL;
+	char * pwr = NULL;
+
 	FILE * fp;
 
 	if (argc < 2) {
@@ -301,7 +305,7 @@ main (int argc, char * argv[])
 		exit (0);
 	}
 
-	while ((c = getopt (argc, argv, "d:l:m:p:s:g:")) != -1) {
+	while ((c = getopt (argc, argv, "d:l:m:p:s:x:g:")) != -1) {
 		switch (c) {
 			case 'd':
 				dfile = optarg;
@@ -319,6 +323,10 @@ main (int argc, char * argv[])
 				sstr = optarg;
 				break;
 			case 'g':
+				gpio = optarg;
+				break;
+			case 'x':
+				pwr = optarg;
 				break;
 			default:
 				cp210x_usage (argv[0]);
@@ -429,6 +437,45 @@ main (int argc, char * argv[])
 		goto save;
 	}
 
+	/* Reset GPIO pin behavior */
+
+	if (gpio != NULL) {
+		p = (uint8_t *)&config;
+		if (strcmp (gpio, "on") == 0) {
+			p[CP2102N_MODE_RESET_P1] |= CP2102N_MODE_GPIO0 |
+			    CP2102N_MODE_GPIO1;
+			p[CP2102N_PORTSET] |= CP2102N_PORTSET_TXLED |
+			    CP2102N_PORTSET_RXLED;
+			goto save;
+		} else if (strcmp (gpio, "off") == 0) {
+			p[CP2102N_MODE_RESET_P1] &= ~(CP2102N_MODE_GPIO0 |
+			    CP2102N_MODE_GPIO1);
+			p[CP2102N_PORTSET] &= ~(CP2102N_PORTSET_TXLED |
+			    CP2102N_PORTSET_RXLED);
+			goto save;
+		} else {
+			fprintf (stderr, "unexpected gpio command (%s)\n",
+			    gpio);
+			cp210x_close (dev);
+			exit (-1);
+		}
+	}
+
+	/* Reset USB max power value */
+
+	if (pwr != NULL) {
+		csum = strtol (pwr, NULL, 10);
+		if (csum > 500) {
+			fprintf (stderr, "power value must be 500mA or less\n");
+			cp210x_close (dev);
+			exit (-1);
+		}
+		p = (uint8_t *)&config;
+		/* power is expressed as mA divided by 2 */
+		p[CP2102N_USB_MAXPOWER] = csum >> 1;
+		goto save;
+	}
+
 	/* Reset vendor */
 
 	if (mstr != NULL) {
@@ -474,17 +521,18 @@ main (int argc, char * argv[])
 		printf ("New serial: %s\n", buf);
 	}
 
+save:
+
 	/* Update checksum */
 
 	csum = cp210x_csum ((uint8_t *)&config, sizeof(config) - 2);
 	config.cp2102n_csum[0] = csum >> 8;
 	config.cp2102n_csum[1] = csum & 0xFF;
 
-save:
-
 	len = sizeof(config);
 	cp210x_write (dev, CP210X_CFG_2102N_WRITE_CONFIG,
 	    (uint8_t *)&config, len);
+
 out:
 
 	cp210x_close (dev);
