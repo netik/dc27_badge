@@ -254,7 +254,7 @@ ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM) badge_fault.S
 INCDIR = $(CHIBIOS)/os/license \
          $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(FLASHINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
-	 $(SHELLINC) $(GFXINC) $(FATFSINC) $(V2600INC) \
+	 $(SHELLINC) $(GFXINC) $(FATFSINC) \
 	 $(CHIBIOS)/os/hal/lib/streams $(CHIBIOS)/os/various
 
 
