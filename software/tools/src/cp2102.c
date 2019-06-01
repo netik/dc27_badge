@@ -446,13 +446,11 @@ main (int argc, char * argv[])
 			    CP2102N_MODE_GPIO1;
 			p[CP2102N_PORTSET] |= CP2102N_PORTSET_TXLED |
 			    CP2102N_PORTSET_RXLED;
-			goto save;
 		} else if (strcmp (gpio, "off") == 0) {
 			p[CP2102N_MODE_RESET_P1] &= ~(CP2102N_MODE_GPIO0 |
 			    CP2102N_MODE_GPIO1);
 			p[CP2102N_PORTSET] &= ~(CP2102N_PORTSET_TXLED |
 			    CP2102N_PORTSET_RXLED);
-			goto save;
 		} else {
 			fprintf (stderr, "unexpected gpio command (%s)\n",
 			    gpio);
@@ -473,7 +471,6 @@ main (int argc, char * argv[])
 		p = (uint8_t *)&config;
 		/* power is expressed as mA divided by 2 */
 		p[CP2102N_USB_MAXPOWER] = csum >> 1;
-		goto save;
 	}
 
 	/* Reset vendor */
