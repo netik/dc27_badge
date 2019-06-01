@@ -384,8 +384,8 @@ bleEnable (void)
 	cfg.conn_cfg.conn_cfg_tag = BLE_IDES_APP_TAG;
 	cfg.conn_cfg.params.l2cap_conn_cfg.rx_mps = BLE_IDES_L2CAP_MPS;
 	cfg.conn_cfg.params.l2cap_conn_cfg.tx_mps = BLE_IDES_L2CAP_MPS;
-	cfg.conn_cfg.params.l2cap_conn_cfg.rx_queue_size = 1;
-	cfg.conn_cfg.params.l2cap_conn_cfg.tx_queue_size = 1;
+	cfg.conn_cfg.params.l2cap_conn_cfg.rx_queue_size = 10;
+	cfg.conn_cfg.params.l2cap_conn_cfg.tx_queue_size = 10;
 	cfg.conn_cfg.params.l2cap_conn_cfg.ch_count = 1;
 
 	r = sd_ble_cfg_set (BLE_CONN_CFG_L2CAP, &cfg, ram_start);
