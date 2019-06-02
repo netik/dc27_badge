@@ -196,6 +196,10 @@ static void setup_start(OrchardAppContext *context) {
   draw_setup_buttons(p);
   context->priv = p;
 
+  // idle ui timer (10s)
+  orchardAppTimer(context, 10000000, true);
+  last_ui_time = chVTGetSystemTime();
+
   geventListenerInit(&p->glSetup);
   gwinAttachListener(&p->glSetup);
   geventRegisterCallback (&p->glSetup, orchardAppUgfxCallback, &p->glSetup);
@@ -266,6 +270,13 @@ static void setup_event(OrchardAppContext *context,
   GMouse * m;
 
   p = context->priv;
+  // idle timeout
+  if (event->type == timerEvent) {
+    if( (chVTGetSystemTime() - last_ui_time) > (UI_IDLE_TIME * 1000)) {
+      orchardAppRun(orchardAppByName("Badge"));
+    }
+    return;
+  }
 
   if ( config->unlocks & UL_LEDS ) {
     max_led_patterns = LED_PATTERNS_FULL;
@@ -280,7 +291,6 @@ static void setup_event(OrchardAppContext *context,
   }
 
   if (event->type == timerEvent) {
-    last_ui_time++;
     if (last_ui_time >= UI_IDLE_TIME) {
       orchardAppRun(orchardAppByName ("Badge"));
     }
@@ -334,7 +344,7 @@ static void setup_event(OrchardAppContext *context,
         if (config->airplane_mode)
           bleDisable ();
         else
-          bleEnable (); 
+          bleEnable ();
       }
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckRotate) {
         config->rotate = ((GEventGWinCheckbox*)pe)->isChecked;
