@@ -116,29 +116,6 @@ static void unlock_result(UnlockHandles *p, char *msg) {
 
 }
 
-static void drawBufferedStringBox(
-  pixel_t **fb,
-  coord_t x,
-  coord_t y,
-  coord_t cx,
-  coord_t cy,
-  const char* str,
-  font_t font,
-  color_t color,
-  justify_t justify) {
-    // if this is the first time through, init the buffer.
-    if (*fb == NULL) {
-      *fb = (pixel_t *) malloc(cx * cy * sizeof(pixel_t));
-      // get the pixels
-      getPixelBlock (x, y, cx, cy, *fb);
-    } else {
-      // paint it back.
-      putPixelBlock (x, y, cx, cy, *fb);
-    }
-
-    // paint the text
-    gdispDrawStringBox(x,y,cx,cy,str,font,color,justify);
-}
 static void redraw_code(UnlockHandles *p) {
   char msg[4];
 

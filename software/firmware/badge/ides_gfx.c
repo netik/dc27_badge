@@ -370,3 +370,29 @@ putPixelBlock (coord_t x, coord_t y, coord_t cx, coord_t cy, pixel_t * buf)
 
   return;
 }
+
+// this allows us to write text to the screen and remember the background
+void drawBufferedStringBox(
+  pixel_t **fb,
+  coord_t x,
+  coord_t y,
+  coord_t cx,
+  coord_t cy,
+  const char* str,
+  font_t font,
+  color_t color,
+  justify_t justify) {
+    // if this is the first time through, init the buffer and
+    // remember the background
+    if (*fb == NULL) {
+      *fb = (pixel_t *) malloc(cx * cy * sizeof(pixel_t));
+      // get the pixels
+      getPixelBlock (x, y, cx, cy, *fb);
+    } else {
+      // paint it back.
+      putPixelBlock (x, y, cx, cy, *fb);
+    }
+
+    // paint the text
+    gdispDrawStringBox(x,y,cx,cy,str,font,color,justify);
+}
