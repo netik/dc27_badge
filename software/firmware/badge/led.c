@@ -68,6 +68,7 @@ static uint8_t ledExitRequest = 0;
 uint8_t ledsOff = 1;
 // the current function that updates the LEDs. Override with ledSetFunction();
 static uint8_t led_current_func = 1;
+static uint8_t led_eye_state = 0;
 
 // for tracking "glitter"
 static LED_PARTICLE particles[LED_MAX_PARTICLES];
@@ -86,15 +87,15 @@ const unsigned char led_address[LED_COUNT_INTERNAL][3] = {
     {0x66, 0x76, 0x86}, {0x68, 0x78, 0x88}, {0x6A, 0x7A, 0x8A},
     {0x6C, 0x7C, 0x8C}, {0x6E, 0x7E, 0x8E},
 
-    /* D217-D224 */
+    /* D217-D224 */ /* D224 skipped, it's the eye */
     {0x30, 0x40, 0x50}, {0x32, 0x42, 0x52}, {0x34, 0x44, 0x54},
     {0x36, 0x46, 0x56}, {0x38, 0x48, 0x58}, {0x3A, 0x4A, 0x5A},
-    {0x3C, 0x4C, 0x5C}, {0x3E, 0x4E, 0x5E},
+    {0x3C, 0x4C, 0x5C},
 
-    /* D225-D232 */
+    /* D225-D232 with D224 as the last led */
     {0x00, 0x10, 0x20}, {0x02, 0x12, 0x22}, {0x04, 0x14, 0x24},
     {0x06, 0x16, 0x26}, {0x08, 0x18, 0x28}, {0x0A, 0x1A, 0x2A},
-    {0x0C, 0x1C, 0x2C}, {0x0E, 0x1E, 0x2E},
+    {0x0C, 0x1C, 0x2C}, {0x0E, 0x1E, 0x2E}, {0x3E, 0x4E, 0x5E},
 
 };
 
@@ -247,7 +248,7 @@ void ledSetPattern(uint8_t patt) {
 }
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
-  if (index < LED_COUNT) {
+  if (index < LED_COUNT_INTERNAL) {
     led_memory[led_address[index][0] + 1] = g;
     led_memory[led_address[index][1] + 1] = r;
     led_memory[led_address[index][2] + 1] = b;
@@ -361,6 +362,17 @@ void led_test() {
     led_show();
     chThdSleepMilliseconds(1000);
     led_clear();
+}
+
+static void update_eye(void) {
+  led_set(31,sin(led_eye_state * M_PI/180) * 255, 0, 0);
+
+  led_eye_state++;
+
+  if (led_eye_state > 254) {
+    led_eye_state = 0;
+  }
+
 }
 
 /* Threads ------------------------------------------------------ */
@@ -511,6 +523,8 @@ static THD_FUNCTION(bling_thread, arg) {
         led_test();
         break;
       }
+
+      update_eye();
     }
 
     if ( ledExitRequest ) {

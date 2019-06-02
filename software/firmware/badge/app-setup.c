@@ -328,6 +328,7 @@ static void setup_event(OrchardAppContext *context,
 
   if (event->type == ugfxEvent) {
     pe = event->ugfx.pEvent;
+    last_ui_time = chVTGetSystemTime();
     i2sPlay("sound/click.snd");
     switch(pe->type) {
 

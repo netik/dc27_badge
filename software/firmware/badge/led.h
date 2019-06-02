@@ -3,7 +3,11 @@
 
 // address is board address without the read write bit, so A0 becomes 50
 #define LED_I2C_ADDR 0x50
-#define LED_COUNT 32
+
+// LEDs that animations can use
+#define LED_COUNT 31
+
+// actual leds on board. the eye is last.
 #define LED_COUNT_INTERNAL 32
 
 // our refresh rate is about 25Hz
