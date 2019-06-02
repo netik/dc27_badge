@@ -322,6 +322,7 @@ static void setup_event(OrchardAppContext *context,
     }
   }
   if (event->type == keyEvent && event->key.flags == keyPress) {
+    last_ui_time = chVTGetSystemTime();
     i2sPlay("sound/click.snd");
   }
 
