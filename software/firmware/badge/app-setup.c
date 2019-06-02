@@ -270,6 +270,7 @@ static void setup_event(OrchardAppContext *context,
   GMouse * m;
 
   p = context->priv;
+
   // idle timeout
   if (event->type == timerEvent) {
     if( (chVTGetSystemTime() - last_ui_time) > (UI_IDLE_TIME * 1000)) {
@@ -290,16 +291,9 @@ static void setup_event(OrchardAppContext *context,
     return;
   }
 
-  if (event->type == timerEvent) {
-    if (last_ui_time >= UI_IDLE_TIME) {
-      orchardAppRun(orchardAppByName ("Badge"));
-    }
-    return;
-  }
-
-  last_ui_time = 0;
-
   if (event->type == keyEvent && event->key.flags == keyRelease) {
+    last_ui_time = chVTGetSystemTime();
+
     switch(event->key.code) {
       case keyALeft:
         prevLedBright();

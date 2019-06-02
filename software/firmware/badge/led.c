@@ -13,6 +13,11 @@
 #define util_random(x,y) randRange(x,y)
 #define M_PI 3.14159265358979323846264338327950288
 
+/* if use_gamma is on, we'll do lookups againt the gamma table
+ * which may make animations look smoother
+ */
+#define USE_GAMMA 1
+
 /*
  * We use led_memory[] as a frame buffer. In reality it's
  * an overlay for the PWM control registers in the LED control
@@ -68,7 +73,7 @@ static uint8_t ledExitRequest = 0;
 uint8_t ledsOff = 1;
 // the current function that updates the LEDs. Override with ledSetFunction();
 static uint8_t led_current_func = 1;
-static uint8_t led_eye_state = 0;
+static int16_t led_eye_state = 0;
 
 // for tracking "glitter"
 static LED_PARTICLE particles[LED_MAX_PARTICLES];
@@ -249,9 +254,15 @@ void ledSetPattern(uint8_t patt) {
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
   if (index < LED_COUNT_INTERNAL) {
+#ifdef USE_GAMMA
+    led_memory[led_address[index][0] + 1] = gamma_values[g];
+    led_memory[led_address[index][1] + 1] = gamma_values[r];
+    led_memory[led_address[index][2] + 1] = gamma_values[b];
+#else
     led_memory[led_address[index][0] + 1] = g;
     led_memory[led_address[index][1] + 1] = r;
     led_memory[led_address[index][2] + 1] = b;
+#endif
   }
 }
 
@@ -365,11 +376,11 @@ void led_test() {
 }
 
 static void update_eye(void) {
-  led_set(31,sin(led_eye_state * M_PI/180) * 255, 0, 0);
+  led_set(31,(sin(led_eye_state * M_PI/180) * 96) + 128, 0, 0);
 
   led_eye_state++;
 
-  if (led_eye_state > 254) {
+  if (led_eye_state > 360) {
     led_eye_state = 0;
   }
 
@@ -886,7 +897,7 @@ void led_pattern_kraftwerk(uint8_t *fx_index, int8_t *fx_position) {
   if (*fx_position > 8) { *fx_position = 0; };
 
   led_clear();
-  led_set(31-(*fx_position), 255,0,0);
+  led_set(LED_COUNT-(*fx_position)-1, 255,0,0);
   led_set(*fx_position, 255,0,0);
   led_show();
 }
