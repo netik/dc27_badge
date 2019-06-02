@@ -777,13 +777,13 @@ void led_pattern_sparkle(uint8_t* p_index) {
 
 void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value) {
   color_rgb_t rgb = util_hsv_to_rgb(*p_hue, 1.0, *p_value);
-  led_set_rgb(16, rgb);
-  led_set_rgb(16 + *p_index, rgb);
-  led_set_rgb(16 - *p_index, rgb);
+  led_set_rgb(LED_COUNT / 2, rgb);
+  led_set_rgb(LED_COUNT / 2 + *p_index, rgb);
+  led_set_rgb(LED_COUNT / 2 - *p_index, rgb);
   led_show();
 
   (*p_index)++;
-  if (*p_index > 16) {
+  if (*p_index > (LED_COUNT / 2)) {
     *p_index = 0;
 
     // Ensure hue wraps around
