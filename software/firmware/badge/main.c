@@ -40,7 +40,7 @@
 #define HALT_ON_SDFAIL 1
 
 // define this to bypass the startup screen, sponsors and song.
-#define FAST_STARTUP 1
+#undef FAST_STARTUP
 
 struct evt_table orchard_events;
 
