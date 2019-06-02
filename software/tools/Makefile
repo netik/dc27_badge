@@ -18,7 +18,15 @@ SOURCE=./src/
 PROG=rgbhdr videomerge sndskip cp2102
 LIST=$(addprefix $(BIN)/, $(PROG))
 CFLAGS= -I$(SOURCE)
-LIBS= -lusb
+
+detected_OS := $(shell sh -c 'uname 2>/dev/null || echo Unknown')
+
+LIBS=-lusb
+
+ifeq ($(detected_OS),Darwin)        # Mac OS X
+  CFLAGS +=  -I/usr/local/include/libusb-1.0
+  LIBS=-L/usr/local/lib -lusb-1.0
+endif
 
 all: dirs $(LIST)
 
