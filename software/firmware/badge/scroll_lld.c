@@ -118,6 +118,7 @@ scrollImage (char * file, int delay)
 
 	for (i = 0; i < h; i++) {
 		f_read (&f, buf, sizeof(pixel_t) * w, &br);
+		gdispDrawLine (scroll_pos, 0, scroll_pos, 230, Black);
 		gdispBlitAreaEx (scroll_pos, (gdispGetHeight () - w) / 2, 1,
 		    w, 0, 0, 1, buf);
 		scroll_pos++;
