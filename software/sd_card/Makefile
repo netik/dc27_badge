@@ -39,6 +39,10 @@ rgb/font/led/%.rgb : jpg/font/led/%.jpg
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst .jpg,.rgb,$<) $(@)
 
+rgb/font/led_90/%.rgb : jpg/font/led_90/%.jpg
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
+	mv $(subst .jpg,.rgb,$<) $(@)
+
 rgb/icons/%.rgb : tif/icons/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/icons/
@@ -103,6 +107,7 @@ images: dirs tools_dep photos \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
         $(addprefix rgb/flags/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/flags/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
+        $(addprefix rgb/font/led_90/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led_90/*.jpg))))) \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/*.jpg)))))
 
 # When possible please use .wav files as source material. MP3s already
@@ -119,6 +124,7 @@ sdcard: dirs tools_dep images sounds video
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
 	-cp rgb/flags/*.rgb $(STAGING_DIR)/flags
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
+	-cp rgb/font/led_90/*.rgb $(STAGING_DIR)/font/led_90
 	-cp ../firmware/updater/updater.bin $(STAGING_DIR)
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
 	-cp dac/*.snd $(STAGING_DIR)/sound
@@ -161,11 +167,13 @@ dirs:
 	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos
 	-[ -d $(STAGING_DIR)/flags ] || mkdir -p $(STAGING_DIR)/flags
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
+	-[ -d $(STAGING_DIR)/font/led_90 ] || mkdir -p $(STAGING_DIR)/font/led_90
 	-[ -d rgb/icons ] || mkdir -p rgb/images
 	-[ -d rgb/icons ] || mkdir -p rgb/icons
 	-[ -d rgb/flags ] || mkdir -p rgb/flags
 	-[ -d rgb/game ] || mkdir -p rgb/game
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
+	-[ -d rgb/font/led_90 ] || mkdir -p rgb/font/led_90
 	-[ -d video ] || mkdir -p video
 
 cleansd:
