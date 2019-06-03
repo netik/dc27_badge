@@ -238,7 +238,6 @@ CSRC += zmachine/acursesio.c \
 	zmachine/interpre.c \
 	zmachine/jzip.c \
 	zmachine/license.c \
-	zmachine/main.c \
 	zmachine/math.c \
 	zmachine/mcurses.c \
 	zmachine/memory.c \
