@@ -38,6 +38,8 @@
 
 #include "ff.h"
 #include "ffconf.h"
+#include "led.h"
+#include "userconfig.h"
 
 #include <string.h>
 
@@ -83,6 +85,7 @@ video_start (OrchardAppContext *context)
 	}
 
 	i += 2;
+	ledStop();
 
 	p = malloc (sizeof(VideoHandles));
 	memset (p, 0, sizeof(VideoHandles));
@@ -173,7 +176,8 @@ video_exit(OrchardAppContext *context)
 {
 	VideoHandles * p;
 	int i;
-
+	userconfig *config = getConfig();
+	
 	p = context->priv;
 
 	if (p == NULL)
@@ -187,6 +191,7 @@ video_exit(OrchardAppContext *context)
 
 	context->priv = NULL;
 
+	ledSetPattern(config->led_pattern);
 	return;
 }
 
