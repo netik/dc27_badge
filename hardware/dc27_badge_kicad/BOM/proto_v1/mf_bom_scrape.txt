@@ -1,0 +1,176 @@
+	Designators	Manufacturer Part Number	Value	Package	Quantity	Total Cost	Stock	Lead Time	DNP
+	BT401	
+JST S2B-PH-SM4-TB(LF)(SN)
+Connector Header, PH Series, 2 Position, Side Entry, 2.00mm, Solder, Surface Mount, Natural
+
+1+ 1 overage	$2.30	675,368 units	16 weeks	
+	C101 - C102	
+Yageo CC0805JRNPO9BN120
+Capacitor: ceramic; MLCC; 12pF; 50V; C0G; ±5%; SMD; 0805
+
+2+ 11 overage	$3.84	129,812 units	17 weeks	
+	C301, C303, C305, C309, C406 - C407, C502, C511	
+MF-CAP-0603-1uF
+Capacitor MLCC 0603 1uF 10% 25V
+
+8	$0.49	Available	None	
+	C302, C304, C306, C501, C503, C507, C602, C604	
+MF-CAP-0603-0.1uF
+Capacitor MLCC 0603 0.1uF 10% 25V
+
+8	$0.49	Available	None	
+	C401 - C405, C601, C603	
+MF-CAP-1206-10uF
+Capacitor MLCC 1206 10uF 10% 16V
+
+7	$1.20	Available	None	
+	C408	
+KEMET C0603C474Z4VACTU
+Cap Ceramic 0.47uF 16V Y5V 20% SMD 0603 85°C Punched Paper T/R
+
+1+ 1 overage	$1.77	77,897 units	44 weeks	
+	C504, C506, C508	
+Nichicon UZP1E3R3MCL1GB
+Cap Alum 3.3UF 20% 25V SMD
+
+3+ 1 overage	$5.94	1,884 units	22 weeks	
+	C505, C510	
+MF-CAP-6.3MM-100uF
+Capacitor Aluminum Electrolytic 6.3mm 100uF 20% 35V
+
+2	$1.00	Available	None	
+	C509	
+MF-CAP-4MM-10uF
+Capacitor Aluminum Electrolytic 4mm 10uF 20% 35V
+
+1	$0.35	Available	None	
+	D201 - D232	
+MF-LED-3228-RGB
+Tri-Color RGB LED 3228 SMD PLCC-4
+
+32	$8.20	Available	None	
+	D401, D601	
+MF-LED-0603-RED
+Red LED 631nm 54mcd 0603
+
+2	$0.49	Available	None	
+	D402, D602	
+MF-LED-0603-GREEN
+Green LED 571nm 35mcd 0603
+
+2	$0.49	Available	None	
+	J101	
+FCI 20021121-00010C4LF
+Pin header; pin strips; Minitek127; male; PIN: 10; vertical; 1.27mm
+
+1+ 1 overage	$6.30	27,255 units	Unknown	
+	J102 - J103	
+Samtec SSM-102-L-DV
+Headers & Wire Housings .100 (2.54 mm) Tiger Claw Surface Mount Socket Strip
+
+2	$5.71	1,247 units	2 weeks	
+	J104	
+Samtec SSM-120-L-DV-K-TR
+Headers & Wire Housings .100 (2.54 mm) Tiger Claw Surface Mount Socket Strip
+
+1	$25.31	1,336 units	6 weeks	
+	J601	
+MF-CON-MICROUSB-RIGHT
+Micro USB Connector Type B Right Angle
+
+1	$0.45	Available	None	
+	R101 - R103	
+MF-RES-0603-10K
+Resistor Thick Film 0603 10K Ohm 5% 100mW 75V
+
+3	$0.18	Available	None	
+	R301 - R303, R501 - R504	
+MF-RES-0805-20K
+Resistor Thick Film 0805 20K Ohm 1% 125mW 150V
+
+7	$0.43	Available	None	
+	R401 - R402, R404, R601	
+MF-RES-0603-1K
+Resistor Thick Film 0603 1K Ohm 5% 100mW 75V
+
+4	$0.24	Available	None	
+	R403	
+MF-RES-0603-2K
+Resistor Thick Film 0603 2K Ohm 1% 1/10W 50V
+
+1	$0.06	Available	None	
+	R602 - R603	
+MF-RES-0603-47
+Resistor Thick Film 0603 47 Ohm 5% 100mW 75V
+
+2	$0.12	Available	None	
+	R604	
+TE Connectivity CRG0805F22K
+Res Thick Film 0805 22K Ohm 1% 0.125W(1/8W) ±100ppm/C Pad SMD T/R
+
+1+ 11 overage	$2.35	48,790 units	28 weeks	
+	R605	
+Yageo RC0201FR-0747K5L
+Res Thick Film 0201 47.5K Ohm 1% 1/20W ±200ppm/°C Molded SMD Paper T/R
+
+1+ 11 overage	$2.35	321,902 units	17 weeks	
+	SW101 - SW108	
+MF-SW-TACT-4.2MM
+Tactile Switch 4.2MM
+
+8	$2.24	Available	None	
+	SW401	
+C&K Components PCM12SMTR
+Switch; Slide; Ultra-Mini; SPDT; ON-ON; 300mA; 6VDC; Surface Mount; R/A; Gull Wing
+
+1	$1.95	175,774 units	24 weeks	
+	U100	
+Rigado BMD-340-A-R
+BMD-340: Bluetooth 5 + Thread
+
+1	$25.95	24,313 units	12 weeks	
+	U301	
+ISSI IS31FL3736-QFLS4-TR
+12x8 Dots Matrix LED Driver with Individual Auto Breath Function 2.7V to 5.5V Input 40-Pin QFN T/R
+
+1	$20.00	34,200 units	12 weeks	
+	U401	
+Microchip MCP73831T-2ACI/OT
+MCP73831 Series Single-Cell Li-Ion/Li-Polymer Battery Charge Controller SOT-23-5
+
+1+ 1 overage	$3.62	62,230 units	6 weeks	
+	U402	
+Texas Instruments LM1117IMPX-3.3/NOPB
+Space saving 800-mA low-dropout linear regulator with internal current limit 4-SOT-223 -40 to 125
+
+1	$3.12	148,329 units	13 weeks	
+	U403	
+Maxim Integrated MAX17055ETB+T
+MAX17055 Series 4.9 V 18 uA Stand-Alone ModelGauge m5 Fuel Gauge - TDFN-10
+
+1	$7.65	47,947 units	17 weeks	
+	U501	
+Cirrus Logic CS4344-CZZ
+DAC 2-CH Delta-Sigma 24-bit 10-Pin TSSOP Tube
+
+1	$8.13	9,034 units	16 weeks	
+	U502	
+Texas Instruments LM4880MX/NOPB
+Dual 200 mW Audio Power Amplifier with Shutdown Mode 8-SOIC -40 to 85
+
+1	$5.43	28,434 units	36 weeks	
+	U601	
+Silicon Labs CP2102N-A01-GQFN28
+Full Speed Basic USB Type-C Controller USB 2.0 3.3V Tube 28-Pin QFN EP
+
+1	$14.17	14,533 units	6 weeks	
+	U602	
+Texas Instruments TPD3E001DRLR
+Low-Capacitance 3-Channel +/-15KV ESD-Protection Array for High-Speed Data Interfaces 5-SOT-5X3 -40 to 85
+
+1+ 1 overage	$3.42	376,720 units	21 weeks	
+	Y101	
+Epson FC-135 32.7680KA-A5
+Crystal 0.032768MHz ±20ppm (Tol) 12.5pF FUND 70000Ohm 2-Pin CSMD T/R
+
+1+ 1 overage	$1.89	409,924 units	15 weeks	

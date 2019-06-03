@@ -1,0 +1,84 @@
+
+get bom:
+
+/api/v3/pcb/{pcb_id}/{pcb_version}/bom
+
+email address in the top right corner when logged in, and then clicking on "Settings"
+
+In each request, you must provide your apikey as a URL parameter with the name 'apikey', e.g.:
+
+https://api.macrofab.com/api/v2/{endpoint}?apikey=abcedefgh
+
+
+Response Types
+By default, you should request a response type of 'application/json'. However, if you are doing quick testing using cUrl, or the like, you may find that some endpoints return html or other formats when you do not specify the response type. You can override this behavior by providing the 'format=json' url parameter and value, e.g.:
+
+curl -XGET "https://api.macrofab.com/api/v2/{endpoint}?apikey=abcdefgh&format=json"
+
+
+
+
+/api/v3/pcb/{pcb_id}/{pcb_version}/bom/parts POST PUT
+POST
+Adds or replaces an entire bill of materials.
+
+Using this endpoint, you can create an entirely new bill of materials.
+
+record_num Required. The row number of the item. This value is zero-indexed and should increment by 1 for each item.
+
+part Required. The part/designator (e.g. 'C1') for the item.
+
+origin Required. The origin of this item. Valid values are market, consignment, inventory.
+
+value The value (e.g. '1K') for the item.
+
+package The package type (e.g. '0402') for the item.
+
+populate Whether or not this part should be populated on the board.
+
+mpn The primary MPN of the part from the market to use for this item.
+
+selected_part The UUID (or house part number) that should be used for this item.
+
+selected_mpn The MPN for the selected part.
+
+You must specify row_num, part, and origin.
+
+Request
+Response
+URI Parameters
+pcb_id: required (string)
+pcb_version: required (string)
+Body
+Type: application/json
+
+Example:
+
+{
+  "parts": [
+    {
+      "mpn": null,
+      "origin": "turnkey",
+      "package": "0603",
+      "part": "C10",
+      "populate": true,
+      "record_num": 1,
+      "selected_mpn": null,
+      "selected_part": "MF-CAP-0603-0.1uF",
+      "value": ".1uF"
+    },
+    {
+      "device": "NCP1117LPST33T3G",
+      "mpn": null,
+      "origin": "turnkey",
+      "package": "SOT-223-3",
+      "part": "U6",
+      "populate": false,
+      "record_num": 2,
+      "selected_mpn": "NCP1117LPST33T3G",
+      "selected_part": "c21b4122-c383-561e-8e80-d9cfa635e28a",
+      "value": "NCP1117LPST33T3G"
+    }
+  ]
+}
+

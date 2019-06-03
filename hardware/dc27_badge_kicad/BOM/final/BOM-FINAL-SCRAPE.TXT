@@ -1,0 +1,202 @@
+BT401	
+JST S2B-PH-SM4-TB(LF)(SN)
+Connector Header, PH Series, 2 Position, Side Entry, 2.00mm, Solder, Surface Mount, Natural
+
+1+ 1 overage	$2.30	430,372 units	16 weeks	
+	C101 - C102	
+Yageo CC0805JRNPO9BN120
+Surface Mount Ceramic Multilayer Capacitor 12pF 5% C0G 50V 0805 Paper T/R
+
+2+ 11 overage	$3.52	127,660 units	17 weeks	
+	C301, C303, C305, C309, C502, C511	
+MF-CAP-0603-1uF
+Capacitor MLCC 0603 1uF 10% 25V
+
+6	$0.37	Available	None	
+	C302, C304, C306, C501, C503, C507, C602, C604	
+MF-CAP-0603-0.1uF
+Capacitor MLCC 0603 0.1uF 10% 25V
+
+8	$0.49	Available	None	
+	C401 - C406, C601, C603	
+MF-CAP-1206-10uF
+Capacitor MLCC 1206 10uF 10% 16V
+
+8	$1.37	Available	None	
+	C504, C506, C508	
+Nichicon UZP1E3R3MCL1GB
+Cap Alum 3.3UF 20% 25V SMD
+
+3+ 1 overage	$5.74	1,834 units	32 weeks	
+	C505, C510	
+MF-CAP-6.3MM-100uF
+Capacitor Aluminum Electrolytic 6.3mm 100uF 20% 35V
+
+2	$1.00	Available	None	
+	C509	
+MF-CAP-4MM-10uF
+Capacitor Aluminum Electrolytic 4mm 10uF 20% 35V
+
+1	$0.35	Available	None	
+	D201 - D232	
+MF-LED-3228-RGB
+Tri-Color RGB LED 3228 SMD PLCC-4
+
+32	$8.20	Available	None	
+	D401, D602	
+MF-LED-0603-GREEN
+Green LED 571nm 35mcd 0603
+
+2	$0.49	Available	None	
+	D402, D601	
+MF-LED-0603-RED
+Red LED 631nm 54mcd 0603
+
+2	$0.49	Available	None	
+	D403	
+MF-LED-0603-GREEN
+Green LED 571nm 35mcd 0603
+
+0603	1	$0.24	Available	None	
+	D404	
+AVX SD0805S020S1R0
+Small Signal Schottky Diode, Single, 20 V, 1 A, 450 Mv, 10 A, 125 C Rohs Compliant: Yes
+
+0805	1+ 1 overage	$1.87	275,498 units	18 weeks	
+	D801 - D810	
+MF-DIO-SOD123-BAT42
+BAT42 Series 30 V 200 mA Small Signal Schottky Diode SOD-123
+
+SOD-123	10	$1.10	Available	None	
+	J101	
+FCI 20021121-00010C4LF
+Conn Unshrouded Header HDR 10 POS 1.27mm Solder ST SMD T/R
+
+1+ 1 overage	$6.30	195,097 units	7 weeks	
+	J102 - J103	
+Samtec SSM-102-L-DV
+Headers & Wire Housings .100 (2.54 mm) Tiger Claw Surface Mount Socket Strip
+
+0	-			
+	J104	
+Samtec SSM-120-L-DV-K-TR
+Headers & Wire Housings .100 (2.54 mm) Tiger Claw Surface Mount Socket Strip
+
+1	$25.31	1,092 units	6 weeks	
+	J601	
+MF-CON-MICROUSB-RIGHT
+Micro USB Connector Type B Right Angle
+
+1	$0.45	Available	None	
+	LS501 - LS502	
+PUI Audio AST-01708MR-R
+Speakers Neodymium Iron Boron 1500±20%Hz 0.5W 87±3dBA 8±15%Ohm Round Pin
+
+0	-			
+	Q401	
+ON Semiconductor FDN360P
+Single P-Channel 30 V 80 mOhm PowerTrench Mosfet - SSOT-3
+
+SOT-23	1+ 1 overage	$2.38	280,830 units	29 weeks	
+	R101 - R103, R301, R303, R406 - R407	
+MF-RES-0603-10K
+Resistor Thick Film 0603 10K Ohm 5% 100mW 75V
+
+7	$0.43	Available	None	
+	R302, R501 - R504	
+MF-RES-0805-20K
+Resistor Thick Film 0805 20K Ohm 1% 125mW 150V
+
+5	$0.30	Available	None	
+	R401 - R402, R405, R601	
+MF-RES-0603-1K
+Resistor Thick Film 0603 1K Ohm 5% 100mW 75V
+
+4	$0.24	Available	None	
+	R403 - R404	
+MF-RES-0603-2K
+Resistor Thick Film 0603 2K Ohm 1% 1/10W 50V
+
+2	$0.12	Available	None	
+	R602 - R603	
+MF-RES-0603-47
+Resistor Thick Film 0603 47 Ohm 5% 100mW 75V
+
+2	$0.12	Available	None	
+	R604	
+TE Connectivity CRG0805F22K
+Res Thick Film 0805 22K Ohm 1% 0.125W(1/8W) ±100ppm/C Pad SMD T/R
+
+1+ 11 overage	$2.35	55,026 units	28 weeks	
+	R605	
+Panasonic ERJ-3EKF4752V
+Res Thick Film 0603 47.5K Ohm 1% 1/10W ±100ppm/°C Molded SMD Punched Carrier T/R
+
+1+ 11 overage	$2.35	4,029,098 units	18 weeks	
+	SW108	
+MF-SW-TACT-4.2MM
+Tactile Switch 4.2MM
+
+1	$0.28	Available	None	
+	SW401	
+C&K Components PCM12SMTR
+Switch; Slide; Ultra-Mini; SPDT; ON-ON; 300mA; 6VDC; Surface Mount; R/A; Gull Wing
+
+1	$1.95	141,357 units	24 weeks	
+	SW801 - SW802	
+ALPS SKRHAAE010
+Switch Tactile Square Plunger J-Bend 0.05A 12VDC 1.23N SMD T/R
+
+2	$6.93	1,226 units	Unknown	
+	TP101 - TP106, TP401 - TP402, TP501 - TP503	
+N/A
+
+No part selected.
+
+0	-			
+	U100	
+BMD-340-A-R
+
+This part will be consumed from your inventory.
+
+1	$3.23			
+	U301	
+ISSI IS31FL3736-QFLS4-TR
+12x8 Dots Matrix LED Driver with Individual Auto Breath Function 2.7V to 5.5V Input 40-Pin QFN T/R
+
+1	$20.00	32,863 units	6 weeks	
+	U401	
+Microchip MCP73833-AMI/UN
+Linear Battery Charger Controller Li-Ion/Li-Pol 1mA 4.2V/4.35V/4.4V/4.5V 10-Pin MSOP Tube
+
+1	$5.51	16,182 units	2 weeks	
+	U402	
+Texas Instruments LM1117IMPX-3.3/NOPB
+Space saving 800-mA low-dropout linear regulator with internal current limit 4-SOT-223 -40 to 125
+
+1	$3.12	126,782 units	7 weeks	
+	U501	
+Cirrus Logic CS4344-CZZR
+DAC 2-CH Delta-Sigma 24-bit 10-Pin TSSOP T/R
+
+1	$8.15	18,145 units	16 weeks	
+	U502	
+Texas Instruments LM4880MX/NOPB
+Dual 200 mW Audio Power Amplifier with Shutdown Mode 8-SOIC -40 to 85
+
+1	$5.45	21,185 units	13 weeks	
+	U601	
+Silicon Labs CP2102N-A01-GQFN28
+Full Speed Basic USB Type-C Controller USB 2.0 3.3V Tube 28-Pin QFN EP
+
+1	$14.17	11,800 units	6 weeks	
+	U602	
+Texas Instruments TPD3E001DRLR
+Low-Capacitance 3-Channel +/-15KV ESD-Protection Array for High-Speed Data Interfaces 5-SOT-5X3 -40 to 85
+
+1+ 1 overage	$3.42	348,523 units	17 weeks	
+	Y101	
+Epson FC-135 32.7680KA-A5
+Crystal 0.032768MHz ±20ppm (Tol) 12.5pF FUND 70000Ohm 2-Pin CSMD T/R
+
+
