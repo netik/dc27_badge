@@ -43,7 +43,7 @@ typedef struct _SetupHandles {
   GListener glSetup;
 } SetupHandles;
 
-static uint32_t last_ui_time = 0;
+static uint32_t last_ui_time;
 extern char *fxlist[];
 
 static font_t fontSM;
@@ -181,6 +181,7 @@ static void draw_setup_buttons(SetupHandles * p) {
 
 static uint32_t setup_init(OrchardAppContext *context) {
   (void)context;
+  last_ui_time = chVTGetSystemTime();
   return 0;
 }
 
