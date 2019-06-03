@@ -18,7 +18,8 @@
 #include "i2s_lld.h"
 #include "fontlist.h"
 
-#define ALERT_DELAY 3000
+#define MAX_CODE_LEN 5
+#define ALERT_DELAY  3000
 
 extern systime_t char_reset_at;
 
@@ -39,7 +40,11 @@ typedef struct _UnlockHandles {
 
   // Fonts
   font_t font_futara_12;
+  font_t font_futara_20;
   font_t font_futara_36;
+
+  // code frame buffers
+  pixel_t *codefb[MAX_CODE_LEN]; /* pointers to frame buffers */
 
 } UnlockHandles;
 
@@ -72,7 +77,7 @@ static char *unlock_desc[] = { "+10% DEF",
                                "PINGDUMP"};
 
 static uint32_t last_ui_time = 0;
-static uint8_t code[5];
+static uint8_t code[MAX_CODE_LEN];
 static int8_t focused = 0;
 
 /* prototypes */
@@ -109,6 +114,21 @@ static void unlock_result(UnlockHandles *p, char *msg) {
     false
   );
 
+}
+
+static void redraw_code(UnlockHandles *p) {
+  char msg[4];
+
+  for (int i=0; i<5; i++) {
+    sprintf(msg,"%x",code[i]);
+    drawBufferedStringBox(&p->codefb[i],
+      15 + (i*60),
+      10,
+      50,
+      gdispGetFontMetric(p->font_futara_20, fontHeight),
+      msg,
+      p->font_futara_20, Yellow, justifyCenter);
+  }
 }
 
 static void init_unlock_ui(UnlockHandles *p) {
@@ -151,13 +171,13 @@ static void init_unlock_ui(UnlockHandles *p) {
 
   // create button widget: ghBack
   wi.g.x = 10;
-  wi.g.y = 100;
+  wi.g.y = 120;
   wi.g.width = 110;
   wi.g.height = 30;
   wi.customDraw = gwinButtonDraw_Normal;
   wi.customParam = 0;
   wi.customStyle = &DarkPurpleFilledStyle;
-  wi.text = "<-";
+  wi.text = "CANCEL";
   p->ghBack = gwinButtonCreate(0, &wi);
   gwinRedraw(p->ghBack);
 
@@ -226,8 +246,6 @@ static void unlock_start(OrchardAppContext *context)
 
   // fill background
   putImageFile(IMG_UNLOCKBG, 0, 0);
-  // draw flags for first time
-  redraw_flags();
 
   // draw UI
   /* starting code */
@@ -235,9 +253,16 @@ static void unlock_start(OrchardAppContext *context)
 
   p = (UnlockHandles *)malloc (sizeof(UnlockHandles));
   p->font_futara_12 = gdispOpenFont (FONT_XS);
+  p->font_futara_20 = gdispOpenFont (FONT_SM);
   p->font_futara_36 = gdispOpenFont (FONT_LG);
   init_unlock_ui(p);
   context->priv = p;
+
+  // clear buffers
+  memset(p->codefb, 0, sizeof(pixel_t *) * MAX_CODE_LEN);
+  // draw flags for first time
+  redraw_flags();
+  redraw_code(p);
 
   // idle ui timer (10s)
   orchardAppTimer(context, 10000000, true);
@@ -304,6 +329,8 @@ static void updatecode(OrchardAppContext *context, uint8_t position, int8_t dire
 
   // redraw the flags
   redraw_flags();
+  redraw_code(p);
+
 }
 
 static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
@@ -324,9 +351,7 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
       unlock_result(p, tmp);
 
       //      ledSetFunction(leds_all_strobe);
-
-      if ((1 << i) != UL_BENDER)      // default sound
-        i2sPlay("fight/leveiup.raw");
+      i2sPlay("fight/leveiup.raw");
 
       // save to config
       configSave(config);
@@ -464,10 +489,16 @@ static void unlock_exit(OrchardAppContext *context) {
   }
 
   gdispCloseFont (p->font_futara_12);
+  gdispCloseFont (p->font_futara_20);
   gdispCloseFont (p->font_futara_36);
   geventDetachSource (&p->glUnlockListener, NULL);
   geventRegisterCallback (&p->glUnlockListener, NULL, NULL);
 
+  for (int i=0; i < MAX_CODE_LEN; i++) {
+    if (p->codefb[i] != NULL) {
+      free(p->codefb[i]);
+    }
+  }
   free(context->priv);
   context->priv = NULL;
 

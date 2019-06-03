@@ -92,7 +92,7 @@ static void flush_radio_queue (void) {
   return;
 }
 void orchardAppRadioCallback (OrchardAppRadioEventType type,
-  ble_evt_t * evt, void * pkt, uint8_t len) {
+  ble_evt_t * evt, void * pkt, uint16_t len) {
  
   OrchardAppRadioEvent * r_evt;
 

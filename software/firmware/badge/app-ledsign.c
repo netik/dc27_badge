@@ -33,18 +33,16 @@
 #include "orchard-app.h"
 #include "orchard-ui.h"
 
-#include "chprintf.h"
-
 #include "scroll_lld.h"
 #include "i2s_lld.h"
 
 #include "userconfig.h"
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #define MESSAGELEN	128
-
-#include <string.h>
 
 static uint32_t
 ledsign_init(OrchardAppContext *context)
@@ -111,12 +109,17 @@ ledsign_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	}
 
         if (event->type == timerEvent) {
+		config = getConfig();
 		scrollAreaSet (0, 0);
 		str = keyboardUiContext->itemlist[1];
 		do {
 			for (i = 0; i < strlen (str); i++) {
-				chsnprintf (fname, 47,
-				    "font/led/%02X.rgb", str[i]);
+				if (config->rotate)
+					snprintf (fname, 47,
+					    "font/led_90/%02X.rgb", str[i]);
+				else
+					snprintf (fname, 47,
+					    "font/led/%02X.rgb", str[i]);
 				sts = scrollImage (fname, 10);
 				if (sts != 0)
 					break;

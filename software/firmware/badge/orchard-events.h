@@ -141,7 +141,7 @@ typedef enum _OrchardAppRadioEventType {
 typedef struct _OrchardAppRadioEvent {
    OrchardAppRadioEventType type;
    ble_evt_t evt;
-   uint8_t pktlen;
+   uint16_t pktlen;
    uint8_t * pkt;
 } OrchardAppRadioEvent;
 

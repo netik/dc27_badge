@@ -37,6 +37,7 @@
 #define BLE_IDES_CHAT_PSM	BLE_IDES_PSM + 1
 #define BLE_IDES_SHOUT_PSM	BLE_IDES_PSM + 2
 #define BLE_IDES_BATTLE_PSM	BLE_IDES_PSM + 3
+#define BLE_IDES_OTA_PSM	BLE_IDES_PSM + 4
 
 /* These values are defined by the BLE SIG */
 
@@ -44,7 +45,7 @@
 #define BLE_PSM_RFCOMM		0x0003
 #define BLE_PSM_IPSP		0x0023
 
-#define BLE_IDES_L2CAP_MTU	128
+#define BLE_IDES_L2CAP_MTU	1024
 #define BLE_IDES_L2CAP_MPS	128
 
 extern uint16_t ble_local_cid;

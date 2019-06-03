@@ -43,7 +43,7 @@ typedef struct _SetupHandles {
   GListener glSetup;
 } SetupHandles;
 
-static uint32_t last_ui_time = 0;
+static uint32_t last_ui_time;
 extern char *fxlist[];
 
 static font_t fontSM;
@@ -181,6 +181,7 @@ static void draw_setup_buttons(SetupHandles * p) {
 
 static uint32_t setup_init(OrchardAppContext *context) {
   (void)context;
+  last_ui_time = chVTGetSystemTime();
   return 0;
 }
 
@@ -195,6 +196,10 @@ static void setup_start(OrchardAppContext *context) {
   p = malloc (sizeof(SetupHandles));
   draw_setup_buttons(p);
   context->priv = p;
+
+  // idle ui timer (10s)
+  orchardAppTimer(context, 10000000, true);
+  last_ui_time = chVTGetSystemTime();
 
   geventListenerInit(&p->glSetup);
   gwinAttachListener(&p->glSetup);
@@ -267,6 +272,14 @@ static void setup_event(OrchardAppContext *context,
 
   p = context->priv;
 
+  // idle timeout
+  if (event->type == timerEvent) {
+    if( (chVTGetSystemTime() - last_ui_time) > (UI_IDLE_TIME * 1000)) {
+      orchardAppRun(orchardAppByName("Badge"));
+    }
+    return;
+  }
+
   if ( config->unlocks & UL_LEDS ) {
     max_led_patterns = LED_PATTERNS_FULL;
   } else {
@@ -279,17 +292,9 @@ static void setup_event(OrchardAppContext *context,
     return;
   }
 
-  if (event->type == timerEvent) {
-    last_ui_time++;
-    if (last_ui_time >= UI_IDLE_TIME) {
-      orchardAppRun(orchardAppByName ("Badge"));
-    }
-    return;
-  }
-
-  last_ui_time = 0;
-
   if (event->type == keyEvent && event->key.flags == keyRelease) {
+    last_ui_time = chVTGetSystemTime();
+
     switch(event->key.code) {
       case keyALeft:
         prevLedBright();
@@ -312,11 +317,13 @@ static void setup_event(OrchardAppContext *context,
     }
   }
   if (event->type == keyEvent && event->key.flags == keyPress) {
+    last_ui_time = chVTGetSystemTime();
     i2sPlay("sound/click.snd");
   }
 
   if (event->type == ugfxEvent) {
     pe = event->ugfx.pEvent;
+    last_ui_time = chVTGetSystemTime();
     i2sPlay("sound/click.snd");
     switch(pe->type) {
 
@@ -334,7 +341,7 @@ static void setup_event(OrchardAppContext *context,
         if (config->airplane_mode)
           bleDisable ();
         else
-          bleEnable (); 
+          bleEnable ();
       }
       if (((GEventGWinCheckbox*)pe)->gwin == p->ghCheckRotate) {
         config->rotate = ((GEventGWinCheckbox*)pe)->isChecked;

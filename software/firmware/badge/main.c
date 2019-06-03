@@ -40,7 +40,7 @@
 #define HALT_ON_SDFAIL 1
 
 // define this to bypass the startup screen, sponsors and song.
-#undef FAST_STARTUP 
+#undef FAST_STARTUP
 
 struct evt_table orchard_events;
 
@@ -437,9 +437,12 @@ int main(void)
     pix1 = gdispGetPixelColor (0, 0);
     pix2 = gdispGetPixelColor (1, 0);
 
-    if (pix1 == 0xCAFE && pix2 == 0xBABE)
+    if (pix1 == 0xCAFE && pix2 == 0xBABE) {
         printf ("Main screen turn on\n");
-    else
+        /* Reset the pixels to black */
+        gdispDrawPixel (0, 0, Black);
+        gdispDrawPixel (1, 0, Black);
+    } else
         printf ("No screen found\n");
 
     /* Mount SD card */

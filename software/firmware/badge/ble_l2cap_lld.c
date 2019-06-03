@@ -140,7 +140,7 @@ bleL2CapDispatch (ble_evt_t * evt)
 			printf ("DATA RECEIVED: [%s]\n", rx->sdu_buf.p_data);
 #endif
 			orchardAppRadioCallback (l2capRxEvent, evt,
-			    rx->sdu_buf.p_data, rx->sdu_buf.len);
+			    rx->sdu_buf.p_data, rx->sdu_len);
 			rx_data.p_data = ble_rx_buf;
 			rx_data.len = BLE_IDES_L2CAP_MTU;
 			sd_ble_l2cap_ch_rx (ble_conn_handle,
