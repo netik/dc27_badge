@@ -144,6 +144,10 @@ otasend_event (OrchardAppContext *context,
 		geventRegisterCallback (&p->gl,
 		    orchardAppUgfxCallback, &p->gl);
 
+		/*
+		 * Initiate GAP connection to peer.
+		 */
+
 		bleGapConnect (&p->listaddrs[uiContext->selected + 1]);
 	}
 
@@ -152,6 +156,11 @@ otasend_event (OrchardAppContext *context,
                 evt = &radio->evt;
 
 		switch (radio->type) {
+			/*
+			 * GAP connection achieved. Now issue a GATTC write to
+			 * the OTA GATTS characteristic to indicate an offer of
+			 * a firmware update.
+			 */
 			case connectEvent:
 				screen_alert_draw (FALSE, "Handshaking...");
 				msg[0] = BLE_IDES_OTAUPDATE_OFFER;
@@ -159,6 +168,10 @@ otasend_event (OrchardAppContext *context,
 				    (uint8_t *)msg, 1, FALSE);
 				break;
 
+			/*
+			 * GATTS write event - this should be a response from the
+			 * peer either accepting or declining the uptate.
+			 */
 			case gattsReadWriteAuthEvent:
 				rw =
 				 &evt->evt.gatts_evt.params.authorize_request;
@@ -168,6 +181,7 @@ otasend_event (OrchardAppContext *context,
 				    req->data[0] == BLE_IDES_OTAUPDATE_ACCEPT){
 					screen_alert_draw (FALSE,
 					    "Offer accepted...");
+					/* Offer accepted -- create L2CAP link */
 					bleL2CapConnect (BLE_IDES_OTA_PSM);
 				} else {
 					screen_alert_draw (FALSE,
@@ -177,9 +191,11 @@ otasend_event (OrchardAppContext *context,
 				}
 				break;
 
+			/* L2CAP connected -- start sending the file */
 			case l2capConnectEvent:
 				screen_alert_draw (FALSE, "Sending...");
 				/* FALLTHROUGH */
+			/* L2CAP TX successful -- send the next chunk */
 			case l2capTxEvent:
 				if (p->retry == 0) {
 					br = 0;
@@ -189,6 +205,7 @@ otasend_event (OrchardAppContext *context,
 				} else
 					br = p->last;
 				if (br) {
+					/* Send data chunk */
 					if (bleL2CapSend (p->txbuf, br) ==
 					    NRF_SUCCESS) {
 						p->retry = 0;
@@ -205,6 +222,7 @@ otasend_event (OrchardAppContext *context,
 				}
 				break;
 
+			/* For any of these events, bail out. */
 			case l2capConnectRefusedEvent:
 			case l2capDisconnectEvent:
 			case disconnectEvent:
