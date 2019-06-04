@@ -74,6 +74,7 @@ ota_event (OrchardAppContext *context,
 
 	p = context->priv;
 
+	/* Send accept response to OTA sender */
 	if (event->type == appEvent && event->app.event == appStart) {
 		reply = BLE_IDES_OTAUPDATE_ACCEPT;
 		bleGattcWrite (ot_handle.value_handle, &reply, 1, FALSE);
@@ -103,9 +104,11 @@ ota_event (OrchardAppContext *context,
 		radio = (OrchardAppRadioEvent *)&event->radio;
 
 		switch (radio->type) {
+			/* L2CAP link established */
 			case l2capConnectEvent:
 				screen_alert_draw (FALSE, "Receiving...");
 				break;
+			/* Data received, write it to the file */
 			case l2capRxEvent:
 				p->total += radio->pktlen;
 				sprintf (buf, "Received %ld bytes", p->total);
@@ -119,11 +122,13 @@ ota_event (OrchardAppContext *context,
 					orchardAppExit ();
 				}
 				break;
+			/* L2CAP link closed -- transfer complete */
 			case l2capDisconnectEvent:
 				sprintf (buf, "Received %ld bytes", p->total);
 				screen_alert_draw (FALSE, buf);
 				chThdSleepMilliseconds (3000);
 				break;
+			/* For any of these events, bail out. */
 			case l2capConnectRefusedEvent:
 			case disconnectEvent:
 			case connectTimeoutEvent:
