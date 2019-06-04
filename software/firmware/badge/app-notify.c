@@ -82,6 +82,10 @@ static bool notify_handler(void * arg)
 	    req->data[0] != BLE_IDES_GAMEATTACK_CHALLENGE)
 		return (FALSE);
 
+	if (rw->request.write.handle != ot_handle.value_handle &&
+	    req->data[0] != BLE_IDES_OTAUPDATE_OFFER)
+		return (FALSE);
+
 	memcpy (&radio_evt, evt, sizeof (radio_evt));
 
 	orchardAppRun (orchardAppByName ("Radio notification"));
@@ -107,6 +111,7 @@ static void notify_start(OrchardAppContext *context)
 	ble_gatts_evt_rw_authorize_request_t * rw;
 	NotifyHandles * p;
 	GWidgetInit wi;
+	int fHeight;
 
 	p = malloc (sizeof (NotifyHandles));
 
@@ -132,16 +137,17 @@ static void notify_start(OrchardAppContext *context)
 
 	p->font = gdispOpenFont(FONT_FIXED);
 
+	fHeight = gdispGetFontMetric (p->font, fontHeight);
+
 	gdispDrawStringBox (0, 50 -
-	    gdispGetFontMetric(p->font, fontHeight),
-	    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
+	    fHeight,
+	    gdispGetWidth(), fHeight,
 	    buf, p->font, White, justifyCenter);
 
 	rw = &radio_evt.evt.evt.gatts_evt.params.authorize_request;
 
 	if (rw->request.write.handle == ch_handle.value_handle) {
-		gdispDrawStringBox (0, 50, 
-		    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
+		gdispDrawStringBox (0, 50, gdispGetWidth(), fHeight,
 		    "WANTS TO CHAT", p->font, White, justifyCenter);
 		p->handle = ch_handle.value_handle;
 		p->app = "Radio Chat";
@@ -150,13 +156,24 @@ static void notify_start(OrchardAppContext *context)
 	}
 
 	if (rw->request.write.handle == gm_handle.value_handle) {
-		gdispDrawStringBox (0, 50, 
-		    gdispGetWidth(), gdispGetFontMetric(p->font, fontHeight),
+		gdispDrawStringBox (0, 50, gdispGetWidth(), fHeight,
 		    "IS CHALLENGING YOU", p->font, White, justifyCenter);
 		p->handle = gm_handle.value_handle;
 		p->app = "Sea Battle";
 		p->response_accept = BLE_IDES_GAMEATTACK_ACCEPT;
 		p->response_decline = BLE_IDES_GAMEATTACK_DECLINE;
+	}
+
+	if (rw->request.write.handle == ot_handle.value_handle) {
+		gdispDrawStringBox (0, 50, gdispGetWidth(), fHeight,
+		    "IS OFFERING YOU A", p->font, White, justifyCenter);
+		gdispDrawStringBox (0, 50 + fHeight, gdispGetWidth(),
+		    fHeight, "FIRMWARE UPDATE", p->font, White,
+		    justifyCenter);
+		p->handle = ot_handle.value_handle;
+		p->app = "OTA Recv";
+		p->response_accept = BLE_IDES_OTAUPDATE_ACCEPT;
+		p->response_decline = BLE_IDES_OTAUPDATE_DECLINE;
 	}
 
 	gwinSetDefaultStyle (&RedButtonStyle, FALSE);

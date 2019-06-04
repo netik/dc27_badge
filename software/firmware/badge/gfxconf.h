@@ -96,7 +96,7 @@
 
 #define GDISP_NEED_IMAGE                             TRUE
 #define GDISP_NEED_IMAGE_NATIVE                  TRUE
-//    #define GDISP_NEED_IMAGE_GIF                     FALSE
+#define GDISP_NEED_IMAGE_GIF                     TRUE
 //    #define GDISP_NEED_IMAGE_BMP                     FALSE
 //        #define GDISP_NEED_IMAGE_BMP_1               FALSE
 //        #define GDISP_NEED_IMAGE_BMP_4               FALSE
@@ -268,7 +268,7 @@
 //#define GFILE_NEED_ROMFS                             FALSE
 //#define GFILE_NEED_RAMFS                             FALSE
 #define GFILE_NEED_FATFS                               TRUE
-#define GFILE_FATFS_READ_ONLY                          TRUE
+// #define GFILE_FATFS_READ_ONLY                       FALSE
 #define GFILE_FATFS_EXTERNAL_LIB                       TRUE
 //#define GFILE_NEED_NATIVEFS                          FALSE
 //#define GFILE_NEED_CHBIOSFS                          FALSE

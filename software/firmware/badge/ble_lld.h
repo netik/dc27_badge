@@ -133,6 +133,10 @@
 #define BLE_IDES_GAMEATTACK_DECLINE		0x03
 #define BLE_IDES_GAMEATTACK_ACTION4		0x04
 
+#define BLE_IDES_OTAUPDATE_OFFER		0x01
+#define BLE_IDES_OTAUPDATE_ACCEPT		0x02
+#define BLE_IDES_OTAUPDATE_DECLINE		0x03
+
 /*
  * We advertise some game info in a vendor-specific field in
  * the advertisement packet. This includes our current x/y
@@ -155,6 +159,7 @@ typedef struct ble_ides_game_state {
 extern uint32_t ble_unlocks;
 extern uint32_t ble_chatreq;
 extern uint32_t ble_gameattack;
+extern uint32_t ble_ota;
 extern char ble_password[32];
 extern uint8_t ble_station_addr[];
 extern volatile uint32_t flash_evt;
