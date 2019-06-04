@@ -28,7 +28,11 @@
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
 
+#define DEBUG_BATTLE_STATE 1
+#include "gamestate.h"
+
 #define ENABLE_MAP_PING  1   // if you want the sonar sounds
+
 #define VGOAL       8        // ship accleration goal
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
@@ -50,36 +54,27 @@ static VECTOR bullet_pending = {0,0};
 static ENEMY *last_near = NULL;
 static ENEMY current_enemy;
 
+OrchardAppContext *mycontext;
+
 /* private memory */
 typedef struct {
-	GListener		gl;
-	font_t			fontLG;
-	font_t			fontXS;
-	font_t			fontSM;
-	GHandle			ghTitleL;
-	GHandle			ghTitleR;
+  GListener	gl;
+  font_t	fontLG;
+  font_t	fontXS;
+  font_t	fontSM;
+  GHandle	ghTitleL;
+  GHandle	ghTitleR;
 } battle_ui_t;
 
 // enemies -- linked list
 gll_t *enemies;
 
-// the current game state */
-enum game_state {
-	WORLD_MAP, // lobby...
-	CONNECTING,
-	CONNECT_FAILED,
-	CONNECTED,
-	BATTLE_ACCEPTED,
-	BATTLE_DECLINED,
-	BATTLE,
-	BATTLE_DEAD,
-	BATTLE_UDEAD,
-	BATTLE_EXITING
-};
+/* state tracking */
+static battle_state current_battle_state = NONE;
+static int16_t animtick = 0;
 
-enum game_state current_state = WORLD_MAP;
-
-static int16_t frame_counter = 0;
+/* prototypes */
+static void changeState(battle_state nextstate);
 
 static
 int getMapTile(ENTITY *e) {
@@ -207,6 +202,8 @@ entity_erase(ENTITY *p) {
 
 static void
 player_render(ENTITY *p) {
+  userconfig *config = getConfig();
+
   /* Draw ship */
   gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, Purple);
 
@@ -219,7 +216,7 @@ player_render(ENTITY *p) {
    */
 
   bleGapUpdateState ((uint16_t)p->vecPosition.x,
-    (uint16_t)p->vecPosition.y, 0, 0);
+    (uint16_t)p->vecPosition.y, config->xp, config->level);
 
   return;
 }
@@ -237,7 +234,7 @@ enemy_render(void *e) {
   ENEMY *en = e;
   if (en->e.blinking) {
     // blink this enemy at 2 Hz.
-    if ( (frame_counter % FPS) < (FPS/2) )
+    if ( (animtick % FPS) < (FPS/2) )
       return;
   }
   gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, Red);
@@ -288,14 +285,18 @@ enemy_update_all(void) {
 static uint32_t
 battle_init(OrchardAppContext *context)
 {
-  (void)context;
   ENEMY *e;
+  userconfig *config = getConfig();
+  mycontext = context;
 
   entity_init(&me);
+  me.vecPosition.x = config->last_x;
+  me.vecPosition.y = config->last_y;
+
   me.visible = true;
 
   for (int i=0; i < MAX_BULLETS; i++) {
-		entity_init(&bullet[i]);
+    entity_init(&bullet[i]);
   }
 
   // fake enemies -- we'll get these from BLE later on.
@@ -315,14 +316,14 @@ battle_init(OrchardAppContext *context)
   return (0);
 }
 
-static void draw_initial_map(OrchardAppContext *context) {
+static void draw_world_map(void) {
   const userconfig *config = getConfig();
-	GWidgetInit wi;
+  GWidgetInit wi;
   char tmp[40];
   battle_ui_t *bh;
 
   // get private memory
-  bh = (battle_ui_t *)context->priv;
+  bh = (battle_ui_t *)mycontext->priv;
 
   // draw map
   putImageFile("game/world.rgb", 0,0);
@@ -366,15 +367,13 @@ battle_start (OrchardAppContext *context)
   bh = malloc(sizeof(battle_ui_t));
   context->priv = bh;
   bh->fontXS = gdispOpenFont (FONT_XS);
-	bh->fontLG = gdispOpenFont (FONT_LG);
-	bh->fontSM = gdispOpenFont (FONT_SM);
-
-  gdispClear (Black);
-
-  draw_initial_map(context);
+  bh->fontLG = gdispOpenFont (FONT_LG);
+  bh->fontSM = gdispOpenFont (FONT_SM);
 
   /* start the timer - 30 fps */
   orchardAppTimer(context, FRAME_DELAY * 1000000, true);
+
+  changeState(WORLD_MAP);
   return;
 }
 
@@ -401,42 +400,40 @@ ENEMY *getNearestEnemy(void) {
 
 static void
 draw_hud(OrchardAppContext *context) {
-	userconfig *config = getConfig();
-	battle_ui_t *bh;
+        userconfig *config = getConfig();
+        battle_ui_t *bh;
 
   // get private memory
   bh = (battle_ui_t *)context->priv;
 
-	// top bar
-	gdispDrawStringBox (0, 0,
-											105, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-											config->name,
-			                bh->fontSM,
-											White,
-											justifyLeft);
+  // top bar
+  gdispDrawStringBox (0, 0,
+                      105, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+                      config->name,
+                      bh->fontSM,
+                      White,
+                      justifyLeft);
 
 
-	gdispDrawStringBox (0, 0,
-											215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-										  "00:60",
-			                bh->fontSM,
-											Yellow,
-											justifyCenter);
+  gdispDrawStringBox (0, 0,
+                      215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+                      "00:60",
+                      bh->fontSM,
+                      Yellow,
+                      justifyCenter);
 
 
-	gdispDrawStringBox (0, 0,
-											215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-										  current_enemy.name,
-			                bh->fontSM,
-											White,
-											justifyRight);
+  gdispDrawStringBox (0, 0,
+                      215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+                      current_enemy.name,
+                      bh->fontSM,
+                      White,
+                      justifyRight);
 }
 
-static void
+static bool
 enemy_engage(OrchardAppContext *context) {
 
-  char fnbuf[30];
-  int newmap;
   ENEMY * e;
 
   e = getNearestEnemy();
@@ -444,24 +441,14 @@ enemy_engage(OrchardAppContext *context) {
   if (e == NULL) {
     // play an error sound because no one is near by
     i2sPlay("game/error.snd");
-    return;
+    return FALSE;
   } else {
     // zoom in
     i2sPlay("game/engage.snd");
-
-    // attempt connection...
-
-    // if success...
-
-    newmap = getMapTile(&me);
-    sprintf(fnbuf, "game/map-%02d.rgb", newmap);
-    putImageFile(fnbuf, 0,0);
-    zoomEntity(&me);
-		// remember this guy.
-		memcpy(&current_enemy, e, sizeof(ENEMY));
-		draw_hud(context);
-    enemy_clearall_blink();
-    player_render(&me);
+    // remember this guy.
+    memcpy(&current_enemy, e, sizeof(ENEMY));
+    changeState(APPROVAL_DEMAND);
+    return TRUE;
   }
 }
 
@@ -480,7 +467,7 @@ fire_bullet(ENTITY *from, VECTOR *bullet_pending) {
       memcpy(&bullet[i].pix_old, from->pix_old, sizeof(from->pix_old));
       bullet[i].vecVelocityGoal.x = bullet_pending->x * 50;
       bullet[i].vecVelocityGoal.y = bullet_pending->y * 50;
-			bullet_pending->x = bullet_pending->y = 0;
+      bullet_pending->x = bullet_pending->y = 0;
       i2sPlay("game/shot.snd");
       return;
     }
@@ -507,19 +494,15 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   VECTOR prevme;
   ENEMY *nearest;
   battle_ui_t *bh;
-	char tmp[40];
+        char tmp[40];
 
   bh = (battle_ui_t *) context->priv;
 
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
-    frame_counter++;
-#ifdef ENABLE_MAP_PING
-    /* every four seconds (120 frames) */
-    if ((frame_counter % 120 == 0) && (current_state == WORLD_MAP)) {
-      i2sPlay("game/map_ping.snd");
-    }
-#endif
+    animtick++;
+    if (battle_funcs[current_battle_state].tick != NULL) // some states lack a tick call
+      battle_funcs[current_battle_state].tick();
 
     // erase everything.
     entity_erase(&me);
@@ -538,7 +521,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     // do we need a new bullet?
     if (bullet_pending.x != 0 || bullet_pending.y != 0) {
       fire_bullet(&me, &bullet_pending);
-			bullet_pending.x = bullet_pending.y = 0;
+                        bullet_pending.x = bullet_pending.y = 0;
     };
 
     // enemy update
@@ -558,8 +541,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           bullet[i].visible = false;
         }
 
-				// do we have an impact?
-				// ...
+                                // do we have an impact?
+                                // ...
 
         getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
       }
@@ -576,116 +559,157 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     player_render(&me);
 
     // render enemies
-    if (current_state == WORLD_MAP) {
+    if (current_battle_state == WORLD_MAP) {
       enemy_clearall_blink();
       nearest = getNearestEnemy();
 
-			if (nearest != NULL)
-				nearest->e.blinking = true;
+      if (nearest != NULL)
+        nearest->e.blinking = true;
 
       if (nearest != last_near) {
-				last_near = nearest;
+        last_near = nearest;
 
-				// if our state has changed, update the UI
-				if (nearest == NULL) {
-					gwinSetText(bh->ghTitleR, "Find an enemy!", TRUE);
-					gwinRedraw(bh->ghTitleR);
-				} else {
-        	// update UI
-					strcpy(tmp, "Engage: ");
-					strcat(tmp, nearest->name);
-        	gwinSetText(bh->ghTitleR, tmp, TRUE);
-        	gwinRedraw(bh->ghTitleR);
-				}
+        // if our state has changed, update the UI
+        if (nearest == NULL) {
+          gwinSetText(bh->ghTitleR, "Find an enemy!", TRUE);
+          gwinRedraw(bh->ghTitleR);
+        } else {
+          // update UI
+          strcpy(tmp, "Engage: ");
+          strcat(tmp, nearest->name);
+          gwinSetText(bh->ghTitleR, tmp, TRUE);
+          gwinRedraw(bh->ghTitleR);
+        }
       }
     }
 
     enemy_renderall();
   }
 
-	// we cheat a bit here and read pins directly to see if
-	// the joystick is in a corner.
-	if (current_state == BATTLE) {
-		if (event->type == keyEvent) {
-    	if (event->key.flags == keyPress) {
-				// we need to figure out if the key is still held
-				// and if so, we will fire a bullet.
-				if (bullet_pending.x == 0 && bullet_pending.y == 0) {
-					if (palReadPad (BUTTON_B_UP_PORT, BUTTON_B_UP_PIN) == 0)
-					  bullet_pending.y = -1;
+  // we cheat a bit here and read pins directly to see if
+  // the joystick is in a corner.
+  if (current_battle_state == COMBAT) {
+    if (event->type == keyEvent) {
+      if (event->key.flags == keyPress) {
+        // we need to figure out if the key is still held
+        // and if so, we will fire a bullet.
+        if (bullet_pending.x == 0 && bullet_pending.y == 0) {
+          if (palReadPad (BUTTON_B_UP_PORT, BUTTON_B_UP_PIN) == 0)
+            bullet_pending.y = -1;
 
-					if (palReadPad (BUTTON_B_DOWN_PORT, BUTTON_B_DOWN_PIN) == 0)
-					  bullet_pending.y = 1;
+          if (palReadPad (BUTTON_B_DOWN_PORT, BUTTON_B_DOWN_PIN) == 0)
+            bullet_pending.y = 1;
 
-					if (palReadPad (BUTTON_B_LEFT_PORT, BUTTON_B_LEFT_PIN) == 0)
-					  bullet_pending.x = -1;
+          if (palReadPad (BUTTON_B_LEFT_PORT, BUTTON_B_LEFT_PIN) == 0)
+            bullet_pending.x = -1;
 
-					if (palReadPad (BUTTON_B_RIGHT_PORT, BUTTON_B_RIGHT_PIN) == 0)
-					  bullet_pending.x = 1;
-				}
-			}
-		}
-	}
+          if (palReadPad (BUTTON_B_RIGHT_PORT, BUTTON_B_RIGHT_PIN) == 0)
+            bullet_pending.x = 1;
+        }
+      }
+    }
+  }
 
-	// movement works in both modes
-	if (current_state == WORLD_MAP || current_state == BATTLE)
-  	if (event->type == keyEvent) {
-    	if (event->key.flags == keyPress)  {
-	      switch (event->key.code) {
-	      case keyALeft:
-	        me.vecVelocityGoal.x = -VGOAL;
-	        break;
-	      case keyARight:
-	        me.vecVelocityGoal.x = VGOAL;
-	        break;
-	      case keyAUp:
-	        me.vecVelocityGoal.y = -VGOAL;
-	        break;
-	      case keyADown:
-	        me.vecVelocityGoal.y = VGOAL;
-	        break;
-	      case keyBSelect:
-	        if (current_state != BATTLE) {
-	          current_state = BATTLE;
-	          enemy_engage(context);
-	        }
-	        break;
-	      default:
-	        break;
-	      }
-			}
+  // movement works in both modes
+  if (current_battle_state == WORLD_MAP || current_battle_state == COMBAT)
+    if (event->type == keyEvent) {
+      if (event->key.flags == keyPress)  {
+        switch (event->key.code) {
+        case keyALeft:
+          me.vecVelocityGoal.x = -VGOAL;
+          break;
+        case keyARight:
+          me.vecVelocityGoal.x = VGOAL;
+          break;
+        case keyAUp:
+          me.vecVelocityGoal.y = -VGOAL;
+          break;
+        case keyADown:
+          me.vecVelocityGoal.y = VGOAL;
+          break;
+        case keyASelect:
+          if (current_battle_state == WORLD_MAP) {
+            i2sPlay ("sound/click.snd");
+            orchardAppExit ();
+          }
+          break;
+        case keyBSelect:
+          if (current_battle_state != COMBAT) {
+            if (enemy_engage(context)) {
+              changeState(APPROVAL_DEMAND);
+            }
+          }
+          break;
+        default:
+          break;
+        }
+      }
 
-	    if (event->key.flags == keyRelease) {
-	      switch (event->key.code) {
-	      case keyALeft:
-	        me.vecVelocityGoal.x = 0;
-	        break;
-	      case keyARight:
-	        me.vecVelocityGoal.x = 0;
-	        break;
-	      case keyAUp:
-	        me.vecVelocityGoal.y = 0;
-	        break;
-	      case keyADown:
-	        me.vecVelocityGoal.y = 0;
-	        break;
-	      default:
-	        break;
-	      }
-     }
-	}
+      if (event->key.flags == keyRelease) {
+        switch (event->key.code) {
+        case keyALeft:
+          me.vecVelocityGoal.x = 0;
+          break;
+        case keyARight:
+          me.vecVelocityGoal.x = 0;
+          break;
+        case keyAUp:
+          me.vecVelocityGoal.y = 0;
+          break;
+        case keyADown:
+          me.vecVelocityGoal.y = 0;
+          break;
+        default:
+          break;
+        }
+      }
+    }
 
   return;
 }
 
-static void
-battle_exit(OrchardAppContext *context)
+
+static void changeState(battle_state nextstate) {
+  // if we need to switch states, do so.
+  if (nextstate == current_battle_state) {
+    // do nothing.
+#ifdef DEBUG_BATTLE_STATE
+    printf("BATTLE: ignoring state change request, as we are already in state %d: %s...\r\n", nextstate, battle_state_name[nextstate]);
+#endif
+    return;
+  }
+
+#ifdef DEBUG_BATTLE_STATE
+  printf("BATTLE: moving to state %d: %s...\r\n", nextstate, battle_state_name[nextstate]);
+#endif
+
+  // exit the old state and reset counters
+  if (battle_funcs[current_battle_state].exit != NULL) {
+    battle_funcs[current_battle_state].exit();
+  }
+
+  animtick = 0;
+  current_battle_state = nextstate;
+
+  // enter the new state
+  if (battle_funcs[current_battle_state].enter != NULL) {
+    battle_funcs[current_battle_state].enter();
+  }
+}
+
+
+static void battle_exit(OrchardAppContext *context)
 {
   userconfig *config = getConfig();
   battle_ui_t *bh;
 
-  (void) context;
-  current_state = WORLD_MAP;
+  // store the last x/y of this guy
+  config->last_x = me.vecPosition.x;
+  config->last_y = me.vecPosition.y;
+  configSave(config);
+
+  // reset this state or we won't init properly next time.
+  changeState(NONE);
 
   // free the enemy list
   gll_destroy(enemies);
@@ -713,6 +737,52 @@ battle_exit(OrchardAppContext *context)
   ledSetPattern(config->led_pattern);
   return;
 }
+
+/* state change and tick functions go here ----------------------------------- */
+
+// WORLDMAP ------------------------------------------------------------------
+void state_worldmap_enter(void) {
+  gdispClear(Black);
+  draw_world_map();
+}
+
+void state_worldmap_tick(void) {
+#ifdef ENABLE_MAP_PING
+  /* every four seconds (120 frames) */
+  if ((animtick % 120 == 0) && (current_battle_state == WORLD_MAP)) {
+    i2sPlay("game/map_ping.snd");
+  }
+#endif
+}
+
+void state_worldmap_exit(void) {
+}
+
+// COMBAT --------------------------------------------------------------------
+
+void state_combat_enter(void) {
+  char fnbuf[30];
+  int newmap;
+
+  newmap = getMapTile(&me);
+  sprintf(fnbuf, "game/map-%02d.rgb", newmap);
+  putImageFile(fnbuf, 0,0);
+  zoomEntity(&me);
+
+
+  draw_hud(mycontext);
+  enemy_clearall_blink();
+  player_render(&me);
+}
+
+
+void state_combat_tick(void) {
+}
+
+void state_combat_exit(void) {
+}
+
+// -------------------------------------------------------------------------
 
 orchard_app("Sea Battle", "icons/ship.rgb", 0, battle_init, battle_start,
     battle_event, battle_exit, 1);

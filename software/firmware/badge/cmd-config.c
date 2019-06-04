@@ -61,6 +61,7 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
   chprintf(chp, "sound      %d\r\n", config->sound_enabled);
   chprintf(chp, "lastdeath  %d\r\n", config->lastdeath);
   chprintf(chp, "incombat   %d\r\n", config->in_combat);
+  chprintf(chp, "lastpos    (%d, %d)\r\n", config->last_x, config->last_y);
   chprintf(chp, "led mode   %d:%s power %d/255\r\n", config->led_pattern, fxlist[config->led_pattern], config->led_brightness);
 
   chprintf(chp, "won/lost   %d/%d\r\n\r\n",
