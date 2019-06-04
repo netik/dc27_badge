@@ -482,7 +482,7 @@ bleGattsStart (void)
 
 	r = bleGattsIntCharAdd (ble_gatts_ides_handle, &ble_service_uuid,
 	    BLE_GATTS_AUTHORIZE_TYPE_READ | BLE_GATTS_AUTHORIZE_TYPE_WRITE,
-	    &ble_chatreq, &gm_handle, (uint8_t *)"Game Attack");
+	    &ble_gameattack, &gm_handle, (uint8_t *)"Game Attack");
  
 	if (r != NRF_SUCCESS)
 		printf ("Adding game attack "
