@@ -192,9 +192,11 @@ bleGapDispatch (ble_evt_t * evt)
 			if (r != NRF_SUCCESS)
 				printf ("Setting tx power failed: 0x%x\n", r);
 
+#ifdef TESTING
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
 				bleGapScanStart ();
-
+#endif
+			sd_ble_gap_scan_stop ();
 #ifdef notyet
 			/*
 			 * Try to request an upgrade to the coded PHY.
@@ -205,9 +207,11 @@ bleGapDispatch (ble_evt_t * evt)
 			 * connection.
 			 */
 
-			phys.rx_phys = BLE_GAP_PHY_CODED;
-			phys.tx_phys = BLE_GAP_PHY_CODED;
-			sd_ble_gap_phy_update (ble_conn_handle, &phys);
+			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
+				phys.rx_phys = BLE_GAP_PHY_CODED;
+				phys.tx_phys = BLE_GAP_PHY_CODED;
+				sd_ble_gap_phy_update (ble_conn_handle, &phys);
+			}
 #endif
 
 			orchardAppRadioCallback (connectEvent, evt, NULL, 0);
@@ -241,6 +245,8 @@ bleGapDispatch (ble_evt_t * evt)
 
 			memset (ble_password, 0, sizeof (ble_password));
 			strcpy (ble_password, "squeamishossifrage");
+
+			bleGapScanStart ();
 
 			break;
 
