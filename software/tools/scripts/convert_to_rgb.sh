@@ -43,6 +43,12 @@ fi
 
 ${FFMPEG} -loglevel panic -vcodec ${CODEC} -i $filename -vcodec rawvideo -f rawvideo -pix_fmt rgb565be /tmp/out$$.raw 
 
+if [ $? != 0 ]; then
+    echo "FFMPEG failed to decode ${filename} !"
+    exit 1
+fi
+
+
 cat /tmp/hdr$$.rgb /tmp/out$$.raw > ${newfilename}
 
 rm -f /tmp/hdr$$.rgb
