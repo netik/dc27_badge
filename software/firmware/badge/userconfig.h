@@ -1,5 +1,8 @@
 #ifndef __USERCONFIG_H__
 #define __USERCONFIG_H__
+
+#include "vector.h"
+
 /* userconfig.h
  *
  * anything that has to do with long term storage of users
@@ -9,7 +12,7 @@
 #define CONFIG_FLASH_ADDR 0xFF000
 #define CONFIG_FLASH_SECTOR 255
 #define CONFIG_SIGNATURE  0xdeadbeef  // duh
-#define CONFIG_VERSION    1
+#define CONFIG_VERSION    2
 #define CONFIG_NAME_MAXLEN 20
 
 #define CONFIG_LEDSIGN_MAXLEN	124
@@ -31,7 +34,6 @@ typedef struct userconfig {
 
   /* hw config */
   uint8_t led_pattern;
-
   uint8_t led_brightness;
   uint8_t sound_enabled;
   uint8_t airplane_mode;
@@ -50,82 +52,22 @@ typedef struct userconfig {
   uint16_t lastdeath; // last time you died
   uint8_t in_combat;
   uint32_t unlocks;
-  int16_t hp;
 
   /* ship configuration -- which ships you possess */
-  uint8_t ships[8]; // integers that point to the ships
-
-  uint16_t xp;
+  uint8_t current_ship;  // which of the ships you are currently using
+  uint8_t ships_enabled; // boolean flags - ship type
+  uint16_t energy;       // how much energy this ship has.
   uint16_t build_points;
+  uint16_t last_x;
+  uint16_t last_y;
 
-  uint16_t energy; // max energy will be calc'd from level.
-
-  /* long-term counters */
+  // long-term stats
+  uint16_t xp;
+  int16_t hp;
   uint16_t won;
   uint16_t lost;
 
 } userconfig;
-
-typedef struct _peer {
-  /* this struct is used for holding users in memory */
-  /* it is also the format of our ping packet */
-  /* unique network ID determined from use of lower 64 bits of SIM-UID */
-  uint32_t netid;         /* 4 */
-  uint8_t opcode;         /* 1 - BATTLE_OPCODE */
-
-  /* Player Payload */
-  char name[CONFIG_NAME_MAXLEN + 1];  /* 16 */
-  uint8_t in_combat;      /* 1 */
-  uint16_t unlocks;       /* 2 */
-  /* Player stats */
-  int16_t hp;             /* 2 */
-  uint16_t xp;            /* 2 */
-  uint8_t level;          /* 1 */
-  uint8_t agl;            /* 1 */
-  uint8_t might;          /* 1 */
-  uint8_t luck;           /* 1 */
-  uint16_t won;           /* 2 */
-  uint16_t lost;          /* 2 */
-  uint32_t rtc;           /* 4 - their clock if they have it */
-  uint8_t ttl;            /* 1 - how recent this peer data is. 10 = 10 pings */
-
-  /* Battle Payload */
-  /* A bitwise map indicating the attack type */
-  uint8_t attack_bitmap;  /* 1 */
-  int16_t damage;         /* 2 */
-
-} peer;
-
-typedef struct _fightpkt {
-  /* this is a shortened form of userdata for transmission during the fight */
-  /* MAX 52 bytes, max is 66 (AES limitiation) */
-
-  /* unique network ID determined from use of lower 64 bits of SIM-UID */
-  uint8_t opcode;         /* 1 - BATTLE_OPCODE */
-
-  /* clock, if any */
-  unsigned long rtc;      /* 4 */
-  /* Player Payload */
-  char name[CONFIG_NAME_MAXLEN + 1];  /* 16 */
-  uint8_t in_combat;      /* 1 */
-  uint16_t unlocks;       /* 2 */
-  int16_t hp;             /* 2 */
-  uint16_t xp;            /* 2 */
-  uint8_t level;          /* 1 */
-  uint8_t agl;            /* 1 */
-  uint8_t might;          /* 1 */
-  uint8_t luck;           /* 1 */
-
-  /* Player stats, used in ping packet */
-  uint16_t won;           /* 2 */
-  uint16_t lost;          /* 2 */
-
-  /* Battle Payload */
-  /* A bitwise map indicating the attack type */
-  uint8_t attack_bitmap;  /* 1 */
-  int16_t damage;         /* 2 */
-
-} fightpkt;
 
 /* prototypes */
 extern void configStart(void);
@@ -137,4 +79,6 @@ extern const char *rankname[];
 extern unsigned long rtc;
 extern unsigned long rtc_set_at;
 
+#define MAX_SAFE_START 22
+extern VECTOR safe_start[];
 #endif

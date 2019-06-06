@@ -70,6 +70,7 @@ uint8_t ble_station_addr[6];
 uint32_t ble_unlocks;
 uint32_t ble_chatreq;
 uint32_t ble_gameattack;
+uint32_t ble_ota;
 char ble_password[32];
 
 static thread_reference_t sdThreadReference;

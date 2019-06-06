@@ -28,6 +28,11 @@ ifeq ($(detected_OS),Darwin)        # Mac OS X
   LIBS=-L/usr/local/lib -lusb-1.0
 endif
 
+ifeq ($(detected_OS),Linux)
+  CFLAGS +=  -I/usr/include/libusb-1.0
+  LIBS=-lusb-1.0
+endif
+
 all: dirs $(LIST)
 
 dirs: 

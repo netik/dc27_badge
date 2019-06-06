@@ -37,6 +37,7 @@ extern ble_gatts_char_handles_t pw_handle;
 extern ble_gatts_char_handles_t ul_handle;
 extern ble_gatts_char_handles_t ch_handle;
 extern ble_gatts_char_handles_t gm_handle;
+extern ble_gatts_char_handles_t ot_handle;
 extern uint16_t ble_gatts_ides_handle;
 extern const ble_uuid128_t ble_ides_base_uuid;
 
