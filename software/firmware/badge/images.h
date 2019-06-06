@@ -17,6 +17,7 @@ Egan Hirvelda (game mechanics)\r\n"
 //                                 12345678.123
 #define IMG_SPLASH         "images/splash.rgb"
 #define IMG_SPONSOR        "images/sponsor.rgb"
+#define IMG_PLANE          "images/plane.rgb"
 
 // images used in the app
 #define IMG_UNLOCKBG       "images/unlock.rgb"

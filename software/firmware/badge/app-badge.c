@@ -27,8 +27,6 @@
 /* remember these many last key-pushes (app-default) */
 #define KEY_HISTORY 8
 
-static int8_t lastimg = -1;
-
 typedef struct _DefaultHandles {
   GHandle ghFightButton;
   GHandle ghExitButton;
@@ -78,65 +76,37 @@ static void draw_buttons(DefaultHandles * p) {
   p->ghExitButton = gwinButtonCreate(NULL, &wi);
 }
 
-static void redraw_player(DefaultHandles *p) {
-  // our image draws just a bit underneath the stats data. If we
-  // draw the character during the HP update, it will blink and we
-  // don't want that.
-  const userconfig *config = getConfig();
-  char tmp[20];
-  char tmp2[40];
-
-  // TODO: put player ship image based on fleet damage on screen
-
-  // Put player rank based on us navy insignia
-  sprintf(tmp2, "game/rank-%d.rgb", config->level);
-  putImageFile(tmp2, 0, 100);
-
-  //  putImageFile(getAvatarImage(config->current_type, img, class, false),
-  //               POS_PLAYER1_X, totalheight - 42 - PLAYER_SIZE_Y);
-
-  /* hit point bar */
-  gdispDrawThickLine(0, 76, 240, 75, Blue, 2, FALSE);
-  drawProgressBar(30,80,160,12,maxhp(config->unlocks,config->level), config->hp, 0, false);
-  gdispDrawThickLine(0, 96, 240, 95, Blue, 2, FALSE);
-
-  chsnprintf(tmp, sizeof(tmp), "HP");
-  chsnprintf(tmp2, sizeof(tmp2), "%d", config->hp);
-
-  gdispDrawStringBox (0 ,
-		      78,
-          30,
-		      gdispGetFontMetric(p->fontXS, fontHeight),
-		      tmp,
-		      p->fontXS, White, justifyLeft);
-
-
-  gdispDrawStringBox (200,
-		      78,
-          30,
-		      gdispGetFontMetric(p->fontXS, fontHeight),
-		      tmp2,
-		      p->fontXS, White, justifyLeft);
-}
-
 static void draw_stat (DefaultHandles * p,
                        uint16_t x, uint16_t y,
                        char * str1, char * str2) {
-  uint16_t lmargin = 120;
 
-  gdispDrawStringBox (lmargin + x,
+  gdispDrawStringBox (x+1,
+		      y+1,
+		      gdispGetFontMetric(p->fontSM, fontMaxWidth)*strlen(str1),
+		      gdispGetFontMetric(p->fontSM, fontHeight),
+		      str1,
+		      p->fontSM, Black, justifyLeft);
+
+  gdispDrawStringBox (x,
 		      y,
 		      gdispGetFontMetric(p->fontSM, fontMaxWidth)*strlen(str1),
 		      gdispGetFontMetric(p->fontSM, fontHeight),
 		      str1,
-		      p->fontSM, Cyan, justifyLeft);
+		      p->fontSM, Red, justifyLeft);
 
-  gdispDrawStringBox (lmargin + x + 15,
-		      y,
-                      72,
+  gdispDrawStringBox (x+101 ,
+		      y+1,
+		      gdispGetFontMetric(p->fontSM, fontMaxWidth)*strlen(str2),
 		      gdispGetFontMetric(p->fontSM, fontHeight),
 		      str2,
-		      p->fontSM, White, justifyRight);
+		      p->fontSM, Black, justifyLeft);
+
+  gdispDrawStringBox (x+100,
+		      y,
+		      gdispGetFontMetric(p->fontSM, fontMaxWidth)*strlen(str2),
+		      gdispGetFontMetric(p->fontSM, fontHeight),
+		      str2,
+		      p->fontSM, White, justifyLeft);
   return;
 }
 
@@ -145,75 +115,64 @@ static void redraw_badge(DefaultHandles *p) {
   const userconfig *config = getConfig();
 
   char tmp[20];
-  char tmp2[40];
-  coord_t ypos = 0;
+  coord_t ypos = 5;
 
+  // Background
   putImageFile("images/badge.rgb",0,0);
 
-  redraw_player(p);
-
-  /* Rank */
+  // Rank
   sprintf(tmp, "%s", rankname[config->level-1]);
-  gdispDrawStringBox (1,
-		      ypos,
-		      gdispGetWidth(),
-		      gdispGetFontMetric(p->fontSM, fontHeight),
-		      tmp,
-		      p->fontSM, Black, justifyLeft);
-  gdispDrawStringBox (0,
+  gdispDrawStringBox (5,
 		      ypos,
 		      gdispGetWidth(),
 		      gdispGetFontMetric(p->fontSM, fontHeight),
 		      tmp,
 		      p->fontSM, White, justifyLeft);
 
-  ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 4;
-
-  // shadow of user's name
-  gdispDrawStringBox (1,
-		      ypos,
-		      gdispGetWidth(),
-		      gdispGetFontMetric(p->fontLG, fontHeight),
-		      config->name,
-		      p->fontLG, Black, justifyRight);
+  ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight);
 
   // user's name
   gdispDrawStringBox (0,
 		      ypos,
-		      gdispGetWidth(),
+		      gdispGetWidth()-5,
 		      gdispGetFontMetric(p->fontLG, fontHeight),
 		      config->name,
 		      p->fontLG, White, justifyRight);
 
-  ypos = ypos + gdispGetFontMetric(p->fontLG, fontHeight);
+  ypos = 77;
 
-  /* end hp bar */
-  ypos = ypos + 40;
+  // level
+  sprintf(tmp, "LEVEL %d", config->level);
+  gdispDrawStringBox (0,
+          ypos,
+          gdispGetWidth(),
+          gdispGetFontMetric(p->fontSM, fontHeight),
+          tmp,
+          p->fontSM, Red, justifyCenter);
 
-  /* LEVEL */
-  chsnprintf(tmp2, sizeof(tmp2), "%d", config->level);
-  draw_stat (p, 0, ypos, "LEVEL", tmp2);
-  ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
+  // insignia
+  sprintf(tmp, "game/rank-%d.rgb", config->level);
+  putImageFile(tmp, 92, 106);
+  gdispDrawBox(91,105,53,95,Grey);
 
   /* XP/WON */
-  chsnprintf(tmp2, sizeof(tmp2), "%3d", config->xp);
-  draw_stat (p, 0, ypos, "XP", tmp2);
-
+  ypos=210;
+  chsnprintf(tmp, sizeof(tmp), "%3d", config->xp);
+  draw_stat (p, 50, ypos, "XP", tmp);
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
-  chsnprintf(tmp2, sizeof(tmp2), "%3d", config->won);
-  draw_stat (p, 0, ypos, "WON", tmp2);
 
+  // WON
+  chsnprintf(tmp, sizeof(tmp), "%3d", config->won);
+  draw_stat (p, 50, ypos, "WON", tmp);
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
-  chsnprintf(tmp2, sizeof(tmp2), "%3d", config->lost);
-  draw_stat (p, 0, ypos, "LOST", tmp2);
 
-  //  if (config->airplane_mode)
-  //    putImageFile(IMG_PLANE, 0, 0);
+  // LOST
+  chsnprintf(tmp, sizeof(tmp), "%3d", config->lost);
+  draw_stat (p, 50, ypos, "LOST", tmp);
+  ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
 
-#ifdef LEADERBOARD_AGENT
-  screen_alert_draw(false, "LB AGENT MODE");
-#endif
-
+  if (config->airplane_mode) // right under the user name.
+    putImageFile(IMG_PLANE, 190, 77);
 }
 
 static uint32_t default_init(OrchardAppContext *context) {
@@ -226,12 +185,13 @@ static uint32_t default_init(OrchardAppContext *context) {
 
 static void default_start(OrchardAppContext *context) {
   DefaultHandles * p;
+
   p = malloc(sizeof(DefaultHandles));
   context->priv = p;
 
   p->fontXS = gdispOpenFont (FONT_XS);
   p->fontLG = gdispOpenFont (FONT_LG);
-  p->fontSM = gdispOpenFont (FONT_FIXED);
+  p->fontSM = gdispOpenFont (FONT_SM);
 
   for (int i=0; i < KEY_HISTORY; i++) {
     p->last_pushed[i] = 0;
@@ -241,7 +201,6 @@ static void default_start(OrchardAppContext *context) {
 
   gdispSetOrientation (0);
 
-  lastimg = -1;
   redraw_badge(p);
   draw_buttons(p);
 
