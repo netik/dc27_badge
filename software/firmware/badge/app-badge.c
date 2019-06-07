@@ -148,7 +148,7 @@ static void redraw_badge(DefaultHandles *p) {
           gdispGetWidth(),
           gdispGetFontMetric(p->fontSM, fontHeight),
           tmp,
-          p->fontSM, Red, justifyCenter);
+          p->fontSM, White, justifyCenter);
 
   // insignia
   sprintf(tmp, "game/rank-%d.rgb", config->level);
