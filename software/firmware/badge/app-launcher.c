@@ -18,6 +18,9 @@
 extern const OrchardApp *orchard_app_list;
 static uint32_t last_ui_time;
 
+static unsigned int selected = 0;
+static unsigned int page = 0;
+
 struct launcher_list_item {
 	const char *		name;
 	const OrchardApp *	entry;
@@ -38,8 +41,6 @@ struct launcher_list {
 	GListener		gl;
 
 	unsigned int		total;
-	unsigned int		page;
-	unsigned int		selected;
 
 	struct launcher_list_item items[0];
 };
@@ -154,9 +155,6 @@ draw_launcher_buttons(struct launcher_list * list)
 	list->ghButtonDn = gwinButtonCreate (0, &wi);
 	gwinRedraw (list->ghButtonDn);
 
-	list->selected = 0;
-	list->page = 0;
-
 	redraw_list(list);
 
 	return;
@@ -170,11 +168,11 @@ draw_box (struct launcher_list * list, color_t color)
 
 	/* row y */
 
-	i = (list->selected % LAUNCHER_PERPAGE) / LAUNCHER_COLS;
+	i = (selected % LAUNCHER_PERPAGE) / LAUNCHER_COLS;
 
 	/* col x */
 
-	j = list->selected % LAUNCHER_COLS;
+	j = selected % LAUNCHER_COLS;
 
 	_gwinDrawStart (list->ghButtonDn);
 
@@ -213,7 +211,7 @@ redraw_list (struct launcher_list * list)
 
 	for (i = 0; i < LAUNCHER_ROWS; i++) {
 		for (j = 0; j < LAUNCHER_COLS; j++) {
-			actualid = (list->page * LAUNCHER_PERPAGE) +
+			actualid = (page * LAUNCHER_PERPAGE) +
 			    (i * LAUNCHER_COLS) + j;
 	 		label = list->ghLabels[(i * LAUNCHER_COLS) + j];
 			item = &list->items[actualid];
@@ -299,8 +297,6 @@ launcher_start (OrchardAppContext *context)
 		current++;
  	}
 
-	list->selected = 0;
-
 	draw_launcher_buttons (list);
 
 	/* set up our local listener */
@@ -379,49 +375,49 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		draw_box (list, Black);
 
 		if (event->key.code == keyAUp || event->key.code == keyBUp)
-			list->selected -= LAUNCHER_COLS;
+			selected -= LAUNCHER_COLS;
 
 		if (event->key.code == keyADown ||
 		    event->key.code == keyBDown) {
-			if (list->selected + LAUNCHER_COLS <=
+			if (selected + LAUNCHER_COLS <=
 			   (list->total - 1))
-				list->selected += LAUNCHER_COLS;
+				selected += LAUNCHER_COLS;
 		}
 
 		if (event->key.code == keyALeft ||
 		    event->key.code == keyBLeft) {
-			if (list->selected > 0)
-				list->selected--;
+			if (selected > 0)
+				selected--;
 		}
 
 		if (event->key.code == keyARight ||
 		    event->key.code == keyBRight) {
-			if (list->selected < (list->total - 1))
-				list->selected++;
+			if (selected < (list->total - 1))
+				selected++;
 		}
 
-		if (list->selected > 250)
-			list->selected  = 0;
+		if (selected > 250)
+			selected  = 0;
 
-		if (list->selected > list->total)
-			list->selected = list->total;
+		if (selected > list->total)
+			selected = list->total;
 
-		if (list->selected >= ((list->page + 1) * LAUNCHER_PERPAGE)) {
-			list->page++;
+		if (selected >= ((page + 1) * LAUNCHER_PERPAGE)) {
+			page++;
 			redraw_list (list);
 			return;
 		}
 
-		if (list->page > 0) {
-			if (list->selected < (list->page * LAUNCHER_PERPAGE)) {
-				list->page--;
+		if (page > 0) {
+			if (selected < (page * LAUNCHER_PERPAGE)) {
+				page--;
 				redraw_list (list);
 				return;
 			}
 		}
 
 		if (event->key.code == keyBSelect) {
-			orchardAppRun (list->items[list->selected].entry);
+			orchardAppRun (list->items[selected].entry);
 			return;
 		}
 
@@ -437,7 +433,7 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		draw_box (list, Black);
 
 		for (i = 0; i < 6; i++) {
-			currapp = (list->page * LAUNCHER_PERPAGE) + i;
+			currapp = (page * LAUNCHER_PERPAGE) + i;
 			if (w == list->ghButtons[i] &&
 			    currapp < list->total) {
 				i2sPlay ("sound/ping.snd");
@@ -454,23 +450,23 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		 */
 
 		if (w == list->ghButtonDn) {
-			if (((list->page + 1) * LAUNCHER_PERPAGE) <
+			if (((page + 1) * LAUNCHER_PERPAGE) <
 			    list->total) {
 				/* remove the box before update  */
-				list->selected += LAUNCHER_PERPAGE;
-				if (list->selected > (list->total - 1))
-					list->selected = (list->total - 1);
-				list->page++;
+				selected += LAUNCHER_PERPAGE;
+				if (selected > (list->total - 1))
+					selected = (list->total - 1);
+				page++;
 				redraw_list (list);
 				return;
 			}
 		}
 
 		if (w == list->ghButtonUp) {
-			if (list->page > 0) {
+			if (page > 0) {
 				/* remove the box before update  */
-				list->page--;
-				list->selected -= LAUNCHER_PERPAGE;
+				page--;
+				selected -= LAUNCHER_PERPAGE;
 				redraw_list (list);
 				return;
 			}
@@ -480,11 +476,11 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 
 	/* wraparound */
 
-	if (list->selected > 255) // underflow
-		list->selected = list->total-1;
+	if (selected > 255) // underflow
+		selected = list->total-1;
 
-	if (list->selected >= list->total)
-		list->selected = 0;
+	if (selected >= list->total)
+		selected = 0;
 
 	return;
 }
