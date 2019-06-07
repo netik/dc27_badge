@@ -225,6 +225,14 @@ otasend_exit (OrchardAppContext *context)
 {
 	OtaHandles *		p;
 	int 			i;
+	const OrchardUi * ui;
+
+	ui = context->instance->ui;
+
+	if (ui != NULL) {
+		ui->exit (context);
+		context->instance->ui = NULL;
+	}
 
 	bleGapDisconnect ();
 
