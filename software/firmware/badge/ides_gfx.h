@@ -1,5 +1,5 @@
 #ifndef __IDES_GFX_H__
-#define __IDEX_GFX_H__
+#define __IDES_GFX_H__
 
 /* ides_gfx.h
  *
@@ -33,4 +33,4 @@ extern void drawBufferedStringBox(
       font_t font,
       color_t color,
       justify_t justify);
-#endif /* __IDEX_GFX_H__ */
+#endif /* __IDES_GFX_H__ */

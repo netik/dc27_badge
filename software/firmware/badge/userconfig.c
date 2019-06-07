@@ -12,6 +12,7 @@
 #include "badge.h"
 
 #include "rand.h"
+#include "vector.h"
 
 #include <string.h>
 
@@ -30,6 +31,31 @@ const char *rankname[] = {
   "WOPR"         // 11
 };
 
+// so that we don't have to search for starting places, here's a list
+// of 20 safe starting places in the world map.
+VECTOR safe_start[MAX_SAFE_START] = {
+  { 20, 225 },
+  { 14, 158 },
+  { 14, 127 },
+  { 14,105 },
+  { 26, 92 },
+  { 56, 109 },
+  { 78, 92 },
+  { 64, 49 },
+  { 88, 50 },
+  { 144, 128 },
+  { 173, 162 },
+  { 199, 199 },
+  { 150, 228 },
+  { 208, 223 },
+  { 231, 199 },
+  { 259, 140 },
+  { 166, 70 },
+  { 173, 26 },
+  { 220, 60 },
+  { 252, 62 },
+  { 286, 107 }
+};
 
 /* We implement a naive real-time clock protocol like NTP but
  * much worse. The global value rtc contains the current real time
@@ -91,30 +117,41 @@ void configSave(userconfig *newConfig) {
 static void init_config(userconfig *config) {
   /* please keep these in the same order as userconfig.h
    * so it's easier to maintain.  */
+
+  int position = randRange(0, MAX_SAFE_START);
+
   config->signature = CONFIG_SIGNATURE;
   config->version = CONFIG_VERSION;
+
   config->led_pattern = 1;
   config->led_brightness = 0xf0;
   config->sound_enabled = 1;
   config->airplane_mode = 0;
   config->rotate = 0;
+
   config->touch_data_present = 0;
   // touch_data will be ignored for now.
-  config->unlocks = 0;
   memset(config->led_string, 0, CONFIG_LEDSIGN_MAXLEN);
+
+  /* game */
   memset(config->name, 0, CONFIG_NAME_MAXLEN);
   config->level = 1;
   config->lastdeath = 0; // last death time to calc healing
-  config->in_combat = 1; // we are incombat until type is set.
+  config->in_combat = 1; // we are incombat until name is set.
   config->unlocks = 0;
-  config->hp = maxhp(0, config->level);
-  memset(config->ships, 0, sizeof(config->ships));
-  config->xp = 0;
-  config->build_points = 40;
+
+  /* ship config */
+  config->current_ship = 1;
+  config->ships_enabled = 1; // just the first ship enabled
   config->energy = 100;
+  config->build_points = 40; // you can buy a few things
+  config->last_x = safe_start[position].x;
+  config->last_y = safe_start[position].y;
+
+  config->xp = 0;
+  config->hp = 0;
   config->won = 0;
   config->lost= 0;
-
 }
 
 
@@ -163,14 +200,10 @@ void configStart(void) {
     memcpy(&config_cache, config, sizeof(userconfig));
 
     if (config_cache.in_combat != 0) {
-      if (config_cache.ships[0] != 0) {
-        // we will only release this when you have one ship.
         printf("You were stuck in combat. Fixed.\n");
         config_cache.in_combat = 0;
         configSave(&config_cache);
-      }
     }
-
   }
 
   return;

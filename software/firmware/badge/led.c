@@ -75,6 +75,10 @@ uint8_t ledsOff = 1;
 static uint8_t led_current_func = 1;
 static int16_t led_eye_state = 0;
 
+// if we're random, our last function was this, which always starts at 2.
+static uint8_t led_current_random = 2;
+static uint32_t last_random_time = 0;
+
 // for tracking "glitter"
 static LED_PARTICLE particles[LED_MAX_PARTICLES];
 static int8_t   led_used_particles = -1;
@@ -138,6 +142,7 @@ const color_rgb_t roygbiv[7] = { 0xff0000,
 
 const char *fxlist[] = {
   "Off",
+  "Random",
   "Flame",
   "Balls",
   "Larson Scanner",
@@ -442,86 +447,99 @@ static THD_FUNCTION(bling_thread, arg) {
 
     // re-render the internal framebuffer animations
     if (led_current_func != 0) {
-      switch (led_current_func) {
-      case 1:
+      uint8_t my_current_func;
+
+      if (led_current_func > 1) {
+        my_current_func = led_current_func;
+      } else {
+        // we're in random mode. We will switch every 15 seconds.
+        if( (chVTGetSystemTime() - last_random_time) > (15 * 1000)) {
+          led_current_random = randRange(2, LED_PATTERNS_LIMITED);
+          last_random_time = chVTGetSystemTime();
+        }
+        my_current_func = led_current_random;
+      }
+
+      switch (my_current_func) {
+      case 2:
         led_pattern_flame();
         break;
-      case 2:
+      case 3:
         led_pattern_balls(&anim_balls);
         break;
-      case 3:
+      case 4:
         led_pattern_kitt(&anim_index, &anim_position);
         break;
-      case 4:
+      case 5:
         led_pattern_sparkle(&anim_uindex);
         break;
-      case 5:
+      case 6:
         led_pattern_double_sweep(&anim_uindex, &anim_hue, &anim_value);
         break;
-      case 6:
+      case 7:
         led_pattern_triangle(&anim_index, &anim_position);
         break;
-      case 7:
+      case 8:
         led_pattern_triple_sweep(&anim_triple);
         break;
-      case 8:
+      case 9:
         led_pattern_rainbow(&anim_hue, 2);
         break;
-      case 9:
+      case 10:
         led_pattern_roller_coaster(positions, util_hsv_to_rgb(0, 1, 1));
         break;
-      case 10:
+      case 11:
         led_pattern_roller_coaster(positions, util_hsv_to_rgb(0.3, 1, 1));
         break;
-      case 11:
+      case 12:
         led_pattern_roller_coaster(positions, util_hsv_to_rgb(0.7, 1, 1));
         break;
-      case 12:
+      case 13:
         led_pattern_roller_coaster(positions, util_hsv_to_rgb(0.16, 1, 1));
         break;
-      case 13:
+      case 14:
         led_pattern_running_lights(255, 0, 0, &anim_uindex);
         break;
-      case 14:
+      case 15:
         led_pattern_running_lights(0, 255, 0, &anim_uindex);
         break;
-      case 15:
+      case 16:
         led_pattern_running_lights(0, 0, 255, &anim_uindex);
         break;
-      case 16:
+      case 17:
         led_pattern_running_lights(255, 255, 0, &anim_uindex);
         break;
-      case 17:
+      case 18:
         led_pattern_kraftwerk(&anim_uindex, &anim_position);
         break;
-      case 18:
+      case 19:
         led_pattern_dualspin(0, 0, 255,
                              0, 255, 0,
                              0, &anim_uindex);
         break;
-      case 19:
+      case 20:
         led_pattern_dualspin(0x14, 0x80, 0x33,
                              0x11, 0x45, 0xff,
                              0, &anim_uindex);
         break;
-      case 20:
+      case 21:
         led_pattern_dualspin(0x81, 0x0D, 0x70,
                              0xF5, 0x82, 0x25,
                              0, &anim_uindex);
         break;
-      case 21:
+      case 22:
         led_pattern_meteor(0xff,0x00,0x00, 2, 100, true, &anim_uindex);
         break;
-      case 22:
+      case 23:
         led_pattern_meteor(0x01,0x0f,0xc2, 2, 100, true, &anim_uindex);
         break;
-      case 23:
+      case 24:
         led_pattern_meteor(0xff,0x00,0xff, 4, 80, true, &anim_uindex);
         break;
-      case 24:
+      case 25:
         led_pattern_bgsparkle(255,0,0,&anim_uindex,false);
         break;
-      case 25:
+      case 26:
         led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
         break;
       case LED_PATTERN_WORLDMAP:

@@ -51,6 +51,10 @@ rgb/game/%.rgb : tif/game/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/game/
 
+rgb/game/%.rgb : tif/game/%.jpg
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
+	mv $(subst rgb/,tif/,$(@)) rgb/game/
+
 rgb/flags/%.rgb : tif/flags/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/flags/
@@ -105,6 +109,7 @@ images: dirs tools_dep photos \
         $(addprefix rgb/images/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/images/*.tif))))) \
         $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
+        $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.jpg))))) \
         $(addprefix rgb/flags/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/flags/*.tif))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
         $(addprefix rgb/font/led_90/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led_90/*.jpg))))) \
@@ -142,7 +147,7 @@ sdcard: dirs tools_dep images sounds video
 # copy the card to the right folder on my osx box
 osxsd:	sdcard
 	@echo "Copying to $(VOLNAME)"
-	time cp -R $(STAGING_DIR)/* $(VOLNAME)/
+	rsync -crvv $(STAGING_DIR)/ $(VOLNAME)/
 	@sync
 
 # copy only binaries and the updater to the card (reduces dev time

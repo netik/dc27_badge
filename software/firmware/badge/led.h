@@ -12,14 +12,14 @@
 
 // our refresh rate is about 25Hz
 #define EFFECTS_REDRAW_MS 20
-#define LED_PATTERNS_FULL 26
-#define LED_PATTERNS_LIMITED 26
+#define LED_PATTERNS_FULL 27
+#define LED_PATTERNS_LIMITED 27
 
 // these are non-user selectable patterns
 // which are used by some apps
-#define LED_PATTERN_WORLDMAP 100
-#define LED_PATTERN_BATTLE   101
-#define LED_PATTERN_UNLOCK   102
+#define LED_PATTERN_WORLDMAP 128
+#define LED_PATTERN_BATTLE   129
+#define LED_PATTERN_UNLOCK   130
 
 typedef uint32_t color_rgb_t;
 
