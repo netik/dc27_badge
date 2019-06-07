@@ -18,7 +18,7 @@
 
 ble_peer_entry ble_peer_list[BLE_PEER_LIST_SIZE];
 
-static mutex_t peer_mutex;
+mutex_t peer_mutex;
 
 static THD_WORKING_AREA(waPeerThread, 32);
 static THD_FUNCTION(peerThread, arg)
@@ -26,7 +26,7 @@ static THD_FUNCTION(peerThread, arg)
 	ble_peer_entry * p;
 	int i;
 	(void)arg;
-    
+
 	chRegSetThreadName ("PeerEvent");
 
 	while (1) {

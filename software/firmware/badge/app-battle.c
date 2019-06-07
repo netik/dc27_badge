@@ -27,6 +27,7 @@
 #include "userconfig.h"
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
+#include "ble_peer.h"
 
 #define DEBUG_BATTLE_STATE 1
 #include "gamestate.h"
@@ -36,6 +37,9 @@
 #define VGOAL       8        // ship accleration goal
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
+
+// 20 fps = 1/20 = 0.0500 S = 50mS
+// 15 fps = 1/15 = 0.0666 S = 66mS
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
 #define VMULT       8        // on each time step, take this many steps.
@@ -56,6 +60,8 @@ static ENEMY current_enemy;
 
 OrchardAppContext *mycontext;
 
+extern mutex_t peer_mutex;
+
 /* private memory */
 typedef struct {
   GListener	gl;
@@ -67,7 +73,7 @@ typedef struct {
 } battle_ui_t;
 
 // enemies -- linked list
-gll_t *enemies;
+gll_t *enemies = NULL;
 
 /* state tracking */
 static battle_state current_battle_state = NONE;
@@ -185,6 +191,30 @@ player_check_collision(ENTITY *p) {
   return false;
 }
 
+static bool entity_check_collision(ENTITY *a, ENTITY *b, int boundbox) {
+  // inverted solution for speed
+  //
+  // Two rectangles do not overlap if one of the following conditions
+  // is true:
+  //   1) One rectangle is above top edge of other rectangle.
+  //   2) One rectangle is on left side of left edge of other rectangle.
+  //
+  // https://www.geeksforgeeks.org/find-two-rectangles-overlap/
+  // O(1) cost
+  
+  // If one rectangle is on left side of other
+  if ( (a->vecPosition.x > (b->vecPosition.x + boundbox)) ||
+       (b->vecPosition.x > (a->vecPosition.x + boundbox)))
+    return false;
+
+  // If one rectangle is above other
+  if ( (a->vecPosition.y < (b->vecPosition.y + boundbox)) ||
+       (b->vecPosition.y < (a->vecPosition.y + boundbox)) )
+    return false;
+
+  return true; 
+}
+
 static void
 entity_erase(ENTITY *p) {
   /*
@@ -237,6 +267,7 @@ enemy_render(void *e) {
     if ( (animtick % FPS) < (FPS/2) )
       return;
   }
+  
   gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, Red);
 }
 
@@ -281,11 +312,90 @@ enemy_update_all(void) {
   gll_each(enemies, enemy_update);
 }
 
+static ENEMY *enemy_find_by_peer(uint8_t *addr) {
+  gll_node_t *currNode = enemies->first;
+
+  while(currNode != NULL) {
+    ENEMY *e = (ENEMY *)currNode->data;
+
+    if (memcmp(e->ble_peer_addr, addr, 6)) {
+      return e;
+    }
+
+    currNode = currNode->next;
+  }
+
+  return NULL;
+}
+
+static int enemy_find_ll_pos(uint8_t *addr) {
+  gll_node_t *currNode = enemies->first;
+  int i = 0;
+
+  while(currNode != NULL) {
+    ENEMY *e = (ENEMY *)currNode->data;
+
+    if (memcmp(e->ble_peer_addr, addr, 6)) {
+      return i;
+    }
+
+    i++;
+    currNode = currNode->next;
+  }
+
+  return -1;
+}
+
+static void enemy_list_refresh(void) {
+  ENEMY *e;
+  ble_peer_entry * p;
+
+  // copy enemies from BLE
+  osalMutexLock (&peer_mutex);
+  
+  for (int i = 0; i < BLE_PEER_LIST_SIZE; i++) {
+    p = &ble_peer_list[i];
+    
+    if (p->ble_used == 0)
+      continue;
+
+    if (p->ble_isbadge == TRUE) {
+      /* this is one of us, copy data over. */
+
+      /* have we seen this address ? */
+      if ((e = enemy_find_by_peer(p->ble_peer_addr)) != NULL) {
+        /* yes, update state */
+        e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
+        e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
+        e->xp = p->ble_game_state.ble_ides_xp;
+        e->ttl = p->ble_ttl;
+
+        // we expire 3 seconds earlier than the ble peer checker...
+        if (e->ttl < 3) {
+          gll_remove(enemies, enemy_find_ll_pos(p->ble_peer_addr));
+        }
+      } else {
+        /* no, add him */
+        e = malloc(sizeof(ENEMY));
+        entity_init(&(e->e));
+        e->e.visible = true;
+        e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
+        e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
+        e->xp = p->ble_game_state.ble_ides_xp;
+        memcpy(e->ble_peer_addr, p->ble_peer_addr, 6);
+        strcpy(e->name, p->ble_peer_name);
+
+        gll_push(enemies, e);
+      }
+    }
+  }
+
+	osalMutexUnlock (&peer_mutex);
+}
 
 static uint32_t
 battle_init(OrchardAppContext *context)
 {
-  ENEMY *e;
   userconfig *config = getConfig();
   mycontext = context;
 
@@ -299,15 +409,9 @@ battle_init(OrchardAppContext *context)
     entity_init(&bullet[i]);
   }
 
-  // fake enemies -- we'll get these from BLE later on.
+  // load the enemy list
   enemies = gll_init();
-  e = malloc(sizeof(ENEMY));
-  entity_init(&(e->e));
-  e->e.visible = true;
-  e->e.vecPosition.x = 90;
-  e->e.vecPosition.y = 90;
-  strcpy(e->name, "enemy1");
-  gll_push(enemies, e);
+  enemy_list_refresh();
 
   // turn off the LEDs
   ledSetPattern(LED_PATTERN_WORLDMAP);
@@ -363,12 +467,24 @@ static void draw_world_map(void) {
 static void
 battle_start (OrchardAppContext *context)
 {
+  userconfig *config = getConfig();
+
   battle_ui_t *bh;
   bh = malloc(sizeof(battle_ui_t));
+  memset(bh, 0, sizeof(battle_ui_t));
+
   context->priv = bh;
   bh->fontXS = gdispOpenFont (FONT_XS);
   bh->fontLG = gdispOpenFont (FONT_LG);
   bh->fontSM = gdispOpenFont (FONT_SM);
+
+  // gtfo if in airplane mode.
+  if (config->airplane_mode) {
+    screen_alert_draw(true, "TURN OFF AIRPLANE MODE!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppRun(orchardAppByName("Badge"));
+    return;
+  }
 
   /* start the timer - 30 fps */
   orchardAppTimer(context, FRAME_DELAY * 1000000, true);
@@ -487,45 +603,55 @@ entity_OOB(ENTITY *e) {
 }
 
 static void
+update_bullets(void) {
+  // bullets
+  int i;
+  
+  for (i=0; i < MAX_BULLETS; i++) {
+    if (bullet[i].visible == true) {
+      entity_erase(&bullet[i]);
+    }
+  }
+  
+  // we have to update bullets in the game loop, not outside or
+  // we'll have all sorts of artifacts on the screen.
+  // do we need a new bullet?
+  if (bullet_pending.x != 0 || bullet_pending.y != 0) {
+    fire_bullet(&me, &bullet_pending);
+    bullet_pending.x = bullet_pending.y = 0;
+  };
+}
+
+static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
   (void) context;
   uint8_t i;
-  VECTOR prevme;
   ENEMY *nearest;
   battle_ui_t *bh;
-        char tmp[40];
-
+  char tmp[40];
+  VECTOR prevme;
+  
   bh = (battle_ui_t *) context->priv;
 
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
     animtick++;
+
     if (battle_funcs[current_battle_state].tick != NULL) // some states lack a tick call
       battle_funcs[current_battle_state].tick();
 
     // erase everything.
-    entity_erase(&me);
     prevme.x = me.vecPosition.x;
     prevme.y = me.vecPosition.y;
 
-    // bullets
-    for (i=0; i < MAX_BULLETS; i++) {
-      if (bullet[i].visible == true) {
-        entity_erase(&bullet[i]);
-      }
+    update_bullets();
+    
+    // refresh world map enemy positions every 800mS
+    if (animtick % 24 == 0) {
+      enemy_list_refresh();
     }
 
-    // we have to update bullets in the game loop, not outside or
-    // we'll have all sorts of artifacts on the screen.
-    // do we need a new bullet?
-    if (bullet_pending.x != 0 || bullet_pending.y != 0) {
-      fire_bullet(&me, &bullet_pending);
-                        bullet_pending.x = bullet_pending.y = 0;
-    };
-
-    // enemy update
-    enemy_erase_all();
     enemy_update_all();
 
     // player update
@@ -541,9 +667,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           bullet[i].visible = false;
         }
 
-                                // do we have an impact?
-                                // ...
-
+        // do we have an impact?
+        // ...
+        
         getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
       }
     }
@@ -586,25 +712,25 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     enemy_renderall();
   }
 
-  // we cheat a bit here and read pins directly to see if
-  // the joystick is in a corner.
   if (current_battle_state == COMBAT) {
     if (event->type == keyEvent) {
       if (event->key.flags == keyPress) {
-        // we need to figure out if the key is still held
-        // and if so, we will fire a bullet.
+        // fire !
         if (bullet_pending.x == 0 && bullet_pending.y == 0) {
-          if (palReadPad (BUTTON_B_UP_PORT, BUTTON_B_UP_PIN) == 0)
+          switch (event->key.code) {
+          case keyBUp:
             bullet_pending.y = -1;
-
-          if (palReadPad (BUTTON_B_DOWN_PORT, BUTTON_B_DOWN_PIN) == 0)
+            break;
+          case keyBDown:
             bullet_pending.y = 1;
-
-          if (palReadPad (BUTTON_B_LEFT_PORT, BUTTON_B_LEFT_PIN) == 0)
+            break;
+          case keyBLeft:
             bullet_pending.x = -1;
-
-          if (palReadPad (BUTTON_B_RIGHT_PORT, BUTTON_B_RIGHT_PIN) == 0)
+            break;
+          case keyBRight:
             bullet_pending.x = 1;
+            break;
+          }
         }
       }
     }
@@ -634,7 +760,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           }
           break;
         case keyBSelect:
-          if (current_battle_state != COMBAT) {
+          if (current_battle_state == WORLD_MAP) {
             if (enemy_engage(context)) {
               changeState(APPROVAL_DEMAND);
             }
@@ -683,11 +809,12 @@ static void changeState(battle_state nextstate) {
   printf("BATTLE: moving to state %d: %s...\r\n", nextstate, battle_state_name[nextstate]);
 #endif
 
-  // exit the old state and reset counters
+  // exit the old state
   if (battle_funcs[current_battle_state].exit != NULL) {
     battle_funcs[current_battle_state].exit();
   }
 
+  // reset counters
   animtick = 0;
   current_battle_state = nextstate;
 
@@ -703,26 +830,36 @@ static void battle_exit(OrchardAppContext *context)
   userconfig *config = getConfig();
   battle_ui_t *bh;
 
-  // store the last x/y of this guy
+  // store my last x/y
   config->last_x = me.vecPosition.x;
   config->last_y = me.vecPosition.y;
   configSave(config);
 
-  // reset this state or we won't init properly next time.
+  // reset this state or we won't init properly next time. state is a
+  // static var, afterall. 
   changeState(NONE);
 
   // free the enemy list
-  gll_destroy(enemies);
+  if (enemies)
+    gll_destroy(enemies);
 
   // free the UI
   bh = (battle_ui_t *)context->priv;
 
-  gdispCloseFont (bh->fontXS);
-  gdispCloseFont (bh->fontLG);
-  gdispCloseFont (bh->fontSM);
+  if (bh->fontXS)
+    gdispCloseFont (bh->fontXS);
 
-  gwinDestroy (bh->ghTitleL);
-  gwinDestroy (bh->ghTitleR);
+  if (bh->fontLG)
+    gdispCloseFont (bh->fontLG);
+
+  if (bh->fontSM)
+    gdispCloseFont (bh->fontSM);
+
+  if (bh->ghTitleL)
+    gwinDestroy (bh->ghTitleL);
+
+  if (bh->ghTitleR)
+    gwinDestroy (bh->ghTitleR);
 
 #ifdef notyet
   /* NB: add back if/when ugfx touch panel events are supported */
@@ -738,7 +875,7 @@ static void battle_exit(OrchardAppContext *context)
   return;
 }
 
-/* state change and tick functions go here ----------------------------------- */
+// state functions start here ================================================
 
 // WORLDMAP ------------------------------------------------------------------
 void state_worldmap_enter(void) {
@@ -769,10 +906,11 @@ void state_combat_enter(void) {
   putImageFile(fnbuf, 0,0);
   zoomEntity(&me);
 
-
   draw_hud(mycontext);
   enemy_clearall_blink();
+
   player_render(&me);
+  // enemy render? 
 }
 
 

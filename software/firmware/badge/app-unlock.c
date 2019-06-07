@@ -19,7 +19,6 @@
 #include "fontlist.h"
 
 #define MAX_CODE_LEN 5
-#define ALERT_DELAY  3000
 
 extern systime_t char_reset_at;
 

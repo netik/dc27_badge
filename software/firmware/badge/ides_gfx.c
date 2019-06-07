@@ -231,13 +231,13 @@ screen_alert_draw (uint8_t clear, char *msg)
 		gdispFillArea( 0, middle - 20, 320, 40, Black );
 	}
 
-	gdispDrawThickLine (0, middle - 20, 320, middle -20, Red, 2, FALSE);
-	gdispDrawThickLine (0, middle + 20, 320, middle +20, Red, 2, FALSE);
+	gdispDrawThickLine (0, middle - 20, 320, middle -20, Blue, 2, FALSE);
+	gdispDrawThickLine (0, middle + 20, 320, middle +20, Blue, 2, FALSE);
 
 	gdispDrawStringBox (0,
 	    middle - (gdispGetFontMetric(fontFF, fontHeight) >> 1),
 	    gdispGetWidth(), gdispGetFontMetric(fontFF, fontHeight),
-	    msg, fontFF, Red, justifyCenter);
+	    msg, fontFF, Yellow, justifyCenter);
 
 
 	gdispCloseFont (fontFF);

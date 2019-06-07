@@ -15,14 +15,22 @@ typedef struct _entity {
   VECTOR vecVelocityGoal; /* goal velocity */
   VECTOR vecPosition;     /* position */
   VECTOR vecGravity;
+
+  VECTOR vecPositionLast; /* if this doesn't match, we'll erase and repaint */
+
+  /* contents of the previous area */
   pixel_t pix_old[FB_X * FB_Y]; /* frame buffer */
+  
 } ENTITY;
 
 typedef struct _enemy {
-  ble_gap_addr_t addr;
-  char name[16];
-  uint8_t level;
-  ENTITY e;
+  uint8_t  ble_peer_addr[6];
+  char     name[16];
+  uint8_t  level;
+  uint16_t xp;
+  uint8_t  ship_type;
+  uint8_t  ttl;
+  ENTITY   e;
 } ENEMY;
 
 typedef struct _bullet {

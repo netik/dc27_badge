@@ -34,3 +34,6 @@ extern void drawBufferedStringBox(
       color_t color,
       justify_t justify);
 #endif /* __IDES_GFX_H__ */
+
+/* used by screen_alert_draw */
+#define ALERT_DELAY  3000
