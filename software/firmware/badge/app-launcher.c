@@ -380,8 +380,14 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 		if (event->key.code == keyADown ||
 		    event->key.code == keyBDown) {
 			if (selected + LAUNCHER_COLS <=
-			   (list->total - 1))
+			   (list->total - 1)) {
 				selected += LAUNCHER_COLS;
+			} else {
+				/* edge case, if you're on the 3rd row and there's something below */
+			  if (selected + LAUNCHER_COLS-1 <= list->total-1) {
+					selected = list->total-1;
+				}
+			}
 		}
 
 		if (event->key.code == keyALeft ||
