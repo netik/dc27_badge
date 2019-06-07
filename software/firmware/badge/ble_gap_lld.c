@@ -68,6 +68,7 @@ static uint8_t ble_scan_buffer[BLE_GAP_SCAN_BUFFER_EXTENDED_MAX];
 static uint8_t ble_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 
 static ble_ides_game_state_t ble_ides_state;
+static bool_t ble_force_restart = FALSE;
 
 uint16_t ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 uint8_t ble_gap_role;
@@ -192,8 +193,16 @@ bleGapDispatch (ble_evt_t * evt)
 			if (r != NRF_SUCCESS)
 				printf ("Setting tx power failed: 0x%x\n", r);
 
-			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
-				bleGapScanStart ();
+			/*
+			 * Turn off scanning while we're connected. Each
+			 * advertisement report event we get while we're
+			 * connected will interrupt us while we're trying
+			 * to send traffic and slow us down a lot, especially
+			 * while trying to do a firmware update.
+			 */
+
+			sd_ble_gap_scan_stop ();
+			sd_ble_gap_adv_stop (ble_adv_handle);
 
 #ifdef notyet
 			/*
@@ -204,10 +213,11 @@ bleGapDispatch (ble_evt_t * evt)
 			 * It prevents iPhones from establishing a proper
 			 * connection.
 			 */
-
-			phys.rx_phys = BLE_GAP_PHY_CODED;
-			phys.tx_phys = BLE_GAP_PHY_CODED;
-			sd_ble_gap_phy_update (ble_conn_handle, &phys);
+			if (ble_gap_role == BLE_GAP_CENTRAL) {
+				phys.rx_phys = BLE_GAP_PHY_CODED;
+				phys.tx_phys = BLE_GAP_PHY_CODED;
+				sd_ble_gap_phy_update (ble_conn_handle, &phys);
+			}
 #endif
 
 			orchardAppRadioCallback (connectEvent, evt, NULL, 0);
@@ -218,24 +228,19 @@ bleGapDispatch (ble_evt_t * evt)
 #ifdef BLE_GAP_VERBOSE
 			printf ("GAP disconnected...\n");
 #endif
+			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
+				ble_force_restart = TRUE;
+
 			ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 			ble_gap_role = BLE_GAP_ROLE_INVALID;
 
 			orchardAppRadioCallback (disconnectEvent, evt,
 			    NULL, 0);
-			r = sd_ble_gap_adv_stop (ble_adv_handle);
-#ifdef notdef
-			if (r != NRF_SUCCESS) {
-				printf ("GAP stop advertisement after "
-				    "disconnect failed! 0x%lx\n", r);
-			}
-#endif
-			r = sd_ble_gap_adv_start (ble_adv_handle,
-			    BLE_IDES_APP_TAG);
-			if (r != NRF_SUCCESS) {
-				printf ("GAP restart advertisement after "
-				    "disconnect failed! 0x%x\n", r);
-			}
+
+			/* Restart scanning and advertising */
+
+			bleGapAdvStart ();
+			bleGapScanStart ();
 
 			/* Reset the password when someone disconnects */
 
@@ -423,6 +428,46 @@ bleGapDispatch (ble_evt_t * evt)
 					printf ("GAP restart advertisement "
 					    "failed! 0x%x\n", r);
 			}
+
+			/*
+			 * Now that we disable scanning once we're connected,
+			 * I've noticed some strange behavior: once we
+			 * disconnect, we can't see advertisements from the
+			 * disconnected peer anymore. For example:
+			 *
+			 * - Peer A connects to Peer B, scanning is stopped
+			 * - Peer A disconnects from Peer B, scanning is
+			 *   resumed
+			 * - Peer A and Peer B both continue to receive
+			 *   advertisements (advertisement report events,
+			 *   scan timeout and advertisement set termination
+			 *   events continue as usual), except neither side
+			 *   seems to receive advertisements from each other.
+			 *   Advertisements from other nearby devices are
+			 *   received as expected.
+			 *
+			 * It turns out that if the peer that intitiated
+			 * the connection attempts another connection which
+			 * times out, this condition clears, and the peers
+			 * can see each others' advertisements again.
+			 */
+
+			if (ble_force_restart == TRUE) {
+				ble_gap_addr_t dummy;
+
+				dummy.addr_id_peer = TRUE;
+				dummy.addr_type =
+				    BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+				dummy.addr[0] = 0;
+				dummy.addr[1] = 0;
+				dummy.addr[2] = 0;
+				dummy.addr[3] = 0;
+				dummy.addr[4] = 0;
+				dummy.addr[4] = 0;
+				bleGapConnect (&dummy);
+				ble_force_restart = FALSE;
+			}
+
 			break;
 
 		case BLE_GAP_EVT_CONN_PARAM_UPDATE:
@@ -713,6 +758,7 @@ bleGapConnect (ble_gap_addr_t * peer)
 	sparams.timeout = BLE_IDES_SCAN_TIMEOUT;
 	sparams.window = MSEC_TO_UNITS(100, UNIT_0_625_MS);
 	sparams.interval = MSEC_TO_UNITS(200, UNIT_0_625_MS);
+	sparams.active = 1;
 
 	cparams.min_conn_interval = MSEC_TO_UNITS(10, UNIT_1_25_MS);
 	cparams.max_conn_interval = MSEC_TO_UNITS(10, UNIT_1_25_MS);
@@ -745,10 +791,6 @@ bleGapDisconnect (void)
 
 	if (r != NRF_SUCCESS)
 		printf ("GAP disconnect failed: 0x%x\n", r);
-
-	ble_conn_handle = BLE_CONN_HANDLE_INVALID;
-
-	bleGapAdvStart ();
 
 	return (r);
 }
