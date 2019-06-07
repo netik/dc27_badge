@@ -449,7 +449,7 @@ static THD_FUNCTION(bling_thread, arg) {
     if (led_current_func != 0) {
       uint8_t my_current_func;
 
-      if (led_current_func > 1) {
+      if (led_current_func > 1 || led_current_func >= 128) {
         my_current_func = led_current_func;
       } else {
         // we're in random mode. We will switch every 15 seconds.

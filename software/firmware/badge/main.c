@@ -413,6 +413,13 @@ int main(void)
 
     gfxInit ();
 
+    /* start the LEDs */
+    if (led_init()) {
+        printf("I2C LED controller found.\r\n");
+        ledStart();
+    } else {
+        printf("I2C LED controller not found. No Bling ;(\r\n");
+    }
     /*
      * Detect if screen is plugged in. We try to write some data to
      * the display and then read it back from the GRAM. If the data
@@ -488,13 +495,6 @@ int main(void)
     else
         i2sEnabled = FALSE;
 
-    /* start the LEDs */
-    if (led_init()) {
-        printf("I2C LED controller found.\r\n");
-        ledStart();
-    } else {
-        printf("I2C LED controller not found. No Bling ;(\r\n");
-    }
 
     NRF_P0->DETECTMODE = 0;
 

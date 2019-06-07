@@ -43,7 +43,7 @@ typedef struct _SetupHandles {
   GListener glSetup;
 } SetupHandles;
 
-static uint32_t last_ui_time;
+static uint32_t last_ui_time = 0;
 extern char *fxlist[];
 
 static font_t fontSM;
@@ -274,7 +274,7 @@ static void setup_event(OrchardAppContext *context,
 
   // idle timeout
   if (event->type == timerEvent) {
-    if( (chVTGetSystemTime() - last_ui_time) > (UI_IDLE_TIME * 1000)) {
+    if( (chVTGetSystemTime() - last_ui_time) > (UI_IDLE_TIME * 1000) && last_ui_time != 0) {
       orchardAppRun(orchardAppByName("Badge"));
     }
     return;
