@@ -37,9 +37,6 @@
 #define VGOAL       8        // ship accleration goal
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
-
-// 20 fps = 1/20 = 0.0500 S = 50mS
-// 15 fps = 1/15 = 0.0666 S = 66mS
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
 #define VMULT       8        // on each time step, take this many steps.
@@ -191,30 +188,6 @@ player_check_collision(ENTITY *p) {
   return false;
 }
 
-static bool entity_check_collision(ENTITY *a, ENTITY *b, int boundbox) {
-  // inverted solution for speed
-  //
-  // Two rectangles do not overlap if one of the following conditions
-  // is true:
-  //   1) One rectangle is above top edge of other rectangle.
-  //   2) One rectangle is on left side of left edge of other rectangle.
-  //
-  // https://www.geeksforgeeks.org/find-two-rectangles-overlap/
-  // O(1) cost
-  
-  // If one rectangle is on left side of other
-  if ( (a->vecPosition.x > (b->vecPosition.x + boundbox)) ||
-       (b->vecPosition.x > (a->vecPosition.x + boundbox)))
-    return false;
-
-  // If one rectangle is above other
-  if ( (a->vecPosition.y < (b->vecPosition.y + boundbox)) ||
-       (b->vecPosition.y < (a->vecPosition.y + boundbox)) )
-    return false;
-
-  return true; 
-}
-
 static void
 entity_erase(ENTITY *p) {
   /*
@@ -267,7 +240,6 @@ enemy_render(void *e) {
     if ( (animtick % FPS) < (FPS/2) )
       return;
   }
-  
   gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, Red);
 }
 
@@ -351,11 +323,11 @@ static void enemy_list_refresh(void) {
   ble_peer_entry * p;
 
   // copy enemies from BLE
-  osalMutexLock (&peer_mutex);
-  
+	osalMutexLock (&peer_mutex);
+
   for (int i = 0; i < BLE_PEER_LIST_SIZE; i++) {
     p = &ble_peer_list[i];
-    
+
     if (p->ble_used == 0)
       continue;
 
@@ -603,35 +575,15 @@ entity_OOB(ENTITY *e) {
 }
 
 static void
-update_bullets(void) {
-  // bullets
-  int i;
-  
-  for (i=0; i < MAX_BULLETS; i++) {
-    if (bullet[i].visible == true) {
-      entity_erase(&bullet[i]);
-    }
-  }
-  
-  // we have to update bullets in the game loop, not outside or
-  // we'll have all sorts of artifacts on the screen.
-  // do we need a new bullet?
-  if (bullet_pending.x != 0 || bullet_pending.y != 0) {
-    fire_bullet(&me, &bullet_pending);
-    bullet_pending.x = bullet_pending.y = 0;
-  };
-}
-
-static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
   (void) context;
   uint8_t i;
+  VECTOR prevme;
   ENEMY *nearest;
   battle_ui_t *bh;
-  char tmp[40];
-  VECTOR prevme;
-  
+        char tmp[40];
+
   bh = (battle_ui_t *) context->priv;
 
   /* MAIN GAME EVENT LOOP */
@@ -642,11 +594,28 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       battle_funcs[current_battle_state].tick();
 
     // erase everything.
+    entity_erase(&me);
     prevme.x = me.vecPosition.x;
     prevme.y = me.vecPosition.y;
 
-    update_bullets();
-    
+    // bullets
+    for (i=0; i < MAX_BULLETS; i++) {
+      if (bullet[i].visible == true) {
+        entity_erase(&bullet[i]);
+      }
+    }
+
+    // we have to update bullets in the game loop, not outside or
+    // we'll have all sorts of artifacts on the screen.
+    // do we need a new bullet?
+    if (bullet_pending.x != 0 || bullet_pending.y != 0) {
+      fire_bullet(&me, &bullet_pending);
+                        bullet_pending.x = bullet_pending.y = 0;
+    };
+
+    // enemy update
+    enemy_erase_all();
+
     // refresh world map enemy positions every 800mS
     if (animtick % 24 == 0) {
       enemy_list_refresh();
@@ -667,9 +636,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           bullet[i].visible = false;
         }
 
-        // do we have an impact?
-        // ...
-        
+                                // do we have an impact?
+                                // ...
+
         getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
       }
     }
@@ -712,25 +681,25 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     enemy_renderall();
   }
 
+  // we cheat a bit here and read pins directly to see if
+  // the joystick is in a corner.
   if (current_battle_state == COMBAT) {
     if (event->type == keyEvent) {
       if (event->key.flags == keyPress) {
-        // fire !
+        // we need to figure out if the key is still held
+        // and if so, we will fire a bullet.
         if (bullet_pending.x == 0 && bullet_pending.y == 0) {
-          switch (event->key.code) {
-          case keyBUp:
+          if (palReadPad (BUTTON_B_UP_PORT, BUTTON_B_UP_PIN) == 0)
             bullet_pending.y = -1;
-            break;
-          case keyBDown:
+
+          if (palReadPad (BUTTON_B_DOWN_PORT, BUTTON_B_DOWN_PIN) == 0)
             bullet_pending.y = 1;
-            break;
-          case keyBLeft:
+
+          if (palReadPad (BUTTON_B_LEFT_PORT, BUTTON_B_LEFT_PIN) == 0)
             bullet_pending.x = -1;
-            break;
-          case keyBRight:
+
+          if (palReadPad (BUTTON_B_RIGHT_PORT, BUTTON_B_RIGHT_PIN) == 0)
             bullet_pending.x = 1;
-            break;
-          }
         }
       }
     }
@@ -760,7 +729,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           }
           break;
         case keyBSelect:
-          if (current_battle_state == WORLD_MAP) {
+          if (current_battle_state != COMBAT) {
             if (enemy_engage(context)) {
               changeState(APPROVAL_DEMAND);
             }
@@ -809,12 +778,11 @@ static void changeState(battle_state nextstate) {
   printf("BATTLE: moving to state %d: %s...\r\n", nextstate, battle_state_name[nextstate]);
 #endif
 
-  // exit the old state
+  // exit the old state and reset counters
   if (battle_funcs[current_battle_state].exit != NULL) {
     battle_funcs[current_battle_state].exit();
   }
 
-  // reset counters
   animtick = 0;
   current_battle_state = nextstate;
 
@@ -830,13 +798,12 @@ static void battle_exit(OrchardAppContext *context)
   userconfig *config = getConfig();
   battle_ui_t *bh;
 
-  // store my last x/y
+  // store the last x/y of this guy
   config->last_x = me.vecPosition.x;
   config->last_y = me.vecPosition.y;
   configSave(config);
 
-  // reset this state or we won't init properly next time. state is a
-  // static var, afterall. 
+  // reset this state or we won't init properly next time.
   changeState(NONE);
 
   // free the enemy list
@@ -875,7 +842,7 @@ static void battle_exit(OrchardAppContext *context)
   return;
 }
 
-// state functions start here ================================================
+/* state change and tick functions go here ----------------------------------- */
 
 // WORLDMAP ------------------------------------------------------------------
 void state_worldmap_enter(void) {
@@ -906,11 +873,10 @@ void state_combat_enter(void) {
   putImageFile(fnbuf, 0,0);
   zoomEntity(&me);
 
+
   draw_hud(mycontext);
   enemy_clearall_blink();
-
   player_render(&me);
-  // enemy render? 
 }
 
 

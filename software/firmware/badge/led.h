@@ -20,6 +20,7 @@
 #define LED_PATTERN_WORLDMAP 128
 #define LED_PATTERN_BATTLE   129
 #define LED_PATTERN_UNLOCK   130
+#define LED_TEST             255
 
 typedef uint32_t color_rgb_t;
 

@@ -420,6 +420,7 @@ int main(void)
     } else {
         printf("I2C LED controller not found. No Bling ;(\r\n");
     }
+
     /*
      * Detect if screen is plugged in. We try to write some data to
      * the display and then read it back from the GRAM. If the data
@@ -457,7 +458,7 @@ int main(void)
     if (gfileMount ('F', "0:") == FALSE) {
         printf ("No SD card found\n");
         splash_SDFail();
-        ledSetPattern(255); // failure mode
+        ledSetPattern(LED_TEST); // failure mode
         shellRestart ();
 #ifdef HALT_ON_SDFAIL
         for (int i = 0; i < 2; i++) {
