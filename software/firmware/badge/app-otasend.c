@@ -252,9 +252,9 @@ otasend_event (OrchardAppContext *context,
 						p->retry = 1;
 				} else {
 					if (radio->type == l2capTxEvent) {
-					screen_alert_draw (FALSE, "Done!");
-					bleL2CapSend ((uint8_t *)&p->crc, 4);
-					orchardAppExit ();
+						screen_alert_draw (FALSE,
+						    "Done!");
+						orchardAppExit ();
 					}
 				}
 				break;

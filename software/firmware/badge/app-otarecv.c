@@ -182,6 +182,7 @@ ota_exit (OrchardAppContext *context)
 			screen_alert_draw (FALSE,
 			    "Bad checksum - aborting");
 			f_unlink ("OTA.BIN");
+			chThdSleepMilliseconds (2000);
 		} else {
 			f_unlink ("BADGE.BIN");
 			f_rename ("OTA.BIN", "BADGE.BIN");
