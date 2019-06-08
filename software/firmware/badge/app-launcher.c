@@ -365,7 +365,8 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 	if (event->type == keyEvent) {
 
 		if (event->key.flags == keyPress) {
-			if (event->key.code == keyBSelect) {
+			if (event->key.code == keyASelect ||
+			    event->key.code == keyBSelect) {
 				i2sPlay ("sound/ping.snd");
 			} else {
 				i2sPlay ("sound/click.snd");
@@ -422,7 +423,8 @@ launcher_event (OrchardAppContext *context, const OrchardAppEvent *event)
 			}
 		}
 
-		if (event->key.code == keyBSelect) {
+		if (event->key.code == keyASelect ||
+		    event->key.code == keyBSelect) {
 			orchardAppRun (list->items[selected].entry);
 			return;
 		}
