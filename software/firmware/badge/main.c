@@ -486,16 +486,17 @@ int main(void)
 
     bleStart ();
 
-    /* Disable the radio if airplane node is on */
-
     config = getConfig ();
-    if (config->airplane_mode)
-        bleDisable ();
 
     /* Set current game board position */
 
     bleGapUpdateState (config->last_x, config->last_y,
         config->xp, config->level);
+
+    /* Disable the radio if airplane node is on */
+
+    if (config->airplane_mode)
+        bleDisable ();
 
     /* Set default sound behavior */
 
