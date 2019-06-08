@@ -450,6 +450,43 @@ static gdispImageError initFrameGif(gdispImage *img) {
 							priv->flags |= GIF_LOOPFOREVER;
 					}
 				}
+				/*
+				 * Okay, look, you clod: application extension
+				 * block headers are always 12 bytes (11 bytes
+				 * payload and 1 size byte, which is always
+				 * 0x0B). But the above routine reads 16 bytes.
+				 * This is because the only application
+				 * extension it supports is the Netscape GIF
+				 * looping marker (which tells browsers to
+				 * loop animated GIFs), and to properly read
+				 * that extension we need to grab a gouple of
+				 * extra bytes after the extension block
+				 * header.
+				 *
+				 * The actual length of the extension
+				 * block is in the byte immediately after the
+				 * extension block header (i.e. byte 13).
+				 *
+				 * To skip to the next extension block, we
+				 * have to seek ahead by the extension block
+				 * size.
+				 *
+				 * But because we read 16 bytes, the file
+				 * pointer is not pointing to the location of
+				 * the extension block size, which means when
+				 * we jump to the skipdatablocks code for
+				 * unrecognized headers, that code will read
+				 * garbage values and parsing of the GIF
+				 * image will fail.
+				 *
+				 * So to properly get to the next block, we
+				 * need to back up by 4 bytes here so that
+				 * skipdatablocks will read the correct size
+				 * and jump to the next block in the file.
+				 */
+
+				gfileSetPos(img->f, gfileGetPos(img->f) - 4);
+
 				goto skipdatablocks;
 
 			case 0x01:			// EXTENSION - Plain Text (Graphics Rendering)
