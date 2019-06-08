@@ -205,6 +205,7 @@ static void serve_interrupt(I2CDriver *i2cp) {
     i2c->ERRORSRC = err;
     i2c->EVENTS_ERROR = 0;
 #if CORTEX_MODEL >= 4
+    (void)i2c->ERRORSRC;
     (void)i2c->EVENTS_ERROR;
 #endif
     if (err & TWI_ERRORSRC_OVERRUN_Msk)
@@ -213,6 +214,9 @@ static void serve_interrupt(I2CDriver *i2cp) {
       i2cp->errors |= I2C_ACK_FAILURE;
 
     i2c->TASKS_STOP = 1;
+#if CORTEX_MODEL >= 4
+    (void)i2c->TASKS_STOP;
+#endif
     _i2c_wakeup_error_isr(i2cp);
   } else if(i2c->EVENTS_STOPPED) {
 
