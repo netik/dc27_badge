@@ -11,7 +11,10 @@
 #include "gfx.h"
 #include "src/gdisp/gdisp.h"
 
+#include "ble.h"
 #include "ble_lld.h"
+#include "ble_gap.h"
+#include "ble_gap_lld.h"
 
 #include "ff.h"
 #include "ffconf.h"
@@ -40,7 +43,7 @@
 #define HALT_ON_SDFAIL 1
 
 // define this to bypass the startup screen, sponsors and song.
-#define FAST_STARTUP 1
+#undef FAST_STARTUP
 
 struct evt_table orchard_events;
 
@@ -488,6 +491,11 @@ int main(void)
     config = getConfig ();
     if (config->airplane_mode)
         bleDisable ();
+
+    /* Set current game board position */
+
+    bleGapUpdateState (config->last_x, config->last_y,
+        config->xp, config->level);
 
     /* Set default sound behavior */
 
