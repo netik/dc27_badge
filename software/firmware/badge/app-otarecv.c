@@ -8,13 +8,17 @@
 #include "i2s_lld.h"
 #include "ides_gfx.h"
 #include "ff.h"
+#include "crc32.h"
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 typedef struct _OtaHandles {
 	FIL			f;
 	uint32_t		total;
+	uint32_t		crc;
+	uint32_t		sent_crc;
 	int			status;
 	GListener		gl;
 } OtaHandles;
@@ -38,21 +42,24 @@ ota_start (OrchardAppContext *context)
 	OtaHandles * p;
 	GSourceHandle gs;
 
-	gdispClear (Black);
+	putImageFile ("images/fwupdate.rgb", 0, 0);
 
 	p = malloc (sizeof (OtaHandles));
 	context->priv = p;
 	p->total = 0;
 	p->status = 0;
+	p->crc = CRC_INIT;
 
 	gs = ginputGetMouse (0);
 	geventListenerInit (&p->gl);
 	geventAttachSource (&p->gl, gs, GLISTEN_MOUSEMETA);
 	geventRegisterCallback (&p->gl, orchardAppUgfxCallback, &p->gl);
 
-	if (f_open (&p->f, "0:BADGE.BIN", FA_WRITE) != FR_OK) {
+	f_unlink ("OTA.BIN");
+	if (f_open (&p->f, "OTA.BIN", FA_WRITE|FA_CREATE_NEW) != FR_OK) {
 		screen_alert_draw (FALSE, "Opening firmware file failed!");
 		chThdSleepMilliseconds (2000);
+		p->status = -1;
 		orchardAppExit ();
 	} else {
 		screen_alert_draw (FALSE, "Starting...");
@@ -83,8 +90,8 @@ ota_event (OrchardAppContext *context,
 
 	if (event->type == keyEvent) {
 		p->status = -1;
-		bleGapDisconnect ();
 		i2sPlay ("sound/click.snd");
+		p->status = -1;
 		orchardAppExit ();
 		return;
 	}
@@ -94,7 +101,6 @@ ota_event (OrchardAppContext *context,
 		if (me->buttons & GMETA_MOUSE_DOWN) {
 			i2sPlay ("sound/click.snd");
 			p->status = -1;
-			bleGapDisconnect ();
 			orchardAppExit ();
 			return;
 		}
@@ -113,13 +119,23 @@ ota_event (OrchardAppContext *context,
 				p->total += radio->pktlen;
 				sprintf (buf, "Received %ld bytes", p->total);
 				screen_alert_draw (FALSE, buf);
-				if (f_write (&p->f, radio->pkt,
-				    radio->pktlen, &br) != FR_OK) {
-					screen_alert_draw (FALSE,
-					    "Writing failed!");
-					bleGapDisconnect ();
-					p->status = -1;
-					orchardAppExit ();
+				/*
+				 * If we receive exactly 4 bytes, it's the
+				 * data checksum, and we don't need to write
+				 * it to the file.
+				 */
+				if (radio->pktlen == 4)
+					memcpy (&p->sent_crc, radio->pkt, 4);
+				else {
+					p->crc = crc32_le (radio->pkt,
+					    radio->pktlen, p->crc);
+					if (f_write (&p->f, radio->pkt,
+					    radio->pktlen, &br) != FR_OK) {
+						screen_alert_draw (FALSE,
+						    "Writing failed!");
+						p->status = -1;
+						orchardAppExit ();
+					}
 				}
 				break;
 			/* L2CAP link closed -- transfer complete */
@@ -147,9 +163,12 @@ ota_exit (OrchardAppContext *context)
 {
 	OtaHandles * p;
 	int status;
+	uint32_t crc, sent_crc;
 
 	p = context->priv;
 	status = p->status;
+	crc = p->crc;
+	sent_crc = p->sent_crc;
 	f_close (&p->f);
 	geventRegisterCallback (&p->gl, NULL, NULL);
 	geventDetachSource (&p->gl, NULL);
@@ -158,8 +177,18 @@ ota_exit (OrchardAppContext *context)
 
 	/* Launch the firmware updater */
 
-	if (status == 0)
-		orchardAppRun (orchardAppByName ("Update FW"));
+	if (status == 0) {
+		if (crc != sent_crc) {
+			screen_alert_draw (FALSE,
+			    "Bad checksum - aborting");
+			f_unlink ("OTA.BIN");
+		} else {
+			f_unlink ("BADGE.BIN");
+			f_rename ("OTA.BIN", "BADGE.BIN");
+			orchardAppRun (orchardAppByName ("Update FW"));
+		}
+	} else
+		bleGapDisconnect ();
 
 	return;
 }

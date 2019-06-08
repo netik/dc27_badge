@@ -12,6 +12,7 @@
 #include "ble_peer.h"
 #include "i2s_lld.h"
 #include "ides_gfx.h"
+#include "crc32.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,8 @@ typedef struct _OtaHandles {
 	uint8_t		retry;
 	uint32_t	size;
 	uint32_t	last;
+	uint32_t	crc;
+	uint32_t	send_crc;
 	char *		listitems[BLE_PEER_LIST_SIZE + 2];
 	ble_gap_addr_t	listaddrs[BLE_PEER_LIST_SIZE + 2];
 	OrchardUiContext uiCtx;
@@ -57,6 +60,7 @@ otasend_start (OrchardAppContext *context)
 	p = malloc (sizeof (OtaHandles));
 
 	memset (p, 0, sizeof(OtaHandles));
+	p->crc = CRC_INIT;
 
 	context->priv = p;
 
@@ -144,6 +148,8 @@ otasend_event (OrchardAppContext *context,
 		geventRegisterCallback (&p->gl,
 		    orchardAppUgfxCallback, &p->gl);
 
+		putImageFile ("images/fwupdate.rgb", 0, 0);
+
 		/*
 		 * Initiate GAP connection to peer.
 		 */
@@ -169,8 +175,8 @@ otasend_event (OrchardAppContext *context,
 				break;
 
 			/*
-			 * GATTS write event - this should be a response from the
-			 * peer either accepting or declining the uptate.
+			 * GATTS write event - this should be a response from
+			 * the peer either accepting or declining the uptate.
 			 */
 			case gattsReadWriteAuthEvent:
 				rw =
@@ -181,7 +187,7 @@ otasend_event (OrchardAppContext *context,
 				    req->data[0] == BLE_IDES_OTAUPDATE_ACCEPT){
 					screen_alert_draw (FALSE,
 					    "Offer accepted...");
-					/* Offer accepted -- create L2CAP link */
+					/* Offer accepted - create L2CAP link*/
 					bleL2CapConnect (BLE_IDES_OTA_PSM);
 				} else {
 					screen_alert_draw (FALSE,
@@ -197,19 +203,49 @@ otasend_event (OrchardAppContext *context,
 				/* FALLTHROUGH */
 			/* L2CAP TX successful -- send the next chunk */
 			case l2capTxEvent:
+
 				if (p->retry == 0) {
 					br = 0;
-					f_read (&p->f, p->txbuf, OTA_SIZE, &br);
+					f_read (&p->f, p->txbuf, OTA_SIZE,&br);
+
+					/*
+					 * The only time the number of bytes
+					 * read will be less than OTA_SIZE
+					 * will be when we read the last few
+					 * bytes left in the file. The other
+					 * side expects that a transmission of
+					 * 4 bytes will always contain the
+				 	 * checksum. If there happens to be
+					 * exactly 4 bytes left in the file
+					 * after the last OTA_SIZE chunk, then
+					 * the other side will mistake it for
+					 * the checksum. To avoid this, if
+					 * we have exactly 4 bytes left,
+					 * lie and claim it's 5 just so the
+					 * other side doesn't get confused.
+					 */
+
+					if (br == 4)
+						br++;
+					if (br == 0 && p->send_crc == 0) {
+						memcpy (p->txbuf, &p->crc, 4);
+						br = 4;
+						p->send_crc = 1;
+					} else {
+						p->crc = crc32_le (p->txbuf,
+						    br, p->crc);
+					}
 					p->last = br;
 					p->size += br;
 				} else
 					br = p->last;
+
 				if (br) {
 					/* Send data chunk */
 					if (bleL2CapSend (p->txbuf, br) ==
 					    NRF_SUCCESS) {
 						p->retry = 0;
-						sprintf (msg, "Sending %ld...",
+						sprintf (msg, "Sent %ld bytes",
 						    p->size);
 						screen_alert_draw (FALSE, msg);
 					} else
@@ -217,6 +253,7 @@ otasend_event (OrchardAppContext *context,
 				} else {
 					if (radio->type == l2capTxEvent) {
 					screen_alert_draw (FALSE, "Done!");
+					bleL2CapSend ((uint8_t *)&p->crc, 4);
 					orchardAppExit ();
 					}
 				}
