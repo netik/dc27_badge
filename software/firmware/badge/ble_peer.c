@@ -103,13 +103,14 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * data, uint8_t len, int8_t rssi)
 	d = data;
 	l = len;
 
-	memset (p->ble_peer_name, 0, BLE_PEER_NAME_MAX);
-
 	if (bleGapAdvBlockFind (&d, &l,
-	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME) == NRF_SUCCESS)
+	    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME) == NRF_SUCCESS) {
+		memset (p->ble_peer_name, 0, BLE_PEER_NAME_MAX);
 		memcpy (p->ble_peer_name, d, l);
-	else
-		memcpy (p->ble_peer_name, "<none>", 7);
+	} else {
+		if (p->ble_peer_name[0] == 0x0)
+			memcpy (p->ble_peer_name, "<none>", 7);
+	}
 
 	/* Now check for game state */
 
