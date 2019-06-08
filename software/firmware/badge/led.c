@@ -71,6 +71,7 @@ void led_pattern_unlock(uint8_t* p_index);
 static thread_t * pThread;
 static uint8_t ledExitRequest = 0;
 uint8_t ledsOff = 1;
+static bool leds_init_ok = false;
 // the current function that updates the LEDs. Override with ledSetFunction();
 static uint8_t led_current_func = 1;
 static int16_t led_eye_state = 0;
@@ -240,7 +241,11 @@ bool led_init() {
     led_memory[i] = 0;
   }
 
-  return drv_is31fl_init();
+  led_reset ();
+
+  leds_init_ok = drv_is31fl_init();
+
+  return (leds_init_ok);
 }
 
 void led_clear() {
@@ -250,6 +255,9 @@ void led_clear() {
 
 void ledSetPattern(uint8_t patt) {
   led_current_func = patt;
+
+  if (leds_init_ok == false)
+    return;
 
   if (ledExitRequest == 1) {
     // our thread is stopped.
