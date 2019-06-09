@@ -51,8 +51,13 @@ typedef struct _VideoHandles {
 	OrchardUiContext	uiCtx;
 } VideoHandles;
 
+__attribute__ ((alias ("video_init1")))
+static uint32_t video_init2(OrchardAppContext *context);
+__attribute__ ((alias ("video_init1")))
+static uint32_t video_init3(OrchardAppContext *context);
+
 static uint32_t
-video_init(OrchardAppContext *context)
+video_init1(OrchardAppContext *context)
 {
 	(void)context;
 	return (0);
@@ -195,5 +200,29 @@ video_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Play Videos", "icons/mask.rgb", 0, video_init, video_start,
+/*
+ * We want to have several categories of videos that the user can
+ * select from the launcher, but we don't want to duplicate the video
+ * player code. Instead, we add the video player to the Orchard app
+ * linker set multiple times, each time with a different name. We
+ * can then select what subdirectory to search in the video_init()
+ * routine based on instance.app->name.
+ *
+ * There's a little bit of hackery going on here: the orchard_app()
+ * macro builds the linker set symbol name using the names of the
+ * init/start/event/exit functions. If these function names are always
+ * the same, you'll end up with duplicate symbol names, which will
+ * cause a compiler error. To work around this, we use a different
+ * name for the init function. We do this by using the __attribute__
+ * tag to create aliases for the init function which creates multiple
+ * entry points to the same function but with different names.
+ */
+
+orchard_app("Play Videos1", "icons/mask.rgb", 0, video_init1, video_start,
+    video_event, video_exit, 0);
+
+orchard_app("Play Videos2", "icons/mask.rgb", 0, video_init2, video_start,
+    video_event, video_exit, 0);
+
+orchard_app("Play Videos3", "icons/mask.rgb", 0, video_init3, video_start,
     video_event, video_exit, 0);
