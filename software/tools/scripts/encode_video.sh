@@ -98,4 +98,4 @@ sox $2/sample.wav $2/sample.s16 channels 2 rate 15600 loudness 12
 # Now merge the video and audio into a single file
 ${MYDIR}/../bin/videomerge $2/video.bin $2/sample.s16 $2/${newfilename}
 
-rm -f $2/video.bin $2/sample.wav 2/sample.s16
+rm -f $2/video.bin $2/sample.wav $2/sample.s16
