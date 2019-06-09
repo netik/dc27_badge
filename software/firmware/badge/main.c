@@ -402,6 +402,13 @@ int main(void)
 	    pFlash->address);
     }
 
+    /*
+     * Init the user configuration - can be
+     * done once the flash driver is initialized.
+     */
+
+    configStart();
+
     /* Enable I2C controller */
 
     i2cStart (&I2CD2, &i2c2_config);
@@ -477,10 +484,6 @@ int main(void)
 #endif
     } else
       printf ("SD card detected\n");
-
-    /* Init the user configuration */
-
-    configStart();
 
     /* Enable bluetooth subsystem */
 
