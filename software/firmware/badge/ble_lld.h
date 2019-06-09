@@ -33,7 +33,7 @@
 #ifndef _BLE_LLD_H_
 #define _BLE_LLD_H_
 
-#define BLE_IDES_PASSWORD	"narf"
+#define BLE_IDES_PASSWORD	((char *)&NRF_UICR->CUSTOMER[4])
 #define BLE_APPEARANCE_DC27	0xDC27
 #define BLE_COMPANY_ID_IDES	0x1DE5
 #define BLE_NAME_IDES		"DC27 IDES of DEF CON"
