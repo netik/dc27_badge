@@ -55,13 +55,13 @@ void led_pattern_roller_coaster(uint8_t positions[], color_rgb_t color);
 void led_pattern_running_lights(uint8_t red,
                                 uint8_t green,
                                 uint8_t blue,
-                                uint8_t* p_position);
+                                uint8_t * p_position);
 void led_pattern_kraftwerk(uint8_t* p_index, int8_t* p_position);
 void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
                           uint8_t r2, uint8_t g2, uint8_t b2,
-                          uint8_t glitter, uint8_t* p_index);
+                          uint8_t glitter, int16_t* p_index);
 void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
-                           uint8_t *p_position, bool bgpulse);
+                           int16_t *degree, bool bgpulse);
 void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
                         uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay,
                         uint8_t *pos);
@@ -407,10 +407,12 @@ static THD_FUNCTION(bling_thread, arg) {
   led_pattern_balls_t anim_balls;
   int8_t anim_index = 0;
   uint8_t anim_uindex = 0;
+  int16_t anim_pos16 = 0;
   int8_t anim_position = 0;
   float anim_hue = 100;
   float anim_value = 0;
   uint8_t last_brightness;
+
   // Positions storage for roller coaster
   uint8_t positions[LED_PATTERN_ROLLER_COASTER_COUNT];
   for (uint8_t i = 0; i < LED_PATTERN_ROLLER_COASTER_COUNT; i++) {
@@ -523,17 +525,17 @@ static THD_FUNCTION(bling_thread, arg) {
       case 19:
         led_pattern_dualspin(0, 0, 255,
                              0, 255, 0,
-                             0, &anim_uindex);
+                             0, &anim_pos16);
         break;
       case 20:
         led_pattern_dualspin(0x14, 0x80, 0x33,
                              0x11, 0x45, 0xff,
-                             0, &anim_uindex);
+                             0, &anim_pos16);
         break;
       case 21:
         led_pattern_dualspin(0x81, 0x0D, 0x70,
                              0xF5, 0x82, 0x25,
-                             0, &anim_uindex);
+                             0, &anim_pos16);
         break;
       case 22:
         led_pattern_meteor(0xff,0x00,0x00, 2, 100, true, &anim_uindex);
@@ -545,16 +547,16 @@ static THD_FUNCTION(bling_thread, arg) {
         led_pattern_meteor(0xff,0x00,0xff, 4, 80, true, &anim_uindex);
         break;
       case 25:
-        led_pattern_bgsparkle(255,0,0,&anim_uindex,false);
+        led_pattern_bgsparkle(255,0,0,&anim_pos16,false);
         break;
       case 26:
-        led_pattern_bgsparkle(255,0,255,&anim_uindex,true);
+        led_pattern_bgsparkle(255,0,255,&anim_pos16,true);
         break;
       case LED_PATTERN_WORLDMAP:
         led_clear();
         break;
       case LED_PATTERN_UNLOCK:
-	      led_pattern_unlock(&anim_uindex);
+        led_pattern_unlock(&anim_uindex);
         break;
       case 255:
         led_test();
@@ -928,7 +930,7 @@ void led_pattern_kraftwerk(uint8_t *fx_index, int8_t *fx_position) {
   led_show();
 }
 
-void led_add_glitter(int n, uint8_t *pos) {
+void led_add_glitter(int n, int16_t *pos) {
 
   if (led_used_particles < 0) {
     led_particle_fwd = true;
@@ -978,7 +980,7 @@ void led_add_glitter(int n, uint8_t *pos) {
 
 void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
                           uint8_t r2, uint8_t g2, uint8_t b2,
-                          uint8_t glitter, uint8_t *p_index) {
+                          uint8_t glitter, int16_t *p_index) {
   // Ensure indices are within range
   if ((*p_index) > (LED_COUNT_INTERNAL - 1)) { *p_index = 0; }
 
@@ -1002,12 +1004,12 @@ void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
 }
 
 void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
-                           uint8_t *p_position, bool bgpulse) {
+                           int16_t *p_position, bool bgpulse) {
 
   if (bgpulse) {
-    led_set_all( ( (sin(*p_position/6) * 127 + 128 ) / 255) * r1,
-                 ( (sin(*p_position/6) * 127 + 128 ) / 255) * g1,
-                 ( (sin(*p_position/6) * 127 + 128 ) / 255) * b1 );
+    led_set_all(  (sin(*p_position * M_PI/180) * r1/2 + r1/2 ),
+                  (sin(*p_position * M_PI/180) * g1/2 + g1/2 ),
+                  (sin(*p_position * M_PI/180) * b1/2 + b1/2 )  );
 
   } else {
     led_set_all(r1, g1, b1);
@@ -1016,7 +1018,6 @@ void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
   led_add_glitter(6, p_position);
 
   (*p_position)++;
-  if (*p_position > 254) { *p_position = 0; }
 
   led_show();
 

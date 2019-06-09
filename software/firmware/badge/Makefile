@@ -166,6 +166,7 @@ CSRC = $(STARTUPSRC) \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c
 
 CSRC += main.c \
+	crc32.c \
 	is31fl_lld.c \
 	userconfig.c \
 	rand.c \
