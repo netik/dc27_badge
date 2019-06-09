@@ -93,8 +93,14 @@ dac/game/%.snd: dac/game/%.wav
 	$(TOOLS_DIR)/scripts/sndmp3toraw.sh $<
 
 # Videos
-video/%.vid: video_src/%.mp4
-	$(TOOLS_DIR)/scripts/encode_video.sh $< video
+video/dabomb/%.vid: video_src/dabomb/%.mp4
+	$(TOOLS_DIR)/scripts/encode_video.sh $< video/dabomb
+
+video/misc/%.vid: video_src/misc/%.mp4
+	$(TOOLS_DIR)/scripts/encode_video.sh $< video/misc
+
+video/civildef/%.vid: video_src/civildef/%.mp4
+	$(TOOLS_DIR)/scripts/encode_video.sh $< video/civildef
 
 # When possible, please use TIF images. Aliasing is a real issue on
 # our display and higher quality input is better.
@@ -121,9 +127,11 @@ images: dirs tools_dep photos \
 sounds: tools_dep $(addprefix dac/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/*.wav dac/*.mp3))))) \
 	          $(addprefix dac/game/, $(notdir  $(addsuffix .snd, $(basename $(wildcard dac/game/*.wav dac/game/*.mp3)))))
 
-video: tools_dep $(addprefix video/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/*.mp4)))))
+video_misc: tools_dep $(addprefix video/misc/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/misc/*.mp4)))))
+video_dabomb: tools_dep $(addprefix video/dabomb/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/dabomb/*.mp4)))))
+video_civildef: tools_dep $(addprefix video/civildef/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/civildef/*.mp4)))))
 
-sdcard: dirs tools_dep images sounds video
+sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
 	-cp rgb/images/*.rgb $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
@@ -136,7 +144,9 @@ sdcard: dirs tools_dep images sounds video
 	-cp photos/*.rgb $(STAGING_DIR)/photos
 	-cp rgb/game/*.rgb $(STAGING_DIR)/game
 	-cp dac/game/*.snd $(STAGING_DIR)/game
-	-cp video/*.vid $(STAGING_DIR)/videos
+	-cp video/misc/*.vid $(STAGING_DIR)/videos/misc
+	-cp video/dabomb/*.vid $(STAGING_DIR)/videos/dabomb
+	-cp video/civildef/*.vid $(STAGING_DIR)/videos/civildef
 	@echo
 	@echo 'sdcard built in $(STAGING_DIR)'
 	@echo
@@ -170,6 +180,9 @@ dirs:
 	-[ -d $(STAGING_DIR)/images ] || mkdir -p $(STAGING_DIR)/images
 	-[ -d $(STAGING_DIR)/sound ] || mkdir -p $(STAGING_DIR)/sound
 	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos
+	-[ -d $(STAGING_DIR)/videos/misc ] || mkdir -p $(STAGING_DIR)/videos/misc
+	-[ -d $(STAGING_DIR)/videos/dabomb ] || mkdir -p $(STAGING_DIR)/videos/dabomb
+	-[ -d $(STAGING_DIR)/videos/civildef ] || mkdir -p $(STAGING_DIR)/videos/civildef
 	-[ -d $(STAGING_DIR)/flags ] || mkdir -p $(STAGING_DIR)/flags
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
 	-[ -d $(STAGING_DIR)/font/led_90 ] || mkdir -p $(STAGING_DIR)/font/led_90
@@ -180,6 +193,9 @@ dirs:
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
 	-[ -d rgb/font/led_90 ] || mkdir -p rgb/font/led_90
 	-[ -d video ] || mkdir -p video
+	-[ -d video/misc ] || mkdir -p video/misc
+	-[ -d video/dabomb ] || mkdir -p video/dabomb
+	-[ -d video/civildef ] || mkdir -p video/civildef
 
 cleansd:
 	@if [ -d "$(STAGING_DIR)" ]; then rm -rf $(STAGING_DIR); fi;
@@ -191,7 +207,7 @@ clean: clean_images
 	-rm -rf bin/
 	-rm -f dac/*.snd
 	-rm -f dac/game/*.snd
-	-rm -f video/*
+	-rm -rf video/*
 	-rm -fr $(STAGING_DIR)/*
 	-rm -f photos/*
 	-rm -f tif/mirrored/*

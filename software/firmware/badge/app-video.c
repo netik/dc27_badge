@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2017, 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,23 +43,35 @@
 
 #include <string.h>
 
-#define VIDEODIR "/videos"
-
 typedef struct _VideoHandles {
 	char **			listitems;
 	int			itemcnt;
 	OrchardUiContext	uiCtx;
 } VideoHandles;
 
-__attribute__ ((alias ("video_init1")))
-static uint32_t video_init2(OrchardAppContext *context);
-__attribute__ ((alias ("video_init1")))
-static uint32_t video_init3(OrchardAppContext *context);
+static char * videodir;
 
 static uint32_t
-video_init1(OrchardAppContext *context)
+video_civildef(OrchardAppContext *context)
 {
 	(void)context;
+	videodir = "/videos/civildef";
+	return (0);
+}
+
+static uint32_t
+video_dabomb(OrchardAppContext *context)
+{
+	(void)context;
+	videodir = "/videos/dabomb";
+	return (0);
+}
+
+static uint32_t
+video_misc(OrchardAppContext *context)
+{
+	(void)context;
+	videodir = "/videos/misc";
 	return (0);
 }
 
@@ -71,7 +83,7 @@ video_start (OrchardAppContext *context)
 	FILINFO info;
 	int i;
 
-	f_opendir (&d, VIDEODIR);
+	f_opendir (&d, videodir);
 
 	i = 0;
 
@@ -100,7 +112,7 @@ video_start (OrchardAppContext *context)
 	p->listitems[0] = "Choose a video";
 	p->listitems[1] = "Exit";
 
-	f_opendir (&d, VIDEODIR);
+	f_opendir (&d, videodir);
 
 	i = 2;
 
@@ -163,7 +175,7 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			return;
 		}
 
-		strcpy (videofn, VIDEODIR);
+		strcpy (videofn, videodir);
 		strcat (videofn, "/");
 		strcat (videofn, p->listitems[uiContext->selected +1]);
 
@@ -213,16 +225,15 @@ video_exit(OrchardAppContext *context)
  * init/start/event/exit functions. If these function names are always
  * the same, you'll end up with duplicate symbol names, which will
  * cause a compiler error. To work around this, we use a different
- * name for the init function. We do this by using the __attribute__
- * tag to create aliases for the init function which creates multiple
- * entry points to the same function but with different names.
+ * name for the init function. This also allows us to use a different
+ * subdirectory for each category of videos.
  */
 
-orchard_app("Play Videos1", "icons/mask.rgb", 0, video_init1, video_start,
+orchard_app("Be Prepared!", "icons/mask.rgb", 0, video_civildef, video_start,
     video_event, video_exit, 0);
 
-orchard_app("Play Videos2", "icons/mask.rgb", 0, video_init2, video_start,
+orchard_app("Da Bomb!", "icons/mask.rgb", 0, video_dabomb, video_start,
     video_event, video_exit, 0);
 
-orchard_app("Play Videos3", "icons/mask.rgb", 0, video_init3, video_start,
+orchard_app("Misc Videos", "icons/mask.rgb", 0, video_misc, video_start,
     video_event, video_exit, 0);
