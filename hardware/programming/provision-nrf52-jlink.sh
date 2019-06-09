@@ -86,7 +86,8 @@ openocd -f interface/jlink.cfg				\
 	-c "init"					\
 	-c "reset halt"					\
 	-c "nrf5 mass_erase"				\
-	-c "program build/badge.elf"			\
+	-c "flash banks"				\
+	-c "flash write_bank 0 build/badge.bin"		\
 	-c "mww 0x4001E504 0x00000001"			\
 	-c "mdw 0x4001E504"				\
 	-c "mww 0x10001200 0x00000012"			\
@@ -101,10 +102,12 @@ openocd -f interface/jlink.cfg				\
 	-c "mdw 0x10001088"				\
 	-c "mww 0x1000108C 0xCCDDEEFF"			\
 	-c "mdw 0x1000108C"				\
-	-c "mww 0x10001090 0x6E617266"			\
+	-c "mww 0x10001090 0x6672616E"			\
 	-c "mdw 0x10001090"				\
 	-c "mww 0x10001094 0x00000000"			\
 	-c "mdw 0x10001094"				\
+	-c "mww 0x10001098 0x00000000"			\
+	-c "mdw 0x10001098"				\
 	-c "mww 0x4001E504 0x00000000"			\
 	-c "mdw 0x4001E400"				\
 	-c "reset init"					\
