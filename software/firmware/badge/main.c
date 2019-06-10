@@ -402,26 +402,44 @@ int main(void)
 	    pFlash->address);
     }
 
-    /*
-     * Init the user configuration - can be
-     * done once the flash driver is initialized.
-     */
-
-    configStart();
-
     /* Enable I2C controller */
 
     i2cStart (&I2CD2, &i2c2_config);
     printf ("I2C interface enabled\n");
 
     /* Enable I2S controller */
-
     i2sStart ();
     printf ("I2S interface enabled\n");
 
     /* Enable display and touch panel */
-
     gfxInit ();
+
+		/* Mount SD card */
+    if (gfileMount ('F', "0:") == FALSE) {
+        printf ("No SD card found\n");
+        splash_SDFail();
+        ledSetPattern(LED_TEST); // failure mode
+        shellRestart ();
+#ifdef HALT_ON_SDFAIL
+        for (int i = 0; i < 2; i++) {
+          // 404, 404, get it? :)
+          tonePlay (NULL, 4, 50);
+          chThdSleepMilliseconds(50);
+          tonePlay (NULL, 0, 50);
+          chThdSleepMilliseconds(50);
+          tonePlay (NULL, 4, 50);
+          chThdSleepMilliseconds(50);
+        }
+        chThdSleep (TIME_INFINITE);
+#endif
+    } else
+      printf ("SD card detected\n");
+
+    /*
+     * Init the user configuration - can be
+     * done once the flash driver is initialized.
+     */
+    configStart();
 
     /* start the LEDs */
     if (led_init()) {
@@ -463,36 +481,11 @@ int main(void)
     } else
         printf ("No screen found\n");
 
-    /* Mount SD card */
-
-    if (gfileMount ('F', "0:") == FALSE) {
-        printf ("No SD card found\n");
-        splash_SDFail();
-        ledSetPattern(LED_TEST); // failure mode
-        shellRestart ();
-#ifdef HALT_ON_SDFAIL
-        for (int i = 0; i < 2; i++) {
-          // 404, 404, get it? :)
-          tonePlay (NULL, 4, 50);
-          chThdSleepMilliseconds(50);
-          tonePlay (NULL, 0, 50);
-          chThdSleepMilliseconds(50);
-          tonePlay (NULL, 4, 50);
-          chThdSleepMilliseconds(50);
-        }
-        chThdSleep (TIME_INFINITE);
-#endif
-    } else
-      printf ("SD card detected\n");
-
     /* Enable bluetooth subsystem */
-
     bleStart ();
-
     config = getConfig ();
 
     /* Set current game board position */
-
     bleGapUpdateState (config->last_x, config->last_y,
         config->xp, config->level);
 

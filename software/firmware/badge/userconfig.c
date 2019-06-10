@@ -181,7 +181,6 @@ void configStart(void) {
     i2sPlay("sound/ping.snd");
     i2sWait ();
 
-    chThdSleepMilliseconds (200);
     wipeconfig = true;
   }
 
