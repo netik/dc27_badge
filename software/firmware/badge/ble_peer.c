@@ -96,7 +96,7 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * data, uint8_t len, int8_t rssi)
 
 	p = &ble_peer_list[firstfree];
 
-	memcpy (p->ble_peer_addr, peer_addr, sizeof(ble_peer_addr));
+	memcpy (p->ble_peer_addr, peer_addr, 6);
 
 	/* Check for name. */
 

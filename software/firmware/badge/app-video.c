@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017
+ * Copyright (c) 2017, 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,18 +43,35 @@
 
 #include <string.h>
 
-#define VIDEODIR "/videos"
-
 typedef struct _VideoHandles {
 	char **			listitems;
 	int			itemcnt;
 	OrchardUiContext	uiCtx;
 } VideoHandles;
 
+static char * videodir;
+
 static uint32_t
-video_init(OrchardAppContext *context)
+video_civildef(OrchardAppContext *context)
 {
 	(void)context;
+	videodir = "/videos/civildef";
+	return (0);
+}
+
+static uint32_t
+video_dabomb(OrchardAppContext *context)
+{
+	(void)context;
+	videodir = "/videos/dabomb";
+	return (0);
+}
+
+static uint32_t
+video_misc(OrchardAppContext *context)
+{
+	(void)context;
+	videodir = "/videos/misc";
 	return (0);
 }
 
@@ -66,7 +83,7 @@ video_start (OrchardAppContext *context)
 	FILINFO info;
 	int i;
 
-	f_opendir (&d, VIDEODIR);
+	f_opendir (&d, videodir);
 
 	i = 0;
 
@@ -95,7 +112,7 @@ video_start (OrchardAppContext *context)
 	p->listitems[0] = "Choose a video";
 	p->listitems[1] = "Exit";
 
-	f_opendir (&d, VIDEODIR);
+	f_opendir (&d, videodir);
 
 	i = 2;
 
@@ -158,7 +175,7 @@ video_event(OrchardAppContext *context, const OrchardAppEvent *event)
 			return;
 		}
 
-		strcpy (videofn, VIDEODIR);
+		strcpy (videofn, videodir);
 		strcat (videofn, "/");
 		strcat (videofn, p->listitems[uiContext->selected +1]);
 
@@ -195,5 +212,28 @@ video_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Play Videos", "icons/mask.rgb", 0, video_init, video_start,
+/*
+ * We want to have several categories of videos that the user can
+ * select from the launcher, but we don't want to duplicate the video
+ * player code. Instead, we add the video player to the Orchard app
+ * linker set multiple times, each time with a different name. We
+ * can then select what subdirectory to search in the video_init()
+ * routine based on instance.app->name.
+ *
+ * There's a little bit of hackery going on here: the orchard_app()
+ * macro builds the linker set symbol name using the names of the
+ * init/start/event/exit functions. If these function names are always
+ * the same, you'll end up with duplicate symbol names, which will
+ * cause a compiler error. To work around this, we use a different
+ * name for the init function. This also allows us to use a different
+ * subdirectory for each category of videos.
+ */
+
+orchard_app("Be Prepared!", "icons/mask.rgb", 0, video_civildef, video_start,
+    video_event, video_exit, 0);
+
+orchard_app("Da Bomb!", "icons/mask.rgb", 0, video_dabomb, video_start,
+    video_event, video_exit, 0);
+
+orchard_app("Misc Videos", "icons/mask.rgb", 0, video_misc, video_start,
     video_event, video_exit, 0);
