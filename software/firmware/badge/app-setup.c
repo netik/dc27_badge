@@ -282,7 +282,6 @@ static void setup_event(OrchardAppContext *context,
   // idle timeout
   if (event->type == timerEvent) {
     if( (chVTGetSystemTime() - last_ui_time) > (UI_IDLE_TIME * 1000) && last_ui_time != 0) {
-      printf("idle exit\n");
 
       orchardAppRun(orchardAppByName("Badge"));
     }
@@ -310,12 +309,6 @@ static void setup_event(OrchardAppContext *context,
         break;
       case keyADown:
         nextLedPattern(max_led_patterns);
-        break;
-      case keyBSelect:
-        configSave(config);
-        printf("b exit\n");
-        orchardAppExit();
-
         break;
       default:
         break; // all other keys ignored
@@ -355,7 +348,6 @@ static void setup_event(OrchardAppContext *context,
     case GEVENT_GWIN_BUTTON:
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonOK) {
           configSave(config);
-          printf("ok exit\n");
           orchardAppExit();
           return;
       }
@@ -382,7 +374,6 @@ static void setup_event(OrchardAppContext *context,
           config->touch_data_present = 1;
 
           configSave(config);
-          printf("cal exit");
           orchardAppExit();
           return;
       }
