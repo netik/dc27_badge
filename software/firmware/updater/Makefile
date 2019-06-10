@@ -72,7 +72,7 @@ ASFLAGS= $(CFLAGS)
 updater: $(OBJS)
 	$(CC) $(OBJS) -ggdb -nostdlib -nostartfiles -mfloat-abi=hard	\
 	-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -flto			\
-	-Wl,--no-warn-mismatch,-Tlink.lds -lc -lgcc -o $@
+	-Wl,-Tlink.lds -lc -lgcc -o $@
 	$(OBJCOPY) -O binary $@ updater.bin
 
 clean:
