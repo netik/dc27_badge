@@ -264,8 +264,8 @@ static void unlock_start(OrchardAppContext *context)
   redraw_code(p);
 
   // idle ui timer (10s)
-  orchardAppTimer(context, 10000000, true);
   last_ui_time = chVTGetSystemTime();
+  orchardAppTimer(context, 10000000, true);
 
   geventListenerInit(&p->glUnlockListener);
   gwinAttachListener(&p->glUnlockListener);

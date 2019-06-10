@@ -47,7 +47,6 @@ void led_pattern_balls(led_pattern_balls_t*);
 void led_pattern_flame(void);
 void led_pattern_kitt(int8_t*, int8_t*);
 void led_pattern_triangle(int8_t*, int8_t*);
-void led_pattern_sparkle(uint8_t*);
 void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value);
 void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep);
 void led_pattern_rainbow(float* p_hue, uint8_t repeat);
@@ -57,6 +56,7 @@ void led_pattern_running_lights(uint8_t red,
                                 uint8_t blue,
                                 uint8_t * p_position);
 void led_pattern_kraftwerk(uint8_t* p_index, int8_t* p_position);
+void led_pattern_police(uint8_t* p_index, int8_t* p_direction);
 void led_pattern_dualspin(uint8_t r1, uint8_t g1, uint8_t b1,
                           uint8_t r2, uint8_t g2, uint8_t b2,
                           uint8_t glitter, int16_t* p_index);
@@ -147,7 +147,7 @@ const char *fxlist[] = {
   "Flame",
   "Balls",
   "Larson Scanner",
-  "Sparkle",
+  "Spot da Fed",
   "Double Sweep",
   "Triangle",
   "Triple Sweep",
@@ -481,7 +481,7 @@ static THD_FUNCTION(bling_thread, arg) {
         led_pattern_kitt(&anim_index, &anim_position);
         break;
       case 5:
-        led_pattern_sparkle(&anim_uindex);
+        led_pattern_police(&anim_uindex, &anim_position);
         break;
       case 6:
         led_pattern_double_sweep(&anim_uindex, &anim_hue, &anim_value);
@@ -569,6 +569,9 @@ static THD_FUNCTION(bling_thread, arg) {
     if ( ledExitRequest ) {
       // force one full cycle through an update on request to force LEDs off
       led_set_all(0,0,0);
+
+      // make the eyeball very dim.
+      led_set(31, 64, 0, 0);
       led_show();
       ledsOff = 1;
 
@@ -660,6 +663,16 @@ void led_pattern_balls(led_pattern_balls_t* p_balls) {
   }
   led_show();
   led_set_all(0, 0, 0);
+}
+
+void led_pattern_police(uint8_t* p_index, int8_t* p_direction) {
+   ++(*p_index);
+   if (*p_index >= LED_COUNT) {*p_index = 0;}
+   int idexR = *p_index;
+   int idexB = 30-idexR;
+   led_set(idexR, 255, 0, 0);
+   led_set(idexB, 0, 0, 255);
+   led_show();
 }
 
 void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep) {
@@ -787,21 +800,6 @@ void led_pattern_kitt(int8_t* p_index, int8_t* p_direction) {
   }
 }
 
-void led_pattern_sparkle(uint8_t* p_index) {
-  uint8_t mode = randRange(0, 2);
-
-  switch (mode) {
-    case 0:
-      *p_index = randRange(0, LED_COUNT);
-      led_set(*p_index, 255, 255, 255);
-      break;
-    case 1:;
-      float hue = (float)randRange(0, 100) / 100.0;
-      led_set_rgb(*p_index, util_hsv_to_rgb(hue, 1.0, 1.0));
-      break;
-  }
-  led_show();
-}
 
 void led_pattern_double_sweep(uint8_t* p_index, float* p_hue, float* p_value) {
   color_rgb_t rgb = util_hsv_to_rgb(*p_hue, 1.0, *p_value);

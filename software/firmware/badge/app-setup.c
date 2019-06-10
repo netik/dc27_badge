@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "ch.h"
 #include "hal.h"
@@ -198,8 +199,8 @@ static void setup_start(OrchardAppContext *context) {
   context->priv = p;
 
   // idle ui timer (10s)
-  orchardAppTimer(context, 10000000, true);
   last_ui_time = chVTGetSystemTime();
+  orchardAppTimer(context, 1000000, true);
 
   geventListenerInit(&p->glSetup);
   gwinAttachListener(&p->glSetup);
@@ -272,9 +273,17 @@ static void setup_event(OrchardAppContext *context,
 
   p = context->priv;
 
+  /* handle events */
+  if (event->type == radioEvent) {
+    /* Ignore radio events */
+    return;
+  }
+
   // idle timeout
   if (event->type == timerEvent) {
     if( (chVTGetSystemTime() - last_ui_time) > (UI_IDLE_TIME * 1000) && last_ui_time != 0) {
+      printf("idle exit\n");
+
       orchardAppRun(orchardAppByName("Badge"));
     }
     return;
@@ -284,12 +293,6 @@ static void setup_event(OrchardAppContext *context,
     max_led_patterns = LED_PATTERNS_FULL;
   } else {
     max_led_patterns = LED_PATTERNS_LIMITED;
-  }
-
-  /* handle events */
-  if (event->type == radioEvent) {
-    /* Ignore radio events */
-    return;
   }
 
   if (event->type == keyEvent && event->key.flags == keyRelease) {
@@ -310,7 +313,9 @@ static void setup_event(OrchardAppContext *context,
         break;
       case keyBSelect:
         configSave(config);
+        printf("b exit\n");
         orchardAppExit();
+
         break;
       default:
         break; // all other keys ignored
@@ -350,6 +355,7 @@ static void setup_event(OrchardAppContext *context,
     case GEVENT_GWIN_BUTTON:
       if (((GEventGWinButton*)pe)->gwin == p->ghButtonOK) {
           configSave(config);
+          printf("ok exit\n");
           orchardAppExit();
           return;
       }
@@ -376,6 +382,7 @@ static void setup_event(OrchardAppContext *context,
           config->touch_data_present = 1;
 
           configSave(config);
+          printf("cal exit");
           orchardAppExit();
           return;
       }
