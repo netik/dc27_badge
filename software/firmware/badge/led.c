@@ -351,6 +351,9 @@ led_reinit (void)
 void led_show() {
   msg_t r;
 
+  if (leds_init_ok == false)
+    return;
+
   i2cAcquireBus(&I2CD2);
 
   drv_is31fl_set_page(ISSI_PAGE_PWM);
