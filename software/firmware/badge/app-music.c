@@ -49,6 +49,9 @@
 
 #include "ides_gfx.h"
 
+#include "userconfig.h"
+#include "led.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -179,6 +182,32 @@ columnDraw (int col, short amp)
 }
 
 static void
+ledDraw (short amp)
+{
+	int i;
+
+	if (amp > LED_COUNT_INTERNAL)
+		amp = LED_COUNT_INTERNAL;
+
+	for (i = LED_COUNT_INTERNAL; i > 0; i--) {
+		if (i > amp)
+			led_set (i - 1, 0, 0, 0);
+		else {
+			if (i >= 0 && i < 8)
+				led_set (i - 1, 0, 255, 0);
+			if (i >= 8 && i < 16)
+				led_set (i - 1, 255, 255, 0);
+			if (i >= 16 && i <= 32)
+				led_set (i - 1, 255, 0, 0);
+		}
+	}
+
+	led_show ();
+	
+	return;
+}
+
+static void
 musicVisualize (MusicHandles * p, uint16_t * samples)
 {
 	unsigned int sum;
@@ -220,11 +249,23 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	 * by 14. This seems to yield a reasonable range.
 	 */
 
+	r = 0;
+
 	for (i = 0; i < MUSIC_SAMPLES / 4; i++) {
 		sum = ((p->real[i] * p->real[i]) +
 		    (p->imaginary[i] * p->imaginary[i]));
 		p->real[i] = (short)(sqrt (sum) / 14.0);
+		r += p->real[i];
 	}
+
+	/*
+	 * Take an average of the sample amplitudes and use it to
+	 * frob the LEDs.
+	 */
+
+	r = r / (MUSIC_SAMPLES / 4);
+	b = r;
+	ledDraw (b);
 
 	/*
 	 * Draw the bar graph. We draw 160 bars that are each one pixel
@@ -262,10 +303,14 @@ musicPlay (MusicHandles * p, char * fname)
 	GListener gl;
 	int r = 0;
 	uint8_t enb;
+	userconfig *config;
+
+	config = getConfig();
 
 	i2sPlay (NULL);
 	enb = i2sEnabled;
 	i2sEnabled = FALSE;
+        ledStop();
 
 	/* Initialize some of the display write window info. */
 
@@ -325,6 +370,8 @@ musicPlay (MusicHandles * p, char * fname)
 
 	i2sAudioAmpCtl (I2S_AMP_ON);
 	i2sEnabled = enb;
+
+	ledSetPattern (config->led_pattern);
 
 	f_close (&f);
 	free (i2sBuf);

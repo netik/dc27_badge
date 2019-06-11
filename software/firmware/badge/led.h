@@ -27,6 +27,8 @@ typedef uint32_t color_rgb_t;
 /* Prototypes */
 extern bool led_init(void);
 extern void led_test(void);
+extern void led_show (void);
+extern void led_set (uint8_t index, uint8_t r, uint8_t g, uint8_t b);
 extern void ledStart(void);
 extern uint8_t ledStop(void);
 extern void ledSetPattern(uint8_t pattern);
