@@ -14,13 +14,14 @@ typedef struct _entity {
   VECTOR vecVelocity;     /* current velocity */
   VECTOR vecVelocityGoal; /* goal velocity */
   VECTOR vecPosition;     /* position */
+  VECTOR prevPos;         /* where we were on the last frame */
   VECTOR vecGravity;
-
   VECTOR vecPositionLast; /* if this doesn't match, we'll erase and repaint */
 
   /* contents of the previous area */
+  bool pix_inited;
   pixel_t pix_old[FB_X * FB_Y]; /* frame buffer */
-  
+
 } ENTITY;
 
 typedef struct _enemy {

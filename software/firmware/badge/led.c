@@ -14,9 +14,11 @@
 #define M_PI 3.14159265358979323846264338327950288
 
 /* if use_gamma is on, we'll do lookups againt the gamma table
- * which may make animations look smoother
+ * which may make animations look smoother. This comes at a cost,
+ * which is that over all the entire system looks darker. It's off
+ * for now. 
  */
-#define USE_GAMMA 1
+#undef USE_GAMMA
 
 /*
  * We use led_memory[] as a frame buffer. In reality it's
@@ -182,6 +184,14 @@ void led_brightness_set(uint8_t brightness) {
   led_brightness_level = brightness;
 }
 
+// FIND INDEX OF ANTIPODAL (OPPOSITE) LED
+#define LEDS_TOP_INDEX 15
+static int antipodal_index(int i) {
+  int iN = i + LEDS_TOP_INDEX;
+  if (i >= LEDS_TOP_INDEX) {iN = ( i + LEDS_TOP_INDEX ) % LED_COUNT; }
+  return iN;
+}
+
 /* color utils */
 color_rgb_t util_hsv_to_rgb(float H, float S, float V) {
   H = fmodf(H, 1.0);
@@ -268,9 +278,9 @@ void ledSetPattern(uint8_t patt) {
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
   if (index < LED_COUNT_INTERNAL) {
 #ifdef USE_GAMMA
-    led_memory[led_address[index][0] + 1] = gamma_values[g];
-    led_memory[led_address[index][1] + 1] = gamma_values[r];
-    led_memory[led_address[index][2] + 1] = gamma_values[b];
+    led_memory[led_address[index][0] + 1] = gamma_values[g / 2];
+    led_memory[led_address[index][1] + 1] = gamma_values[r / 2];
+    led_memory[led_address[index][2] + 1] = gamma_values[b / 2];
 #else
     led_memory[led_address[index][0] + 1] = g;
     led_memory[led_address[index][1] + 1] = r;
@@ -532,7 +542,7 @@ static THD_FUNCTION(bling_thread, arg) {
         break;
       case 20:
         led_pattern_dualspin(0x14, 0x80, 0x33,
-                             0x11, 0x45, 0xff,
+                             0xdd, 0xdd, 0xdd,
                              0, &anim_pos16);
         break;
       case 21:
@@ -669,13 +679,16 @@ void led_pattern_balls(led_pattern_balls_t* p_balls) {
 }
 
 void led_pattern_police(uint8_t* p_index, int8_t* p_direction) {
-   ++(*p_index);
-   if (*p_index >= LED_COUNT) {*p_index = 0;}
-   int idexR = *p_index;
-   int idexB = 30-idexR;
-   led_set(idexR, 255, 0, 0);
-   led_set(idexB, 0, 0, 255);
-   led_show();
+
+  //-POLICE LIGHTS (TWO COLOR SOLID)
+  ++(*p_index);
+  if (*p_index >= LED_COUNT) {*p_index = 0;}
+  int fx_positionR = *p_index;
+  int fx_positionB = antipodal_index(fx_positionR);
+  led_set(fx_positionR, 255, 0, 0);
+  led_set(fx_positionB, 0, 0, 255);
+
+  led_show();
 }
 
 void led_pattern_triple_sweep(led_triple_sweep_state_t* p_triple_sweep) {
