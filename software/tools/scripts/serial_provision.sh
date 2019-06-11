@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 echo
 echo "daBomb cp2102 provision Ready."

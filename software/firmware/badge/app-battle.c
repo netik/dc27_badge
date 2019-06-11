@@ -358,7 +358,7 @@ static void enemy_list_refresh(void) {
 
         e->xp = p->ble_game_state.ble_ides_xp;
         memcpy(e->ble_peer_addr, p->ble_peer_addr, 6);
-        strcpy(e->name, p->ble_peer_name);
+        strcpy(e->name, (char *)p->ble_peer_name);
         printf("enemy: found new enemy %x:%x:%x:%x:%x:%x\n",
           p->ble_peer_addr[5],
           p->ble_peer_addr[4],
