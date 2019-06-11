@@ -79,7 +79,7 @@ draw_launcher_buttons(struct launcher_list * list)
 
 	wi.g.show = TRUE;
 	wi.g.x = 141;
-	wi.g.width = 170;
+	wi.g.width = 179;
 	wi.g.height = -1;
 	wi.text = tmp;
 	wi.customDraw = gwinLabelDrawJustifiedRight;
