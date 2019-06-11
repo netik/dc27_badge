@@ -32,7 +32,7 @@
 #define DEBUG_BATTLE_STATE 1
 #include "gamestate.h"
 
-#define ENABLE_MAP_PING  1   // if you want the sonar sounds
+#undef ENABLE_MAP_PING     // if you want the sonar sounds
 
 #define VGOAL       8        // ship accleration goal
 #define VDRAG       -0.01f   // this is constant
@@ -123,8 +123,7 @@ entity_init(ENTITY *p) {
   // this is "ocean drag"
   p->vecGravity.x = VDRAG;
   p->vecGravity.y = VDRAG;
-
-  memset (p->pix_old, 0xFF, sizeof(p->pix_old));
+  p->pix_inited = false;
 }
 
 /* approach lets us interpolate smoothly between positions */
@@ -141,8 +140,39 @@ approach(float flGoal, float flCurrent, float dt) {
   return flGoal;
 }
 
+static bool
+check_land_collision(ENTITY *p) {
+  /* linear search for a collision with land.
+   *
+   * this is somewhat inefficient, we should be checking edges of pixmap
+   * not interior. Edges are 40 pixels, interior is 100 px. maybe we don't
+   * care at such a small size.
+   */
+  for (int i = 0; i < FB_X * FB_Y; i++) {
+    if ( (p->pix_old[i] <= 0x9e00 || p->pix_old[i] >= 0xbf09) && p->pix_old[i] != 0xffff) {
+      // collide
+      p->vecVelocity.x = 0;
+      p->vecVelocity.y = 0;
+      p->vecVelocityGoal.x = 0;
+      p->vecVelocityGoal.y = 0;
+      p->vecPosition.x = p->prevPos.x;
+      p->vecPosition.y = p->prevPos.y;
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
 static void
 entity_update(ENTITY *p, float dt) {
+
+  if (! p->pix_inited) {
+    getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+    p->pix_inited = true;
+  }
+
   if ((p->ttl > -1) && (p->visible)) {
     p->ttl--;
     if (p->ttl == 0) {
@@ -150,6 +180,10 @@ entity_update(ENTITY *p, float dt) {
       i2sPlay("game/splash.snd");
     }
   }
+
+  // store our position
+  p->prevPos.x = p->vecPosition.x;
+  p->prevPos.y = p->vecPosition.y;
 
   p->vecVelocity.x = approach(p->vecVelocityGoal.x,
                               p->vecVelocity.x,
@@ -164,43 +198,18 @@ entity_update(ENTITY *p, float dt) {
 
   p->vecVelocity.x = p->vecVelocity.x + p->vecGravity.x * dt;
   p->vecVelocity.y = p->vecVelocity.y + p->vecGravity.y * dt;
-}
 
-static bool
-player_check_collision(ENTITY *p) {
-  /* linear search for a collision with land.
-   *
-   * this is somewhat inefficient, we should be checking edges of pixmap
-   * not interior. Edges are 40 pixels, interior is 100 px. maybe we don't
-   * care at such a small size.
-   */
-  for (int i = 0; i < FB_X * FB_Y; i++) {
-    if ( (p->pix_old[i] <= 0x9e00 || p->pix_old[i] >= 0xbf09) && p->pix_old[i] != 0xffff) {
-      // collide
-      p->vecVelocity.x = 0;
-      p->vecVelocity.y = 0;
-      p->vecVelocityGoal.x = 0;
-      p->vecVelocityGoal.y = 0;
-      return true;
-    }
+  if (p->prevPos.x != p->vecPosition.x ||
+      p->prevPos.y != p->vecPosition.y) {
+      // erase the old position
+      putPixelBlock (p->prevPos.x, p->prevPos.y, FB_X, FB_Y, p->pix_old);
+
+      // check for collision with land
+      getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+      if (check_land_collision(p)) {
+              getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+      };
   }
-
-  return false;
-}
-
-static void
-entity_erase(ENTITY *p) {
-  /*
-   * This test is here because right after the app is launched,
-   * before we draw the player for the first time, we don't have
-   * anything to un-draw yet.
-   */
-  if (p->pix_old[0] == 0xFFFF)
-    return;
-
-  /* Put back what was previously on the screen */
-  putPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
-  return;
 }
 
 static void
@@ -233,23 +242,6 @@ bullets_render(void) {
 }
 
 static void
-enemy_render(void *e) {
-  ENEMY *en = e;
-  if (en->e.blinking) {
-    // blink this enemy at 2 Hz.
-    if ( (animtick % FPS) < (FPS/2) )
-      return;
-  }
-  gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, Red);
-}
-
-static void
-enemy_renderall(void) {
-  // @brief walk our linked list of enemies and render each one
-  gll_each(enemies, enemy_render);
-}
-
-static void
 enemy_clear_blink(void *e) {
   ENEMY *en = e;
   en->e.blinking = false;
@@ -261,36 +253,13 @@ enemy_clearall_blink(void) {
   gll_each(enemies, enemy_clear_blink);
 }
 
-static void
-enemy_erase(void *e) {
-  ENEMY *en = e;
-  entity_erase(&(en->e));
-}
-
-static void
-enemy_erase_all(void) {
-  gll_each(enemies, enemy_erase);
-}
-
-static void enemy_update(void *e) {
-  ENEMY *en = e;
-  // do whatever update here, like get positions from network
-  // grab the pixels under the new position
-  getPixelBlock (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, en->e.pix_old);
-}
-
-static void
-enemy_update_all(void) {
-  gll_each(enemies, enemy_update);
-}
-
 static ENEMY *enemy_find_by_peer(uint8_t *addr) {
   gll_node_t *currNode = enemies->first;
 
   while(currNode != NULL) {
     ENEMY *e = (ENEMY *)currNode->data;
 
-    if (memcmp(e->ble_peer_addr, addr, 6)) {
+    if (memcmp(e->ble_peer_addr, addr, 6) == 0) {
       return e;
     }
 
@@ -307,7 +276,7 @@ static int enemy_find_ll_pos(uint8_t *addr) {
   while(currNode != NULL) {
     ENEMY *e = (ENEMY *)currNode->data;
 
-    if (memcmp(e->ble_peer_addr, addr, 6)) {
+    if (memcmp(e->ble_peer_addr, addr, 6) == 0) {
       return i;
     }
 
@@ -336,16 +305,42 @@ static void enemy_list_refresh(void) {
 
       /* have we seen this address ? */
       if ((e = enemy_find_by_peer(p->ble_peer_addr)) != NULL) {
+//        printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
+//          p->ble_peer_addr[5],
+//          p->ble_peer_addr[4],
+//          p->ble_peer_addr[3],
+//          p->ble_peer_addr[2],
+//          p->ble_peer_addr[1],
+//          p->ble_peer_addr[0]);
+        // we expire 3 seconds earlier than the ble peer checker...
+        if (e->ttl < 3) {
+          // erase the old position
+          putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, FB_X, FB_Y, e->e.pix_old);
+
+          gll_remove(enemies, enemy_find_ll_pos(p->ble_peer_addr));
+          continue;
+        }
+
         /* yes, update state */
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
+
         e->xp = p->ble_game_state.ble_ides_xp;
         e->ttl = p->ble_ttl;
 
-        // we expire 3 seconds earlier than the ble peer checker...
-        if (e->ttl < 3) {
-          gll_remove(enemies, enemy_find_ll_pos(p->ble_peer_addr));
+        if (e->e.prevPos.x != e->e.vecPosition.x ||
+            e->e.prevPos.y != e->e.vecPosition.y) {
+            // erase the old position
+            putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, FB_X, FB_Y, e->e.pix_old);
+            // grab the new data
+            getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, e->e.pix_old);
+            /* Draw ship */
+            gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, Red);
+            // update
+            e->e.prevPos.x = e->e.vecPosition.x;
+            e->e.prevPos.y = e->e.vecPosition.y;
         }
+
       } else {
         /* no, add him */
         e = malloc(sizeof(ENEMY));
@@ -353,10 +348,24 @@ static void enemy_list_refresh(void) {
         e->e.visible = true;
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
+        e->e.prevPos.x = e->e.vecPosition.x;
+        e->e.prevPos.y = e->e.vecPosition.y;
+
+        /* load the frame buffer */
+        getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, e->e.pix_old);
+        /* Draw ship */
+        gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, Red);
+
         e->xp = p->ble_game_state.ble_ides_xp;
         memcpy(e->ble_peer_addr, p->ble_peer_addr, 6);
         strcpy(e->name, p->ble_peer_name);
-
+        printf("enemy: found new enemy %x:%x:%x:%x:%x:%x\n",
+          p->ble_peer_addr[5],
+          p->ble_peer_addr[4],
+          p->ble_peer_addr[3],
+          p->ble_peer_addr[2],
+          p->ble_peer_addr[1],
+          p->ble_peer_addr[0]);
         gll_push(enemies, e);
       }
     }
@@ -374,7 +383,6 @@ battle_init(OrchardAppContext *context)
   entity_init(&me);
   me.vecPosition.x = config->last_x;
   me.vecPosition.y = config->last_y;
-
   me.visible = true;
 
   for (int i=0; i < MAX_BULLETS; i++) {
@@ -383,7 +391,6 @@ battle_init(OrchardAppContext *context)
 
   // load the enemy list
   enemies = gll_init();
-  enemy_list_refresh();
 
   // turn off the LEDs
   ledSetPattern(LED_PATTERN_WORLDMAP);
@@ -579,7 +586,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
   (void) context;
   uint8_t i;
-  VECTOR prevme;
   ENEMY *nearest;
   battle_ui_t *bh;
         char tmp[40];
@@ -593,39 +599,16 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     if (battle_funcs[current_battle_state].tick != NULL) // some states lack a tick call
       battle_funcs[current_battle_state].tick();
 
-    // erase everything.
-    entity_erase(&me);
-    prevme.x = me.vecPosition.x;
-    prevme.y = me.vecPosition.y;
-
-    // bullets
-    for (i=0; i < MAX_BULLETS; i++) {
-      if (bullet[i].visible == true) {
-        entity_erase(&bullet[i]);
-      }
-    }
-
-    // we have to update bullets in the game loop, not outside or
-    // we'll have all sorts of artifacts on the screen.
-    // do we need a new bullet?
-    if (bullet_pending.x != 0 || bullet_pending.y != 0) {
-      fire_bullet(&me, &bullet_pending);
-                        bullet_pending.x = bullet_pending.y = 0;
-    };
-
-    // enemy update
-    enemy_erase_all();
-
-    // refresh world map enemy positions every 800mS
-    if (animtick % 24 == 0) {
+    // refresh world map enemy positions every 500mS
+    if (animtick % 12 == 0) {
       enemy_list_refresh();
     }
 
-    enemy_update_all();
-
     // player update
     entity_update(&me, FRAME_DELAY);
-    getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
+
+    // check for collison with enemies
+    player_render(&me);
 
     // bullets
     for (i=0; i < MAX_BULLETS; i++) {
@@ -636,22 +619,13 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           bullet[i].visible = false;
         }
 
-                                // do we have an impact?
-                                // ...
+        // do we have an impact?
+        // ...
 
         getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
       }
     }
-
-    if (player_check_collision(&me) || entity_OOB(&me)) {
-      // put the player back and get the pixel again
-      me.vecPosition.x = prevme.x;
-      me.vecPosition.y = prevme.y;
-      getPixelBlock (me.vecPosition.x, me.vecPosition.y, FB_X, FB_Y, me.pix_old);
-    }
-
     bullets_render();
-    player_render(&me);
 
     // render enemies
     if (current_battle_state == WORLD_MAP) {
@@ -677,8 +651,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         }
       }
     }
-
-    enemy_renderall();
   }
 
   // we cheat a bit here and read pins directly to see if
@@ -876,7 +848,6 @@ void state_combat_enter(void) {
 
   draw_hud(mycontext);
   enemy_clearall_blink();
-  player_render(&me);
 }
 
 
