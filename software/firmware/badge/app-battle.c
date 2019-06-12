@@ -25,8 +25,12 @@
 #include "math.h"
 #include "led.h"
 #include "userconfig.h"
+
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
+#include "ble_l2cap_lld.h"
+#include "ble_gattc_lld.h"
+#include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
 #define DEBUG_BATTLE_STATE 1
@@ -53,7 +57,7 @@ static ENTITY bullet[MAX_BULLETS];
 static VECTOR bullet_pending = {0,0};
 
 static ENEMY *last_near = NULL;
-static ENEMY current_enemy;
+static ENEMY *current_enemy = NULL;
 
 OrchardAppContext *mycontext;
 
@@ -78,6 +82,7 @@ static int16_t animtick = 0;
 
 /* prototypes */
 static void changeState(battle_state nextstate);
+static ENEMY *enemy_find_by_peer(uint8_t *addr);
 
 static
 int getMapTile(ENTITY *e) {
@@ -259,7 +264,7 @@ static ENEMY *enemy_find_by_peer(uint8_t *addr) {
   while(currNode != NULL) {
     ENEMY *e = (ENEMY *)currNode->data;
 
-    if (memcmp(e->ble_peer_addr, addr, 6) == 0) {
+    if (memcmp(&(e->ble_peer_addr), addr, 6) == 0) {
       return e;
     }
 
@@ -269,14 +274,14 @@ static ENEMY *enemy_find_by_peer(uint8_t *addr) {
   return NULL;
 }
 
-static int enemy_find_ll_pos(uint8_t *addr) {
+static int enemy_find_ll_pos(ble_gap_addr_t *ble_peer_addr) {
   gll_node_t *currNode = enemies->first;
   int i = 0;
 
   while(currNode != NULL) {
     ENEMY *e = (ENEMY *)currNode->data;
 
-    if (memcmp(e->ble_peer_addr, addr, 6) == 0) {
+    if (memcmp(&(e->ble_peer_addr), ble_peer_addr, 6) == 0) {
       return i;
     }
 
@@ -304,20 +309,22 @@ static void enemy_list_refresh(void) {
       /* this is one of us, copy data over. */
 
       /* have we seen this address ? */
-      if ((e = enemy_find_by_peer(p->ble_peer_addr)) != NULL) {
-//        printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
-//          p->ble_peer_addr[5],
-//          p->ble_peer_addr[4],
-//          p->ble_peer_addr[3],
-//          p->ble_peer_addr[2],
-//          p->ble_peer_addr[1],
-//          p->ble_peer_addr[0]);
+      /* addresses are 48 bit / 6 bytes */
+      if ((e = enemy_find_by_peer(&p->ble_peer_addr[3])) != NULL) {
+        printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
+          p->ble_peer_addr[5],
+          p->ble_peer_addr[4],
+          p->ble_peer_addr[3],
+          p->ble_peer_addr[2],
+          p->ble_peer_addr[1],
+          p->ble_peer_addr[0]);
+
         // we expire 3 seconds earlier than the ble peer checker...
         if (e->ttl < 3) {
           // erase the old position
           putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, FB_X, FB_Y, e->e.pix_old);
 
-          gll_remove(enemies, enemy_find_ll_pos(p->ble_peer_addr));
+          gll_remove(enemies, enemy_find_ll_pos((ble_gap_addr_t *)&p->ble_peer_addr));
           continue;
         }
 
@@ -357,15 +364,19 @@ static void enemy_list_refresh(void) {
         gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, Red);
 
         e->xp = p->ble_game_state.ble_ides_xp;
-        memcpy(e->ble_peer_addr, p->ble_peer_addr, 6);
+        memcpy(&e->ble_peer_addr.addr, p->ble_peer_addr, 6);
+
+        e->ble_peer_addr.addr_id_peer = TRUE;
+        e->ble_peer_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+
         strcpy(e->name, (char *)p->ble_peer_name);
         printf("enemy: found new enemy %x:%x:%x:%x:%x:%x\n",
-          p->ble_peer_addr[5],
-          p->ble_peer_addr[4],
-          p->ble_peer_addr[3],
-          p->ble_peer_addr[2],
-          p->ble_peer_addr[1],
-          p->ble_peer_addr[0]);
+          e->ble_peer_addr.addr[5],
+          e->ble_peer_addr.addr[4],
+          e->ble_peer_addr.addr[3],
+          e->ble_peer_addr.addr[2],
+          e->ble_peer_addr.addr[1],
+          e->ble_peer_addr.addr[0]);
         gll_push(enemies, e);
       }
     }
@@ -520,13 +531,13 @@ draw_hud(OrchardAppContext *context) {
 
   gdispDrawStringBox (0, 0,
                       215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-                      current_enemy.name,
+                      current_enemy->name,
                       bh->fontSM,
                       White,
                       justifyRight);
 }
 
-static bool
+static ENEMY *
 enemy_engage(OrchardAppContext *context) {
 
   ENEMY * e;
@@ -536,15 +547,10 @@ enemy_engage(OrchardAppContext *context) {
   if (e == NULL) {
     // play an error sound because no one is near by
     i2sPlay("game/error.snd");
-    return FALSE;
-  } else {
-    // zoom in
-    i2sPlay("game/engage.snd");
-    // remember this guy.
-    memcpy(&current_enemy, e, sizeof(ENEMY));
-    changeState(APPROVAL_DEMAND);
-    return TRUE;
+    return NULL;
   }
+
+  return e;
 }
 
 static void
@@ -589,6 +595,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ENEMY *nearest;
   battle_ui_t *bh;
         char tmp[40];
+	OrchardAppRadioEvent * radio;
+	ble_evt_t * evt;
+	char			msg[32];
 
   bh = (battle_ui_t *) context->priv;
 
@@ -653,6 +662,24 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     }
   }
 
+  // deal with the radio
+  if (event->type == radioEvent) {
+    radio = (OrchardAppRadioEvent *)&event->radio;
+    evt = &radio->evt;
+
+  	switch (radio->type) {
+      case connectEvent:
+        // fires when we succeed on a connect i think.
+        screen_alert_draw (FALSE, "Handshaking...");
+        msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
+        bleGattcWrite (gm_handle.value_handle,
+            (uint8_t *)msg, 1, FALSE);
+        break;
+      default:
+        break;
+      }
+  }
+
   // we cheat a bit here and read pins directly to see if
   // the joystick is in a corner.
   if (current_battle_state == COMBAT) {
@@ -702,7 +729,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           break;
         case keyBSelect:
           if (current_battle_state != COMBAT) {
-            if (enemy_engage(context)) {
+            if ((current_enemy = enemy_engage(context)) != NULL) {
               changeState(APPROVAL_DEMAND);
             }
           }
@@ -832,6 +859,27 @@ void state_worldmap_tick(void) {
 }
 
 void state_worldmap_exit(void) {
+}
+
+// APPOVAL_DEMAND ------------------------------------------------------------
+void state_approval_demand_enter(void) {
+  printf("engage: %x:%x:%x:%x:%x:%x\n",
+    current_enemy->ble_peer_addr.addr[5],
+    current_enemy->ble_peer_addr.addr[4],
+    current_enemy->ble_peer_addr.addr[3],
+    current_enemy->ble_peer_addr.addr[2],
+    current_enemy->ble_peer_addr.addr[1],
+    current_enemy->ble_peer_addr.addr[0]);
+  screen_alert_draw (FALSE, "Connecting...");
+
+  // we will now attempt to open a BLE gap connecto to the user.
+  bleGapConnect (&current_enemy->ble_peer_addr);
+}
+
+void state_approval_demand_tick(void) {
+}
+
+void state_approval_demand_exit(void) {
 }
 
 // COMBAT --------------------------------------------------------------------

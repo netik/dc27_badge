@@ -43,6 +43,10 @@ static void state_worldmap_enter(void);
 static void state_worldmap_tick(void);
 static void state_worldmap_exit(void);
 
+static void state_approval_demand_enter(void);
+static void state_approval_demand_tick(void);
+static void state_approval_demand_exit(void);
+
 static void state_combat_enter(void);
 static void state_combat_tick(void);
 static void state_combat_exit(void);
@@ -81,9 +85,9 @@ state_funcs battle_funcs[] = {
     NULL
   },
   { // approval_demand
-    NULL,
-    NULL,
-    NULL
+    state_approval_demand_enter,
+    state_approval_demand_tick,
+    state_approval_demand_exit,
   },
   {  // approval_wait
     NULL,
