@@ -194,7 +194,7 @@ video_exit(OrchardAppContext *context)
 	VideoHandles * p;
 	int i;
 	userconfig *config = getConfig();
-	
+
 	p = context->priv;
 
 	if (p == NULL)
@@ -229,7 +229,7 @@ video_exit(OrchardAppContext *context)
  * subdirectory for each category of videos.
  */
 
-orchard_app("Be Prepared!", "icons/mask.rgb", 0, video_civildef, video_start,
+orchard_app("Be Prepared!", "icons/cd.rgb", 0, video_civildef, video_start,
     video_event, video_exit, 0);
 
 orchard_app("Da Bomb!", "icons/mask.rgb", 0, video_dabomb, video_start,
