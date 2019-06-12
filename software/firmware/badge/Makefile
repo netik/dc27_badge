@@ -332,13 +332,17 @@ ULIBS += -u _printf_float -u _scanf_float
 # End of user defines
 ##############################################################################
 
-.PHONY: updatebuildtime
+.PHONY: updatebuildtime 
 
 RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/
 include $(RULESPATH)/rules.mk
 
-PRE_MAKE_ALL_RULE_HOOK: buildtime.h
- 
+PRE_MAKE_ALL_RULE_HOOK: buildtime.h unlocks.h
+
+# if you haven't made this file yet, we'll make it for you. 
+unlocks.h: | unlocks.h.dist
+	cp $| $@
+
 buildtime.h: updatebuildtime
 	echo "#define BUILDTIME \"Built: `/bin/date` (`/bin/hostname -s`)\"" > $@
 	echo "#define BUILDVER `/bin/date +%s`" >> $@

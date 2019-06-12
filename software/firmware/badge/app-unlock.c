@@ -18,8 +18,6 @@
 #include "i2s_lld.h"
 #include "fontlist.h"
 
-#define MAX_CODE_LEN 5
-
 extern systime_t char_reset_at;
 
 // handles
@@ -49,31 +47,32 @@ typedef struct _UnlockHandles {
 
 /* codes, packed as bits. Note only last five nibbles (4 bits) are used, MSB of
    1st byte is always zero */
-#define MAX_ULCODES 11
-static uint8_t unlock_codes[MAX_ULCODES][3] = { { 0x01, 0xde, 0xf1 }, // 0 +10% DEF
-                                                { 0x0d, 0xef, 0xad }, // 1 +10% HP
-                                                { 0x0a, 0x7a, 0xa7 }, // 2 +10% DMG
-                                                { 0x07, 0x70, 0x07 }, // 3 SUBMARINE
-                                                { 0x0a, 0xed, 0x17 }, // 4 FASTER HEAL
-                                                { 0x00, 0x1a, 0xc0 }, // 5 MOAR LEDs
-                                                { 0x0b, 0xae, 0xac }, // 6
-                                                { 0x0d, 0xe0, 0x1a }, // 7
-                                                { 0x0b, 0xbb, 0xbb }, // 8
-                                                { 0x06, 0x07, 0x42 }, // 9 GOD MODE (can issue grants)
-                                                { 0x0a, 0x1a, 0x1a }  // 10 PINGDUMP
+
+static uint8_t unlock_codes[MAX_ULCODES][3] = { 
+  UL_CODE_0,
+  UL_CODE_1,
+  UL_CODE_2,
+  UL_CODE_3,
+  UL_CODE_4,
+  UL_CODE_5,
+  UL_CODE_7,
+  UL_CODE_8,
+  UL_CODE_9,
+  UL_CODE_10
 };
 
 static char *unlock_desc[] = { "+10% DEF",
                                "+10% HP",
                                "+10% DMG",
-                               "+20% LUCK",
-                               "FASTER HEAL",
+                               "+20% SPEED",
+                               "FAST REPAIR",
                                "MOAR LEDs",
-                               "SUBMARINE!",
-                               "YYY",
-                               "XX",
-                               "U R A GOD",
-                               "PINGDUMP"};
+                               "MOAR VIDEO",
+                               "CARRIER",
+                               "SUBMARINE",
+                               "GOD MODE",
+                               "DEBUG MODE"
+};
 
 static uint32_t last_ui_time = 0;
 static uint8_t code[MAX_CODE_LEN];

@@ -1,0 +1,38 @@
+#ifndef __UNLOCKS_H__
+#define __UNLOCKS_H__
+
+/* These are a set of bit flags in config->unlocks which can do
+ * different things to the badge. There are 11 unlocks. 
+ *
+ * The number in parenthesis indicates the grant page the buff can be
+ * transmitted from. (Hit Up on the fight screen if you have the GOD unlock)
+ **/
+
+#define MAX_ULCODES 11
+#define MAX_CODE_LEN 5
+
+#define UL_PLUSDEF      ( 1 << 0 )  // +10% DEF 
+#define UL_PLUSHP       ( 1 << 1 )  // +10% HP  
+#define UL_PLUSMIGHT    ( 1 << 2 )  // +10% DMG 
+#define UL_SPEED        ( 1 << 3 )  // +20% SPEED
+#define UL_REPAIR       ( 1 << 4 )  // FAST REPAIR
+#define UL_LEDS         ( 1 << 5 )  // MORE LEDs
+#define UL_VIDEO1       ( 1 << 6 )  // Unlocks additional videos
+#define UL_SHIP1        ( 1 << 7 )  // Unlocks additional ships
+#define UL_SHIP2        ( 1 << 8 )  // Unlocks additional ship #2
+#define UL_GOD          ( 1 << 9 )  // GOD_MODE       
+#define UL_PINGDUMP     ( 1 << 10 ) // NETWORK DEBUG (BLACK_BADGE only)
+
+#define UL_CODE_0  { 0x01, 0xde, 0xf1 } // 0 +10% DEF
+#define UL_CODE_1  { 0x0d, 0xef, 0xad } // 1 +10% HP
+#define UL_CODE_2  { 0x0a, 0x7a, 0xa7 } // 2 +10% DMG
+#define UL_CODE_3  { 0x07, 0x70, 0x07 } // 3 +20% SPEED
+#define UL_CODE_4  { 0x0a, 0xed, 0x17 } // 4 FAST REPAIR
+#define UL_CODE_5  { 0x00, 0x1a, 0xc0 } // 5 MOAR LEDs
+#define UL_CODE_6  { 0x0b, 0xae, 0xac } // 6 MOAR VIDEO
+#define UL_CODE_7  { 0x0d, 0xe0, 0x1a } // 7 SHIP1
+#define UL_CODE_8  { 0x0b, 0xbb, 0xbb } // 8 SHIP2
+#define UL_CODE_9  { 0x06, 0x07, 0x42 } // 9 GOD MODE (can issue grants)
+#define UL_CODE_10 { 0x0a, 0x1a, 0x1a } // 10 PINGDUMP
+
+#endif
