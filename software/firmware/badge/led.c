@@ -111,6 +111,7 @@ const unsigned char led_address[LED_COUNT_INTERNAL][3] = {
 
 };
 
+#ifdef USE_GAMMA
 const uint8_t gamma_values[] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,
@@ -131,6 +132,7 @@ const uint8_t gamma_values[] = {
     215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
     255
 };
+#endif
 
 // common colors
 const color_rgb_t roygbiv[7] = { 0xff0000,
