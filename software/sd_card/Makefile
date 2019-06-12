@@ -82,6 +82,11 @@ photos/%.rgb: photos_src/%.tif
 # User supplied photos if any.
 photos: tools_dep $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.tif)))))
 
+
+# the credits image, if needed
+tif/images/credits.tif: tif/images/credits.tif.orig
+	convert $< -rotate 90 -flop tif/images/credits.tif
+
 # Sounds
 dac/%.snd: dac/%.mp3
 	$(TOOLS_DIR)/scripts/sndmp3toraw.sh $<
