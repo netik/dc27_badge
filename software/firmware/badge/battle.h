@@ -25,7 +25,7 @@ typedef struct _entity {
 } ENTITY;
 
 typedef struct _enemy {
-  uint8_t  ble_peer_addr[6];
+  ble_gap_addr_t  ble_peer_addr;
   char     name[16];
   uint8_t  level;
   uint16_t xp;

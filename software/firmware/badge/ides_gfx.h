@@ -36,4 +36,5 @@ extern void drawBufferedStringBox(
 #endif /* __IDES_GFX_H__ */
 
 /* used by screen_alert_draw */
+#define ALERT_DELAY_SHORT 1500
 #define ALERT_DELAY  3000
