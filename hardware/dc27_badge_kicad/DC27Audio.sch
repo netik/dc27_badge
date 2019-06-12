@@ -172,7 +172,7 @@ Text Notes 7350 7500 0    50   ~ 0
 DC 27 Badge - Team Ides - John Adams / Bill Paul
 Text Notes 1900 3350 0    50   ~ 10
 I2S/I2C DAC
-Text Notes 4100 1900 0    50   ~ 10
+Text Notes 2600 1800 0    50   ~ 10
 Audio Power Filtering\n
 Text Notes 8850 4300 0    50   ~ 0
 +\n
@@ -200,8 +200,8 @@ F 3 "~" H 7150 4800 50  0001 C CNN
 	1    7150 4800
 	0    1    1    0   
 $EndComp
-Text Notes 1900 5650 0    50   ~ 0
-MUST PUT ALL OF THIS CIRCUITRY ON SEPARATE AREA OF BOARD WITH GROUND MOAT / 0 OHM\n RESISTOR, ETC.
+Text Notes 7000 6750 0    50   ~ 0
+CIRCUIT MUST BE ISOLATED FROM RF SOURCES AND AS FAR AWAY FROM HIGH FREQUENCY COMPONENTS \n(MCPU, LED I2C CONTROLLER, SCREEN) AS POSSIBLE
 $Comp
 L Device:C C511
 U 1 1 5C16082A
@@ -237,7 +237,7 @@ F 1 "3.3uF" V 5011 3650 50  0000 C CNN
 F 2 "Capacitor_SMD:CP_Elec_5x5.3" H 4850 3650 50  0001 C CNN
 F 3 "~" H 4850 3650 50  0001 C CNN
 	1    4850 3650
-	0    1    1    0   
+	0    -1   -1   0   
 $EndComp
 $Comp
 L Device:CP1 C506
@@ -248,7 +248,7 @@ F 1 "3.3uF" V 5011 4100 50  0000 C CNN
 F 2 "Capacitor_SMD:CP_Elec_5x5.3" H 4850 4100 50  0001 C CNN
 F 3 "~" H 4850 4100 50  0001 C CNN
 	1    4850 4100
-	0    1    1    0   
+	0    -1   -1   0   
 $EndComp
 $Comp
 L Device:C C?
@@ -556,7 +556,7 @@ F 3 "~" H 8940 4300 50  0001 C CNN
 $EndComp
 Text Notes 9500 4450 0    50   ~ 0
 AST-01708MRR\n200mW
-Text Notes 4850 3350 0    50   ~ 0
+Text Notes 4550 2700 0    50   ~ 0
 Can drop R502,503 to 15k, \nbut some distortion present.
 $Comp
 L Connector:TestPoint TP501
@@ -606,4 +606,6 @@ Wire Wire Line
 Wire Wire Line
 	4500 4850 4500 4550
 Connection ~ 4500 4550
+Text Notes 7000 7150 0    50   ~ 0
+C504 and C506 had inverted polarity in our production run. This has been corrected in this schematic. \nWe used bipolar caps in our BOM - Nichicon UZP1E3R3MCL1GB (25v) or UWP1H3R3MCL1GB (50v)\n\n
 $EndSCHEMATC
