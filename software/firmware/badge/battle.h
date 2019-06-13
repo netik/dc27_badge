@@ -1,13 +1,21 @@
 #ifndef _BATTLE_H_
 #define _BATTLE_H_
 
+#include "ble_lld.h"
+#include "ble_gap_lld.h"
+#include "ble_peer.h"
+
 #include "vector.h"
+#include "gfx.h"
 
 /* Old pixel data */
 #define FB_X 10
 #define FB_Y 10
 
+enum entity_type { T_PLAYER, T_ENEMY, T_BULLET, T_SPECIAL };
+
 typedef struct _entity {
+  enum entity_type type;
   bool visible;
   bool blinking;
   int ttl;                /* if -1, always visible, else a number of frames */

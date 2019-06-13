@@ -228,6 +228,9 @@ redraw_list (struct launcher_list * list)
 			GDISP->clipx1 = 320;
 			GDISP->clipy1 = 240;
 
+			gdispFillArea ((j * 90) + 2, 30 + (110 * i),
+			    81, 81, Black);
+
 			if (actualid < list->total) {
 				gwinSetText (label, item->name, FALSE);
 				if (item->entry->icon != NULL) {
@@ -236,8 +239,6 @@ redraw_list (struct launcher_list * list)
 				}
 			} else {
 				gwinSetText (label, "", FALSE);
-				gdispFillArea ((j * 90) + 2, 30 + (110 * i),
-				    81, 81, Black);
 			}
 
 			_gwinDrawEnd (list->ghButtonDn);

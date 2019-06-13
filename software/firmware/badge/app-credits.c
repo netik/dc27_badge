@@ -90,5 +90,5 @@ credits_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Credits", "icons/captain.rgb", 0, credits_init, credits_start,
+orchard_app("Credits", "icons/captain.gif", 0, credits_init, credits_start,
     credits_event, credits_exit, 3);

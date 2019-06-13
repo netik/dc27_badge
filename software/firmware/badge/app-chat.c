@@ -505,5 +505,5 @@ static void chat_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Radio Chat", "icons/lghthous.rgb", 0,
+orchard_app("Radio Chat", "icons/lghthous.gif", 0,
 	chat_init, chat_start, chat_event, chat_exit, 9999);

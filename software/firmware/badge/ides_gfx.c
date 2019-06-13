@@ -139,10 +139,9 @@ const GWidgetStyle DarkGreyStyle = {
   }
 };
 
-int
-putImageFile (char *name, int16_t x, int16_t y)
+static int
+putGifImage (char *name, int16_t x, int16_t y)
 {
-#ifdef notdef
 	gdispImage img;
 
 	if (gdispImageOpenFile (&img, name) == GDISP_IMAGE_ERR_OK) {
@@ -150,7 +149,13 @@ putImageFile (char *name, int16_t x, int16_t y)
 		gdispImageClose (&img);
 		return (1);
 	}
-#else
+
+	return (0);
+}
+
+static int
+putRgbImage (char *name, int16_t x, int16_t y)
+{
 	FIL f;
 	uint16_t h;
 	uint16_t w;
@@ -210,8 +215,21 @@ putImageFile (char *name, int16_t x, int16_t y)
 	f_close (&f);
 
 	free (buf);
-#endif
+
 	return (0);
+}
+
+int
+putImageFile (char *name, int16_t x, int16_t y)
+{
+	int r;
+
+	if (strstr (name, ".gif") != NULL)
+		r = putGifImage (name, x, y);
+	else
+		r = putRgbImage (name, x, y);
+
+	return (r);
 }
 
 void
