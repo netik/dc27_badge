@@ -58,7 +58,7 @@ static volatile long unsigned int *unlock_codes[MAX_ULCODES][3] = {
   { UL_CODE_7 },
   { UL_CODE_8 },
   { UL_CODE_9 },
-  { UL_CODE_10 } 
+  { UL_CODE_10 }
 };
 
 static char *unlock_desc[] = { "+10% DEF",
@@ -345,6 +345,7 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
     (code[3] << 24);
 
   for (i=0; i < MAX_ULCODES; i++) {
+    printf("%d\n", i);
     if (**unlock_codes[i] == mycode) {
       // set bit
       config->unlocks |= (1 << i);
@@ -373,7 +374,9 @@ static void do_unlock(OrchardAppContext *context) {
   UnlockHandles * p;
   p = context->priv;
 
+  // remove the UI and repaint the background
   destroy_unlock_ui(context);
+  putImageFile(IMG_UNLOCKBG, 0, 0);
 
   if (validate_code(context, config)) {
     return;

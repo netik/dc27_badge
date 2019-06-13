@@ -107,8 +107,26 @@ openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
 	-c "mdw 0x10001090"				\
 	-c "mww 0x10001094 0x00000000"			\
 	-c "mdw 0x10001094"				\
-	-c "mww 0x10001098 0x00000000"			\
-	-c "mdw 0x10001098"				\
+        -c "mww 0x100010d0 0x0001deaf"                  \
+        -c "mdw 0x100010d0"                             \
+        -c "mww 0x100010d4 0x000f10a7"                  \
+        -c "mdw 0x100010d4"                             \
+        -c "mww 0x100010d8 0x000c0571"                  \
+        -c "mdw 0x100010d8"                             \
+        -c "mww 0x100010dc 0x000d2d2d"                  \
+        -c "mdw 0x100010dc"                             \
+        -c "mww 0x100010e0 0x00031337"                  \
+        -c "mdw 0x100010e0"                             \
+        -c "mww 0x100010e4 0x000feed5"                  \
+        -c "mdw 0x100010e4"                             \
+        -c "mww 0x100010ec 0x0000c01d"                  \
+        -c "mdw 0x100010ec"                             \
+        -c "mww 0x100010f0 0x000a55e5"                  \
+        -c "mdw 0x100010f0"                             \
+        -c "mww 0x100010f4 0x000b00b5"                  \
+        -c "mdw 0x100010f4"                             \
+        -c "mww 0x100010f8 0x000c0ded"                  \
+        -c "mdw 0x100010f8"                             \
 	-c "mww 0x4001E504 0x00000000"			\
 	-c "mdw 0x4001E400"				\
 	-c "reset init"					\
