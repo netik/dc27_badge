@@ -48,7 +48,7 @@ typedef struct _UnlockHandles {
 /* codes, packed as bits. Note only last five nibbles (4 bits) are used, MSB of
    1st byte is always zero */
 
-static long unsigned int *unlock_codes[MAX_ULCODES][3] = {
+static volatile long unsigned int *unlock_codes[MAX_ULCODES][3] = {
   { UL_CODE_0 },
   { UL_CODE_1 },
   { UL_CODE_2 },
@@ -58,7 +58,7 @@ static long unsigned int *unlock_codes[MAX_ULCODES][3] = {
   { UL_CODE_7 },
   { UL_CODE_8 },
   { UL_CODE_9 },
-  { UL_CODE_10 }
+  { UL_CODE_10 } 
 };
 
 static char *unlock_desc[] = { "+10% DEF",
@@ -339,12 +339,13 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
   long unsigned int mycode;
 
   // each code is a byte. shift it accordingly
-  mycode = (code[0] << 4)
+  mycode = (code[0] << 0) +
+    (code[1] << 8) +
+    (code[2] << 16) +
+    (code[3] << 24);
 
   for (i=0; i < MAX_ULCODES; i++) {
-    if ((unlock_codes[i][0] == code[0]) &&
-        (unlock_codes[i][1] == ((code[1] << 4) + code[2])) &&
-        (unlock_codes[i][2] == ((code[3] << 4) + code[4]))) {
+    if (**unlock_codes[i] == mycode) {
       // set bit
       config->unlocks |= (1 << i);
 
