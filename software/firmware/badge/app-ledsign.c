@@ -145,5 +145,5 @@ ledsign_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("LED Sign", "icons/shell.rgb", 0, ledsign_init, ledsign_start,
+orchard_app("LED Sign", "icons/shell.gif", 0, ledsign_init, ledsign_start,
     ledsign_event, ledsign_exit, 9999);

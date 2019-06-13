@@ -898,5 +898,5 @@ void state_combat_exit(void) {
 
 // -------------------------------------------------------------------------
 
-orchard_app("Sea Battle", "icons/ship.rgb", 0, battle_init, battle_start,
+orchard_app("Sea Battle", "icons/ship.gif", 0, battle_init, battle_start,
     battle_event, battle_exit, 1);

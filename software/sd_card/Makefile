@@ -47,6 +47,10 @@ rgb/icons/%.rgb : tif/icons/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/icons/
 
+rgb/icons/%.gif : tif/icons/%.tif
+	convert $< -fuzz 7% -fill none -draw "matte 0,0 replace" $@
+	mv $(subst gif/,tif/,$(@)) rgb/icons/
+
 rgb/game/%.rgb : tif/game/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst rgb/,tif/,$(@)) rgb/game/
@@ -119,6 +123,7 @@ images: dirs tools_dep photos \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/*.tif))))) \
         $(addprefix rgb/images/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/images/*.tif))))) \
         $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
+        $(addprefix rgb/icons/, $(notdir  $(addsuffix .gif, $(basename $(wildcard tif/icons/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.jpg))))) \
         $(addprefix rgb/flags/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/flags/*.tif))))) \
@@ -140,6 +145,7 @@ sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
 	-cp rgb/images/*.rgb $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
+	-cp rgb/icons/*.gif $(STAGING_DIR)/icons
 	-cp rgb/flags/*.rgb $(STAGING_DIR)/flags
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
 	-cp rgb/font/led_90/*.rgb $(STAGING_DIR)/font/led_90
