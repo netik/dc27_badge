@@ -344,5 +344,5 @@ void update_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Update FW", "icons/rov.gif", 0,
+orchard_app("Update FW", "icons/rov.rgb", 0,
             update_init, update_start, update_event, update_exit, 9999);

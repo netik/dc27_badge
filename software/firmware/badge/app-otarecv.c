@@ -194,5 +194,5 @@ ota_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("OTA Recv", "icons/wheel.gif", APP_FLAG_HIDDEN,
+orchard_app("OTA Recv", NULL, APP_FLAG_HIDDEN,
     ota_init, ota_start, ota_event, ota_exit, 1);

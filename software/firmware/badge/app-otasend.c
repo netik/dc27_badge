@@ -308,5 +308,5 @@ otasend_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("OTA Send", "icons/wheel.gif",
+orchard_app("OTA Send", "icons/wheel.rgb",
     0, otasend_init, otasend_start, otasend_event, otasend_exit, 1);

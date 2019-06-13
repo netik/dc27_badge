@@ -478,5 +478,5 @@ music_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Play Music", "icons/jelly.gif", 0, music_init, music_start,
+orchard_app("Play Music", "icons/jelly.rgb", 0, music_init, music_start,
     music_event, music_exit, 9999);

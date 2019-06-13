@@ -313,5 +313,5 @@ static void default_exit(OrchardAppContext *context) {
   return;
 }
 
-orchard_app("Badge", "icons/anchor.gif", 0, default_init, default_start,
+orchard_app("Badge", "icons/anchor.rgb", 0, default_init, default_start,
 	default_event, default_exit, 0);

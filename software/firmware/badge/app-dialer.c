@@ -479,5 +479,5 @@ dialer_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("DTMF Dialer", "icons/bell.gif", 0, dialer_init,
+orchard_app("DTMF Dialer", "icons/bell.rgb", 0, dialer_init,
              dialer_start, dialer_event, dialer_exit, 9999);
