@@ -16,7 +16,7 @@
 /* if use_gamma is on, we'll do lookups againt the gamma table
  * which may make animations look smoother. This comes at a cost,
  * which is that over all the entire system looks darker. It's off
- * for now. 
+ * for now.
  */
 #undef USE_GAMMA
 
@@ -67,7 +67,9 @@ void led_pattern_bgsparkle(uint8_t r1, uint8_t g1, uint8_t b1,
 void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
                         uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay,
                         uint8_t *pos);
-void led_pattern_unlock(uint8_t* p_index);
+void led_pattern_unlock(uint8_t* p_index, int8_t* p_direction);
+void led_pattern_unlock_success(uint8_t* p_index);
+void led_pattern_unlock_failed(uint8_t *p_position);
 
 /* control vars */
 static thread_t * pThread;
@@ -474,7 +476,7 @@ static THD_FUNCTION(bling_thread, arg) {
     if (led_current_func != 0) {
       uint8_t my_current_func;
 
-      if (led_current_func > 1 || led_current_func >= 128) {
+      if (led_current_func > 1 ) {
         my_current_func = led_current_func;
       } else {
         // we're in random mode. We will switch every 15 seconds.
@@ -571,9 +573,15 @@ static THD_FUNCTION(bling_thread, arg) {
         led_clear();
         break;
       case LED_PATTERN_UNLOCK:
-        led_pattern_unlock(&anim_uindex);
+        led_pattern_unlock(&anim_uindex, &anim_index);
         break;
-      case 255:
+      case LED_PATTERN_UNLOCK_FAILED:
+        led_pattern_unlock_failed(&anim_uindex);
+        break;
+      case LED_PATTERN_LEVELUP:
+        led_pattern_unlock_success(&anim_uindex);
+        break;
+      case LED_TEST:
         led_test();
         break;
       }
@@ -1079,27 +1087,72 @@ void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
     (*pos)++;
 }
 
-void led_pattern_unlock(uint8_t *p_position) {
+void led_pattern_unlock(uint8_t *p_position, int8_t *direction) {
   userconfig *config = getConfig();
 
+
+  led_set_all(0, 0, 0);
   // pulse the first 16 LEDs to show unlock state.
   for (int i = 0; i < 16; i++) {
-    uint8_t red = 255;
-    uint8_t green = 127;
-    uint8_t blue = 50;
-
     // pulse the ones that we have enabled.
     if (config->unlocks & ( 1 << i )) {
-      led_set(i, ((sin(*p_position) * 127 + 128) / 255) * red,
-	      ((sin(*p_position) * 127 + 128) / 255) * green,
-	      ((sin(*p_position) * 127 + 128) / 255) * blue);
+      led_set(i,0,*p_position,0);
     } else {
       // grey
-      led_set(i, 30, 30, 30);
+      led_set(i, 0, 0, 30);
     }
   }
 
-  p_position++;
+  // update movement
+  if (*direction != -1 && *direction != 1) {
+    *direction = 1;
+  }
+
+  *p_position = *p_position + *direction;
+
+  if (*p_position > 254) {
+    *p_position = 255;
+    *direction = -1;
+  }
+
+  if (*p_position == 0) {
+    *direction = 1;
+  }
+
+  led_show();
+}
+
+void led_pattern_unlock_failed(uint8_t *p_position) {
+  // abuse lights @ 40mS
+  if (*p_position % 2 == 0) {
+    led_set_all(220, 255, 255); // white-ish-blue
+  } else {
+    led_set_all(0, 0, 0);
+  };
+
+  ++(*p_position);
+
+  if (*p_position > 1000 / EFFECTS_REDRAW_MS) {
+    *p_position = 0;
+  }
+
+  led_show();
+
+}
+
+void led_pattern_unlock_success(uint8_t *p_position) {
+  // abuse lights @ 40mS, green
+  if (*p_position % 2 == 0) {
+    led_set_all(0, 255, 0); // green
+  } else {
+    led_set_all(0, 0, 0);
+  };
+
+  ++(*p_position);
+
+  if (*p_position > 1000 / EFFECTS_REDRAW_MS) {
+    *p_position = 0;
+  }
 
   led_show();
 

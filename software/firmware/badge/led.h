@@ -17,10 +17,13 @@
 
 // these are non-user selectable patterns
 // which are used by some apps
-#define LED_PATTERN_WORLDMAP 128
-#define LED_PATTERN_BATTLE   129
-#define LED_PATTERN_UNLOCK   130
-#define LED_TEST             255
+#define LED_PATTERN_WORLDMAP       128
+#define LED_PATTERN_BATTLE         129
+#define LED_PATTERN_UNLOCK         130
+#define LED_PATTERN_UNLOCK_FAILED  131
+#define LED_PATTERN_UNLOCK_SUCCESS 132
+#define LED_PATTERN_LEVELUP        132
+#define LED_TEST                   255
 
 typedef uint32_t color_rgb_t;
 

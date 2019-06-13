@@ -61,6 +61,9 @@
 # Offsets 0x10001080 through 0x100010FC correspond to UICR->CUSTOMER[0]
 # through UICR->CUSTOMER[31]. We can put anything we want there.
 #
+# Currently UICR->CUSTOMER[20] through UICR->CUSTOMER[31] contain the
+# game 'unlock' codes, which unlock various buffs in the game.
+#
 # Currently this script programs some test values to UICR->CUSTOMER[0]
 # through UICR->CUSTOMER[3]. It then sets UICR->CUSTOMER[4] to a 4-byte
 # string, which can act as the unlocks password. (The string can be longer,

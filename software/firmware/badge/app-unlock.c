@@ -89,25 +89,25 @@ static void unlock_result(UnlockHandles *p, char *msg) {
   gdispClear(Black);
   // lines around text
   gdispDrawThickLine(0,
-    (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) - 10,
+    (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_20, fontHeight) / 2) - 10,
     gdispGetWidth(),
-    (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) - 10,
+    (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_20, fontHeight) / 2) - 10,
     Blue,
     4,
     false
   );
 
   gdispDrawStringBox (0,
-          (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2),
+          (gdispGetHeight() / 2) - (gdispGetFontMetric(p->font_futara_20, fontHeight) / 2),
           gdispGetWidth(),
-          gdispGetFontMetric(p->font_futara_36, fontHeight),
+          gdispGetFontMetric(p->font_futara_20, fontHeight),
           msg,
-          p->font_futara_36, Yellow, justifyCenter);
+          p->font_futara_20, Yellow, justifyCenter);
 
   gdispDrawThickLine(0,
-    (gdispGetHeight() / 2) + (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) + 10,
+    (gdispGetHeight() / 2) + (gdispGetFontMetric(p->font_futara_20, fontHeight) / 2) + 10,
     gdispGetWidth(),
-    (gdispGetHeight() / 2) + (gdispGetFontMetric(p->font_futara_36, fontHeight) / 2) + 10,
+    (gdispGetHeight() / 2) + (gdispGetFontMetric(p->font_futara_20, fontHeight) / 2) + 10,
     Blue,
     4,
     false
@@ -341,13 +341,13 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
   long unsigned int mycode;
 
   // each code is a byte. shift it accordingly
-  mycode = (code[0] << 0) +
-    (code[1] << 8) +
-    (code[2] << 16) +
-    (code[3] << 24);
+  mycode = ((code[0] << 16) +
+            (code[1] << 12) +
+            (code[2] << 8) +
+            (code[3] << 4) +
+            code[4]);
 
   for (i=0; i < MAX_ULCODES; i++) {
-    printf("%d\n", i);
     if (*unlock_codes[i] == mycode) {
       // set bit
       config->unlocks |= (1 << i);
@@ -356,8 +356,9 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
       strcat(tmp, " unlocked!");
       unlock_result(p, tmp);
 
-      //      ledSetFunction(leds_all_strobe);
-      i2sPlay("fight/leveiup.raw");
+      ledSetPattern(LED_PATTERN_LEVELUP);
+
+      i2sPlay("sound/levelup.snd");
 
       // save to config
       configSave(config);
@@ -385,7 +386,7 @@ static void do_unlock(OrchardAppContext *context) {
   }
 
   // no match
-  //      ledSetFunction(leds_all_strobered);
+  ledSetPattern(LED_PATTERN_UNLOCK_FAILED);
   unlock_result(p, "Unlock Failed.");
   i2sPlay("sound/wilhelm.snd");
   chThdSleepMilliseconds(ALERT_DELAY);
