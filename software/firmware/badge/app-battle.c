@@ -264,7 +264,7 @@ static ENEMY *enemy_find_by_peer(uint8_t *addr) {
   while(currNode != NULL) {
     ENEMY *e = (ENEMY *)currNode->data;
 
-    if (memcmp(&(e->ble_peer_addr), addr, 6) == 0) {
+    if (memcmp(&(e->ble_peer_addr.addr), addr, 6) == 0) {
       return e;
     }
 
@@ -310,15 +310,15 @@ static void enemy_list_refresh(void) {
 
       /* have we seen this address ? */
       /* addresses are 48 bit / 6 bytes */
-      if ((e = enemy_find_by_peer(&p->ble_peer_addr[3])) != NULL) {
-        printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
+      if ((e = enemy_find_by_peer(&p->ble_peer_addr[0])) != NULL) {
+        /*printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
           p->ble_peer_addr[5],
           p->ble_peer_addr[4],
           p->ble_peer_addr[3],
           p->ble_peer_addr[2],
           p->ble_peer_addr[1],
           p->ble_peer_addr[0]);
-
+        */
         // we expire 3 seconds earlier than the ble peer checker...
         if (e->ttl < 3) {
           // erase the old position
@@ -370,6 +370,7 @@ static void enemy_list_refresh(void) {
         e->ble_peer_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
 
         strcpy(e->name, (char *)p->ble_peer_name);
+        /*
         printf("enemy: found new enemy %x:%x:%x:%x:%x:%x\n",
           e->ble_peer_addr.addr[5],
           e->ble_peer_addr.addr[4],
@@ -377,6 +378,7 @@ static void enemy_list_refresh(void) {
           e->ble_peer_addr.addr[2],
           e->ble_peer_addr.addr[1],
           e->ble_peer_addr.addr[0]);
+        */
         gll_push(enemies, e);
       }
     }
@@ -594,11 +596,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   uint8_t i;
   ENEMY *nearest;
   battle_ui_t *bh;
-        char tmp[40];
 	OrchardAppRadioEvent * radio;
 	ble_evt_t * evt;
-	char			msg[32];
-
+	ble_gatts_evt_rw_authorize_request_t * rw;
+	ble_gatts_evt_write_t * req;
+  char msg[32];
+  char tmp[40];
   bh = (battle_ui_t *) context->priv;
 
   /* MAIN GAME EVENT LOOP */
@@ -670,11 +673,29 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   	switch (radio->type) {
       case connectEvent:
         // fires when we succeed on a connect i think.
-        screen_alert_draw (FALSE, "Handshaking...");
+          screen_alert_draw (FALSE, "Sending Challenge...");
         msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
         bleGattcWrite (gm_handle.value_handle,
             (uint8_t *)msg, 1, FALSE);
         break;
+      case gattsReadWriteAuthEvent:
+        rw =
+         &evt->evt.gatts_evt.params.authorize_request;
+        req = &rw->request.write;
+        if (rw->request.write.handle ==
+            ot_handle.value_handle &&
+            req->data[0] == BLE_IDES_GAMEATTACK_ACCEPT) {
+          screen_alert_draw (FALSE,
+              "Battle Accepted!");
+          /* Offer accepted - create L2CAP link*/
+          //bleL2CapConnect (BLE_IDES_OTA_PSM);
+        } else {
+          screen_alert_draw (FALSE,
+              "Battle Declined.");
+          chThdSleepMilliseconds (2000);
+          bleGapDisconnect ();
+          changeState(WORLD_MAP);
+        }
       default:
         break;
       }
