@@ -184,6 +184,7 @@ CSRC += main.c \
 	ui-list.c \
 	gll.c \
 	splash.c \
+	ships.c \
 	app-badge.c \
 	app-battle.c \
 	app-launcher.c \
@@ -337,11 +338,7 @@ ULIBS += -u _printf_float -u _scanf_float
 RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/
 include $(RULESPATH)/rules.mk
 
-PRE_MAKE_ALL_RULE_HOOK: buildtime.h unlocks.h
-
-# if you haven't made this file yet, we'll make it for you. 
-unlocks.h: | unlocks.h.dist
-	cp $| $@
+PRE_MAKE_ALL_RULE_HOOK: buildtime.h
 
 buildtime.h: updatebuildtime
 	echo "#define BUILDTIME \"Built: `/bin/date` (`/bin/hostname -s`)\"" > $@
@@ -351,8 +348,6 @@ buildtime.h: updatebuildtime
 OHEX = $(BUILDDIR)/$(PROJECT).hex
 OELF = $(BUILDDIR)/$(PROJECT).elf
 OBIN = $(BUILDDIR)/$(PROJECT).bin
-
-
 
 include $(CHIBIOS_CONTRIB)/os/various/jlink.mk
 include $(CHIBIOS_CONTRIB)/os/various/gdb.mk
