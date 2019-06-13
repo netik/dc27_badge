@@ -1090,33 +1090,22 @@ void led_pattern_meteor(uint8_t red, uint8_t green, uint8_t blue,
 void led_pattern_unlock(uint8_t *p_position, int8_t *direction) {
   userconfig *config = getConfig();
 
-
   led_set_all(0, 0, 0);
   // pulse the first 16 LEDs to show unlock state.
   for (int i = 0; i < 16; i++) {
     // pulse the ones that we have enabled.
     if (config->unlocks & ( 1 << i )) {
-      led_set(i,0,*p_position,0);
+      led_set(i,0,(sin(.25 * *p_position) * 64) + 128,0);
     } else {
-      // grey
+      // blue
       led_set(i, 0, 0, 30);
     }
   }
 
-  // update movement
-  if (*direction != -1 && *direction != 1) {
-    *direction = 1;
-  }
-
-  *p_position = *p_position + *direction;
+  *p_position = *p_position + 1;
 
   if (*p_position > 254) {
-    *p_position = 255;
-    *direction = -1;
-  }
-
-  if (*p_position == 0) {
-    *direction = 1;
+    *p_position = 0;
   }
 
   led_show();
