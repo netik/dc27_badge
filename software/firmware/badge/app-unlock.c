@@ -276,6 +276,7 @@ static void unlock_start(OrchardAppContext *context)
 
 
   // display the current unlocks on the LEDs
+  led_clear();
   ledSetPattern(LED_PATTERN_UNLOCK);
 }
 
