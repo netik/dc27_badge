@@ -36,6 +36,9 @@
 #include "scroll_lld.h"
 #include "i2s_lld.h"
 
+#include "led.h"
+#include "userconfig.h"
+
 static uint32_t
 credits_init(OrchardAppContext *context)
 {
@@ -51,9 +54,13 @@ credits_start(OrchardAppContext *context)
 
 	(void)context;
 
+        // curtains down, start the show.
 	gdispClear (Black);
 
+	ledSetPattern(16); // blue spin
+        
 	scrollAreaSet (0, 0);
+
 	i2sWait ();
 	i2sPlay ("sound/fflost.snd");
 	r = scrollImage ("images/credits.rgb", 15);
@@ -87,6 +94,10 @@ static void
 credits_exit(OrchardAppContext *context)
 {
 	(void)context;
+	userconfig *config = getConfig();
+
+        // restore leds
+	ledSetPattern(config->led_pattern);
 	return;
 }
 

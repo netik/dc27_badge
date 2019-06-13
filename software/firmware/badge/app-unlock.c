@@ -55,6 +55,7 @@ static volatile long unsigned int *unlock_codes[MAX_ULCODES] = {
   UL_CODE_3 ,
   UL_CODE_4 ,
   UL_CODE_5 ,
+  UL_CODE_6 ,
   UL_CODE_7 ,
   UL_CODE_8 ,
   UL_CODE_9 ,
