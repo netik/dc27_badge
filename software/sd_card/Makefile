@@ -44,11 +44,12 @@ rgb/font/led_90/%.rgb : jpg/font/led_90/%.jpg
 	mv $(subst .jpg,.rgb,$<) $(@)
 
 rgb/icons/%.rgb : tif/icons/%.tif
-	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
-	mv $(subst rgb/,tif/,$(@)) rgb/icons/
+	$(TOOLS_DIR)/scripts/bg_black.sh $< tmpbg.tif
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh tmpbg.tif
+	mv tmpbg.rgb $(subst gif/,tif/,$(@))
 
 rgb/icons/%.gif : tif/icons/%.tif
-	convert $< -fuzz 7% -fill none -draw "matte 0,0 replace" $@
+	$(TOOLS_DIR)/scripts/bg_transparent.sh $< $@
 	mv $(subst gif/,tif/,$(@)) rgb/icons/
 
 rgb/game/%.rgb : tif/game/%.tif
