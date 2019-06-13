@@ -1,7 +1,6 @@
 .dep
 build
 buildtime.h
-unlocks.h
 *~
 #*#
 .*~
