@@ -34,8 +34,6 @@
 #include "orchard-app.h"
 #include "orchard-ui.h"
 
-#include "ff.h"
-
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
 #include "ble_l2cap_lld.h"
@@ -44,31 +42,32 @@
 #include "ble_peer.h"
 #include "i2s_lld.h"
 #include "ides_gfx.h"
-#include "crc32.h"
+#include "unlocks.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 
-#define OTA_SIZE	BLE_IDES_L2CAP_MTU
+extern char * unlock_desc[];
 
-typedef struct _OtaHandles {
-	FIL		f;
-	uint8_t		txbuf[OTA_SIZE];
-	uint8_t		retry;
-	uint32_t	size;
-	uint32_t	last;
-	uint32_t	crc;
-	uint32_t	send_crc;
+#define UL_STATE_PW_SENT	1
+#define UL_STATE_UL_SENT	2
+#define UL_STATE_UL_READ	3
+
+typedef struct _UlHandles {
+	uint32_t	unlocks;
+	int		unlock_idx;
+	uint16_t	len;
+	uint32_t	ul_state;
 	char *		listitems[BLE_PEER_LIST_SIZE + 2];
 	ble_gap_addr_t	listaddrs[BLE_PEER_LIST_SIZE + 2];
 	OrchardUiContext uiCtx;
 	GListener	gl;
-} OtaHandles;
+} UlHandles;
 
 static uint32_t
-otasend_init (OrchardAppContext *context)
+radiounlock_init (OrchardAppContext *context)
 {
 	(void)context;
 
@@ -81,22 +80,19 @@ otasend_init (OrchardAppContext *context)
 }
 
 static void
-otasend_start (OrchardAppContext *context)
+radiounlock_start (OrchardAppContext *context)
 {
-	OtaHandles * p;
+	UlHandles * p;
 	ble_peer_entry * peer;
 	int i, j;
 
 	gdispClear (Black);
 
-	p = malloc (sizeof (OtaHandles));
+	p = malloc (sizeof (UlHandles));
 
-	memset (p, 0, sizeof(OtaHandles));
-	p->crc = CRC_INIT;
+	memset (p, 0, sizeof(UlHandles));
 
 	context->priv = p;
-
-	f_open (&p->f, "0:BADGE.BIN", FA_READ);
 
 	p->listitems[0] = "Choose a peer";
 	p->listitems[1] = "Exit";
@@ -133,16 +129,11 @@ otasend_start (OrchardAppContext *context)
 }
 
 static void
-otasend_event (OrchardAppContext *context,
+radiounlock_event (OrchardAppContext *context,
 	const OrchardAppEvent *event)
 {
 	OrchardAppRadioEvent *	radio;
-	ble_evt_t *		evt;
-	UINT			br;
-	OtaHandles * 		p;
-	char			msg[32];
-	ble_gatts_evt_rw_authorize_request_t * rw;
-	ble_gatts_evt_write_t * req;
+	UlHandles * 		p;
 	const OrchardUi * ui;
 	OrchardUiContext * uiContext;
 	GSourceHandle gs;
@@ -151,15 +142,10 @@ otasend_event (OrchardAppContext *context,
 	uiContext = context->instance->uicontext;
 	p = context->priv;
 
-	if (event->type == ugfxEvent || event->type == keyEvent) {
-		if (ui != NULL)
-			ui->event (context, event);
-		else {
-                        i2sPlay ("sound/click.snd");
-                        bleGapDisconnect ();
-                        orchardAppExit ();
-                        return;
-		}
+	if ((event->type == ugfxEvent || event->type == keyEvent) &&
+	    ui != NULL) {
+		ui->event (context, event);
+		return;
 	}
 
 	if (event->type == uiEvent && event->ui.code == uiComplete &&
@@ -180,7 +166,7 @@ otasend_event (OrchardAppContext *context,
 		geventRegisterCallback (&p->gl,
 		    orchardAppUgfxCallback, &p->gl);
 
-		putImageFile ("images/fwupdate.rgb", 0, 0);
+		putImageFile ("images/unlock.rgb", 0, 0);
 
 		/*
 		 * Initiate GAP connection to peer.
@@ -189,109 +175,99 @@ otasend_event (OrchardAppContext *context,
 		bleGapConnect (&p->listaddrs[uiContext->selected + 1]);
 	}
 
+	if (event->type == keyEvent && event->key.flags == keyPress) {
+		i2sPlay ("sound/click.snd");
+
+		if (event->key.code == keyAUp ||
+		    event->key.code == keyBUp) {
+			/*
+			 * Note: We allow one index higher than MAX_ULCODES
+			 * so that we can propagate the black badge
+			 * attribute.
+			 */
+			if (p->unlock_idx == MAX_ULCODES)
+				return;
+			else
+				p->unlock_idx++;
+			screen_alert_draw (FALSE, unlock_desc[p->unlock_idx]);
+		}
+
+		if (event->key.code == keyADown ||
+		    event->key.code == keyBDown) {
+			if (p->unlock_idx == 0)
+				return;
+			else
+				p->unlock_idx--;
+			screen_alert_draw (FALSE, unlock_desc[p->unlock_idx]);
+		}
+
+		if (event->key.code == keyASelect ||
+		    event->key.code == keyBSelect) {
+			p->unlocks |= __builtin_bswap32 (1 << p->unlock_idx);
+			bleGattcWrite (ul_handle.value_handle,
+			    (uint8_t *)&p->unlocks, 4, FALSE);
+			screen_alert_draw (FALSE, "Sending unlock...");
+			p->ul_state = UL_STATE_UL_SENT;
+		}
+	}
+
         if (event->type == radioEvent) {
                 radio = (OrchardAppRadioEvent *)&event->radio;
-                evt = &radio->evt;
 
 		switch (radio->type) {
-			/*
-			 * GAP connection achieved. Now issue a GATTC write to
-			 * the OTA GATTS characteristic to indicate an offer of
-			 * a firmware update.
-			 */
-			case connectEvent:
-				screen_alert_draw (FALSE, "Handshaking...");
-				msg[0] = BLE_IDES_OTAUPDATE_OFFER;
-				bleGattcWrite (ot_handle.value_handle,
-				    (uint8_t *)msg, 1, FALSE);
-				break;
 
 			/*
-			 * GATTS write event - this should be a response from
-			 * the peer either accepting or declining the uptate.
+			 * GAP connection achieved. Now issue a GATTC write to
+			 * the send the password to unlock remote updates.
 			 */
-			case gattsReadWriteAuthEvent:
-				rw =
-				 &evt->evt.gatts_evt.params.authorize_request;
-				req = &rw->request.write;
-	 			if (rw->request.write.handle ==
-				    ot_handle.value_handle &&
-				    req->data[0] == BLE_IDES_OTAUPDATE_ACCEPT){
+
+			case connectEvent:
+
+				screen_alert_draw (FALSE,
+				    "Sending password...");
+				bleGattcWrite (pw_handle.value_handle,
+				    (uint8_t *)BLE_IDES_PASSWORD,
+				    strlen (BLE_IDES_PASSWORD), FALSE);
+				p->ul_state = UL_STATE_PW_SENT;
+				break;
+
+			case gattcCharWriteEvent:
+
+				if (p->ul_state == UL_STATE_PW_SENT) {
 					screen_alert_draw (FALSE,
-					    "Offer accepted...");
-					/* Offer accepted - create L2CAP link*/
-					bleL2CapConnect (BLE_IDES_OTA_PSM);
-				} else {
+					    "Password sent!");
+					p->ul_state = UL_STATE_UL_READ;
+					p->len = 4;
+					bleGattcRead (ul_handle.value_handle,
+			    		    (uint8_t *)&p->unlocks,
+					    &p->len, FALSE);
 					screen_alert_draw (FALSE,
-					    "Offer declined");
+					    "Fetching unlocks...");
+				}
+
+				if (p->ul_state == UL_STATE_UL_READ) {
+					screen_alert_draw (FALSE,
+					    "Unlocks received!");
+					p->ul_state = 0;
+					p->unlocks =
+					    __builtin_bswap32 (p->unlocks);
+					screen_alert_draw (FALSE,
+					    unlock_desc[p->unlock_idx]);
+				}
+
+				if (p->ul_state == UL_STATE_UL_SENT) {
+					screen_alert_draw (FALSE,
+					    "Unlock sent!");
 					chThdSleepMilliseconds (2000);
 					orchardAppExit ();
 				}
 				break;
 
-			/* L2CAP connected -- start sending the file */
-			case l2capConnectEvent:
-				screen_alert_draw (FALSE, "Sending...");
-				/* FALLTHROUGH */
-			/* L2CAP TX successful -- send the next chunk */
-			case l2capTxEvent:
-
-				if (p->retry == 0) {
-					br = 0;
-					f_read (&p->f, p->txbuf, OTA_SIZE,&br);
-
-					/*
-					 * The only time the number of bytes
-					 * read will be less than OTA_SIZE
-					 * will be when we read the last few
-					 * bytes left in the file. The other
-					 * side expects that a transmission of
-					 * 4 bytes will always contain the
-				 	 * checksum. If there happens to be
-					 * exactly 4 bytes left in the file
-					 * after the last OTA_SIZE chunk, then
-					 * the other side will mistake it for
-					 * the checksum. To avoid this, if
-					 * we have exactly 4 bytes left,
-					 * lie and claim it's 5 just so the
-					 * other side doesn't get confused.
-					 */
-
-					if (br == 4)
-						br++;
-					if (br == 0 && p->send_crc == 0) {
-						memcpy (p->txbuf, &p->crc, 4);
-						br = 4;
-						p->send_crc = 1;
-					} else {
-						p->crc = crc32_le (p->txbuf,
-						    br, p->crc);
-					}
-					p->last = br;
-					p->size += br;
-				} else
-					br = p->last;
-
-				if (br) {
-					/* Send data chunk */
-					if (bleL2CapSend (p->txbuf, br) ==
-					    NRF_SUCCESS) {
-						p->retry = 0;
-						sprintf (msg, "Sent %ld bytes",
-						    p->size);
-						screen_alert_draw (FALSE, msg);
-					} else
-						p->retry = 1;
-				} else {
-					if (radio->type == l2capTxEvent) {
-						screen_alert_draw (FALSE,
-						    "Done!");
-						orchardAppExit ();
-					}
-				}
-				break;
-
 			/* For any of these events, bail out. */
+
+			case gattsReadWriteAuthEvent:
+			case l2capConnectEvent:
+			case l2capTxEvent:
 			case l2capConnectRefusedEvent:
 			case l2capDisconnectEvent:
 			case disconnectEvent:
@@ -308,9 +284,9 @@ otasend_event (OrchardAppContext *context,
 }
 
 static void
-otasend_exit (OrchardAppContext *context)
+radiounlock_exit (OrchardAppContext *context)
 {
-	OtaHandles *		p;
+	UlHandles *		p;
 	int 			i;
 	const OrchardUi * ui;
 
@@ -325,8 +301,6 @@ otasend_exit (OrchardAppContext *context)
 
 	p = context->priv;
 
-	f_close (&p->f);
-
 	geventRegisterCallback (&p->gl, NULL, NULL);
 	geventDetachSource (&p->gl, NULL);
 
@@ -340,5 +314,6 @@ otasend_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("OTA Send", "icons/wheel.rgb", APP_FLAG_BLACKBADGE,
-    otasend_init, otasend_start, otasend_event, otasend_exit, 1);
+orchard_app("Radio Unlock", "icons/wheel.rgb", APP_FLAG_BLACKBADGE,
+    radiounlock_init, radiounlock_start, radiounlock_event,
+    radiounlock_exit, 2);

@@ -12,6 +12,16 @@
 #define MAX_ULCODES 11
 #define MAX_CODE_LEN 5
 
+/* 
+ * Note: the UL_BLACKBADGE bit is not unlockable by the user using
+ * the app-unlock puzzle app. It's outside the range of MAX_ULCODES,
+ * which is all the puzzle app supports. The only ways to enable it are:
+ * 1) add it to the default config->unlocks word at compile time
+ * 2) unlock it via radio using a phone, with the access password
+ * 3) unlock it using the special app-radiounlock app (which also
+ * uses the access password)
+ */
+
 #define UL_PLUSDEF      ( 1 << 0 )  // +10% DEF
 #define UL_PLUSHP       ( 1 << 1 )  // +10% HP
 #define UL_PLUSDMG      ( 1 << 2 )  // +10% DMG
@@ -23,6 +33,7 @@
 #define UL_SHIP2        ( 1 << 8 )  // Unlocks additional ship #2
 #define UL_GOD          ( 1 << 9 )  // GOD_MODE
 #define UL_PINGDUMP     ( 1 << 10 ) // NETWORK DEBUG (BLACK_BADGE only)
+#define UL_BLACKBADGE	( 1 << 11 ) // black badge
 
 /* we store our codes in the UICR instead of in files */
 /* check the provisioning script to change the codes. */

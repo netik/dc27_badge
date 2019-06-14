@@ -10,6 +10,7 @@
 #include "userconfig.h"
 #include "i2s_lld.h"
 #include "ble_lld.h"
+#include "unlocks.h"
 
 #define LAUNCHER_COLS 3
 #define LAUNCHER_ROWS 2
@@ -269,10 +270,26 @@ launcher_start (OrchardAppContext *context)
 	unsigned int total_apps = 0;
 	userconfig *config = getConfig();
 
-	/* How many apps do we have? */
+	/*
+	 * How many apps do we have?
+	 * Hidden apps are not counted here. They never show up in
+	 * the launcher.
+	 * Apps with the black badge flag set only show up if
+	 * this is a black badge.
+	 * Apps with the unlock flag set will be shown either
+	 * if this is a black badge, or if the user has unlocked
+	 * the feature through the puzzle unlocker.
+	 */
 	current = orchard_app_list;
 	while (current->name) {
-		if ((current->flags & APP_FLAG_HIDDEN) == 0)
+		if (current->flags == APP_FLAG_NONE)
+			total_apps++;
+		if (current->flags == APP_FLAG_UNLOCK &&
+		    config->unlocks & UL_VIDEO1)
+			total_apps++;
+		if (current->flags ==
+		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE) &&
+		    config->unlocks & UL_BLACKBADGE)
 			total_apps++;
 		current++;
 	}
@@ -290,7 +307,20 @@ launcher_start (OrchardAppContext *context)
 	current = orchard_app_list;
 	list->total = 0;
 	while (current->name) {
-		if ((current->flags & APP_FLAG_HIDDEN) == 0) {
+		if (current->flags == APP_FLAG_NONE) {
+			list->items[list->total].name = current->name;
+			list->items[list->total].entry = current;
+			list->total++;
+		}
+		if (current->flags == APP_FLAG_UNLOCK &&
+		    config->unlocks & UL_VIDEO1) {
+			list->items[list->total].name = current->name;
+			list->items[list->total].entry = current;
+			list->total++;
+		}
+		if (current->flags ==
+		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE) &&
+		    config->unlocks & UL_BLACKBADGE) {
 			list->items[list->total].name = current->name;
 			list->items[list->total].entry = current;
 			list->total++;

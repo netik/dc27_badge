@@ -6,8 +6,11 @@
 #include "gfx.h"
 #include "orchard-ui.h"
 
-#define APP_FLAG_HIDDEN		0x00000001
-#define APP_FLAG_AUTOINIT	0x00000002
+#define APP_FLAG_NONE		0x00000000 /* normal app */
+#define APP_FLAG_HIDDEN		0x00000001 /* always hidden apps */
+#define APP_FLAG_AUTOINIT	0x00000002 /* apps with autoinit methods */
+#define APP_FLAG_UNLOCK		0x00000004 /* apps that must be unlocked */
+#define APP_FLAG_BLACKBADGE	0x00000008 /* black badge apps only */
 
 #define PING_MIN_INTERVAL  3000 // base time between pings
 #define PING_RAND_INTERVAL 2000 // randomization zone for pings

@@ -128,7 +128,7 @@ FLASHSRC := $(CHIBIOS)/os/hal/lib/peripherals/flash/hal_flash.c
 # joypad layout.
 
 # jna: force this for now
-#JOYPADCOMPAT=y
+# JOYPADCOMPAT=y
 
 ifeq ($(JOYPADCOMPAT),)
 JOYPADSRC = joypad_lld.c
@@ -204,6 +204,7 @@ CSRC += main.c \
 	app-unlock.c \
 	app-otasend.c \
 	app-otarecv.c \
+	app-radiounlock.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \
