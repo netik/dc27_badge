@@ -189,15 +189,15 @@ ledDraw (short amp)
 	if (amp > LED_COUNT_INTERNAL)
 		amp = LED_COUNT_INTERNAL;
 
-	for (i = LED_COUNT_INTERNAL; i > 0; i--) {
-		if (i > amp)
+	for (i = LED_COUNT_INTERNAL; i >= 0; i--) {
+		if (i > amp) {
 			led_set (i - 1, 0, 0, 0);
-		else {
-			if (i >= 0 && i < 8)
+		} else {
+			if (i >= 1 && i <= 8)
 				led_set (i - 1, 0, 255, 0);
-			if (i >= 8 && i < 16)
+			if (i >= 9 && i <= 16)
 				led_set (i - 1, 255, 255, 0);
-			if (i >= 16 && i <= 32)
+			if (i >= 17 && i <= 32)
 				led_set (i - 1, 255, 0, 0);
 		}
 	}
