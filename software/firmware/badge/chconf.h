@@ -68,7 +68,7 @@
  * (SHPR2). If the current thread's priority is higher than the SVC handler
  * priority, executing the 'svc' instruction triggers a hard fault.
  *
- * Normally, when using advenced kernel mode, the basepri value is 0.
+ * Normally, when using advanced kernel mode, the basepri value is 0.
  * When a context switch is performed, ChibiOS changes this to the
  * CORTEX_BASEPRI_KERNEL value, 0x40, which is supposed to be higher
  * priority than all interrupt handlers except for SVCALL. This is
@@ -92,20 +92,31 @@
  * Unfortunately, there's still one more problem: the SoftDevice
  * programs the radio interrupt with the highest priority of all, which
  * allows it to preempt ChibiOS context switch code. Technically, as
- * long as we have enough stack space we can accomodate this, but I'm
- * not comfortable with the ChibiOS context switch code potentially
- * being slowed down like that at arbitrary times, so for now we're
- * going to stick with compact kernel mode, which masks off all
- * interrupts during a context switch.
+ * long as we have enough stack space we can accomodate this. We can adjust
+ * the PORT_INT_REQUIRED_STACK to handle this.
+ *
+ * I would normally prefer to keep the keep the ChibiOS context switch
+ * uninterrupted and use compact kernel mode. However system response
+ * seems much better when using advanced kernel mode. (With compact mode,
+ * the music player stutters when it has the LEDs going and the radio
+ * thread is running at the same time. With advanced mode, everything is
+ * smooth.)
  */
 
 /* Force the SVCALL priority to match the SoftDevice. */
 
 #define CORTEX_PRIORITY_SVCALL 4
 
-/* Force compact kernel mode. */
+/* Select advanced kernel mode. */
 
-#define CORTEX_SIMPLIFIED_PRIORITY TRUE
+#define CORTEX_SIMPLIFIED_PRIORITY FALSE
+
+/*
+ * Increase thread stack size to account for needing to potentially
+ * save FPU state during a context switch.
+ */
+
+#define PORT_INT_REQUIRED_STACK 104
 
 /*
  * We would like the idle thread to put the CPU to sleep during idle
