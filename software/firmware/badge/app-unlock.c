@@ -62,17 +62,18 @@ static volatile long unsigned int *unlock_codes[MAX_ULCODES] = {
   UL_CODE_10
 };
 
-static char *unlock_desc[] = { "+10% DEF",
-                               "+10% HP",
-                               "+10% DMG",
-                               "+20% SPEED",
-                               "FAST REPAIR",
-                               "MOAR LEDs",
-                               "MOAR VIDEO",
-                               "CARRIER",
-                               "SUBMARINE",
-                               "GOD MODE",
-                               "DEBUG MODE"
+char *unlock_desc[] = { "+10% DEF",
+                        "+10% HP",
+                        "+10% DMG",
+                        "+20% SPEED",
+                        "FAST REPAIR",
+                        "MOAR LEDs",
+                        "MOAR VIDEO",
+                        "CARRIER",
+                        "SUBMARINE",
+                        "GOD MODE",
+                        "DEBUG MODE",
+                        "BLACK BADGE"
 };
 
 static uint32_t last_ui_time = 0;
