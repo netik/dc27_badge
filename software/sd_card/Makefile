@@ -190,6 +190,7 @@ dirs:
 	-[ -d $(STAGING_DIR)/game ] || mkdir -p $(STAGING_DIR)/game
 	-[ -d $(STAGING_DIR)/icons ] || mkdir -p $(STAGING_DIR)/icons
 	-[ -d $(STAGING_DIR)/images ] || mkdir -p $(STAGING_DIR)/images
+	-[ -d $(STAGING_DIR)/photos ] || mkdir -p $(STAGING_DIR)/photos
 	-[ -d $(STAGING_DIR)/sound ] || mkdir -p $(STAGING_DIR)/sound
 	-[ -d $(STAGING_DIR)/videos ] || mkdir -p $(STAGING_DIR)/videos
 	-[ -d $(STAGING_DIR)/videos/misc ] || mkdir -p $(STAGING_DIR)/videos/misc
