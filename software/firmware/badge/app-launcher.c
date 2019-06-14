@@ -284,12 +284,12 @@ launcher_start (OrchardAppContext *context)
 	while (current->name) {
 		if (current->flags == APP_FLAG_NONE)
 			total_apps++;
-		if (current->flags == APP_FLAG_UNLOCK &&
-		    config->unlocks & UL_VIDEO1)
+		else if ((current->flags & APP_FLAG_UNLOCK) &&
+		    (config->unlocks & UL_VIDEO1))
 			total_apps++;
-		if (current->flags ==
-		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE) &&
-		    config->unlocks & UL_BLACKBADGE)
+		else if ((current->flags & 
+		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE)) &&
+		    (config->unlocks & UL_BLACKBADGE))
 			total_apps++;
 		current++;
 	}
@@ -312,15 +312,15 @@ launcher_start (OrchardAppContext *context)
 			list->items[list->total].entry = current;
 			list->total++;
 		}
-		if (current->flags == APP_FLAG_UNLOCK &&
-		    config->unlocks & UL_VIDEO1) {
+		else if ((current->flags & APP_FLAG_UNLOCK) &&
+		    (config->unlocks & UL_VIDEO1)) {
 			list->items[list->total].name = current->name;
 			list->items[list->total].entry = current;
 			list->total++;
 		}
-		if (current->flags ==
-		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE) &&
-		    config->unlocks & UL_BLACKBADGE) {
+		else if ((current->flags &
+		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE)) &&
+		    (config->unlocks & UL_BLACKBADGE)) {
 			list->items[list->total].name = current->name;
 			list->items[list->total].entry = current;
 			list->total++;
