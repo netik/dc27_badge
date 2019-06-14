@@ -30,6 +30,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
+
 #include "ch.h"
 #include "hal.h"
 
@@ -49,11 +51,12 @@ static volatile UINT async_br = ASYNC_THD_READY;
 static UINT * saved_br;
 
 static thread_reference_t fsReference;
+static thread_reference_t wakeReference;
 
 static THD_WORKING_AREA(waAsyncIoThread, 256);
 static THD_FUNCTION(asyncIoThread, arg)
 {
-	UINT br;
+	UINT br = ASYNC_THD_READY;
 
 	(void) arg;
 
@@ -62,6 +65,7 @@ static THD_FUNCTION(asyncIoThread, arg)
 	while (1) {
 		osalSysLock ();
 		async_br = br;
+		osalThreadResumeS (&wakeReference, MSG_OK);
 		osalThreadSuspendS (&fsReference);
 		osalSysUnlock ();
 		if (async_br == ASYNC_THD_EXIT)
@@ -97,8 +101,11 @@ asyncIoRead (FIL * f, void * buf, UINT btr, UINT * br)
 void
 asyncIoWait (void)
 {
-	while (async_br == ASYNC_THD_READ)
-		;
+	osalSysLock ();
+	while (async_br == ASYNC_THD_READ ||
+	       async_br == ASYNC_THD_READY)
+		osalThreadSuspendS (&wakeReference);
+	osalSysUnlock ();
 
 	*saved_br = async_br;
 	async_br = ASYNC_THD_READY;
