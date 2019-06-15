@@ -201,6 +201,7 @@ otasend_event (OrchardAppContext *context,
 			 */
 			case connectEvent:
 				screen_alert_draw (FALSE, "Handshaking...");
+				chThdSleepMilliseconds (100);
 				msg[0] = BLE_IDES_OTAUPDATE_OFFER;
 				bleGattcWrite (ot_handle.value_handle,
 				    (uint8_t *)msg, 1, FALSE);
