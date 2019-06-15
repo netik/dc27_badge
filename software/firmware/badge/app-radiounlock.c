@@ -225,6 +225,7 @@ radiounlock_event (OrchardAppContext *context,
 
 				screen_alert_draw (FALSE,
 				    "Sending password...");
+				chThdSleepMilliseconds (100);
 				bleGattcWrite (pw_handle.value_handle,
 				    (uint8_t *)BLE_IDES_PASSWORD,
 				    strlen (BLE_IDES_PASSWORD), FALSE);
