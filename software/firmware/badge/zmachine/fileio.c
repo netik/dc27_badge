@@ -35,6 +35,7 @@
 
 #include "ff.h"
 #include "ffconf.h"
+#include "diskio.h"
 
 /* Static data */
 
@@ -43,11 +44,11 @@ extern int GLOBALVER;
 #ifdef USE_ZLIB
 static gzFile *gfp = NULL;      /* Zcode file pointer */
 #else
-static File gfp;        /* Zcode file pointer */
+static FIL gfp;        /* Zcode file pointer */
 #endif
 
-static File sfp;        /* Script file pointer */
-static File rfp;        /* Record file pointer */
+static FIL sfp;        /* Script file pointer */
+static FIL rfp;        /* Record file pointer */
 
 #if defined BUFFER_FILES        
 #ifndef USE_ZLIB
@@ -94,7 +95,8 @@ int analyze_exefile( void )
 
    /* Look for the magic string, starting from the beginning. */
    //jz_rewind( gfp );
-   gfp.seek(0);
+   f_lseek (&gfp, (FSIZE_t)0);
+
    i = 0;
 
    while ( ( c = gfp.read() ) > -1 )
@@ -217,13 +219,13 @@ void open_story( const char *storyname )
       set_names( storyname );   
       return;                   
    }                            
-   printf(String(tmp) + String(" does not exist"));
+   printf("%s does not exist", tmp);
 
 // assume Zcode file is in root folder for Arduino
       sprintf( tmp, "\\%s", storyname );
       if (spiffs.exists(tmp))
       {
-        printf(String(tmp) + String(" exists"));
+        printf("%s exists", tmp);
         gfp = spiffs.open( tmp, FILE_READ);                            
 #if defined BUFFER_FILES        
 #ifndef USE_ZLIB
@@ -234,11 +236,10 @@ void open_story( const char *storyname )
          return;
 
       }
-    printf(String(tmp) + String(" does not exist"));
+      printf("%s does not exist", tmp);
 
    fatal( "open_story(): Zcode file not found" );
 }                               /* open_story */
-
 
 /*
  * close_story
@@ -266,11 +267,12 @@ unsigned int get_story_size( void )
 
    /* Read whole file to calculate file size */
    //jz_rewind( gfp );
-   gfp.seek(0);
+   f_lseek (&gfp, (FSIZE_t)0);
    for ( file_length = 0; gfp.read() != EOF; file_length++ )
       ;
    //jz_rewind( gfp );
-   gfp.seek(0);
+   f_lseek (&gfp, (FSIZE_t)0);
+
    /* Calculate length of file in game allocation units */
    file_length =
          ( file_length + ( unsigned long ) ( story_scaler - 1 ) ) / ( unsigned long ) story_scaler;
@@ -841,7 +843,7 @@ static int save_restore( const char *file_name, int flag )
          output_line( "Cannot open SAVE file" );
          return ( 1 );
       }
-      digitalWrite(LEDPIN,HIGH); // LED on while read/writing save file
+      //      digitalWrite(LEDPIN,HIGH); // LED on while read/writing save file
 #if defined BUFFER_FILES        
       setbuf( tfp, tfpbuffer ); 
 #endif 
@@ -978,7 +980,7 @@ static int save_restore( const char *file_name, int flag )
          fatal( "save_restore(): Read from SAVE file failed" );
       }
    }
-   digitalWrite(LEDPIN,LOW); // LED on while read/writing save file
+   //   digitalWrite(LEDPIN,LOW); // LED on while read/writing save file
 
    return ( status );
 
@@ -1402,8 +1404,7 @@ int playback_line( int buflen, char *buffer, int *read_size )
 /*
  * playback_key
  *
- * Get a key from the command file.
- *
+ * Get a key from the command 
  */
 
 int playback_key( void )

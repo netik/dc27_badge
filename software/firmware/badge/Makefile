@@ -233,7 +233,6 @@ CSRC += zmachine/acursesio.c \
 	zmachine/control.c \
 	zmachine/extern.c \
 	zmachine/fileio.c \
-	zmachine/getopt.c \
 	zmachine/input.c \
 	zmachine/interpre.c \
 	zmachine/jzip.c \

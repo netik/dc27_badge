@@ -1,14 +1,14 @@
 
-/* $Id: quetzal.c,v 1.3 2000/07/05 15:20:34 jholder Exp $   
+/* $Id: quetzal.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: quetzal.c,v 1.3 2000/07/05 15:20:34 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: quetzal.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: quetzal.c,v $
  * Revision 1.3  2000/07/05 15:20:34  jholder
  * Updated code to remove warnings.
@@ -59,14 +59,14 @@ typedef unsigned long ul_t;
 #define ID_ANNO 0x414e4e4f
 
 /* macros to write QUETZAL files */
-//#define write_byte(fp,b) (put_c ((unsigned)(b),fp) != EOF) 
-#define write_byte(fp,b) (fp.write((uint8_t)(b)) != 0) 
+//#define write_byte(fp,b) (put_c ((unsigned)(b),fp) != EOF)
+#define write_byte(fp,b) (fp.write((uint8_t)(b)) != 0)
 #define write_bytx(fp,b) write_byte(fp,(b) & 0xFF)
 #define write_word(fp,w) \
     (write_bytx(fp,(w)>> 8) && write_bytx(fp,(w)))
 #define write_long(fp,l) \
     (write_bytx(fp,(ul_t)(l)>>24) && write_bytx(fp,(ul_t)(l)>>16) && \
-     write_bytx(fp,(ul_t)(l)>> 8) && write_bytx(fp,(ul_t)(l))) 
+     write_bytx(fp,(ul_t)(l)>> 8) && write_bytx(fp,(ul_t)(l)))
 #define write_chnk(fp,id,len) \
     (write_long(fp,id)      && write_long(fp,len))
 #define write_run(fp,run) \
@@ -107,7 +107,7 @@ int save_quetzal( File &sfp, File &gfp )
    if ( !write_word( sfp, h_checksum ) )
       return FALSE;
    if ( !write_long( sfp, ( ( ul_t ) pc ) << 8 ) ) /* includes pad byte */
-      return FALSE;             
+      return FALSE;
 
    /* write CMem chunk */
    /* j is current run length */
@@ -116,7 +116,7 @@ int save_quetzal( File &sfp, File &gfp )
    if ( !write_chnk( sfp, ID_CMem, 0 ) )
       return FALSE;
    //jz_rewind( gfp );
-   gfp.seek(0);
+   f_lseek (&gfp, (FSIZE_t)0);
    for ( i = 0, j = 0, cmemlen = 0; i < h_restart_size; ++i )
    {
       if ( ( c = gfp.read() ) == -1 )
@@ -304,9 +304,9 @@ int restore_quetzal( FILE * sfp, gzFile * gfp )
 int restore_quetzal( File &sfp, File &gfp )
 #endif
 {
-   ul_t ifzslen, currlen, tmpl, skip = 0; 
+   ul_t ifzslen, currlen, tmpl, skip = 0;
    zword_t i, tmpw;
-   zbyte_t progress = GOT_NONE; 
+   zbyte_t progress = GOT_NONE;
    int x, y;
 
    /* check for IFZS file */
@@ -314,7 +314,7 @@ int restore_quetzal( File &sfp, File &gfp )
       return FALSE;
    if ( !read_long( sfp, &currlen ) )
       return FALSE;
-      
+
    if ( tmpl != ID_FORM || currlen != ID_IFZS )
    {
       output_line( "This is not a saved game file!" );
@@ -355,7 +355,7 @@ int restore_quetzal( File &sfp, File &gfp )
             {
                if ( ( x = sfp.read() ) == -1 )
                   return FALSE;
-               if ( x != ( int ) get_byte( i ) ) 
+               if ( x != ( int ) get_byte( i ) )
                   progress = GOT_ERROR;
             }
             if ( !read_word( sfp, &i ) )
@@ -376,7 +376,7 @@ int restore_quetzal( File &sfp, File &gfp )
             if ( ( x = sfp.read() ) == -1 )
                return FALSE;
             pc |= ( ul_t ) x;
-            for ( i = 13; ( ul_t ) i < currlen; ++i ) 
+            for ( i = 13; ( ul_t ) i < currlen; ++i )
                ( void ) sfp.read(); /* skip rest of chunk */
             break;
          case ID_Stks:
@@ -490,7 +490,7 @@ int restore_quetzal( File &sfp, File &gfp )
             if ( !( progress & GOT_MEMORY ) )
             {
                //jz_rewind( gfp );
-               gfp.seek(0);
+               f_lseek (&gfp, (FSIZE_t)0);
                i = 0;           /* bytes written to data area */
                for ( ; currlen > 0; --currlen )
                {

@@ -559,8 +559,7 @@ void fatal( const char *s )
    sprintf(strbuff, "\n**FATAL ERROR: %s", s);
    printf(strbuff);
    while(1)
-   {
-    Blink(LEDPIN,100,20);
+
    }
 }                               /* fatal */
 
