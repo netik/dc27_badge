@@ -93,6 +93,7 @@ photos_event (OrchardAppContext *context,
 	if (event->type == ugfxEvent) {
 	        me = (GEventMouse *)event->ugfx.pEvent;
 		if (me->buttons & GMETA_MOUSE_DOWN) {
+			i2sPlay ("sound/click.snd");
 			orchardAppExit ();
 			return;
 		}
