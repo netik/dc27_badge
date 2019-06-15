@@ -87,8 +87,8 @@ bleGapScanStart (void)
 	scan.extended = 0;
 	scan.scan_phys = BLE_GAP_PHY_AUTO;
 	scan.timeout = BLE_IDES_SCAN_TIMEOUT;
-	scan.window = MSEC_TO_UNITS(100, UNIT_0_625_MS);
-	scan.interval = MSEC_TO_UNITS(200, UNIT_0_625_MS);
+	scan.window = MSEC_TO_UNITS(250, UNIT_0_625_MS);
+	scan.interval = MSEC_TO_UNITS(20, UNIT_0_625_MS);
 	scan.active = 1;
 
 	scan_buffer.p_data = ble_scan_buffer;
@@ -427,45 +427,6 @@ bleGapDispatch (ble_evt_t * evt)
 					    "failed! 0x%x\n", r);
 			}
 
-			/*
-			 * Now that we disable scanning once we're connected,
-			 * I've noticed some strange behavior: once we
-			 * disconnect, we can't see advertisements from the
-			 * disconnected peer anymore. For example:
-			 *
-			 * - Peer A connects to Peer B, scanning is stopped
-			 * - Peer A disconnects from Peer B, scanning is
-			 *   resumed
-			 * - Peer A and Peer B both continue to receive
-			 *   advertisements (advertisement report events,
-			 *   scan timeout and advertisement set termination
-			 *   events continue as usual), except neither side
-			 *   seems to receive advertisements from each other.
-			 *   Advertisements from other nearby devices are
-			 *   received as expected.
-			 *
-			 * It turns out that if the peer that intitiated
-			 * the connection attempts another connection which
-			 * times out, this condition clears, and the peers
-			 * can see each others' advertisements again.
-			 */
-
-			if (ble_force_restart == TRUE) {
-				ble_gap_addr_t dummy;
-
-				dummy.addr_id_peer = TRUE;
-				dummy.addr_type =
-				    BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
-				dummy.addr[0] = 0;
-				dummy.addr[1] = 0;
-				dummy.addr[2] = 0;
-				dummy.addr[3] = 0;
-				dummy.addr[4] = 0;
-				dummy.addr[4] = 0;
-				bleGapConnect (&dummy);
-				ble_force_restart = FALSE;
-			}
-
 			break;
 
 		case BLE_GAP_EVT_CONN_PARAM_UPDATE:
@@ -630,8 +591,8 @@ bleGapAdvBlockFinish (uint8_t * pkt, uint8_t len)
 	adv_params.properties.type =
 	    BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
 
-	adv_params.interval = MSEC_TO_UNITS(33, UNIT_0_625_MS);
-	adv_params.duration = MSEC_TO_UNITS(2000, UNIT_10_MS);
+	adv_params.interval = MSEC_TO_UNITS(50, UNIT_0_625_MS);
+	adv_params.duration = MSEC_TO_UNITS(250, UNIT_10_MS);
 	adv_params.filter_policy =  BLE_GAP_SCAN_FP_ACCEPT_ALL;
 	adv_params.primary_phy = BLE_GAP_PHY_AUTO;
 	adv_params.secondary_phy = BLE_GAP_PHY_CODED;
