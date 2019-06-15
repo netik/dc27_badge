@@ -557,10 +557,6 @@ void fatal( const char *s )
    //reset_screen(  );
    char strbuff[512];
    sprintf(strbuff, "\n**FATAL ERROR: %s", s);
-   printf(strbuff);
-   while(1)
-
-   }
 }                               /* fatal */
 
 #endif /* !defined(AMIGA) */

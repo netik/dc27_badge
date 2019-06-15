@@ -96,7 +96,6 @@ int analyze_exefile( void )
    /* Look for the magic string, starting from the beginning. */
    //jz_rewind( gfp );
    f_lseek (&gfp, (FSIZE_t)0);
-
    i = 0;
 
    while ( ( c = gfp.read() ) > -1 )
@@ -272,7 +271,6 @@ unsigned int get_story_size( void )
       ;
    //jz_rewind( gfp );
    f_lseek (&gfp, (FSIZE_t)0);
-
    /* Calculate length of file in game allocation units */
    file_length =
          ( file_length + ( unsigned long ) ( story_scaler - 1 ) ) / ( unsigned long ) story_scaler;
@@ -981,7 +979,6 @@ static int save_restore( const char *file_name, int flag )
       }
    }
    //   digitalWrite(LEDPIN,LOW); // LED on while read/writing save file
-
    return ( status );
 
 }                               /* save_restore */
@@ -1404,7 +1401,8 @@ int playback_line( int buflen, char *buffer, int *read_size )
 /*
  * playback_key
  *
- * Get a key from the command 
+ * Get a key from the command file.
+ *
  */
 
 int playback_key( void )

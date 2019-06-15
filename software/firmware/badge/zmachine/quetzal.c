@@ -1,4 +1,3 @@
-
 /* $Id: quetzal.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
  * --------------------------------------------------------------------
  * see doc/License.txt for License Information
@@ -9,6 +8,7 @@
  * Description:
  *
  * Modification history:
+ *
  * $Log: quetzal.c,v $
  * Revision 1.3  2000/07/05 15:20:34  jholder
  * Updated code to remove warnings.
@@ -59,7 +59,6 @@ typedef unsigned long ul_t;
 #define ID_ANNO 0x414e4e4f
 
 /* macros to write QUETZAL files */
-//#define write_byte(fp,b) (put_c ((unsigned)(b),fp) != EOF)
 #define write_byte(fp,b) (fp.write((uint8_t)(b)) != 0)
 #define write_bytx(fp,b) write_byte(fp,(b) & 0xFF)
 #define write_word(fp,w) \
@@ -117,6 +116,7 @@ int save_quetzal( File &sfp, File &gfp )
       return FALSE;
    //jz_rewind( gfp );
    f_lseek (&gfp, (FSIZE_t)0);
+
    for ( i = 0, j = 0, cmemlen = 0; i < h_restart_size; ++i )
    {
       if ( ( c = gfp.read() ) == -1 )
@@ -314,7 +314,6 @@ int restore_quetzal( File &sfp, File &gfp )
       return FALSE;
    if ( !read_long( sfp, &currlen ) )
       return FALSE;
-
    if ( tmpl != ID_FORM || currlen != ID_IFZS )
    {
       output_line( "This is not a saved game file!" );

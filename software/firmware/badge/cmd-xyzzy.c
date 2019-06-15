@@ -222,8 +222,8 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
 
   open_story(storyfile);
   configure((zbyte_t) V1, (zbyte_t) V8 );
-  /*
   initialize_screen(  );
+  /*
   load_cache();
   z_restart(  );
   ( void ) interpret(  );
