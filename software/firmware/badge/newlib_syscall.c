@@ -70,9 +70,23 @@ newlibStart (void)
 
 __attribute__((used))
 int
+_read (int file, char * ptr, int len)
+{
+	if (file != 0) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	ptr[0] = sdGet (&SD1);
+	return (1);
+}
+
+__attribute__((used))
+int
 _write (int file, char * ptr, int len)
 {
 	int i;
+
 	if (file != 1 && file != 2) {
 		errno = ENOSYS;
 		return -1;
