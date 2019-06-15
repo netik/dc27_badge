@@ -68,7 +68,6 @@ static uint8_t ble_scan_buffer[BLE_GAP_SCAN_BUFFER_EXTENDED_MAX];
 static uint8_t ble_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 
 static ble_ides_game_state_t ble_ides_state;
-static bool_t ble_force_restart = FALSE;
 
 uint16_t ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 uint8_t ble_gap_role;
@@ -212,6 +211,7 @@ bleGapDispatch (ble_evt_t * evt)
 			 * It prevents iPhones from establishing a proper
 			 * connection.
 			 */
+
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
 				phys.rx_phys = BLE_GAP_PHY_2MBPS;
 				phys.tx_phys = BLE_GAP_PHY_2MBPS;
@@ -224,11 +224,9 @@ bleGapDispatch (ble_evt_t * evt)
 
 		case BLE_GAP_EVT_DISCONNECTED:
 #ifdef BLE_GAP_VERBOSE
-			printf ("GAP disconnected...\n");
+			printf ("GAP disconnected, reason: 0x%x\n",
+			    evt->evt.gap_evt.params.disconnected.reason);
 #endif
-			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
-				ble_force_restart = TRUE;
-
 			ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 			ble_gap_role = BLE_GAP_ROLE_INVALID;
 
