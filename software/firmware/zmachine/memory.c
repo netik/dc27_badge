@@ -180,6 +180,9 @@ void unload_cache( void )
       free( cachep );
    }
 
+   /* Don't forget the last node, you idiot! */
+   free (cachep);
+
    cache = NULL;
    current_code_page = 0;
    current_code_cachep = NULL;
