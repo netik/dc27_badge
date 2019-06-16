@@ -138,7 +138,11 @@ static void init_config(userconfig *config) {
   config->level = 1;
   config->lastdeath = 0; // last death time to calc healing
   config->in_combat = 1; // we are incombat until name is set.
+#ifdef BLACK_BADGE
+  config->unlocks = UL_BLACKBADGE;
+#else
   config->unlocks = 0;
+#endif
 
   /* ship config */
   config->current_ship = 1;
