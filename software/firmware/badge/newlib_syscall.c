@@ -183,7 +183,7 @@ _open (const char * file, int flags, int mode)
 		fmode = FA_READ|FA_WRITE;
 
 	if (flags & O_CREAT)
-		fmode |= FA_CREATE_NEW;
+		fmode |= FA_CREATE_ALWAYS;
 	if (flags & O_APPEND)
 		fmode |= FA_OPEN_APPEND;
 
