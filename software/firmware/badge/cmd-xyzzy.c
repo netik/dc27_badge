@@ -176,6 +176,16 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
 
   printf("Thanks for playing!\n");
 
+  /*
+   * This is a small tweak to reclaim some memory from the heap.
+   * when using getc()/getchar(), the newlib stdio code will allocate
+   * some buffer memory for the stdin FILE pointer. It's about 1024
+   * bytes, and it would be nice to reclaim it. Doing an fclose()
+   * on stdin has the side effect of doing exactly that.
+   */
+
+  fclose (stdin);
+
   return;
 }
 
