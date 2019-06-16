@@ -86,14 +86,15 @@ static int inc( uint32_t timeout )
    if (c == MSG_TIMEOUT)
     return -1;
 
-   if(c != 127) { // is this a backspace key? will print it later
+   if(c != 127 && c != 8) { // is this a backspace key? will print it later
      putchar((char) c);
-     fflush (stdout);
    }
    if(c == '\r') {
      putchar((char) '\n');
-     fflush (stdout);
    }
+
+   fflush (stdout);
+
    return c;
 }
 
@@ -369,13 +370,16 @@ int input_line( int buflen, char *buffer, int timeout, int *read_size )
       if (c == -1)
           continue;
 
-      if(c == 127) // backspace pressed?
+      if(c == 127 || c == 8) // backspace pressed?
       {
         if(*read_size > 0)
         {
           buffer[(*read_size)] = '\0';
           (*read_size)--;
-          putchar ((char) c); // OK to backspace, characters still on the left side
+          putchar (0x08); // OK to backspace, characters still on the left side
+          putchar (0x20);
+          putchar (0x08);
+          fflush (stdout);
         }
       }
       else if ( *read_size < buflen )
