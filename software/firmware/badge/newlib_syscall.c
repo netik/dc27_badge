@@ -53,14 +53,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <fcntl.h>
+#include <stdio.h>
 
 #include "ch.h"
 #include "hal.h"
 #include "osal.h"
 
+#include "ff.h"
+
 extern char   __heap_base__; /* Set by linker */
 
 static mutex_t malloc_mutex;
+
+#define MAX_FILES 5
+static FIL file_handles[MAX_FILES];
+static int file_used[MAX_FILES];
 
 void
 newlibStart (void)
@@ -68,17 +76,37 @@ newlibStart (void)
 	osalMutexObjectInit (&malloc_mutex);
 }
 
+
 __attribute__((used))
 int
 _read (int file, char * ptr, int len)
 {
-	if (file != 0) {
-		errno = ENOSYS;
-		return -1;
+	int i;
+	FIL * f;
+	UINT br;
+
+	/* descriptor 0 is always stdin */
+
+	if (file == 0) {
+		ptr[0] = sdGet (&SD1);
+		return (1);
 	}
 
-	ptr[0] = sdGet (&SD1);
-	return (1);
+	/* Can't read from stdout or stderr */
+
+	if (file == 1 || file == 2)
+		return (EINVAL);
+
+	i = file - 3;
+	if (file_used[i] == 0)
+		return (EINVAL);
+
+	f = &file_handles [i];
+
+	if (f_read (f, ptr, len, &br) != FR_OK)
+		return (EIO);
+
+	return (br);
 }
 
 __attribute__((used))
@@ -86,19 +114,131 @@ int
 _write (int file, char * ptr, int len)
 {
 	int i;
+	UINT br;
+	FIL * f;
 
-	if (file != 1 && file != 2) {
-		errno = ENOSYS;
-		return -1;
+	if (file == 1 || file == 2) {
+		for (i = 0; i < len; i++) {
+			if (ptr[i] == '\n')
+				sdPut (&SD1, '\r');
+			sdPut (&SD1, ptr[i]);
+		}
+		return (len);
 	}
 
-	for (i = 0; i < len; i++) {
-		if (ptr[i] == '\n')
-			sdPut (&SD1, '\r');
-		sdPut (&SD1, ptr[i]);
+	i = file - 3;
+
+	if (file_used[i] == 0)
+		return (EINVAL);
+
+	f = &file_handles [i];
+
+	if (f_write (f, ptr, len, &br) != FR_OK)
+		return (EIO);
+
+	return (br);
+}
+
+__attribute__((used))
+int
+_open (const char * file, int flags, int mode)
+{
+	FIL * f;
+	BYTE fmode = 0;
+	int i;
+
+	for (i = 0; i < MAX_FILES; i++) {
+		if (file_used[i] == 0)
+			break;
 	}
 
-	return (len);
+	if (i == MAX_FILES)
+		return (ENOSPC);
+
+	f = &file_handles[i];
+
+	fmode = FA_READ;
+
+	if (flags & O_WRONLY)
+		fmode = FA_WRITE;
+	if (flags & O_RDWR)
+		fmode = FA_READ|FA_WRITE;
+
+	if (flags & O_CREAT)
+		fmode |= FA_CREATE_NEW;
+	if (flags & O_APPEND)
+		fmode |= FA_OPEN_APPEND;
+
+	if (f_open (f, file, fmode) != FR_OK)
+		return (EIO);
+
+	file_used[i] = 1;
+
+	/*
+	 * stdin, stdout and stderr are descriptors
+	 * 0, 1 and 2, so start at 3
+	 */
+
+	i += 3;
+
+	return (i);
+}
+
+__attribute__((used))
+int
+_close (int file)
+{
+	int i;
+	FIL * f;
+
+	if (file < 3)
+		return (EINVAL);
+
+	i = file - 3;
+
+	if (file_used[i] == 0)
+		return (EINVAL);
+
+	f = &file_handles [i];
+	file_used[i] = 0;
+	f_close (f);
+
+	return (0);
+}
+
+__attribute__((used))
+int
+_lseek (int file, int ptr, int dir)
+{
+	int i;
+	FIL * f;
+	FSIZE_t offset = 0;
+
+	/* Not sure how to handle SEEK_END */
+
+	if (dir == SEEK_END)
+		return (EINVAL);
+
+	if (file < 3)
+		return (EINVAL);
+
+	i = file - 3;
+
+	if (file_used[i] == 0)
+		return (EINVAL);
+
+	f = &file_handles [i];
+
+	if (dir == SEEK_SET)
+		offset = ptr;
+
+	if (dir == SEEK_CUR)
+		offset = f_tell (f) + ptr;
+
+	if (f_lseek (f, offset) != FR_OK)
+		return (EIO);
+
+	return (offset);
 }
 
 __attribute__((used))
