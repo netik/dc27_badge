@@ -16,9 +16,34 @@ void randInit(void) {
   return;
 }
 
+void
+srandom (unsigned int seed)
+{
+  (void)seed;
+}
+
+long
+random (void)
+{
+  uint8_t sdenabled = 0;
+  long random_buffer;
+
+  sd_softdevice_is_enabled (&sdenabled);
+
+  if (sdenabled == TRUE)
+    sd_rand_application_vector_get ((uint8_t *)&random_buffer, 4);
+  else {
+    rngStart (&RNGD1, NULL);
+    rngWrite (&RNGD1, (uint8_t *)&random_buffer, 4, TIME_INFINITE);
+    rngStop (&RNGD1);
+  }
+
+  return random_buffer;
+}
+
 uint8_t randByte(void) {
   uint8_t sdenabled = 0;
-  static uint8_t random_buffer;
+  uint8_t random_buffer;
 
   sd_softdevice_is_enabled (&sdenabled);
 
