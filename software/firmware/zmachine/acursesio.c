@@ -430,7 +430,10 @@ static int read_char( int timeout )
 
 int input_character( int timeout )
 {
-   int c = read_char( timeout );
+   int c;
+
+   (void)timeout;
+   c = getchar ();
 
    /* Bureaucracy expects CR, not NL.  */
    return ( ( c == '\n' ) ? '\r' : c );
