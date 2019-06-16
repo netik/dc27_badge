@@ -83,6 +83,7 @@ int _main( int argc, char *argv[] )
    return ( 0 );
 
 }                               /* main */
+#endif
 
 /*
  * configure
@@ -91,7 +92,7 @@ int _main( int argc, char *argv[] )
  *
  */
 
-static void configure( zbyte_t min_version, zbyte_t max_version )
+/*static*/ void configure( zbyte_t min_version, zbyte_t max_version )
 {
    zbyte_t header[PAGE_SIZE], second;
 
@@ -171,4 +172,3 @@ static void configure( zbyte_t min_version, zbyte_t max_version )
    datap = NULL;
 
 }                               /* configure */
-#endif

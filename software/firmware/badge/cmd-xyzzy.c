@@ -15,6 +15,8 @@
 
 static char **storyfilelist;
 
+extern void configure( zbyte_t, zbyte_t );
+
 extern ztheme_t themes[];
 int theme = 2; // default theme
 
@@ -133,70 +135,6 @@ char **getDirectory(char *dirname)
   f_closedir (&d);
 
   return dirlist;
-}
-
-static void configure( zbyte_t min_version, zbyte_t max_version )
-{
-  zbyte_t header[PAGE_SIZE];
-  
-  read_page( 0, header );
-  datap = header;
-  
-  h_type = get_byte( H_TYPE );
-  
-  GLOBALVER = h_type;
-  if ( h_type < min_version || h_type > max_version ||
-       ( get_byte( H_CONFIG ) & CONFIG_BYTE_SWAPPED ) )
-    fatal( "Wrong game or version" );
-  /*
-   * if (h_type == V6 || h_type == V7)
-   * fatal ("Unsupported zcode version.");
-   */
-  
-  if ( h_type < V4 )
-    {
-      story_scaler = 2;
-      story_shift = 1;
-      property_mask = P3_MAX_PROPERTIES - 1;
-      property_size_mask = 0xe0;
-    }
-  else if ( h_type < V8 )
-    {
-      story_scaler = 4;
-      story_shift = 2;
-      property_mask = P4_MAX_PROPERTIES - 1;
-      property_size_mask = 0x3f;
-    }
-  else
-    {
-      story_scaler = 8;
-      story_shift = 3;
-      property_mask = P4_MAX_PROPERTIES - 1;
-      property_size_mask = 0x3f;
-    }
-  
-  h_config = get_byte( H_CONFIG );
-  h_version = get_word( H_VERSION );
-  h_data_size = get_word( H_DATA_SIZE );
-  h_start_pc = get_word( H_START_PC );
-  h_words_offset = get_word( H_WORDS_OFFSET );
-  h_objects_offset = get_word( H_OBJECTS_OFFSET );
-  h_globals_offset = get_word( H_GLOBALS_OFFSET );
-  h_restart_size = get_word( H_RESTART_SIZE );
-  h_flags = get_word( H_FLAGS );
-  h_synonyms_offset = get_word( H_SYNONYMS_OFFSET );
-  h_file_size = get_word( H_FILE_SIZE );
-  if ( h_file_size == 0 )
-    h_file_size = get_story_size(  );
-  h_checksum = get_word( H_CHECKSUM );
-  h_alternate_alphabet_offset = get_word( H_ALTERNATE_ALPHABET_OFFSET );
-  
-  if ( h_type >= V5 )
-    {
-      h_unicode_table = get_word( H_UNICODE_TABLE );
-    }
-  datap = NULL;
-  
 }
 
 static void
