@@ -51,6 +51,7 @@ int interpret(  )
    int maxoperands, count, extended, i;
 
    interpreter_status = 1;
+   halt = FALSE;
 
    /* Loop until HALT instruction executed */
 

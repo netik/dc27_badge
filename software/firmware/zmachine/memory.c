@@ -167,6 +167,11 @@ void unload_cache( void )
    free( datap );
    free( undo_datap );
 
+   line = NULL;
+   status_line = NULL;
+   datap = NULL;
+   undo_datap = NULL;
+
    /* Free cache memory */
 
    for ( cachep = cache; cachep->flink != NULL; cachep = nextp )
@@ -174,6 +179,12 @@ void unload_cache( void )
       nextp = cachep->flink;
       free( cachep );
    }
+
+   cache = NULL;
+   current_code_page = 0;
+   current_code_cachep = NULL;
+   current_data_page = 0;
+   current_data_cachep = NULL;
 
 }                               /* unload_cache */
 

@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 
 #include "ch.h"
 #include "hal.h"
@@ -19,10 +18,10 @@ static char **storyfilelist;
 extern ztheme_t themes[];
 int theme = 2; // default theme
 
-static int selectTheme(BaseSequentialStream *);
-static int selectStory(BaseSequentialStream *);
+static int selectTheme(void);
+static int selectStory(void);
 
-static int selectTheme(BaseSequentialStream *chp)
+static int selectTheme(void)
 {
   int buflen = 100;
   char buf[100];
@@ -56,7 +55,7 @@ static int selectTheme(BaseSequentialStream *chp)
   return theme - 1;
 }
 
-static int selectStory(BaseSequentialStream *chp)
+static int selectStory(void)
 {
   static int storynum = 1;
   int count = 0;
@@ -75,9 +74,11 @@ static int selectStory(BaseSequentialStream *chp)
 	}
       if(count == 0)
 	{
-	  fatal("No stories found\n");
+	  printf ("No stories found\n");
+          return (-1);
 	}
       printf("Choose a story by number [%d]:", storynum);
+      fflush (stdout);
 
       input_line( buflen, buffer, timeout, &read_size );
       if(read_size > 0)
@@ -136,7 +137,7 @@ char **getDirectory(char *dirname)
 
 static void configure( zbyte_t min_version, zbyte_t max_version )
 {
-  zbyte_t header[PAGE_SIZE], second;
+  zbyte_t header[PAGE_SIZE];
   
   read_page( 0, header );
   datap = header;
@@ -209,18 +210,18 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
   printf("\nzmachine!\n\n");
 
   // prompt for theme
-  theme = selectTheme(chp);
+  theme = selectTheme();
 
   //initialize_screen();
 
-#ifdef notdef
   // prompt for story file
   storyfilelist = getDirectory(GAMEPATH);
-  storynum = selectStory(chp);
+  storynum = selectStory();
+
+  if (storynum == -1)
+      return;
 
   sprintf(storyfile,"%s/%s",GAMEPATH, storyfilelist[storynum]);
-#endif
-  sprintf (storyfile, "ZORK1.DAT");
 
   printf("\nOpening story...\n");
 
@@ -230,10 +231,11 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
   load_cache();
   z_restart(  );
   ( void ) interpret(  );
-  unload_cache(  );
-  close_story(  );
   close_script(  );
+  close_story(  );
+  unload_cache(  );
   reset_screen(  );
+
   printf("Thanks for playing!\n");
 
   return;
