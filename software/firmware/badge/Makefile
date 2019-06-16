@@ -128,7 +128,7 @@ FLASHSRC := $(CHIBIOS)/os/hal/lib/peripherals/flash/hal_flash.c
 # joypad layout.
 
 # jna: force this for now
-# JOYPADCOMPAT=y
+#JOYPADCOMPAT=y
 
 ifeq ($(JOYPADCOMPAT),)
 JOYPADSRC = joypad_lld.c
@@ -146,6 +146,10 @@ include $(GFXLIB)/drivers/ginput/touch/MCU/driver.mk
 # FatFS library
 FATFS = $(CHIBIOS)/../FatFs
 include $(FATFS)/build.mk
+
+# Z Machine library
+ZMACHINE = $(CHIBIOS)/../zmachine
+include $(ZMACHINE)/build.mk
 
 # Define linker script file here
 LDSCRIPT= NRF52840_softdecvice.ld
@@ -205,7 +209,6 @@ CSRC += main.c \
 	app-unlock.c \
 	app-otasend.c \
 	app-otarecv.c \
-	app-radiounlock.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \
@@ -226,28 +229,8 @@ CSRC += main.c \
 	ides_gfx.c \
 	newlib_syscall.c \
         $(GFXSRC) \
-	$(FATFSSRC)
-
-# if we want the zmachine we need these files too.
-CSRC += zmachine/acursesio.c \
-	zmachine/control.c \
-	zmachine/extern.c \
-	zmachine/fileio.c \
-	zmachine/input.c \
-	zmachine/interpre.c \
-	zmachine/jzip.c \
-	zmachine/license.c \
-	zmachine/math.c \
-	zmachine/mcurses.c \
-	zmachine/memory.c \
-	zmachine/object.c \
-	zmachine/operand.c \
-	zmachine/osdepend.c \
-	zmachine/property.c \
-	zmachine/quetzal.c \
-	zmachine/screen.c \
-	zmachine/text.c \
-	zmachine/variable.c
+	$(FATFSSRC) \
+	$(ZMACHINESRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -281,7 +264,7 @@ ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM) badge_fault.S
 INCDIR = $(CHIBIOS)/os/license \
          $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(FLASHINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
-	 $(SHELLINC) $(GFXINC) $(FATFSINC) \
+	 $(SHELLINC) $(GFXINC) $(FATFSINC) $(ZMACHINEINC) \
 	 $(CHIBIOS)/os/hal/lib/streams $(CHIBIOS)/os/various
 
 

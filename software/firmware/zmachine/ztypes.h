@@ -36,12 +36,8 @@
 #if !defined(__ZTYPES_INCLUDED)
 #define __ZTYPES_INCLUDED
 
-#ifdef ARDUINO
-#include <Arduino.h>
-#include <SPI.h>
-#include <Adafruit_SPIFlash.h>
-#include <Adafruit_SPIFlash_FatFs.h>
-#endif
+#define _BSD_SOURCE
+#define POSIX
 
 /* AIX likes to see this define... */
 #if defined(AIX)
@@ -81,7 +77,7 @@
 extern unsigned char JTERP;
 
 /* Configuration options */
-/*
+
 #ifdef USE_ZLIB
 #include <zlib.h>
 #define jz_rewind  gzrewind
@@ -96,7 +92,6 @@ extern unsigned char JTERP;
 #define jz_close   fclose
 #define jz_getc    getc
 #endif
-*/
 
 #define USE_QUETZAL
 
@@ -106,7 +101,7 @@ extern unsigned char JTERP;
 #define DEFAULT_RIGHT_MARGIN 1  /* # of characters in rt margin (UNIX likes 1)*/
 #define DEFAULT_TOP_MARGIN   0  /* # of lines on screen before [MORE] message */
 
-/*
+
 #ifdef LOUSY_RANDOM
 #define RANDOM_FUNC  rand
 #define SRANDOM_FUNC srand
@@ -114,9 +109,7 @@ extern unsigned char JTERP;
 #define RANDOM_FUNC  random
 #define SRANDOM_FUNC srandom
 #endif
-*/
-#define RANDOM_FUNC  random
-#define SRANDOM_FUNC randomSeed
+
 /* Perform stricter z-code error checking. If STRICTZ is #defined,
  * the interpreter will check for common opcode errors, such as reading
  * or writing properties of the "nothing" (0) object. When such an

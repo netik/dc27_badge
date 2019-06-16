@@ -34,22 +34,6 @@
 #include "ztypes.h"
 
 /*
- * Arduino doesn't have rand() and srand(), lets add them
- */
- 
-static unsigned long int next = 1;
-int random(void) // RAND_MAX assumed to be 32767
-{
-    next = next * 1103515245 + 12345;
-    return (unsigned int)(next/65536) % 32768;
-}
-
-void srandom(unsigned int seed)
-{
-    next = seed;
-}
-
-/*
  * z_add
  *
  * Add two operands
@@ -245,7 +229,7 @@ void z_random( zword_t a )
       store_operand( 0 );
    else if ( a & 0x8000 )
    {                            /* (a < 0) - used to set seed with #RANDOM */
-      SRANDOM_FUNC( ( unsigned int ) abs( a ) );
+      SRANDOM_FUNC( ( unsigned int ) /*abs*/( a ) );
       store_operand( 0 );
    }
    else                         /* (a > 0) */

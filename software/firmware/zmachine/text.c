@@ -687,7 +687,12 @@ void write_char( int c )
 
 void z_set_text_style( zword_t mode )
 {
-   if ( mode >= MIN_ATTRIBUTE  && mode <= MAX_ATTRIBUTE )
+   /*
+    * Note: zword_t is an unsigned short. This means "mode >= 0"
+    * is always true (because unsigned quantities can't be less
+    * than 0; they are always greater than or equal to 0).
+    */
+   if ( /*mode >= MIN_ATTRIBUTE && */ mode <= MAX_ATTRIBUTE )
    {
       set_attribute( mode );
    }

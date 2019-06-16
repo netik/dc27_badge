@@ -45,6 +45,8 @@
 
 extern int GLOBALVER;
 
+#ifdef notused
+
 static void configure( zbyte_t, zbyte_t );
 
 /*
@@ -89,7 +91,7 @@ int _main( int argc, char *argv[] )
  *
  */
 
-static void _configure( zbyte_t min_version, zbyte_t max_version )
+static void configure( zbyte_t min_version, zbyte_t max_version )
 {
    zbyte_t header[PAGE_SIZE], second;
 
@@ -169,3 +171,4 @@ static void _configure( zbyte_t min_version, zbyte_t max_version )
    datap = NULL;
 
 }                               /* configure */
+#endif

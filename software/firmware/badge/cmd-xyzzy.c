@@ -10,14 +10,14 @@
 #include "ffconf.h"
 
 #include "badge.h"
-#include "zmachine/ztypes.h"
+#include "ztypes.h"
 
 #define MAXFILELIST 50 // max. # of game files to display
 
 static char **storyfilelist;
 
 extern ztheme_t themes[];
-static int theme = 2; // default theme
+int theme = 2; // default theme
 
 static int selectTheme(BaseSequentialStream *);
 static int selectStory(BaseSequentialStream *);
@@ -25,13 +25,13 @@ static int selectStory(BaseSequentialStream *);
 static int selectTheme(BaseSequentialStream *chp)
 {
   int buflen = 100;
-  char buf[buflen];
+  char buf[100];
   static int theme = 1;
-  int timeout = 0;
+  int timeout = 1;
   int read_size = 0;
   buf[0] = '\0';
   extern int themecount;
-  
+
   do
     {
       for(int i = 1; i <= themecount; i++)
@@ -40,8 +40,9 @@ static int selectTheme(BaseSequentialStream *chp)
 	}
 
       printf("Choose a color theme by number [%d]: ", theme);
+      fflush (stdout);
       input_line( buflen, buf, timeout, &read_size );
-      
+
       if (read_size > 0)
 	{
 	  // use entered value, otherwise, use default
@@ -212,18 +213,20 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
 
   //initialize_screen();
 
+#ifdef notdef
   // prompt for story file
   storyfilelist = getDirectory(GAMEPATH);
   storynum = selectStory(chp);
 
   sprintf(storyfile,"%s/%s",GAMEPATH, storyfilelist[storynum]);
+#endif
+  sprintf (storyfile, "ZORK1.DAT");
 
   printf("\nOpening story...\n");
 
   open_story(storyfile);
   configure((zbyte_t) V1, (zbyte_t) V8 );
   initialize_screen(  );
-  /*
   load_cache();
   z_restart(  );
   ( void ) interpret(  );
@@ -232,7 +235,6 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
   close_script(  );
   reset_screen(  );
   printf("Thanks for playing!\n");
-  */
 
   return;
 }

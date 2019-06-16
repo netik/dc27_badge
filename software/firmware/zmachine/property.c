@@ -138,7 +138,8 @@ void z_get_prop( zword_t obj, zword_t prop )
    {
       prop_addr++;
       /* Only load first property if it is a byte sized property */
-      if ( h_type <= V3 && !( value & 0xe0 ) || h_type >= V4 && !( value & 0xc0 ) )
+      if ( ((h_type <= V3) && !( value & 0xe0 )) ||
+           ((h_type >= V4) && !( value & 0xc0 )) )
       {
          bprop_val = get_byte( prop_addr );
          wprop_val = bprop_val;
@@ -205,7 +206,8 @@ void z_put_prop( zword_t obj, zword_t prop, zword_t setvalue )
 
    prop_addr++;
 
-   if ( h_type <= V3 && !( value & 0xe0 ) || h_type >= V4 && !( value & 0xc0 ) )
+   if ( ((h_type <= V3) && !( value & 0xe0 )) ||
+        ((h_type >= V4) && !( value & 0xc0 )) )
    {
       set_byte( prop_addr, ( zbyte_t ) setvalue );
    }
@@ -328,7 +330,7 @@ void z_get_prop_addr( zword_t obj, zword_t prop )
 
 void z_get_prop_len( zword_t prop_addr )
 {
-   zbyte_t value;
+   zbyte_t value = 0;
 
    /* This is proper according to an email to the Zmachine list by Graham*/
    if ( prop_addr == 0 )

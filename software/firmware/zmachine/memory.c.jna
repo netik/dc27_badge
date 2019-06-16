@@ -299,7 +299,7 @@ zword_t read_data_word( unsigned long *addr )
 zbyte_t read_data_byte( unsigned long *addr )
 {
    unsigned int page_number, page_offset;
-   zbyte_t value;
+   zbyte_t value = 0;
 
    /* Check if byte is in non-paged cache */
 

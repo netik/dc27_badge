@@ -69,14 +69,14 @@ void setFunction_getchar(char (*functionPoitner)(void))
 	FunctionPointer_getchar = functionPoitner;
 }
 
-void setFunction_putchar(void (*functionPoitner)(uint8_t ch))
+void setFunction_putchar(void (*functionPoitner)(uint_fast8_t ch))
 {
 	FunctionPointer_putchar = functionPoitner;
 }
 
 static uint_fast8_t mcurses_phyio_init (void)
 {
-
+	return (0);
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ static void mcurses_phyio_halfdelay (uint_fast8_t tenths)
  * PHYIO: flush output (AVR)
  *---------------------------------------------------------------------------------------------------------------------------------------------------
  */
-static void mcurses_phyio_flush_output ()
+static void mcurses_phyio_flush_output (void)
 {
 	
 }
