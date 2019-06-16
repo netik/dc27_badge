@@ -35,7 +35,7 @@ endif
 
 # Enable this if you want link time optimizations (LTO)
 ifeq ($(USE_LTO),)
-  USE_LTO = yes
+  USE_LTO = no
 endif
 
 # If enabled, this option allows to compile the application in THUMB mode.
@@ -147,6 +147,10 @@ include $(GFXLIB)/drivers/ginput/touch/MCU/driver.mk
 FATFS = $(CHIBIOS)/../FatFs
 include $(FATFS)/build.mk
 
+# Z Machine library
+ZMACHINE = $(CHIBIOS)/../zmachine
+include $(ZMACHINE)/build.mk
+
 # Define linker script file here
 LDSCRIPT= NRF52840_softdecvice.ld
 
@@ -178,6 +182,7 @@ CSRC += main.c \
 	cmd-random.c \
 	cmd-mem.c \
 	cmd-unix.c \
+	cmd-xyzzy.c \
 	orchard-app.c \
 	orchard-ui.c \
 	ui-keyboard.c \
@@ -225,7 +230,8 @@ CSRC += main.c \
 	ides_gfx.c \
 	newlib_syscall.c \
         $(GFXSRC) \
-	$(FATFSSRC)
+	$(FATFSSRC) \
+	$(ZMACHINESRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -259,7 +265,7 @@ ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM) badge_fault.S
 INCDIR = $(CHIBIOS)/os/license \
          $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(FLASHINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
-	 $(SHELLINC) $(GFXINC) $(FATFSINC) \
+	 $(SHELLINC) $(GFXINC) $(FATFSINC) $(ZMACHINEINC) \
 	 $(CHIBIOS)/os/hal/lib/streams $(CHIBIOS)/os/various
 
 
