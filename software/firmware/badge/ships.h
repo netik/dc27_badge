@@ -12,20 +12,6 @@
  *
  */
 
-/*
- * this structure represents ship parameters.
- * base_fn is typically the shortened ship name used to derive the icon filenames
- *
- * Filename composition: 
- *     1234  5    6 7 8.rgb
- *     SHIP  L/R  T 0 1
- *
- *     basename = SHIP
- *     LH file name = game/ship1.rgb
- *     RH file name = game/ship1.rgb (flipped)
- *    
- */
-
 // bitfields 
 #define SP_NONE          0
 #define SP_HEAL          ( 1 << 0 )
@@ -80,5 +66,7 @@ typedef struct {
   uint8_t special_flags;
 
 } ship_type_t;
+
+#define DEFAULT_VRATES VGOAL,VDRAG,VAPPROACH,VMULT
 
 #endif /* _SHIPS_H_ */

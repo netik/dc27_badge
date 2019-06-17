@@ -5,8 +5,6 @@
 /* ship definition file */
 
 /* we store a lot of ship details here. */
-#define DEFAULT_VRATES VGOAL,VDRAG,VAPPROACH,VMULT
-
 const ship_type_t shiptable[8] = {
 
   // max_special_ttl is used for a variety of functions, depending.
