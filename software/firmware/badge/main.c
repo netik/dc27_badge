@@ -411,6 +411,20 @@ int main(void)
     i2sStart ();
     printf ("I2S interface enabled\n");
 
+    /*
+     * Init the user configuration - can be
+     * done once the flash driver is initialized.
+     */
+    configStart();
+
+    /* start the LEDs */
+    if (led_init()) {
+        printf("I2C LED controller found.\r\n");
+        ledStart();
+    } else {
+        printf("I2C LED controller not found. No Bling ;(\r\n");
+    }
+
     /* Enable display and touch panel */
     gfxInit ();
 
@@ -434,20 +448,6 @@ int main(void)
 #endif
     } else
       printf ("SD card detected\n");
-
-    /*
-     * Init the user configuration - can be
-     * done once the flash driver is initialized.
-     */
-    configStart();
-
-    /* start the LEDs */
-    if (led_init()) {
-        printf("I2C LED controller found.\r\n");
-        ledStart();
-    } else {
-        printf("I2C LED controller not found. No Bling ;(\r\n");
-    }
 
     /*
      * Detect if screen is plugged in. We try to write some data to
