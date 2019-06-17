@@ -260,10 +260,14 @@ static void cmd_config_led_run(BaseSequentialStream *chp, int argc, char *argv[]
   config->led_pattern = pattern-1;
   ledSetPattern(config->led_pattern);
 
-  chprintf(chp, "Pattern changed to %s.\r\n", fxlist[pattern]);
+  chprintf(chp, "Pattern changed to %s.\r\n", fxlist[config->led_pattern]);
 
-  if (ledsOff) {
-    ledStart();
+  if (config->led_pattern == 0) {
+    ledStop();
+  } else {
+    if (ledsOff) {
+      ledStart();
+    }
   }
 }
 
