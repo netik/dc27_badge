@@ -279,7 +279,7 @@ static void cmd_config_led_eye(BaseSequentialStream *chp, int argc, char *argv[]
 
   chprintf(chp, "Eye set.\r\n");
 
-  config->eye_rgb_color = ( r << 4) + ( g << 2 ) + b;
+  config->eye_rgb_color = ( r << 16 ) + ( g << 8 ) + b;
 
 }
 
