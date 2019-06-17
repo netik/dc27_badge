@@ -19,7 +19,7 @@
 
 /* Board identifier. */
 #define BOARD_NRF52_IDES_OF_DEFCON
-#define BOARD_NAME              "DC27 Ides of DEF CON"
+#define BOARD_NAME              "DC27 da Bomb"
 
 /* Board oscillators-related settings. */
 #define NRF5_XTAL_VALUE        32000000
