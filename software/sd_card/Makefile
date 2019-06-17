@@ -142,13 +142,13 @@ video_dabomb: tools_dep $(addprefix video/dabomb/, $(notdir  $(addsuffix .vid, $
 video_civildef: tools_dep $(addprefix video/civildef/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/civildef/*.mp4)))))
 
 sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
+	cp ../firmware/updater/updater.bin $(STAGING_DIR)
 	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
 	-cp rgb/images/*.rgb $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
 	-cp rgb/flags/*.rgb $(STAGING_DIR)/flags
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
 	-cp rgb/font/led_90/*.rgb $(STAGING_DIR)/font/led_90
-	-cp ../firmware/updater/updater.bin $(STAGING_DIR)
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
 	-cp dac/*.snd $(STAGING_DIR)/sound
 	-cp photos/*.rgb $(STAGING_DIR)/photos
