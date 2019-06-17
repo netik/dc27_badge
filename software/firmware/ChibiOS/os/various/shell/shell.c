@@ -50,6 +50,7 @@ event_source_t shell_terminated;
 /*===========================================================================*/
 /* Module local variables.                                                   */
 /*===========================================================================*/
+static uint8_t cmdcnt;
 
 /*===========================================================================*/
 /* Module local functions.                                                   */
@@ -91,9 +92,17 @@ static char *parse_arguments(char *str, char **saveptr) {
 static void list_commands(BaseSequentialStream *chp, const ShellCommand *scp) {
 
   while (scp->sc_name != NULL) {
-    chprintf(chp, "%s ", scp->sc_name);
+    chprintf(chp, "%-10s ", scp->sc_name);
     scp++;
+    cmdcnt++; // filthy hack - track commands listed across invocations
+    if (cmdcnt > 5) {
+      chprintf(chp, "\r\n    ", scp->sc_name);
+      cmdcnt = 0;
+    } else {
+      cmdcnt++;
+    }
   }
+
 }
 
 static bool cmdexec(const ShellCommand *scp, BaseSequentialStream *chp,
@@ -387,10 +396,14 @@ THD_FUNCTION(shellThread, p) {
           shellUsage(chp, "help");
           continue;
         }
-        chprintf(chp, "Commands: help ");
+        chprintf(chp, "Commands:%s", SHELL_NEWLINE_STR);
+
+        chprintf(chp, "    %-10s ", "help");
+        cmdcnt = 2;
         list_commands(chp, shell_local_commands);
         if (scp != NULL)
           list_commands(chp, scp);
+
         chprintf(chp, SHELL_NEWLINE_STR);
       }
       else if (cmdexec(shell_local_commands, chp, cmd, n, args) &&
