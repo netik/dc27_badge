@@ -16,10 +16,14 @@
  * this structure represents ship parameters.
  * base_fn is typically the shortened ship name used to derive the icon filenames
  *
- * example:
- *     basefn = sub
- *     LH file name = game/sub-l.rgb
- *     RH file name = game/sub-r.rgb (flipped)
+ * Filename composition: 
+ *     1234  5    6 7 8.rgb
+ *     SHIP  L/R  T 0 1
+ *
+ *     basename = SHIP
+ *     LH file name = game/ship1.rgb
+ *     RH file name = game/ship1.rgb (flipped)
+ *    
  */
 
 // bitfields 
@@ -47,7 +51,6 @@
 
 typedef struct {
   char type_name[12]; /* type */
-  char base_fn[16];   /* icon name that all other names will be based on */
   
   /* base params */
   int16_t max_hp;

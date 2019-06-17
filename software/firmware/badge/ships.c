@@ -21,7 +21,7 @@ const ship_type_t shiptable[8] = {
 
   // pt boat has -1 for special ttl, it's instant.
   { 
-    "PT Boat", "ship1", 
+    "PT Boat", 
     200, 10, 100, 3,
     500, 150, 50,
     DEFAULT_VRATES,
@@ -30,7 +30,7 @@ const ship_type_t shiptable[8] = {
   },
 
   { 
-    "Patrol Boat", "ship2", 
+    "Patrol Boat",
     250, 25, 120, 3,
     1000, 120, 50,
     DEFAULT_VRATES,
@@ -42,7 +42,7 @@ const ship_type_t shiptable[8] = {
   // tbd: what does "do not move last 7 seconds each" mean? 
   // maybe mines don't move but persist for 7 seconds?
   { 
-    "Destroyer","ship3", 
+    "Destroyer",
     400, 50, 120, 3,
     2000, 300, 40,
     DEFAULT_VRATES,
@@ -53,7 +53,7 @@ const ship_type_t shiptable[8] = {
   { 
     // cruiser has impact blast of 25, wtf is that?
     // cruiser also has a shield at 50/energy/second cost
-    "Cruiser","ship4", 
+    "Cruiser",
     400, 45, 250, 3,
     2000, 250, 35,
     DEFAULT_VRATES,
@@ -62,7 +62,7 @@ const ship_type_t shiptable[8] = {
   },
 
   {
-    "Frigate","ship5",
+    "Frigate",
     500, 80, 300, 3,
     500, 500, 45,
     DEFAULT_VRATES,
@@ -71,7 +71,7 @@ const ship_type_t shiptable[8] = {
   },
 
   { 
-    "Battleship","ship6", 
+    "Battleship",
     600, 60, 400, 3,
     333, 400, 35,
     DEFAULT_VRATES,
@@ -80,7 +80,7 @@ const ship_type_t shiptable[8] = {
   },
 
   { 
-    "Submarine","ship7",
+    "Submarine",
     30, 30, 300, 3,
     333, 350, 40,
     DEFAULT_VRATES,
@@ -89,7 +89,7 @@ const ship_type_t shiptable[8] = {
   },
 
   { 
-    "Tesla","ship8",
+    "Tesla",
     300, 30, 300, 3,
     333, 2000, 40,
     DEFAULT_VRATES,
