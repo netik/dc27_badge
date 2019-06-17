@@ -296,7 +296,7 @@ static void cmd_config_led_list(BaseSequentialStream *chp) {
   uint8_t max_led_patterns;
   userconfig *config = getConfig();
 
-  chprintf(chp, "\r\nAvailable LED Patterns\r\n");
+  chprintf(chp, "\r\nAvailable LED Patterns\r\n\r\n");
 
   if ( config->unlocks & UL_LEDS ) {
     max_led_patterns = LED_PATTERNS_FULL;
@@ -306,11 +306,16 @@ static void cmd_config_led_list(BaseSequentialStream *chp) {
 
 
   for (int i=0; i < max_led_patterns; i++) {
-    chprintf(chp, "%2d) %s\r\n", i+1, fxlist[i]);
+    chprintf(chp, "%2d) %-20s  ", i+1, fxlist[i]);
+    if ((i+1) % 3 == 0) {
+      chprintf(chp, "\r\n");
+    }
   }
 
+  chprintf(chp, "\r\n");
+
   if ( (config->unlocks & UL_LEDS) == 0) {
-    chprintf(chp, "More can be unlocked!\r\n");
+    chprintf(chp, "\r\nMore can be unlocked!\r\n\r\n");
   }
 }
 

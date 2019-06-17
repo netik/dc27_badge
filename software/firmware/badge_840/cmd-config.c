@@ -378,9 +378,13 @@ static void cmd_config_led_list(BaseSequentialStream *chp) {
 
 
   for (int i=0; i < max_led_patterns; i++) {
-    chprintf(chp, "%2d) %s\r\n", i+1, fxlist[i]);
+    chprintf(chp, "  %2d) %-10s ", i+1, fxlist[i]);
+    if (()(i+1) % 4) == 0) {
+      chprintf(chp, "\r\n  ");
+    }
   }
-
+  chprintf(chp, "\r\n  ");
+  
   if ( (config->unlocks & UL_LEDS) == 0) {
     chprintf(chp, "More can be unlocked!\r\n");
   }
