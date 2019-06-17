@@ -146,7 +146,9 @@ msg_t rng_lld_write(RNGDriver *rngp, uint8_t *buf, size_t n,
       SCB->SCR |= SCB_SCR_SEVONPEND_Msk;
       __SEV();
       __WFE();
+#ifdef notdef
       __WFE();
+#endif
     }
 
     /* Read byte */

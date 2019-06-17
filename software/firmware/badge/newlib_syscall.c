@@ -94,17 +94,23 @@ _read (int file, char * ptr, int len)
 
 	/* Can't read from stdout or stderr */
 
-	if (file == 1 || file == 2)
-		return (EINVAL);
+	if (file == 1 || file == 2 || file > MAX_FILES) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	i = file - 3;
-	if (file_used[i] == 0)
-		return (EINVAL);
+	if (file_used[i] == 0) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	f = &file_handles [i];
 
-	if (f_read (f, ptr, len, &br) != FR_OK)
-		return (EIO);
+	if (f_read (f, ptr, len, &br) != FR_OK) {
+		errno = EIO;
+		return (-1);
+	}
 
 	return (br);
 }
@@ -126,15 +132,24 @@ _write (int file, char * ptr, int len)
 		return (len);
 	}
 
+	if (file == 0 || file > MAX_FILES) {
+		errno = EINVAL;
+		return (-1);
+	}
+
 	i = file - 3;
 
-	if (file_used[i] == 0)
-		return (EINVAL);
+	if (file_used[i] == 0) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	f = &file_handles [i];
 
-	if (f_write (f, ptr, len, &br) != FR_OK)
-		return (EIO);
+	if (f_write (f, ptr, len, &br) != FR_OK) {
+		errno = EIO;
+		return (-1);
+	}
 
 	return (br);
 }
@@ -144,6 +159,7 @@ int
 _open (const char * file, int flags, int mode)
 {
 	FIL * f;
+	FRESULT r;
 	BYTE fmode = 0;
 	int i;
 
@@ -152,8 +168,10 @@ _open (const char * file, int flags, int mode)
 			break;
 	}
 
-	if (i == MAX_FILES)
-		return (ENOSPC);
+	if (i == MAX_FILES) {
+		errno = ENOSPC;
+		return (-1);
+	}
 
 	f = &file_handles[i];
 
@@ -165,12 +183,23 @@ _open (const char * file, int flags, int mode)
 		fmode = FA_READ|FA_WRITE;
 
 	if (flags & O_CREAT)
-		fmode |= FA_CREATE_NEW;
+		fmode |= FA_CREATE_ALWAYS;
 	if (flags & O_APPEND)
 		fmode |= FA_OPEN_APPEND;
 
-	if (f_open (f, file, fmode) != FR_OK)
-		return (EIO);
+	r = f_open (f, file, fmode);
+
+	if (r != FR_OK) {
+		if (r == FR_NO_FILE)
+			errno = ENOENT;
+		else if (r == FR_DENIED)
+			errno = EPERM;
+		else if (r == FR_EXIST)
+			errno = EEXIST;
+		else
+			errno = EIO;
+		return (-1);
+	}
 
 	file_used[i] = 1;
 
@@ -191,13 +220,17 @@ _close (int file)
 	int i;
 	FIL * f;
 
-	if (file < 3)
-		return (EINVAL);
+	if (file < 3 || file > MAX_FILES) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	i = file - 3;
 
-	if (file_used[i] == 0)
-		return (EINVAL);
+	if (file_used[i] == 0) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	f = &file_handles [i];
 	file_used[i] = 0;
@@ -216,16 +249,22 @@ _lseek (int file, int ptr, int dir)
 
 	/* Not sure how to handle SEEK_END */
 
-	if (dir == SEEK_END)
-		return (EINVAL);
+	if (dir == SEEK_END) {
+		errno = EINVAL;
+		return (-1);
+	}
 
-	if (file < 3)
-		return (EINVAL);
+	if (file < 3 || file > MAX_FILES) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	i = file - 3;
 
-	if (file_used[i] == 0)
-		return (EINVAL);
+	if (file_used[i] == 0) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	f = &file_handles [i];
 
@@ -235,10 +274,76 @@ _lseek (int file, int ptr, int dir)
 	if (dir == SEEK_CUR)
 		offset = f_tell (f) + ptr;
 
-	if (f_lseek (f, offset) != FR_OK)
-		return (EIO);
+	if (f_lseek (f, offset) != FR_OK) {
+		errno = EIO;
+		return (-1);
+	}
 
 	return (offset);
+}
+
+__attribute__((used))
+int
+_stat (const char * file, struct stat * st)
+{
+	FILINFO f;
+	FRESULT r;
+
+	r = f_stat (file, &f);
+
+	if (r != FR_OK) {
+		if (r == FR_NO_FILE)
+			errno = ENOENT;
+		else if (r == FR_DENIED)
+			errno = EPERM;
+		else
+			errno = EIO;
+		return (-1);
+
+	}
+
+	st->st_size = f.fsize;
+	st->st_blksize = 512;
+	st->st_blocks = f.fsize / 512;
+	if (st->st_blocks == 0)
+		st->st_blocks++;
+
+	return (0);
+}
+
+__attribute__((used))
+int
+_fstat (int desc, struct stat * st)
+{
+	FIL * f;
+	int i;
+
+	st->st_blksize = 512;
+	st->st_size = 0;
+	st->st_blocks = 0;
+
+	if (desc < 3)
+		return (0);
+
+	if (desc > MAX_FILES) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	i = desc - 3;
+	if (file_used[i] == 0) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	f = &file_handles [i];
+
+	st->st_size = f_size (f);
+	st->st_blocks = f_size (f) / 512;
+	if (st->st_blocks == 0)
+		st->st_blocks++;
+
+	return (0);
 }
 
 __attribute__((used))
