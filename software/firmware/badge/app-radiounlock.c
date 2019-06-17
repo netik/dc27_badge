@@ -166,7 +166,7 @@ radiounlock_event (OrchardAppContext *context,
 		geventRegisterCallback (&p->gl,
 		    orchardAppUgfxCallback, &p->gl);
 
-		putImageFile ("images/unlock.rgb", 0, 0);
+		putImageFile ("images/runlock.rgb", 0, 0);
 
 		/*
 		 * Initiate GAP connection to peer.
