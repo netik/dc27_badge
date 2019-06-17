@@ -27,7 +27,7 @@ VOLNAME= /Volumes/NO\ NAME
 
 .PHONY: tools_dep dirs
 
-all: dirs tools_dep images video sounds photos sdcard stories
+all: dirs tools_dep images video sounds photos sdcard
 
 tools_dep:
 	$(MAKE) -C $(TOOLS_DIR)
@@ -48,9 +48,9 @@ rgb/icons/%.rgb : tif/icons/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh tmpbg.tif
 	mv tmpbg.rgb $(subst gif/,tif/,$(@))
 
-rgb/icons/%.gif : tif/icons/%.tif
-	$(TOOLS_DIR)/scripts/bg_transparent.sh $< $@
-	mv $(subst gif/,tif/,$(@)) rgb/icons/
+#rgb/icons/%.gif : tif/icons/%.tif
+#	$(TOOLS_DIR)/scripts/bg_transparent.sh $< $@
+#	mv $(subst gif/,tif/,$(@)) rgb/icons/
 
 rgb/game/%.rgb : tif/game/%.tif
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
@@ -124,7 +124,6 @@ images: dirs tools_dep photos \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/*.tif))))) \
         $(addprefix rgb/images/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/images/*.tif))))) \
         $(addprefix rgb/icons/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/icons/*.tif))))) \
-        $(addprefix rgb/icons/, $(notdir  $(addsuffix .gif, $(basename $(wildcard tif/icons/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.jpg))))) \
         $(addprefix rgb/flags/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/flags/*.tif))))) \
@@ -143,14 +142,13 @@ video_dabomb: tools_dep $(addprefix video/dabomb/, $(notdir  $(addsuffix .vid, $
 video_civildef: tools_dep $(addprefix video/civildef/, $(notdir  $(addsuffix .vid, $(basename $(wildcard video_src/civildef/*.mp4)))))
 
 sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
+	cp ../firmware/updater/updater.bin $(STAGING_DIR)
 	-cp sdcard-readme.txt $(STAGING_DIR)/README.txt
 	-cp rgb/images/*.rgb $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
-	-cp rgb/icons/*.gif $(STAGING_DIR)/icons
 	-cp rgb/flags/*.rgb $(STAGING_DIR)/flags
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
 	-cp rgb/font/led_90/*.rgb $(STAGING_DIR)/font/led_90
-	-cp ../firmware/updater/updater.bin $(STAGING_DIR)
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
 	-cp dac/*.snd $(STAGING_DIR)/sound
 	-cp photos/*.rgb $(STAGING_DIR)/photos
@@ -159,7 +157,7 @@ sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 	-cp video/misc/*.vid $(STAGING_DIR)/videos/misc
 	-cp video/dabomb/*.vid $(STAGING_DIR)/videos/dabomb
 	-cp video/civildef/*.vid $(STAGING_DIR)/videos/civildef
-	-cp ../firmware/zmachine/games/*.dat ../firmware/zmachine/games/*.DAT ../firmware/zmachine/games/*.z5 $(STAGING_DIR)/stories
+	-cp -R zgames/* $(STAGING_DIR)/stories
 	@echo
 	@echo 'sdcard built in $(STAGING_DIR)'
 	@echo
