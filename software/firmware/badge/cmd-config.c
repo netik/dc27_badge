@@ -173,9 +173,8 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
     chprintf(chp, "   show           show config\r\n");
     chprintf(chp, "   set nnn yyy    set variable nnn to yyy (vars: name, sound, ctype)\r\n");
     chprintf(chp, "   led list       list animations available\r\n");
-    chprintf(chp, "   led dim n      dimmer level (0-7) 0=brightest\r\n");
+    chprintf(chp, "   led dim n      LED Global Current Control (0-255) 255=brightest\r\n");
     chprintf(chp, "   led run n      run pattern #n\r\n");
-    chprintf(chp, "   led all r g b  set all leds to one color (0-255)\r\n");
     chprintf(chp, "   led stop       stop and blank LEDs\r\n");
     chprintf(chp, "   save           save config to flash\r\n\r\n");
 
