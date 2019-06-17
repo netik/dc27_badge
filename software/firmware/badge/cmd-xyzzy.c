@@ -36,22 +36,21 @@ static int selectTheme(void)
   do
     {
       for(int i = 1; i <= themecount; i++)
-	{
-	  printf("%d: %s\n", i, themes[i-1].tname);
-	}
+	    {
+	       printf("%d: %s\n", i, themes[i-1].tname);
+	    }
 
       printf("Choose a color theme by number [%d]: ", theme);
       fflush (stdout);
       input_line( buflen, buf, timeout, &read_size );
 
       if (read_size > 0)
-	{
-	  // use entered value, otherwise, use default
-	  buf[read_size] = '\0';
-	  theme = atoi(buf);
-	}
+	    {
+    	  // use entered value, otherwise, use default
+    	  buf[read_size] = '\0';
+    	  theme = atoi(buf);
+	    }
     }
-  
   while(theme < 1 || theme > themecount);
 
   return theme - 1;
@@ -70,16 +69,21 @@ static int selectStory(void)
       count = 0;
 
       while(storyfilelist[count] != NULL && count < MAXFILELIST)
-	{
-	  printf("%d: %s\n", count + 1, storyfilelist[count]);
-	  count++;
-	}
-      if(count == 0)
-	{
-	  printf ("No stories found\n");
-          return (-1);
-	}
-      printf("Choose a story by number [%d]:", storynum);
+	    {
+	       printf("%2d: %-20s", count + 1, storyfilelist[count]);
+         if ((count + 1) % 3 == 0) {
+           printf("\n");
+         }
+	       count++;
+	    }
+
+      if (count == 0)
+	    {
+	       printf ("No stories found\n");
+         return (-1);
+	    }
+
+      printf("\nChoose a story by number [%d]:", storynum);
       fflush (stdout);
 
       input_line( buflen, buffer, timeout, &read_size );
@@ -91,7 +95,7 @@ static int selectStory(void)
       printf("\n");
     }
   while(storynum <= 0 || storynum > count);
-  
+
   return storynum - 1;
 }
 
@@ -114,24 +118,24 @@ char **getDirectory(char *dirname)
   f_opendir(&d, dirname);
 
   while (true)
-    {
+  {
       if (f_readdir (&d, &info) != FR_OK || info.fname[0] == 0)
-	break;
+	     break;
 
       if (! (info.fattrib & AM_DIR))
-	{
-	  dirlist[dirlistcount++] = filebuffptr;
-	  strcpy(filebuffptr, info.fname);
-	  filebuffptr += strlen(info.fname) + 1;
+    	{
+    	  dirlist[dirlistcount++] = filebuffptr;
+    	  strcpy(filebuffptr, info.fname);
+    	  filebuffptr += strlen(info.fname) + 1;
 
-	  if (dirlistcount > MAXFILELIST)
-	    {
-	      // no more files
-	      break;
-	    }
-	}
-    }
-  
+    	  if (dirlistcount > MAXFILELIST)
+    	  {
+    	      // no more files
+    	      break;
+    	  }
+    	}
+  }
+
   f_closedir (&d);
 
   return dirlist;
@@ -145,11 +149,12 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
   char storyfile[200];
 
   // handle arg here if necessary
-  printf("\nzmachine!\n\n");
+  printf("\nzmachine!\nPlease set your terminal to 80x24 ANSI or things won't look right.\n\n");
 
   // prompt for theme
   theme = selectTheme();
-
+  printf("\n");
+  
   //initialize_screen();
 
   // prompt for story file
@@ -175,16 +180,6 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
   reset_screen(  );
 
   printf("Thanks for playing!\n");
-
-  /*
-   * This is a small tweak to reclaim some memory from the heap.
-   * when using getc()/getchar(), the newlib stdio code will allocate
-   * some buffer memory for the stdin FILE pointer. It's about 1024
-   * bytes, and it would be nice to reclaim it. Doing an fclose()
-   * on stdin has the side effect of doing exactly that.
-   */
-
-  fclose (stdin);
 
   return;
 }

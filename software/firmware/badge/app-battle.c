@@ -679,7 +679,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           screen_alert_draw (FALSE,
               "Battle Accepted!");
           /* Offer accepted - create L2CAP link*/
-          //bleL2CapConnect (BLE_IDES_OTA_PSM);
+          bleL2CapConnect (BLE_IDES_BATTLE_PSM);
         } else {
           screen_alert_draw (FALSE,
               "Battle Declined.");
@@ -687,6 +687,20 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           bleGapDisconnect ();
           changeState(WORLD_MAP);
         }
+        break;
+      case l2capRxEvent:
+        // we then get a radio event
+        // MTU is 1024 bytes.
+        // radio->pkt and radio->pktlen
+        break;
+      case l2capTxEvent:
+        // after transmit... they got the data.
+        break;
+      case l2capConnectEvent:
+        // now we have a peer connection.
+        // we send with bl2L@CApSend(data, size) == NRF_SUCCESS ...
+        changeState(COMBAT);
+        break;
       default:
         break;
       }
