@@ -27,7 +27,7 @@ VOLNAME= /Volumes/NO\ NAME
 
 .PHONY: tools_dep dirs
 
-all: dirs tools_dep images video sounds photos sdcard
+all: dirs tools_dep images video sounds photos sdcard stories
 
 tools_dep:
 	$(MAKE) -C $(TOOLS_DIR)
@@ -159,6 +159,7 @@ sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 	-cp video/misc/*.vid $(STAGING_DIR)/videos/misc
 	-cp video/dabomb/*.vid $(STAGING_DIR)/videos/dabomb
 	-cp video/civildef/*.vid $(STAGING_DIR)/videos/civildef
+	-cp ../firmware/zmachine/games/*.dat ../firmware/zmachine/games/*.DAT ../firmware/zmachine/games/*.z5 $(STAGING_DIR)/stories
 	@echo
 	@echo 'sdcard built in $(STAGING_DIR)'
 	@echo
@@ -199,17 +200,18 @@ dirs:
 	-[ -d $(STAGING_DIR)/flags ] || mkdir -p $(STAGING_DIR)/flags
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
 	-[ -d $(STAGING_DIR)/font/led_90 ] || mkdir -p $(STAGING_DIR)/font/led_90
+	-[ -d $(STAGING_DIR)/stories ] || mkdir -p $(STAGING_DIR)/stories
 	-[ -d rgb/icons ] || mkdir -p rgb/images
 	-[ -d rgb/icons ] || mkdir -p rgb/icons
 	-[ -d rgb/flags ] || mkdir -p rgb/flags
 	-[ -d rgb/game ] || mkdir -p rgb/game
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
 	-[ -d rgb/font/led_90 ] || mkdir -p rgb/font/led_90
+	-[ -d saves ] || mkdir -p saves
 	-[ -d video ] || mkdir -p video
 	-[ -d video/misc ] || mkdir -p video/misc
 	-[ -d video/dabomb ] || mkdir -p video/dabomb
 	-[ -d video/civildef ] || mkdir -p video/civildef
-
 cleansd:
 	@if [ -d "$(STAGING_DIR)" ]; then rm -rf $(STAGING_DIR); fi;
 	@if [ -d "rgb" ]; then rm -rf rgb; fi;
