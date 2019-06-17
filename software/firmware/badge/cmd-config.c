@@ -30,6 +30,7 @@ static void cmd_config_led_stop(BaseSequentialStream *chp);
 static void cmd_config_led_run(BaseSequentialStream *chp, int argc, char *argv[]);
 static void cmd_config_led_dim(BaseSequentialStream *chp, int argc, char *argv[]);
 static void cmd_config_led_list(BaseSequentialStream *chp);
+static void cmd_config_led_eye(BaseSequentialStream *chp, int argc, char *argv[]);
 
 /* end prototypes */
 
@@ -55,26 +56,39 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
 #endif
 
   chprintf(chp, "name       %s\r\n", config->name);
+  chprintf(chp, "config ver %d\r\n", config->version);
   chprintf(chp, "signature  0x%08x\r\n", config->signature);
-  chprintf(chp, "version    %d\r\n", config->version);
   chprintf(chp, "unlocks    0x%04x\r\n", config->unlocks);
   chprintf(chp, "sound      %d\r\n", config->sound_enabled);
+  chprintf(chp, "LEDs       Pattern %d:%s power %d/255 eye (%x)\r\n",
+    config->led_pattern,
+    fxlist[config->led_pattern],
+    config->led_brightness,
+    config->eye_rgb_color
+  );
+
+  chprintf(chp, "Game\r\n");
+  chprintf(chp, "----\r\n");
+  chprintf(chp, "level      %s (%d)\r\n",
+           config->level,
+           rankname[config->level-1]);
+  chprintf(chp, "currship   %d (enabled: %x)\r\n",
+           config->current_ship,
+           config->ships_enabled);
+  chprintf(chp, "hp         %d\r\n",
+           config->hp);
+  chprintf(chp, "xp         %d\r\n",
+           config->xp);
+  chprintf(chp, "energy     %d\r\n",
+          config->hp);
+  chprintf(chp, "bp         %d\r\n",
+          config->xp);
   chprintf(chp, "lastdeath  %d\r\n", config->lastdeath);
   chprintf(chp, "incombat   %d\r\n", config->in_combat);
   chprintf(chp, "lastpos    (%d, %d)\r\n", config->last_x, config->last_y);
-  chprintf(chp, "led mode   %d:%s power %d/255\r\n", config->led_pattern, fxlist[config->led_pattern], config->led_brightness);
-
   chprintf(chp, "won/lost   %d/%d\r\n\r\n",
            config->won,
            config->lost);
-
-  chprintf(chp, "lvl %4d\r\n",
-           config->level);
-
-  chprintf(chp, "hp  %4d xp  %4d\r\n",
-           config->hp,
-           config->xp
-           );
 }
 
 static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -128,11 +142,18 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     return;
   }
 
+  if (!strcasecmp(argv[1], "ships")) {
+    config->ships_enabled = val;
+    chprintf(chp, "Enabled ships set to %d.\r\n", config->ships_enabled);
+    return;
+  }
+
   if (!strcasecmp(argv[1], "unlocks")) {
     config->unlocks = val;
     chprintf(chp, "Unlocks set to %d.\r\n", config->unlocks);
     return;
   }
+
   if (!strcasecmp(argv[1], "hp")) {
     config->hp = val;
     chprintf(chp, "HP set to %d.\r\n", config->hp);
@@ -171,11 +192,12 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
   if (argc == 0) {
     chprintf(chp, "config commands:\r\n");
     chprintf(chp, "   show           show config\r\n");
-    chprintf(chp, "   set nnn yyy    set variable nnn to yyy (vars: name, sound, ctype)\r\n");
+    chprintf(chp, "   set nnn yyy    set variable nnn to yyy (vars: name, sound)\r\n");
     chprintf(chp, "   led list       list animations available\r\n");
     chprintf(chp, "   led dim n      LED Global Current Control (0-255) 255=brightest\r\n");
     chprintf(chp, "   led run n      run pattern #n\r\n");
     chprintf(chp, "   led stop       stop and blank LEDs\r\n");
+    chprintf(chp, "   led eye r g b  set eye color (rgb 0-255)\r\n");
     chprintf(chp, "   save           save config to flash\r\n\r\n");
 
     chprintf(chp, "warning: there is no mutex on config changes. save quickly or get conflicts.\r\n");
@@ -203,13 +225,18 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
       return;
     }
 
-    if (!strcasecmp(argv[1], "list")) {
-      cmd_config_led_list(chp);
+    if (!strcasecmp(argv[1], "dim")) {
+      cmd_config_led_dim(chp, argc, argv);
       return;
     }
 
-    if (!strcasecmp(argv[1], "dim")) {
-      cmd_config_led_dim(chp, argc, argv);
+    if (!strcasecmp(argv[1], "eye")) {
+      cmd_config_led_eye(chp, argc, argv);
+      return;
+    }
+
+    if (!strcasecmp(argv[1], "list")) {
+      cmd_config_led_list(chp);
       return;
     }
 
@@ -225,6 +252,34 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
   }
 
   chprintf(chp, "Unrecognized config command.\r\n");
+
+}
+
+static void cmd_config_led_eye(BaseSequentialStream *chp, int argc, char *argv[]) {
+
+  int16_t r,g,b;
+  userconfig *config = getConfig();
+
+  if (argc != 5) {
+    chprintf(chp, "Not enough arguments.\r\n");
+    return;
+  }
+
+  r = strtoul(argv[2], NULL, 0);
+  g = strtoul(argv[3], NULL, 0);
+  b = strtoul(argv[4], NULL, 0);
+
+  if ((r < 0) || (r > 255) ||
+      (g < 0) || (g > 255) ||
+      (b < 0) || (b > 255) ) {
+    chprintf(chp, "Invaild value. Must be 0 to 255.\r\n");
+    return;
+
+  }
+
+  chprintf(chp, "Eye set.\r\n");
+
+  config->eye_rgb_color = ( r << 4) + ( g << 2 ) + b;
 
 }
 

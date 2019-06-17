@@ -12,7 +12,7 @@
 #define CONFIG_FLASH_ADDR 0xFF000
 #define CONFIG_FLASH_SECTOR 255
 #define CONFIG_SIGNATURE  0xdeadbeef  // duh
-#define CONFIG_VERSION    2
+#define CONFIG_VERSION    3
 #define CONFIG_NAME_MAXLEN 20
 
 #define CONFIG_LEDSIGN_MAXLEN	124
@@ -38,6 +38,8 @@ typedef struct userconfig {
   uint8_t sound_enabled;
   uint8_t airplane_mode;
   uint8_t rotate;
+
+  uint32_t eye_rgb_color;
 
   /* touchpad calibration data */
   uint8_t touch_data_present;

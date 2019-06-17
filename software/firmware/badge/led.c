@@ -406,7 +406,16 @@ void led_test() {
 }
 
 static void update_eye(void) {
-  led_set(31,(sin(led_eye_state * M_PI/180) * 96) + 128, 0, 0);
+  userconfig *config = getConfig();
+
+  // quick'n'dirty remap
+  uint8_t r = (config->eye_rgb_color & 0xff0000) >> 16;
+  uint8_t g = (config->eye_rgb_color & 0x00ff00) >> 8;
+  uint8_t b = (config->eye_rgb_color & 0x0000ff);
+
+  led_set(31,(sin(led_eye_state * M_PI/180) * 96) + (r / 2),
+             (sin(led_eye_state * M_PI/180) * 96) + (g / 2),
+             (sin(led_eye_state * M_PI/180) * 96) + (b / 2));
 
   led_eye_state++;
 
