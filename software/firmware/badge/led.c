@@ -407,11 +407,11 @@ void led_test() {
 static void update_eye(void) {
   userconfig *config = getConfig();
 
-  // quick'n'dirty remap
   uint8_t r = (config->eye_rgb_color & 0xff0000) >> 16;
   uint8_t g = (config->eye_rgb_color & 0x00ff00) >> 8;
   uint8_t b = (config->eye_rgb_color & 0x0000ff);
 
+  // this approximates the 'breathing' pattern as seen on macbooks
   led_set(31,(exp(sin(MILLIS()/4000.0 * M_PI)) - 0.36787944) * r/2,
 	  (exp(sin(MILLIS()/4000.0 * M_PI)) - 0.36787944) * g/2,
 	  (exp(sin(MILLIS()/4000.0 * M_PI)) - 0.36787944) * b/2);
