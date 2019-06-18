@@ -80,12 +80,12 @@ rgb/images/%.rgb : tif/images/%.tif
 # credits app.
 #
 photos/%.rgb: photos_src/%.tif
-	convert $< -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop $(subst photos_src/,photos/,$<)
+	convert $< -resize 320x240 -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop $(subst photos_src/,photos/,$<)
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $(subst photos_src/,photos/,$<)
 	rm $(subst photos_src/,photos/,$<)
 
 photos/%.rgb: photos_src/%.jpg
-	convert "$<" -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop "$(subst photos_src/,photos/,$<)"
+	convert "$<" -resize 320x240 -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop "$(subst photos_src/,photos/,$<)"
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh "$(subst photos_src/,photos/,$<)"
 	rm "$(subst photos_src/,photos/,$<)"
 
