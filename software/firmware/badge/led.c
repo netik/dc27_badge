@@ -78,7 +78,6 @@ uint8_t ledsOff = 1;
 static bool leds_init_ok = false;
 // the current function that updates the LEDs. Override with ledSetFunction();
 static uint8_t led_current_func = 1;
-static int16_t led_eye_state = 0;
 
 // if we're random, our last function was this, which always starts at 2.
 static uint8_t led_current_random = 2;
@@ -413,16 +412,9 @@ static void update_eye(void) {
   uint8_t g = (config->eye_rgb_color & 0x00ff00) >> 8;
   uint8_t b = (config->eye_rgb_color & 0x0000ff);
 
-  led_set(31,(sin(led_eye_state * M_PI/180) * 96) + (r / 2),
-             (sin(led_eye_state * M_PI/180) * 96) + (g / 2),
-             (sin(led_eye_state * M_PI/180) * 96) + (b / 2));
-
-  led_eye_state++;
-
-  if (led_eye_state > 360) {
-    led_eye_state = 0;
-  }
-
+  led_set(31,(exp(sin(MILLIS()/4000.0 * M_PI)) - 0.36787944) * r/2,
+	  (exp(sin(MILLIS()/4000.0 * M_PI)) - 0.36787944) * g/2,
+	  (exp(sin(MILLIS()/4000.0 * M_PI)) - 0.36787944) * b/2);
 }
 
 /* Threads ------------------------------------------------------ */

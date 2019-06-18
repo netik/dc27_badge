@@ -30,7 +30,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  USE_LDOPT =
 endif
 
 # Enable this if you want link time optimizations (LTO)
@@ -305,7 +305,7 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Define C warning options here
-CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes  -Wno-unused-parameter 
+CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes  -Wno-unused-parameter
 
 # Define C++ warning options here
 CPPWARN = -Wall -Wextra -Wundef
@@ -319,7 +319,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -DSHELL_PROMPT_STR="\"boom> \""
+UDEFS = -DSHELL_PROMPT_STR="\"boom> \"" -DSHELL_MAX_ARGUMENTS=6
 
 # Define ASM defines here
 UADEFS =
@@ -340,7 +340,7 @@ ULIBS += -u _printf_float -u _scanf_float
 # End of user defines
 ##############################################################################
 
-.PHONY: updatebuildtime 
+.PHONY: updatebuildtime
 
 RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/
 include $(RULESPATH)/rules.mk
@@ -365,4 +365,3 @@ flash: all jlink-flash
 debug: gdb-debug
 erase-all: jlink-erase-all
 debug-server: jlink-debug-server
-

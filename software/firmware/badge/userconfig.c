@@ -128,7 +128,7 @@ static void init_config(userconfig *config) {
   config->sound_enabled = 1;
   config->airplane_mode = 0;
   config->rotate = 0;
-  config->eye_rgb_color = 0xff0000;
+  config->eye_rgb_color = 0x800000;
 
   config->touch_data_present = 0;
   // touch_data will be ignored for now.

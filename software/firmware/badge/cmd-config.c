@@ -70,8 +70,8 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
   chprintf(chp, "Game\r\n");
   chprintf(chp, "----\r\n");
   chprintf(chp, "level      %s (%d)\r\n",
-           config->level,
-           rankname[config->level-1]);
+           rankname[config->level-1],
+           config->level);
   chprintf(chp, "currship   %d (enabled: %x)\r\n",
            config->current_ship,
            config->ships_enabled);
@@ -197,7 +197,7 @@ static void cmd_config(BaseSequentialStream *chp, int argc, char *argv[])
     chprintf(chp, "   led dim n      LED Global Current Control (0-255) 255=brightest\r\n");
     chprintf(chp, "   led run n      run pattern #n\r\n");
     chprintf(chp, "   led stop       stop and blank LEDs\r\n");
-    chprintf(chp, "   led eye r g b  set eye color (rgb 0-255)\r\n");
+    chprintf(chp, "   led eye r g b  set eye color (rgb 0-127)\r\n");
     chprintf(chp, "   save           save config to flash\r\n\r\n");
 
     chprintf(chp, "warning: there is no mutex on config changes. save quickly or get conflicts.\r\n");
@@ -269,10 +269,10 @@ static void cmd_config_led_eye(BaseSequentialStream *chp, int argc, char *argv[]
   g = strtoul(argv[3], NULL, 0);
   b = strtoul(argv[4], NULL, 0);
 
-  if ((r < 0) || (r > 255) ||
-      (g < 0) || (g > 255) ||
-      (b < 0) || (b > 255) ) {
-    chprintf(chp, "Invaild value. Must be 0 to 255.\r\n");
+  if ((r < 0) || (r > 127) ||
+      (g < 0) || (g > 127) ||
+      (b < 0) || (b > 127) ) {
+    chprintf(chp, "Invaild value. Must be 0 to 127.\r\n");
     return;
 
   }
