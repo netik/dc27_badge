@@ -80,12 +80,17 @@ rgb/images/%.rgb : tif/images/%.tif
 # credits app.
 #
 photos/%.rgb: photos_src/%.tif
-	convert $< -resize \!320x240 -rotate 90 -flop $(subst photos_src/,photos/,$<)
+	convert $< -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop $(subst photos_src/,photos/,$<)
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $(subst photos_src/,photos/,$<)
 	rm $(subst photos_src/,photos/,$<)
 
+photos/%.rgb: photos_src/%.jpg
+	convert "$<" -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop "$(subst photos_src/,photos/,$<)"
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh "$(subst photos_src/,photos/,$<)"
+	rm "$(subst photos_src/,photos/,$<)"
+
 # User supplied photos if any.
-photos: tools_dep $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.tif)))))
+photos: tools_dep $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.tif))))) $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.jpg)))))
 
 
 # the credits image, if needed
@@ -151,6 +156,7 @@ sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 	-cp rgb/font/led_90/*.rgb $(STAGING_DIR)/font/led_90
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
 	-cp dac/*.snd $(STAGING_DIR)/sound
+	mkdir -p $(STAGING_DIR)/photos
 	-cp photos/*.rgb $(STAGING_DIR)/photos
 	-cp rgb/game/*.rgb $(STAGING_DIR)/game
 	-cp dac/game/*.snd $(STAGING_DIR)/game
