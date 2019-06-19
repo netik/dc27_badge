@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# 
+# Fetch latest bom's from Macrofab.
+#
+# J. Adams <jna@retina.net> 6/2019
+#
+
+# You can pretty-print these json outputs with the jsonpp utility, available via:
+#    brew install jsonpp
 #
 # set APIKEY in your environment prior to calling this script.
 #
