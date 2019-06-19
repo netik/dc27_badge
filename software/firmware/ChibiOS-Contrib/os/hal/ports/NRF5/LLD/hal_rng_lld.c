@@ -58,6 +58,31 @@ RNGDriver RNGD1;
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
 
+/**
+ * @brief   RNG interrupt handler.
+ *
+ * @isr
+ */
+OSAL_IRQ_HANDLER(Vector74)
+{
+  NRF_RNG_Type *rng;
+
+  rng = RNGD1.rng;
+
+  OSAL_IRQ_PROLOGUE();
+  osalSysLock ();
+
+  rng->EVENTS_VALRDY = 0;
+#if CORTEX_MODEL >= 4
+  (void)rng->EVENTS_VALRDY;
+#endif
+
+  osalThreadResumeI (&RNGD1.tr, MSG_OK);
+  osalSysUnlock ();
+  OSAL_IRQ_EPILOGUE();
+  return;
+}
+
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
@@ -93,17 +118,12 @@ void rng_lld_start(RNGDriver *rngp) {
   else
     rng->CONFIG &= ~RNG_CONFIG_DERCEN_Msk;
 
-  /* Clear pending events */
-  rng->EVENTS_VALRDY = 0;
-#if CORTEX_MODEL >= 4
-    (void)rng->EVENTS_VALRDY;
-#endif
-    
+  /* Enable vector */
+  nvicEnableVector (RNG_IRQn, NRF5_RNG_RNG0_IRQ_PRIORITY);
+
   /* Set interrupt mask */
   rng->INTENSET      = RNG_INTENSET_VALRDY_Msk;
 
-  /* Start */
-  rng->TASKS_START   = 1;
 }
 
 
@@ -117,8 +137,11 @@ void rng_lld_start(RNGDriver *rngp) {
 void rng_lld_stop(RNGDriver *rngp) {
   NRF_RNG_Type *rng = rngp->rng;
 
-  /* Stop peripheric */
-  rng->TASKS_STOP = 1;
+  /* Clear interrupt mask */
+  rng->INTENCLR      = RNG_INTENSET_VALRDY_Msk;
+
+  /* Disable vector */
+  nvicDisableVector (RNG_IRQn);
 }
 
 
@@ -134,36 +157,35 @@ void rng_lld_stop(RNGDriver *rngp) {
 msg_t rng_lld_write(RNGDriver *rngp, uint8_t *buf, size_t n,
                     systime_t timeout) {
   NRF_RNG_Type *rng = rngp->rng;
+  msg_t msg;
   size_t i;
 
-  for (i = 0 ; i < n ; i++) {
-    /* Wait for byte ready
-     * It take about 677µs to generate a new byte, not sure if
-     * forcing a context switch will be a benefit
-     */
-    while (rng->EVENTS_VALRDY == 0) {
-      /* Sleep and wakeup on ARM event (interrupt) */
-      SCB->SCR |= SCB_SCR_SEVONPEND_Msk;
-      __SEV();
-      __WFE();
-#ifdef notdef
-      __WFE();
-#endif
-    }
+  if (rngp->state != RNG_READY)
+      return (MSG_TIMEOUT);
+
+  /* Start */
+  rng->TASKS_START = 1;
+
+  for (i = 0; i < n; i++) {
+    msg = osalThreadSuspendTimeoutS (&rngp->tr, timeout);
+    if (msg != MSG_OK)
+      break;
 
     /* Read byte */
     buf[i] = (char)rng->VALUE;
 
-    /* Mark as read */
-    rng->EVENTS_VALRDY = 0;
-#if CORTEX_MODEL >= 4
-    (void)rng->EVENTS_VALRDY;
-#endif
-    
-    /* Clear interrupt so we can wake up again */
-    nvicClearPending(rngp->irq);
   }
-  return MSG_OK;
+
+  /* Stop */
+  rng->TASKS_STOP = 1;
+
+  /* Mark as read */
+  rng->EVENTS_VALRDY = 0;
+#if CORTEX_MODEL >= 4
+  (void)rng->EVENTS_VALRDY;
+#endif
+
+  return (msg);
 }
 
 #endif /* HAL_USE_RNG */

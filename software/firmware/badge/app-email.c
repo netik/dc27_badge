@@ -72,5 +72,5 @@ email_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Bitcoin Miner", "icons/bitcoin.rgb", 0, email_init, email_start,
+orchard_app("Crypto Miner", "icons/bitcoin.rgb", 0, email_init, email_start,
     email_event, email_exit, aaaa);

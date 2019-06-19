@@ -126,6 +126,10 @@ struct RNGDriver {
    * @brief IRQ number
    */
   uint32_t                  irq;
+  /**
+   * @brief thread handle
+   */
+  thread_reference_t        tr;
 };
 
 /*===========================================================================*/

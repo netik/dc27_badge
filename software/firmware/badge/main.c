@@ -364,6 +364,12 @@ int main(void)
 
     printf("Priority levels %d\n", CORTEX_PRIORITY_LEVELS);
 
+    /* Enable random number generator */
+
+    rngStart (&RNGD1, NULL);
+
+    printf ("Random number generator enabled\n");
+
     /* Set up I/O pins */
 
     palSetPad (IOPORT1, IOPORT1_SPI_MOSI);
@@ -388,6 +394,7 @@ int main(void)
 
     spiStart (&SPID1, &spi1_config);
     printf ("SPI bus 1 enabled\n");
+
     spiStart (&SPID4, &spi4_config);
     printf ("SPI bus 4 enabled\n");
 
@@ -428,7 +435,7 @@ int main(void)
     /* Enable display and touch panel */
     gfxInit ();
 
-		/* Mount SD card */
+    /* Mount SD card */
     if (gfileMount ('F', "0:") == FALSE) {
         printf ("No SD card found\n");
         splash_SDFail();
@@ -483,6 +490,7 @@ int main(void)
 
     /* Enable bluetooth subsystem */
     bleStart ();
+
     config = getConfig ();
 
     /* Set current game board position */
@@ -490,17 +498,14 @@ int main(void)
         config->xp, config->level);
 
     /* Disable the radio if airplane node is on */
-
     if (config->airplane_mode)
         bleDisable ();
 
     /* Set default sound behavior */
-
     if (config->sound_enabled)
         i2sEnabled = TRUE;
     else
         i2sEnabled = FALSE;
-
 
     NRF_P0->DETECTMODE = 0;
 

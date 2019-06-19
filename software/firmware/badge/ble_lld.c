@@ -329,7 +329,10 @@ bleEnable (void)
 	clock_source.source = NRF_CLOCK_LF_SRC_XTAL;
 	clock_source.accuracy = NRF_CLOCK_LF_ACCURACY_20_PPM;
 
+	rngAcquireUnit (&RNGD1);
+	rngStop (&RNGD1);
 	r = sd_softdevice_enable (&clock_source, nordic_fault_handler);
+	rngReleaseUnit (&RNGD1);
 
 	if (r == NRF_SUCCESS)
 		printf ("SoftDevice version %d.%d.%d enabled\n",
@@ -424,7 +427,10 @@ bleDisable (void)
 {
 	int r;
 
+	rngAcquireUnit (&RNGD1);
 	r = sd_softdevice_disable ();
+	rngStart (&RNGD1, NULL);
+	rngReleaseUnit (&RNGD1);
 
 	if (r == NRF_SUCCESS)
 		printf ("Bluetooth LE disabled\n");

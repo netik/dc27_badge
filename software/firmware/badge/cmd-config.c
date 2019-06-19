@@ -321,6 +321,7 @@ static void cmd_config_led_run(BaseSequentialStream *chp, int argc, char *argv[]
     ledStop();
   } else {
     if (ledsOff) {
+      led_init ();
       ledStart();
     }
   }
