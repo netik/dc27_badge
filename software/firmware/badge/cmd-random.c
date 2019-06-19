@@ -65,6 +65,8 @@ cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 	if (argc > 0)
 		size = atoi(argv[0]);
 
+	rngAcquireUnit (&RNGD1);
+
 	sd_softdevice_is_enabled (&sdenabled);
 
 	if (sdenabled) {
@@ -89,11 +91,10 @@ cmd_random (BaseSequentialStream *chp, int argc, char *argv[])
 		}
 
 		printf ("Fetching %d random byte(s):\r\n", size);
-
-		rngStart (&RNGD1, NULL);
-		rngWrite (&RNGD1, random_buffer, size, TIME_INFINITE);
- 		rngStop (&RNGD1);
+		rngWrite (&RNGD1, random_buffer, size, OSAL_MS2I(100));
 	}
+
+	rngReleaseUnit (&RNGD1);
 
 	for (i = 0 ; i < size ; i++) {
 		printf ("%02x ", random_buffer[i]);

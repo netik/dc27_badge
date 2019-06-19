@@ -28,15 +28,17 @@ random (void)
   uint8_t sdenabled = 0;
   long random_buffer;
 
-  sd_softdevice_is_enabled (&sdenabled);
+  rngAcquireUnit (&RNGD1);
 
-  if (sdenabled == TRUE)
+  sd_softdevice_is_enabled (&sdenabled);
+ 
+ if (sdenabled == TRUE)
     sd_rand_application_vector_get ((uint8_t *)&random_buffer, 4);
   else {
-    rngStart (&RNGD1, NULL);
-    rngWrite (&RNGD1, (uint8_t *)&random_buffer, 4, TIME_INFINITE);
-    rngStop (&RNGD1);
+    rngWrite (&RNGD1, (uint8_t *)&random_buffer, 4, OSAL_MS2I(100));
   }
+
+  rngReleaseUnit (&RNGD1);
 
   return random_buffer;
 }
@@ -45,15 +47,17 @@ uint8_t randByte(void) {
   uint8_t sdenabled = 0;
   uint8_t random_buffer;
 
+  rngAcquireUnit (&RNGD1);
+
   sd_softdevice_is_enabled (&sdenabled);
 
   if (sdenabled == TRUE)
     sd_rand_application_vector_get (&random_buffer, 1);
   else {
-    rngStart (&RNGD1, NULL);
-    rngWrite (&RNGD1, &random_buffer, 1, TIME_INFINITE);
-    rngStop (&RNGD1);
+    rngWrite (&RNGD1, &random_buffer, 1, OSAL_MS2I(100));
   }
+
+  rngReleaseUnit (&RNGD1);
 
   return random_buffer;
 }
