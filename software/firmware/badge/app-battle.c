@@ -38,7 +38,7 @@
 #include "ships.h"
 
 #undef ENABLE_MAP_PING     // if you want the sonar sounds
-#define DEBUG_ENEMY_DISCOVERY
+#undef DEBUG_ENEMY_DISCOVERY // debugs the discovery process
 
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
