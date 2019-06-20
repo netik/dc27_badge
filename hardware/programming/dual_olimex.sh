@@ -17,14 +17,21 @@ serialarr=($SERIALS)
 
 NUM=1
 
-for i in $SERIALS;
-do
-    echo "$NUM) $i"
-    NUM=$(( $NUM + 1))
-done
+if [ "$1" == "" ];
+then
+    # show a menu, nothing was requested
 
-echo -n "Which? [1]: "
-read X
+    for i in $SERIALS;
+    do
+        echo "$NUM) $i"
+        NUM=$(( $NUM + 1))
+    done
+    
+    echo -n "Which? [1]: "
+    read X
+else
+    X=$1
+fi
 
 if [ "$X" == "" ]; then
     X=1
@@ -49,5 +56,4 @@ openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
         -c "ftdi_serial ${SERIAL}" \
 	-c "gdb_flash_program enable"			\
 	-c "gdb_breakpoint_override hard"		\
-	-c "nrf52.cpu configure -rtos ChibiOS" $*
-
+	-c "nrf52.cpu configure -rtos ChibiOS" 

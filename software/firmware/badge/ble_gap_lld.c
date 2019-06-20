@@ -753,12 +753,13 @@ bleGapDisconnect (void)
 }
 
 void
-bleGapUpdateState (uint16_t x, uint16_t y, uint16_t xp, uint8_t rank)
+bleGapUpdateState (uint16_t x, uint16_t y, uint16_t xp, uint8_t rank, bool in_combat)
 {
 	ble_ides_state.ble_ides_x = x;
 	ble_ides_state.ble_ides_y = y;
 	ble_ides_state.ble_ides_xp = xp;
 	ble_ides_state.ble_ides_rank = rank;
+	ble_ides_state.ble_ides_incombat = in_combat;
 
 	/*
 	 * If we're not connected, then we need to turn off

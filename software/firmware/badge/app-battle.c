@@ -38,9 +38,13 @@
 #include "ships.h"
 
 #undef ENABLE_MAP_PING     // if you want the sonar sounds
+#define DEBUG_ENEMY_DISCOVERY
 
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
+
+#define COLOR_ENEMY  Red
+#define COLOR_PLAYER HTML2COLOR(0xeeeeee) // light grey
 
 /* single player on this badge */
 static ENTITY me;
@@ -147,8 +151,13 @@ check_land_collision(ENTITY *p) {
    * not interior. Edges are 40 pixels, interior is 100 px. maybe we don't
    * care at such a small size.
    */
+
+  // 0x1f28 or 0x3f20 is blue water in rgb565 land. There's some random
+  // variation here maybe due to coloring?
   for (int i = 0; i < FB_X * FB_Y; i++) {
-    if ( (p->pix_old[i] <= 0x9e00 || p->pix_old[i] >= 0xbf09) && p->pix_old[i] != 0xffff) {
+    if (p->pix_old[i] != 0x1f28 &&
+        p->pix_old[i] != 0x3f20 &&
+        p->pix_old[i] != 0xffff) {
       // collide
       p->vecVelocity.x = 0;
       p->vecVelocity.y = 0;
@@ -206,7 +215,7 @@ entity_update(ENTITY *p, float dt) {
       // check for collision with land
       getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
       if (check_land_collision(p)) {
-              getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+            getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
       };
   }
 }
@@ -216,7 +225,7 @@ player_render(ENTITY *p) {
   userconfig *config = getConfig();
 
   /* Draw ship */
-  gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, Purple);
+  gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, COLOR_PLAYER);
 
   /*
    * Broadcast our location.
@@ -227,7 +236,10 @@ player_render(ENTITY *p) {
    */
 
   bleGapUpdateState ((uint16_t)p->vecPosition.x,
-    (uint16_t)p->vecPosition.y, config->xp, config->level);
+                     (uint16_t)p->vecPosition.y,
+                     config->xp,
+                     config->level,
+                     config->in_combat);
 
   return;
 }
@@ -305,14 +317,19 @@ static void enemy_list_refresh(void) {
       /* have we seen this address ? */
       /* addresses are 48 bit / 6 bytes */
       if ((e = enemy_find_by_peer(&p->ble_peer_addr[0])) != NULL) {
-        /*printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
+#ifdef DEBUG_ENEMY_DISCOVERY
+        printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
           p->ble_peer_addr[5],
           p->ble_peer_addr[4],
           p->ble_peer_addr[3],
           p->ble_peer_addr[2],
           p->ble_peer_addr[1],
           p->ble_peer_addr[0]);
-        */
+#endif
+        // is this dude in combat? Get rid of him.
+        if (p->ble_game_state.ble_ides_incombat) {
+          e->ttl = 0;
+        }
         // we expire 3 seconds earlier than the ble peer checker...
         if (e->ttl < 3) {
           // erase the old position
@@ -336,7 +353,7 @@ static void enemy_list_refresh(void) {
             // grab the new data
             getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, e->e.pix_old);
             /* Draw ship */
-            gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, Red);
+            gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, COLOR_ENEMY);
             // update
             e->e.prevPos.x = e->e.vecPosition.x;
             e->e.prevPos.y = e->e.vecPosition.y;
@@ -344,6 +361,18 @@ static void enemy_list_refresh(void) {
 
       } else {
         /* no, add him */
+        if (p->ble_game_state.ble_ides_incombat) {
+#ifdef DEBUG_ENEMY_DISCOVERY
+          printf("enemy: ignoring in-combat %x:%x:%x:%x:%x:%x\n",
+            e->ble_peer_addr.addr[5],
+            e->ble_peer_addr.addr[4],
+            e->ble_peer_addr.addr[3],
+            e->ble_peer_addr.addr[2],
+            e->ble_peer_addr.addr[1],
+            e->ble_peer_addr.addr[0]);
+#endif
+          continue;
+        }
         e = malloc(sizeof(ENEMY));
         entity_init(&(e->e));
         e->e.visible = true;
@@ -355,7 +384,7 @@ static void enemy_list_refresh(void) {
         /* load the frame buffer */
         getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, e->e.pix_old);
         /* Draw ship */
-        gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, Red);
+        gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, COLOR_ENEMY);
 
         e->xp = p->ble_game_state.ble_ides_xp;
         memcpy(&e->ble_peer_addr.addr, p->ble_peer_addr, 6);
@@ -364,15 +393,16 @@ static void enemy_list_refresh(void) {
         e->ble_peer_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
 
         strcpy(e->name, (char *)p->ble_peer_name);
-        /*
-        printf("enemy: found new enemy %x:%x:%x:%x:%x:%x\n",
+#ifdef DEBUG_ENEMY_DISCOVERY
+        printf("enemy: found new enemy (ic=%d) %x:%x:%x:%x:%x:%x\n",
+          p->ble_game_state.ble_ides_incombat,
           e->ble_peer_addr.addr[5],
           e->ble_peer_addr.addr[4],
           e->ble_peer_addr.addr[3],
           e->ble_peer_addr.addr[2],
           e->ble_peer_addr.addr[1],
           e->ble_peer_addr.addr[0]);
-        */
+#endif
         gll_push(enemies, e);
       }
     }
@@ -384,23 +414,6 @@ static void enemy_list_refresh(void) {
 static uint32_t
 battle_init(OrchardAppContext *context)
 {
-  userconfig *config = getConfig();
-  mycontext = context;
-
-  entity_init(&me);
-  me.vecPosition.x = config->last_x;
-  me.vecPosition.y = config->last_y;
-  me.visible = true;
-
-  for (int i=0; i < MAX_BULLETS; i++) {
-    entity_init(&bullet[i]);
-  }
-
-  // load the enemy list
-  enemies = gll_init();
-
-  // turn off the LEDs
-  ledSetPattern(LED_PATTERN_WORLDMAP);
 
   // don't allocate any stack space
   return (0);
@@ -454,10 +467,26 @@ static void
 battle_start (OrchardAppContext *context)
 {
   userconfig *config = getConfig();
-
   battle_ui_t *bh;
   bh = malloc(sizeof(battle_ui_t));
   memset(bh, 0, sizeof(battle_ui_t));
+
+  mycontext = context;
+
+  entity_init(&me);
+  me.vecPosition.x = config->last_x;
+  me.vecPosition.y = config->last_y;
+  me.visible = true;
+
+  for (int i=0; i < MAX_BULLETS; i++) {
+    entity_init(&bullet[i]);
+  }
+
+  // load the enemy list
+  enemies = gll_init();
+
+  // turn off the LEDs
+  ledSetPattern(LED_PATTERN_WORLDMAP);
 
   context->priv = bh;
   bh->fontXS = gdispOpenFont (FONT_XS);
@@ -976,5 +1005,8 @@ void state_combat_exit(void) {
 
 // -------------------------------------------------------------------------
 
-orchard_app("Sea Battle", "icons/ship.rgb", 0, battle_init, battle_start,
-    battle_event, battle_exit, 1);
+orchard_app("Sea Battle",
+            "icons/ship.rgb",
+            APP_FLAG_AUTOINIT,
+            battle_init, battle_start,
+            battle_event, battle_exit, 1);

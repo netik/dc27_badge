@@ -494,8 +494,12 @@ int main(void)
     config = getConfig ();
 
     /* Set current game board position */
-    bleGapUpdateState (config->last_x, config->last_y,
-        config->xp, config->level);
+    bleGapUpdateState (
+                       config->last_x,
+                       config->last_y,
+                       config->xp,
+                       config->level,
+                       config->in_combat);
 
     /* Disable the radio if airplane node is on */
     if (config->airplane_mode)

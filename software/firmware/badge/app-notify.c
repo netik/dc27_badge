@@ -66,7 +66,7 @@ typedef struct _NHandles {
 static bool notify_handler(void * arg)
 {
 	OrchardAppRadioEvent * evt;
-        ble_gatts_evt_rw_authorize_request_t * rw;
+  ble_gatts_evt_rw_authorize_request_t * rw;
 	ble_gatts_evt_write_t * req;
 
 	evt = arg;

@@ -8,7 +8,6 @@
 #include "vector.h"
 #include "gfx.h"
 
-/* Old pixel data */
 #define FB_X 10
 #define FB_Y 10
 

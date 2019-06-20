@@ -34,27 +34,34 @@ const char *rankname[] = {
 // so that we don't have to search for starting places, here's a list
 // of 20 safe starting places in the world map.
 VECTOR safe_start[MAX_SAFE_START] = {
-  { 20, 225 },
-  { 14, 158 },
-  { 14, 127 },
-  { 14,105 },
-  { 26, 92 },
-  { 56, 109 },
-  { 78, 92 },
-  { 64, 49 },
-  { 88, 50 },
-  { 144, 128 },
-  { 173, 162 },
-  { 199, 199 },
-  { 150, 228 },
-  { 208, 223 },
-  { 231, 199 },
-  { 259, 140 },
-  { 166, 70 },
-  { 173, 26 },
-  { 220, 60 },
-  { 252, 62 },
-  { 286, 107 }
+  { 12,38 },
+  { 61,47 },
+  { 97,52 },
+  { 137,49 },
+  { 253,84 },
+  { 299,118 },
+  { 192,134 },
+  { 40,174 },
+  { 254,215 },
+  { 122,182 },
+  { 289,185 },
+  { 300,40 },
+  { 116,127 },
+  { 55,134 },
+  { 176,215 },
+  { 250,86 },
+  { 19,212 },
+  { 248,150 },
+  { 86,213 },
+  { 218,210 },
+  { 275,80 },
+  { 26, 145 },
+  { 169, 154 },
+  { 24, 88 },
+  { 168, 89 },
+  { 294, 213 },
+  { 134, 214 },
+  { 62, 82 }
 };
 
 /* We implement a naive real-time clock protocol like NTP but
@@ -203,7 +210,8 @@ void configStart(void) {
     printf("Config OK!\n");
     memcpy(&config_cache, config, sizeof(userconfig));
 
-    if (config_cache.in_combat != 0) {
+    // you can't leave combat if your name isn't set.
+    if (config_cache.in_combat != 0 && strlen(config_cache.name) > 0) {
         printf("You were stuck in combat. Fixed.\n");
         config_cache.in_combat = 0;
         configSave(&config_cache);
