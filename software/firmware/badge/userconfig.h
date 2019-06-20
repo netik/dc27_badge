@@ -81,6 +81,6 @@ extern const char *rankname[];
 extern unsigned long rtc;
 extern unsigned long rtc_set_at;
 
-#define MAX_SAFE_START 22
+#define MAX_SAFE_START 30
 extern VECTOR safe_start[];
 #endif
