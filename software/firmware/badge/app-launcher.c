@@ -282,12 +282,14 @@ launcher_start (OrchardAppContext *context)
 	 */
 	current = orchard_app_list;
 	while (current->name) {
-		if (current->flags == APP_FLAG_NONE)
+		if (  (current->flags & APP_FLAG_HIDDEN) == 0 &&
+				  ! (current->flags & APP_FLAG_UNLOCK) &&
+				  ! (current->flags & APP_FLAG_BLACKBADGE))
 			total_apps++;
 		else if ((current->flags & APP_FLAG_UNLOCK) &&
 		    (config->unlocks & UL_VIDEO1))
 			total_apps++;
-		else if ((current->flags & 
+		else if ((current->flags &
 		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE)) &&
 		    (config->unlocks & UL_BLACKBADGE))
 			total_apps++;
@@ -307,7 +309,8 @@ launcher_start (OrchardAppContext *context)
 	current = orchard_app_list;
 	list->total = 0;
 	while (current->name) {
-		if (current->flags == APP_FLAG_NONE) {
+		if (((current->flags & APP_FLAG_HIDDEN) == 0) &&
+				 ! (current->flags & (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE))) {
 			list->items[list->total].name = current->name;
 			list->items[list->total].entry = current;
 			list->total++;
