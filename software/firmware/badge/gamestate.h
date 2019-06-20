@@ -84,15 +84,15 @@ state_funcs battle_funcs[] = {
     NULL,
     NULL
   },
-  { // approval_demand
+  { // approval_demand - you are attacking us, we need to prompt
     state_approval_demand_enter,
     state_approval_demand_tick,
     state_approval_demand_exit,
   },
-  {  // approval_wait
-    NULL,
-    NULL,
-    NULL
+  {  // approval_wait - we are attacking you, you need to accept
+    state_approval_wait_enter,
+    state_approval_wait_tick,
+    state_approval_wait_exit,
   },
   {  // vs_screen
     NULL,

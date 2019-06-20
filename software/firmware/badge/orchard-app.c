@@ -22,7 +22,7 @@ bool (*app_radio_notify)(void *);
 const OrchardApp *orchard_app_list;
 
 /* the one and in fact only instance of any orchard app */
-orchard_app_instance instance;  
+orchard_app_instance instance;
 
 /* graphics event handle */
 static OrchardAppEvent ugfx_evt;
@@ -93,7 +93,7 @@ static void flush_radio_queue (void) {
 }
 void orchardAppRadioCallback (OrchardAppRadioEventType type,
   ble_evt_t * evt, void * pkt, uint16_t len) {
- 
+
   OrchardAppRadioEvent * r_evt;
 
   if (instance.context == NULL)
@@ -151,9 +151,9 @@ static void radio_event(eventid_t id) {
         /*
          * When someone writes to one of our characteristics, it could
          * be a notification of some kind (e.g. chat request). If no
-	 * other app is running besides the launcher, run the notify
-	 * app to announce what happened.
-	 */
+      	 * other app is running besides the launcher, run the notify
+      	 * app to announce what happened.
+      	 */
 
         r = FALSE;
 
@@ -201,12 +201,12 @@ static void key_event(eventid_t id) {
 static void ui_complete_cleanup(eventid_t id) {
   (void)id;
   OrchardAppEvent evt;
- 
+
   evt.type = uiEvent;
   evt.ui.code = uiComplete;
   evt.ui.flags = uiOK;
 
-  instance.app->event(instance.context, &evt);  
+  instance.app->event(instance.context, &evt);
 
   return;
 }
@@ -320,13 +320,6 @@ void orchardAppTimer(const OrchardAppContext *context,
   return;
 }
 
-// jna: second argument here is stack space allocated to the application thread.
-// 0x300 = 768  = Breaks app-fight.c badly
-// 0x400 = 1024 = Works fine with app-fight.c.
-//
-// Please don't modify this unless absolutely necessary. I will figure
-// out how to reduce stack usage in app-fight.c 
-
 static THD_WORKING_AREA(waOrchardAppThread, 1280);
 static THD_FUNCTION(orchard_app_thread, arg) {
 
@@ -341,7 +334,7 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   memset(&app_context, 0, sizeof(app_context));
   instance->context = &app_context;
   app_context.instance = instance;
-  
+
   // set UI elements to null
   instance->ui = NULL;
   instance->uicontext = NULL;
@@ -355,7 +348,7 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   evtTableHook(orchard_app_events, orchard_app_key, key_event);
   evtTableHook(orchard_app_events, timer_expired, timer_event);
 
-  // if APP is null, the system will crash here. 
+  // if APP is null, the system will crash here.
   if (instance->app->init)
     app_context.priv_size = instance->app->init(&app_context);
   else
@@ -383,7 +376,7 @@ static THD_FUNCTION(orchard_app_thread, arg) {
 
   if (instance->app->start)
     instance->app->start(&app_context);
- 
+
   if (instance->app->event) {
     {
       evt.type = appEvent;
@@ -415,7 +408,7 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   evtTableUnhook(orchard_app_events, orchard_app_gfx, ugfx_event);
   evtTableUnhook(orchard_app_events, orchard_app_radio, radio_event);
   evtTableUnhook(orchard_app_events, orchard_app_key, key_event);
- 
+
   /* Atomically broadcasting the event source and terminating the thread,
      there is not a chSysUnlock() because the thread terminates upon return.*/
 
