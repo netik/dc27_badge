@@ -42,6 +42,7 @@
 
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
+#define NETWORK_TIMEOUT 450  // number of ticks to timeout (15 seconds)
 
 #define COLOR_ENEMY  Red
 #define COLOR_PLAYER HTML2COLOR(0xeeeeee) // light grey
@@ -69,6 +70,8 @@ typedef struct {
   font_t	fontSM;
   GHandle	ghTitleL;
   GHandle	ghTitleR;
+  GHandle	ghACCEPT;
+  GHandle	ghDECLINE;
 } battle_ui_t;
 
 // enemies -- linked list
@@ -119,9 +122,9 @@ entity_init(ENTITY *p) {
   p->vecVelocityGoal.x = 0;
   p->vecVelocityGoal.y = 0;
 
-  // we're going to always start in the lower harbor for now.
-  p->vecPosition.x = HARBOR_LWR_X;
-  p->vecPosition.y = HARBOR_LWR_Y;
+  // we'll set this to 0,0 for now. The caller should immediately set this.
+  p->vecPosition.x = 0;
+  p->vecPosition.y = 0;
 
   // this is "ocean drag"
   p->vecGravity.x = VDRAG;
@@ -700,7 +703,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     // PERIPH is the one that accepts.
   	switch (radio->type) {
       case connectEvent:
-        if (current_state == APPROVAL_WAIT) {
+        if (current_battle_state == APPROVAL_WAIT) {
           // fires when we succeed on a connect i think.
           screen_alert_draw (FALSE, "Sending Challenge...");
           msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
@@ -713,13 +716,17 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
          &evt->evt.gatts_evt.params.authorize_request;
         req = &rw->request.write;
         if (rw->request.write.handle ==
-            ot_handle.value_handle &&
+            gm_handle.value_handle &&
             req->data[0] == BLE_IDES_GAMEATTACK_ACCEPT) {
           screen_alert_draw (FALSE,
               "Battle Accepted!");
           /* Offer accepted - create L2CAP link*/
           bleL2CapConnect (BLE_IDES_BATTLE_PSM);
-        } else {
+        }
+
+        if (rw->request.write.handle ==
+            gm_handle.value_handle &&
+            req->data[0] == BLE_IDES_GAMEATTACK_DECLINE) {
           screen_alert_draw (FALSE,
               "Battle Declined.");
           chThdSleepMilliseconds (2000);
@@ -728,6 +735,13 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             draw_world_map();
           }
           changeState(WORLD_MAP);
+        }
+
+        // we under attack, yo.
+        if (rw->request.write.handle ==
+            gm_handle.value_handle &&
+            req->data[0] == BLE_IDES_GAMEATTACK_CHALLENGE) {
+            changeState(APPROVAL_DEMAND);
         }
         break;
       case l2capRxEvent:
@@ -861,12 +875,18 @@ static void changeState(battle_state nextstate) {
   }
 }
 
+static void free_enemy(void *e) {
+  ENEMY *en = e;
+  free(en);
+}
 
 static void battle_exit(OrchardAppContext *context)
 {
   userconfig *config = getConfig();
   battle_ui_t *bh;
 
+  // free the UI
+  bh = (battle_ui_t *)context->priv;
   // store the last x/y of this guy
   config->last_x = me.vecPosition.x;
   config->last_y = me.vecPosition.y;
@@ -876,11 +896,11 @@ static void battle_exit(OrchardAppContext *context)
   changeState(NONE);
 
   // free the enemy list
-  if (enemies)
+  if (enemies) {
+    gll_each(enemies, free_enemy);
     gll_destroy(enemies);
-
-  // free the UI
-  bh = (battle_ui_t *)context->priv;
+    free(enemies);
+  }
 
   if (bh->fontXS)
     gdispCloseFont (bh->fontXS);
@@ -911,12 +931,26 @@ static void battle_exit(OrchardAppContext *context)
   return;
 }
 
+
+static void
+render_enemy(void *e) {
+  ENEMY *en = e;
+  gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, COLOR_ENEMY);
+}
+
+static void
+render_all_enemies(void) {
+  // @brief clear enemy blink state
+  gll_each(enemies, render_enemy);
+}
+
 /* state change and tick functions go here ----------------------------------- */
 
 // WORLDMAP ------------------------------------------------------------------
 void state_worldmap_enter(void) {
   gdispClear(Black);
   draw_world_map();
+  render_all_enemies();
 }
 
 void state_worldmap_tick(void) {
@@ -929,7 +963,12 @@ void state_worldmap_tick(void) {
 }
 
 void state_worldmap_exit(void) {
-  if (bh->ghTitleL)
+  battle_ui_t *bh;
+
+  // get private memory
+  bh = (battle_ui_t *)mycontext->priv;
+
+  if (bh->ghTitleL) {
     gwinDestroy (bh->ghTitleL);
     bh->ghTitleL= NULL;
   }
@@ -957,28 +996,97 @@ void state_approval_wait_enter(void) {
   bleGapConnect (&current_enemy->ble_peer_addr);
   // when the gap connection is accepted, we will attempt a
   // l2cap connect
+
+  animtick = 0;
 }
 
-void state_approval_wait_tick(void) {}
+void state_approval_wait_tick(void) {
+  animtick++;
 
-void state_approval_wait_exit(void) {}
+  // we shouldn't be in this state for more than five seconds or so.
+  if (animtick > NETWORK_TIMEOUT) {
+    // forget it.
+    screen_alert_draw(TRUE, "TIMED OUT");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    changeState(WORLD_MAP);
+  }
+}
+
+void state_approval_wait_exit(void) {
+  bleGapDisconnect ();
+}
 
 // APPOVAL_DEMAND ------------------------------------------------------------
 // Someone is attacking us.
 void state_approval_demand_enter(void) {
-    gdispClear(Black);
-    gdispDrawStringBox (0,
-                        0,
-                        gdispGetWidth(),
-                        gdispGetFontMetric(p->fontFF, fontHeight),
-                        "YOU ARE BEING ATTACKED!",
-                        p->fontFF, Red, justifyCenter);
+  battle_ui_t *bh;
+	ble_peer_entry * peer;
+  char buf[50];
+	int fHeight;
+	GWidgetInit wi;
+
+  bh = (battle_ui_t *)mycontext->priv;
+  gdispClear(Black);
+
+  peer = blePeerFind (ble_peer_addr.addr);
+  if (peer == NULL)
+		snprintf (buf, 128, "Badge %X:%X:%X:%X:%X:%X",
+		    ble_peer_addr.addr[5],  ble_peer_addr.addr[4],
+		    ble_peer_addr.addr[3],  ble_peer_addr.addr[2],
+		    ble_peer_addr.addr[1],  ble_peer_addr.addr[0]);
+	else
+		snprintf (buf, 128, "%s", peer->ble_peer_name);
+
+  putImageFile ("images/undrattk.rgb", 0, 0);
+  i2sPlay("sound/klaxon.snd");
+  snprintf (buf, 128, "Badge %s", peer->ble_peer_name);
+
+  fHeight = gdispGetFontMetric (bh->fontSM, fontHeight);
+
+  gdispDrawStringBox (0, 50 -
+    fHeight,
+    gdispGetWidth(), fHeight,
+    buf, bh->fontSM, White, justifyCenter);
+
+  gdispDrawStringBox (0, 50, gdispGetWidth(), fHeight,
+      "IS CHALLENGING YOU", bh->fontSM, White, justifyCenter);
+
+  gwinSetDefaultStyle (&RedButtonStyle, FALSE);
+  gwinSetDefaultFont (bh->fontSM);
+  gwinWidgetClearInit (&wi);
+  wi.g.show = TRUE;
+  wi.g.x = 0;
+  wi.g.y = 210;
+  wi.g.width = 150;
+  wi.g.height = 30;
+  wi.text = "DECLINE";
+  bh->ghDECLINE = gwinButtonCreate(0, &wi);
+
+  wi.g.x = 170;
+  wi.text = "ACCEPT";
+  bh->ghACCEPT = gwinButtonCreate(0, &wi);
+
+  gwinSetDefaultStyle (&BlackWidgetStyle, FALSE);
+
+	geventListenerInit (&bh->gl);
+	gwinAttachListener (&bh->gl);
+	geventRegisterCallback (&bh->gl, orchardAppUgfxCallback, &bh->gl);
+
 }
 
 void state_approval_demand_tick(void) {
 }
 
 void state_approval_demand_exit(void) {
+  battle_ui_t *bh;
+
+  bh = mycontext->priv;
+
+  gwinDestroy (bh->ghACCEPT);
+  gwinDestroy (bh->ghDECLINE);
+
+  geventDetachSource (&bh->gl, NULL);
+  geventRegisterCallback (&bh->gl, NULL, NULL);
 }
 
 // COMBAT --------------------------------------------------------------------

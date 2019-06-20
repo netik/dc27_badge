@@ -43,6 +43,10 @@ static void state_worldmap_enter(void);
 static void state_worldmap_tick(void);
 static void state_worldmap_exit(void);
 
+static void state_approval_wait_enter(void);
+static void state_approval_wait_tick(void);
+static void state_approval_wait_exit(void);
+
 static void state_approval_demand_enter(void);
 static void state_approval_demand_tick(void);
 static void state_approval_demand_exit(void);

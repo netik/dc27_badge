@@ -34,10 +34,10 @@ const char *rankname[] = {
 // so that we don't have to search for starting places, here's a list
 // of 20 safe starting places in the world map.
 VECTOR safe_start[MAX_SAFE_START] = {
-  { 12,38 },
-  { 61,47 },
+  { 38,57 },
+  { 51,47 },
   { 97,52 },
-  { 137,49 },
+  { 117,49 },
   { 253,84 },
   { 299,118 },
   { 192,134 },
