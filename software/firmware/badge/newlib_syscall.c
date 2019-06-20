@@ -63,6 +63,7 @@
 #include "ff.h"
 
 extern char   __heap_base__; /* Set by linker */
+extern char   __heap_end__; /* Set by linker */
 
 static mutex_t malloc_mutex;
 
@@ -372,8 +373,13 @@ _sbrk (int incr)
 	if (heap_end == NULL)
 		heap_end = &__heap_base__;
     
+	if ((heap_end + incr) > &__heap_end__) {
+		errno = ENOMEM;
+		return ((void *)-1);
+	}
+
 	prev_heap_end = heap_end;
 	heap_end += incr;
-    
+
 	return (void *) prev_heap_end;
 }
