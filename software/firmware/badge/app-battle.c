@@ -54,6 +54,9 @@ static VECTOR bullet_pending = {0,0};
 static ENEMY *last_near = NULL;
 static ENEMY *current_enemy = NULL;
 
+// if true, we initiated combat.
+static bool started_it = false;
+
 OrchardAppContext *mycontext;
 
 extern mutex_t peer_mutex;
@@ -690,13 +693,20 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     radio = (OrchardAppRadioEvent *)&event->radio;
     evt = &radio->evt;
 
+    // ble notes
+    // ble_gap_role (ble_lld.h) indicates where the connection came from.
+    // It can be BLE_GAP_ROLE_CENTRAL or BLE_GAP_ROLE_PERIPH.
+    // CENTRAL is the one that initiates the connection.
+    // PERIPH is the one that accepts.
   	switch (radio->type) {
       case connectEvent:
-        // fires when we succeed on a connect i think.
+        if (current_state == APPROVAL_WAIT) {
+          // fires when we succeed on a connect i think.
           screen_alert_draw (FALSE, "Sending Challenge...");
-        msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
-        bleGattcWrite (gm_handle.value_handle,
-            (uint8_t *)msg, 1, FALSE);
+          msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
+          bleGattcWrite (gm_handle.value_handle,
+              (uint8_t *)msg, 1, FALSE);
+        }
         break;
       case gattsReadWriteAuthEvent:
         rw =
@@ -714,6 +724,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
               "Battle Declined.");
           chThdSleepMilliseconds (2000);
           bleGapDisconnect ();
+          if (current_battle_state == WORLD_MAP) {
+            draw_world_map();
+          }
           changeState(WORLD_MAP);
         }
         break;
@@ -727,7 +740,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         break;
       case l2capConnectEvent:
         // now we have a peer connection.
-        // we send with bl2L@CApSend(data, size) == NRF_SUCCESS ...
+        // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
         changeState(COMBAT);
         break;
       default:
@@ -785,7 +798,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         case keyBSelect:
           if (current_battle_state != COMBAT) {
             if ((current_enemy = enemy_engage(context)) != NULL) {
-              changeState(APPROVAL_DEMAND);
+              // outgoing challenge
+              started_it = true;
+              changeState(APPROVAL_WAIT);
             }
           }
           break;
@@ -914,10 +929,22 @@ void state_worldmap_tick(void) {
 }
 
 void state_worldmap_exit(void) {
+  if (bh->ghTitleL)
+    gwinDestroy (bh->ghTitleL);
+    bh->ghTitleL= NULL;
+  }
+
+  if (bh->ghTitleR) {
+    gwinDestroy (bh->ghTitleR);
+    bh->ghTitleR = NULL;
+  }
 }
 
-// APPOVAL_DEMAND ------------------------------------------------------------
-void state_approval_demand_enter(void) {
+// APPROVAL_WAIT -------------------------------------------------------------
+// we are attacking someone, wait for consent.
+void state_approval_wait_enter(void) {
+  // we will now attempt to open a BLE gap connecto to the user.
+  started_it = true;
   printf("engage: %x:%x:%x:%x:%x:%x\n",
     current_enemy->ble_peer_addr.addr[5],
     current_enemy->ble_peer_addr.addr[4],
@@ -927,8 +954,25 @@ void state_approval_demand_enter(void) {
     current_enemy->ble_peer_addr.addr[0]);
   screen_alert_draw (FALSE, "Connecting...");
 
-  // we will now attempt to open a BLE gap connecto to the user.
   bleGapConnect (&current_enemy->ble_peer_addr);
+  // when the gap connection is accepted, we will attempt a
+  // l2cap connect
+}
+
+void state_approval_wait_tick(void) {}
+
+void state_approval_wait_exit(void) {}
+
+// APPOVAL_DEMAND ------------------------------------------------------------
+// Someone is attacking us.
+void state_approval_demand_enter(void) {
+    gdispClear(Black);
+    gdispDrawStringBox (0,
+                        0,
+                        gdispGetWidth(),
+                        gdispGetFontMetric(p->fontFF, fontHeight),
+                        "YOU ARE BEING ATTACKED!",
+                        p->fontFF, Red, justifyCenter);
 }
 
 void state_approval_demand_tick(void) {
@@ -947,7 +991,6 @@ void state_combat_enter(void) {
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
   putImageFile(fnbuf, 0,0);
   zoomEntity(&me);
-
 
   draw_hud(mycontext);
   enemy_clearall_blink();
