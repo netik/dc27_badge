@@ -1,5 +1,3 @@
-#define BLE_GAP_VERBOSE 1
-
 /*-
  * Copyright (c) 2017-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -755,7 +753,8 @@ bleGapDisconnect (void)
 }
 
 void
-bleGapUpdateState (uint16_t x, uint16_t y, uint16_t xp, uint8_t rank, bool in_combat)
+bleGapUpdateState (uint16_t x, uint16_t y, uint16_t xp,
+    uint8_t rank, bool in_combat)
 {
 	ble_ides_state.ble_ides_x = x;
 	ble_ides_state.ble_ides_y = y;

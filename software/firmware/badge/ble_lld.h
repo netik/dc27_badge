@@ -153,7 +153,7 @@ typedef struct ble_ides_game_state {
 	uint16_t	ble_ides_y;
 	uint16_t	ble_ides_xp;
 	uint8_t		ble_ides_rank;
-        bool            ble_ides_incombat;
+	bool		ble_ides_incombat;
 } ble_ides_game_state_t;
 #pragma pack()
 

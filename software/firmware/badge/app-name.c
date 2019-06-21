@@ -93,22 +93,31 @@ static void name_event(OrchardAppContext *context,
 		if ((event->ui.code == uiComplete) &&
 		    (event->ui.flags == uiOK)) {
 			if (strlen(config->name) > 0) {
-				/* if we've actually got a name now, update the config and
-				 * update BLE
+
+				/*
+				 * If we've actually got a name now,
+				 * update the config and update BLE
 				 */
+
 				config->in_combat = 0;
 				configSave (config);
 
-				/* I think this will stop and restart advertisments twice, but oh well */
+				/*
+				 * I think this will stop and restart
+				 * advertisments twice, but oh well
+				 */
+
 				bleGapUpdateName ();
 				bleGapUpdateState (config->last_x,
-													 config->last_y,
-													 config->xp,
-													 config->level,
-													 config->in_combat);
+				    config->last_y, config->xp, 
+				    config->level, config->in_combat);
 			}
 
-			/* if the name is blank, the launcher will kick us back */
+			/*
+			 * If the name is blank, the launcher
+			 * will kick us back
+			 */
+
 			orchardAppExit ();
 		}
 	}

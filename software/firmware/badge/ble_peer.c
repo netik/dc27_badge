@@ -121,11 +121,11 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * data, uint8_t len, int8_t rssi)
 	    BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA) == NRF_SUCCESS) {
 		s = (ble_ides_game_state_t *)d;
 		if (s->ble_ides_company_id == BLE_COMPANY_ID_IDES) {
-                  memcpy (&p->ble_game_state, s,
-                          sizeof(ble_ides_game_state_t));
-                  p->ble_isbadge = TRUE;
+			memcpy (&p->ble_game_state, s,
+			    sizeof(ble_ides_game_state_t));
+			p->ble_isbadge = TRUE;
 		} else
-                  p->ble_isbadge = FALSE;
+			p->ble_isbadge = FALSE;
 	}
 
 	p->ble_rssi = rssi;
@@ -181,10 +181,10 @@ blePeerShow (void)
 		printf ("[%d] ", p->ble_ttl);
 		if (p->ble_isbadge == TRUE) {
 			t = &p->ble_game_state;
-			printf ("Badge: X/Y: %d/%d XP: %d RANK: %d INCOMBAT: %d",
-                                t->ble_ides_x, t->ble_ides_y, t->ble_ides_xp,
-                                t->ble_ides_rank,
-                                t->ble_ides_incombat);
+			printf ("Badge: X/Y: %d/%d XP: %d"
+			    " RANK: %d INCOMBAT: %d",
+			    t->ble_ides_x, t->ble_ides_y, t->ble_ides_xp,
+			    t->ble_ides_rank, t->ble_ides_incombat);
 		}
 		printf ("\n");
 	}
