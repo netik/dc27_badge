@@ -70,7 +70,7 @@ OSAL_IRQ_HANDLER(Vector74)
   rng = RNGD1.rng;
 
   OSAL_IRQ_PROLOGUE();
-  osalSysLock ();
+  osalSysLockFromISR ();
 
   rng->EVENTS_VALRDY = 0;
 #if CORTEX_MODEL >= 4
@@ -78,7 +78,7 @@ OSAL_IRQ_HANDLER(Vector74)
 #endif
 
   osalThreadResumeI (&RNGD1.tr, MSG_OK);
-  osalSysUnlock ();
+  osalSysUnlockFromISR ();
   OSAL_IRQ_EPILOGUE();
   return;
 }
