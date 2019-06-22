@@ -35,6 +35,8 @@ typedef struct _DefaultHandles {
   GHandle ghExitButton;
   GListener glBadge;
   font_t fontLG, fontSM, fontXS, fontSYS;
+  uint32_t temp_age;
+  pixel_t *temppixels;
 
   /* ^ ^ v v < > < > ent will fire the unlocks screen */
   OrchardAppEventKeyCode last_pushed[KEY_HISTORY];
@@ -113,11 +115,34 @@ static void draw_stat (DefaultHandles * p,
   return;
 }
 
+static void update_temp(DefaultHandles *p) {
+  int32_t temp;
+  float ftemp;
+  char tmp[40];
+
+  // finally, draw the temperature.
+  if (tempGet (&temp) != NRF_SUCCESS) {
+    printf ("Reading temperature failed\n");
+  } else {
+    int fh = gdispGetFontMetric(p->fontSYS, fontHeight);
+
+    ftemp = ((temp /4.00) * 9/5) + 32;
+    sprintf(tmp, "%.1f F / %.1f C", ftemp, temp / 4.00);
+
+    drawBufferedStringBox (&p->temppixels,
+        0,
+        gdispGetHeight() - fh,
+        gdispGetWidth(),
+        fh,
+        tmp,
+        p->fontSYS, White, justifyCenter);
+  }
+  // reset the age counter
+  p->temp_age = 0;
+}
 static void redraw_badge(DefaultHandles *p) {
   // draw the entire background badge image. Shown when the screen is idle.
   const userconfig *config = getConfig();
-  int32_t temp;
-  float ftemp;
 
   char tmp[20];
   coord_t ypos = 5;
@@ -179,30 +204,14 @@ static void redraw_badge(DefaultHandles *p) {
   if (config->airplane_mode) // right under the user name.
     putImageFile(IMG_PLANE, 190, 77);
 
-
-  // finally, draw the temperature.
-  if (tempGet (&temp) != NRF_SUCCESS) {
-    printf ("Reading temperature failed\n");
-  } else {
-    int fh = gdispGetFontMetric(p->fontSYS, fontHeight);
-
-    ftemp = ((temp /4.00) * 9/5) + 32;
-    sprintf(tmp, "%.1f F / %.1f C", ftemp, temp / 4.00);
-    
-    gdispDrawStringBox (0,
-                        gdispGetHeight() - fh,
-                        gdispGetWidth(),
-                        fh,
-                        tmp,
-                        p->fontSYS, White, justifyCenter);
-  }
+  update_temp(p);
 }
 
 static uint32_t default_init(OrchardAppContext *context) {
   (void)context;
 
-  //  orchardAppTimer(context, HEAL_INTERVAL_US, true);
-
+  // 1 second timer.
+  orchardAppTimer(context, 1000000, true);
   return 0;
 }
 
@@ -211,15 +220,16 @@ static void default_start(OrchardAppContext *context) {
 
   p = malloc(sizeof(DefaultHandles));
   context->priv = p;
-
+  p->temp_age = 9999; // force update.
   p->fontXS = gdispOpenFont (FONT_XS);
   p->fontLG = gdispOpenFont (FONT_LG);
   p->fontSM = gdispOpenFont (FONT_SM);
   p->fontSYS = gdispOpenFont (FONT_SYS);
-  
+
   for (int i=0; i < KEY_HISTORY; i++) {
     p->last_pushed[i] = 0;
   }
+  p->temppixels = NULL;
 
   gdispClear(Black);
 
@@ -259,9 +269,6 @@ static void default_event(OrchardAppContext *context,
 	const OrchardAppEvent *event) {
   DefaultHandles * p;
   GEvent * pe;
-  char tmp[40];
-  coord_t totalheight = gdispGetHeight();
-  coord_t totalwidth = gdispGetWidth();
 
   p = context->priv;
 
@@ -298,20 +305,13 @@ static void default_event(OrchardAppContext *context,
     }
   }
 
-  /* timed events (heal, caesar election, etc.) */
+  /* timed events - temperature update, damage repair, etc. */
   if (event->type == timerEvent) {
+    // every five timer ticks (5 x 1 sec) we'll do an update.
+    if (p->temp_age > 4)
+      update_temp(p);
 
-    gdispFillArea( totalwidth - 100, totalheight - 50,
-                   100, gdispGetFontMetric(p->fontXS, fontHeight),
-                   Black );
-
-    gdispDrawStringBox (0,
-                        totalheight - 50,
-                        totalwidth,
-                        gdispGetFontMetric(p->fontXS, fontHeight),
-                        tmp,
-                        p->fontXS, White, justifyRight);
-
+    p->temp_age++;
   }
 }
 
@@ -326,9 +326,13 @@ static void default_exit(OrchardAppContext *context) {
   gdispCloseFont (p->fontLG);
   gdispCloseFont (p->fontSM);
   gdispCloseFont (p->fontSYS);
-  
+
   geventDetachSource (&p->glBadge, NULL);
   geventRegisterCallback (&p->glBadge, NULL, NULL);
+
+  if (p->temppixels) {
+    free(p->temppixels);
+  }
 
   free(context->priv);
   context->priv = NULL;
