@@ -181,6 +181,7 @@ CSRC += main.c \
 	cmd-reset.c \
 	cmd-random.c \
 	cmd-mem.c \
+	cmd-temp.c \
 	cmd-unix.c \
 	cmd-xyzzy.c \
 	orchard-app.c \
@@ -222,6 +223,7 @@ CSRC += main.c \
 	i2s_lld.c \
 	mmc_spi_lld.c \
 	nrf52flash_lld.c \
+	nrf52temp_lld.c \
 	nullprot_lld.c \
 	$(JOYPADSRC) \
 	xpt2046_lld.c \
