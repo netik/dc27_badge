@@ -46,13 +46,15 @@ static void
 cmd_temp(BaseSequentialStream *chp, int argc, char *argv[])
 {
 	int32_t temp;
+	float ftemp;
 
-	if (tempGet (&temp) != NRF_SUCCESS)
+	if (tempGet (&temp) != NRF_SUCCESS) {
 		printf ("Reading temperature failed\n");
-	else
-		printf ("Current CPU temperature: %f degrees celsius\n",
-		    temp / 4.00);
-
+	} else {
+		ftemp = ((temp /4.00) * 9/5) + 32;
+		printf ("Current CPU temperature: %f degrees celsius, %f farenheit.\n",
+		    temp / 4.00, ftemp);
+	}
 	return;
 }
 
