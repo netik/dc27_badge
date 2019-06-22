@@ -134,9 +134,9 @@ static void update_temp(DefaultHandles *p) {
     sprintf(tmp, "%.1f F / %.1f C", ftemp, temp / 4.00);
 
     drawBufferedStringBox (&p->temppixels,
-        0,
+        45,
         gdispGetHeight() - fh,
-        gdispGetWidth(),
+        195,
         fh,
         tmp,
         p->fontSYS, White, justifyCenter);
