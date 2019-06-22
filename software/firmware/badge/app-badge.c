@@ -27,6 +27,10 @@
 #include "nrf_soc.h"
 #include "nrf52temp_lld.h"
 
+/* we wil refresh the temperature this many timer ticks */
+/* timer tick interval is currenty 1 second, so this is 10 sec */
+#define TEMP_REFRESH_INTERVAL 10
+
 /* remember these many last key-pushes (app-default) */
 #define KEY_HISTORY 8
 
@@ -308,7 +312,7 @@ static void default_event(OrchardAppContext *context,
   /* timed events - temperature update, damage repair, etc. */
   if (event->type == timerEvent) {
     // every five timer ticks (5 x 1 sec) we'll do an update.
-    if (p->temp_age > 4)
+    if (p->temp_age > TEMP_REFRESH_INTERVAL)
       update_temp(p);
 
     p->temp_age++;
