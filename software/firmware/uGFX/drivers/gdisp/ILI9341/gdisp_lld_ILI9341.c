@@ -334,18 +334,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	 * mode, you get 6 bits each for red, green and blue color data.
 	 * In the internal graphics RAM, each byte of RGB color data
 	 * maps directly to the 6-bits of RGB data supplied when drawing.
-	 *
-	 * In 16-bit (RGB565) mode though, only green has 6 bits: red
-	 * and blue have just 5. But the chip spreads out the 5 bits
-	 * of blue and red color data over 6 bits. The transformation
-	 * seems to be:
-	 *
-	 * 6bitval = (5bitval * 8) + 4
-	 *
 	 * We have to be careful to reverse this when trandlating the
-	 * data back. For blue, the "+ 4" gets trimmed off when shifting
-	 * the bits to the right. But for the red color data, we have
-	 * to do a -4, otherwise some of the colors come out wrong.
+	 * data back.
 	 */
 
 	LLDSPEC	color_t gdisp_lld_read_color(GDisplay *g) {
@@ -353,9 +343,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		pixel_t		data;
 		spiReceive (&SPI_BUS, 3, p);
 
-		data = (p[0] - 4) << 11;
-		data |= p[1] << 3;
-		data |= p[2] >> 3;
+		data = (p[0] >> 3) << 11;	/* Red */
+		data |= p[1] << 3;		/* Green */
+		data |= p[2] >> 3;		/* Blue */
 		data = __builtin_bswap16 (data);
 
 		return (data);
