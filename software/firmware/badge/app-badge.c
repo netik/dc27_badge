@@ -41,6 +41,7 @@ typedef struct _DefaultHandles {
   font_t fontLG, fontSM, fontXS, fontSYS;
   uint32_t temp_age;
   pixel_t *temppixels;
+  int32_t prevtemp;
 
   /* ^ ^ v v < > < > ent will fire the unlocks screen */
   OrchardAppEventKeyCode last_pushed[KEY_HISTORY];
@@ -123,12 +124,16 @@ static void update_temp(DefaultHandles *p) {
   int32_t temp;
   float ftemp;
   char tmp[40];
+  int fh;
 
   // finally, draw the temperature.
   if (tempGet (&temp) != NRF_SUCCESS) {
     printf ("Reading temperature failed\n");
   } else {
-    int fh = gdispGetFontMetric(p->fontSYS, fontHeight);
+    if (temp == p->prevtemp)
+        return;
+    p->prevtemp = temp; 
+    fh = gdispGetFontMetric(p->fontSYS, fontHeight);
 
     ftemp = ((temp /4.00) * 9/5) + 32;
     sprintf(tmp, "%.1f F / %.1f C", ftemp, temp / 4.00);
@@ -223,6 +228,7 @@ static void default_start(OrchardAppContext *context) {
   DefaultHandles * p;
 
   p = malloc(sizeof(DefaultHandles));
+  memset (p, 0, sizeof(DefaultHandles));
   context->priv = p;
   p->temp_age = 9999; // force update.
   p->fontXS = gdispOpenFont (FONT_XS);
