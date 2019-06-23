@@ -136,7 +136,7 @@ static void update_temp(DefaultHandles *p) {
     drawBufferedStringBox (&p->temppixels,
         45,
         gdispGetHeight() - fh,
-        195,
+        150,
         fh,
         tmp,
         p->fontSYS, White, justifyCenter);
