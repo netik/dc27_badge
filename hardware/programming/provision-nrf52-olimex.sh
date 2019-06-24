@@ -91,7 +91,7 @@ openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
 	-c "reset halt"					\
 	-c "nrf5 mass_erase"				\
 	-c "flash banks"				\
-	-c "flash write_bank 0 build/badge.bin"		\
+	-c "flash write_bank 0 ../../software//firmware/badge/build/badge.bin"		\
 	-c "mww 0x4001E504 0x00000001"			\
 	-c "mdw 0x4001E504"				\
 	-c "mww 0x10001200 0x00000012"			\
