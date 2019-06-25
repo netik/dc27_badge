@@ -211,6 +211,7 @@ CSRC += main.c \
 	app-otasend.c \
 	app-otarecv.c \
 	app-radiounlock.c \
+	app-spectrum.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \
@@ -223,6 +224,7 @@ CSRC += main.c \
 	mmc_spi_lld.c \
 	nrf52i2s_lld.c \
 	nrf52flash_lld.c \
+	nrf52radio_lld.c \
 	nrf52temp_lld.c \
 	nullprot_lld.c \
 	$(JOYPADSRC) \
