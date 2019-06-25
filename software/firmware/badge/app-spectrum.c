@@ -65,7 +65,7 @@ paramShow (uint32_t spanHz, uint32_t centerHz)
 
 	font = gdispOpenFont (FONT_KEYBOARD);
 
-	snprintf (str, sizeof(str), "Start: %dMHz", 2400);
+	snprintf (str, sizeof(str), "Start: %dMHz", 2360);
   
 	gdispDrawStringBox (0, 0, gdispGetWidth(),
 	    gdispGetFontMetric(font, fontHeight),
@@ -119,7 +119,7 @@ spectrum_start (OrchardAppContext *context)
 	state = malloc (sizeof(SpectrumState));
 	context->priv = state;
 
-	paramShow (100, 2450);
+	paramShow (140, 2430);
 
 	gs = ginputGetMouse (0);
 	geventListenerInit (&state->gl);
@@ -157,14 +157,14 @@ spectrum_event (OrchardAppContext *context,
 
 	if (event->type == timerEvent) {
 		GDISP->p.y = 112;
-		GDISP->p.cx = 3;
+		GDISP->p.cx = 2;
 		GDISP->p.cy = gdispGetHeight () - 112;
-		for (j = 0; j < 100; j++) {
-			nrf52radioChanSet (2400 + j);
+		for (j = 0; j < 140; j++) {
+			nrf52radioChanSet (2360 + j);
 			nrf52radioRxEnable ();
 			nrf52radioRssiGet (&rssi);
 			nrf52radioRxDisable ();
-			GDISP->p.x = 10 + (j * 3);
+			GDISP->p.x = 20 + (j * 2);
 			gdisp_lld_write_start (GDISP);
 			for (i = 0; i < 128; i++) {
 				if (rssi == i)
@@ -173,7 +173,7 @@ spectrum_event (OrchardAppContext *context,
 					GDISP->p.color = Teal;
 				else
 					GDISP->p.color = Navy;
-				for (x = 0; x < 3; x++)
+				for (x = 0; x < 2; x++)
 					gdisp_lld_write_color (GDISP);
 			}
 			gdisp_lld_write_stop (GDISP);

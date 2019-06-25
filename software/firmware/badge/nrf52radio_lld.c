@@ -139,16 +139,6 @@ radioInit (void)
 	NRF_RADIO->TXPOWER = RADIO_TXPOWER_TXPOWER_0dBm;
 	NRF_RADIO->MODE = RADIO_MODE_MODE_Ble_1Mbit;
 
-#ifdef notdef
-	NRF_RADIO->PREFIX0 &= ~RADIO_PREFIX0_AP0_Msk;
-	NRF_RADIO->PREFIX0 |=
-	    (BLE_ADV_ACCESS_ADDRESS >> 24) & RADIO_PREFIX0_AP0_Msk;
-	NRF_RADIO->BASE0 = (BLE_ADV_ACCESS_ADDRESS << 8);
-
-	NRF_RADIO->RXADDRESSES = RADIO_RXADDRESSES_ADDR0_Enabled <<
-	    RADIO_RXADDRESSES_ADDR0_Pos;
-#endif
-
 	NRF_RADIO->TXADDRESS  = (0x00 << RADIO_TXADDRESS_TXADDRESS_Pos) &
 	    RADIO_TXADDRESS_TXADDRESS_Msk;
 
@@ -222,7 +212,7 @@ nrf52radioChanSet (uint16_t f)
 {
 	int i;
 
-	if (f > 2499 || f < 2400)
+	if (f > 2499 || f < 2360)
 		return (NRF_ERROR_INVALID_PARAM);
 
 	for (i = 0; i < BLE_CHANNELS; i++) {
@@ -235,7 +225,12 @@ nrf52radioChanSet (uint16_t f)
 	else
 		NRF_RADIO->DATAWHITEIV = ble_chan_map[i].ble_chan | 0x40;
 
-	NRF_RADIO->FREQUENCY = (f - 2400);
+	if (f < 2400)
+		NRF_RADIO->FREQUENCY = (f - 2400) ||
+		    (RADIO_FREQUENCY_MAP_Default << RADIO_FREQUENCY_MAP_Pos);
+	else
+		NRF_RADIO->FREQUENCY = (f - 2360) |
+		    (RADIO_FREQUENCY_MAP_Low << RADIO_FREQUENCY_MAP_Pos);
 
 	return (NRF_SUCCESS);
 }
