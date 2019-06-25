@@ -156,7 +156,6 @@ sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 	-cp rgb/font/led_90/*.rgb $(STAGING_DIR)/font/led_90
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
 	-cp dac/*.snd $(STAGING_DIR)/sound
-	mkdir -p $(STAGING_DIR)/photos
 	-cp photos/*.rgb $(STAGING_DIR)/photos
 	-cp rgb/game/*.rgb $(STAGING_DIR)/game
 	-cp dac/game/*.snd $(STAGING_DIR)/game
