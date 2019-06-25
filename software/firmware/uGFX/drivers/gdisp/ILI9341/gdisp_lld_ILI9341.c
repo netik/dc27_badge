@@ -6,6 +6,7 @@
  */
 
 #include "gfx.h"
+#include <stdio.h>
 
 #if GFX_USE_GDISP
 
@@ -327,12 +328,26 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	 * translate them back into 16-bit RGB565 form in software.
 	 * This is not terribly fast, so you should avoid doing it for
 	 * large display regions.
+	 *
+	 * Note that the ILI9341 supports two color modes: 16-bit
+	 * (with 64K colors) and 18-bit (with 256K colors). With 18-bit
+	 * mode, you get 6 bits each for red, green and blue color data.
+	 * In the internal graphics RAM, each byte of RGB color data
+	 * maps directly to the 6-bits of RGB data supplied when drawing.
+	 * We have to be careful to reverse this when trandlating the
+	 * data back.
 	 */
+
 	LLDSPEC	color_t gdisp_lld_read_color(GDisplay *g) {
 		uint8_t		p[3];
-		uint16_t	data;
+		pixel_t		data;
 		spiReceive (&SPI_BUS, 3, p);
-		data = __builtin_bswap16(p[0] << 8 | p[1] << 3 | p[2] >> 3);
+
+		data = (p[0] >> 3) << 11;	/* Red */
+		data |= p[1] << 3;		/* Green */
+		data |= p[2] >> 3;		/* Blue */
+		data = __builtin_bswap16 (data);
+
 		return (data);
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {

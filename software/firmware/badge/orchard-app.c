@@ -9,7 +9,7 @@
 #include "orchard-events.h"
 #include "orchard-ui.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "joypad_lld.h"
 
 extern OrchardAppEvent joyEvent;
@@ -320,7 +320,7 @@ void orchardAppTimer(const OrchardAppContext *context,
   return;
 }
 
-static THD_WORKING_AREA(waOrchardAppThread, 1280);
+static THD_WORKING_AREA(waOrchardAppThread, 2048); // was 1280
 static THD_FUNCTION(orchard_app_thread, arg) {
 
   struct orchard_app_instance *instance = arg;

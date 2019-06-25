@@ -2,7 +2,7 @@
 #include "ides_gfx.h"
 #include "fontlist.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "ble_lld.h"
 
 #include <stdlib.h>

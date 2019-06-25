@@ -22,7 +22,14 @@
 #include "datetime.h"
 #include "src/gdisp/gdisp_driver.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
+
+#include "nrf_soc.h"
+#include "nrf52temp_lld.h"
+
+/* we wil refresh the temperature this many timer ticks */
+/* timer tick interval is currenty 1 second, so this is 10 sec */
+#define TEMP_REFRESH_INTERVAL 10
 
 /* remember these many last key-pushes (app-default) */
 #define KEY_HISTORY 8
@@ -31,7 +38,10 @@ typedef struct _DefaultHandles {
   GHandle ghFightButton;
   GHandle ghExitButton;
   GListener glBadge;
-  font_t fontLG, fontSM, fontXS;
+  font_t fontLG, fontSM, fontXS, fontSYS;
+  uint32_t temp_age;
+  pixel_t *temppixels;
+  int32_t prevtemp;
 
   /* ^ ^ v v < > < > ent will fire the unlocks screen */
   OrchardAppEventKeyCode last_pushed[KEY_HISTORY];
@@ -110,6 +120,35 @@ static void draw_stat (DefaultHandles * p,
   return;
 }
 
+static void update_temp(DefaultHandles *p) {
+  int32_t temp;
+  float ftemp;
+  char tmp[40];
+  int fh;
+
+  // finally, draw the temperature.
+  if (tempGet (&temp) != NRF_SUCCESS) {
+    printf ("Reading temperature failed\n");
+  } else {
+    if (temp == p->prevtemp)
+        return;
+    p->prevtemp = temp; 
+    fh = gdispGetFontMetric(p->fontSYS, fontHeight);
+
+    ftemp = ((temp /4.00) * 9/5) + 32;
+    sprintf(tmp, "%.1f F / %.1f C", ftemp, temp / 4.00);
+
+    drawBufferedStringBox (&p->temppixels,
+        45,
+        gdispGetHeight() - fh,
+        150,
+        fh,
+        tmp,
+        p->fontSYS, White, justifyCenter);
+  }
+  // reset the age counter
+  p->temp_age = 0;
+}
 static void redraw_badge(DefaultHandles *p) {
   // draw the entire background badge image. Shown when the screen is idle.
   const userconfig *config = getConfig();
@@ -173,13 +212,15 @@ static void redraw_badge(DefaultHandles *p) {
 
   if (config->airplane_mode) // right under the user name.
     putImageFile(IMG_PLANE, 190, 77);
+
+  update_temp(p);
 }
 
 static uint32_t default_init(OrchardAppContext *context) {
   (void)context;
 
-  //  orchardAppTimer(context, HEAL_INTERVAL_US, true);
-
+  // 1 second timer.
+  orchardAppTimer(context, 1000000, true);
   return 0;
 }
 
@@ -187,15 +228,18 @@ static void default_start(OrchardAppContext *context) {
   DefaultHandles * p;
 
   p = malloc(sizeof(DefaultHandles));
+  memset (p, 0, sizeof(DefaultHandles));
   context->priv = p;
-
+  p->temp_age = 9999; // force update.
   p->fontXS = gdispOpenFont (FONT_XS);
   p->fontLG = gdispOpenFont (FONT_LG);
   p->fontSM = gdispOpenFont (FONT_SM);
+  p->fontSYS = gdispOpenFont (FONT_SYS);
 
   for (int i=0; i < KEY_HISTORY; i++) {
     p->last_pushed[i] = 0;
   }
+  p->temppixels = NULL;
 
   gdispClear(Black);
 
@@ -235,9 +279,6 @@ static void default_event(OrchardAppContext *context,
 	const OrchardAppEvent *event) {
   DefaultHandles * p;
   GEvent * pe;
-  char tmp[40];
-  coord_t totalheight = gdispGetHeight();
-  coord_t totalwidth = gdispGetWidth();
 
   p = context->priv;
 
@@ -274,20 +315,13 @@ static void default_event(OrchardAppContext *context,
     }
   }
 
-  /* timed events (heal, caesar election, etc.) */
+  /* timed events - temperature update, damage repair, etc. */
   if (event->type == timerEvent) {
+    // every five timer ticks (5 x 1 sec) we'll do an update.
+    if (p->temp_age > TEMP_REFRESH_INTERVAL)
+      update_temp(p);
 
-    gdispFillArea( totalwidth - 100, totalheight - 50,
-                   100, gdispGetFontMetric(p->fontXS, fontHeight),
-                   Black );
-
-    gdispDrawStringBox (0,
-                        totalheight - 50,
-                        totalwidth,
-                        gdispGetFontMetric(p->fontXS, fontHeight),
-                        tmp,
-                        p->fontXS, White, justifyRight);
-
+    p->temp_age++;
   }
 }
 
@@ -301,9 +335,14 @@ static void default_exit(OrchardAppContext *context) {
   gdispCloseFont (p->fontXS);
   gdispCloseFont (p->fontLG);
   gdispCloseFont (p->fontSM);
+  gdispCloseFont (p->fontSYS);
 
   geventDetachSource (&p->glBadge, NULL);
   geventRegisterCallback (&p->glBadge, NULL, NULL);
+
+  if (p->temppixels) {
+    free(p->temppixels);
+  }
 
   free(context->priv);
   context->priv = NULL;

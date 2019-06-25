@@ -34,7 +34,7 @@
 #include "orchard-ui.h"
 
 #include "scroll_lld.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include "ff.h"
 #include "ffconf.h"

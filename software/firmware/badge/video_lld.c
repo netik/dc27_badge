@@ -42,7 +42,7 @@
 
 #include "video_lld.h"
 #include "async_io_lld.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include <stdlib.h>
 

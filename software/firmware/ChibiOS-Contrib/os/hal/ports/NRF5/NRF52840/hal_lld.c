@@ -68,6 +68,8 @@ void hal_lld_init(void)
 
   NRF_CLOCK->TASKS_HFCLKSTART = 1;
 
+  while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0) {
+  }
 
   /*
    * Low frequency clock initialisation

@@ -17,7 +17,7 @@
 #include "orchard-app.h"
 #include "orchard-ui.h"
 #include "fontlist.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "ides_gfx.h"
 #include "images.h"
 #include "battle.h"
@@ -33,15 +33,19 @@
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
+// debugs the discovery process
+#define DEBUG_ENEMY_DISCOVERY
 #define DEBUG_BATTLE_STATE 1
+#define DEBUG_ENEMY_TTL 1
+
 #include "gamestate.h"
 #include "ships.h"
 
 #undef ENABLE_MAP_PING     // if you want the sonar sounds
-#define DEBUG_ENEMY_DISCOVERY
 
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
+#define NETWORK_TIMEOUT 450  // number of ticks to timeout (15 seconds)
 
 #define COLOR_ENEMY  Red
 #define COLOR_PLAYER HTML2COLOR(0xeeeeee) // light grey
@@ -69,6 +73,8 @@ typedef struct {
   font_t	fontSM;
   GHandle	ghTitleL;
   GHandle	ghTitleR;
+  GHandle	ghACCEPT;
+  GHandle	ghDECLINE;
 } battle_ui_t;
 
 // enemies -- linked list
@@ -119,9 +125,9 @@ entity_init(ENTITY *p) {
   p->vecVelocityGoal.x = 0;
   p->vecVelocityGoal.y = 0;
 
-  // we're going to always start in the lower harbor for now.
-  p->vecPosition.x = HARBOR_LWR_X;
-  p->vecPosition.y = HARBOR_LWR_Y;
+  // we'll set this to 0,0 for now. The caller should immediately set this.
+  p->vecPosition.x = 0;
+  p->vecPosition.y = 0;
 
   // this is "ocean drag"
   p->vecGravity.x = VDRAG;
@@ -231,8 +237,7 @@ player_render(ENTITY *p) {
    * Broadcast our location.
    * Ideally we should only do this when we know we've changed location,
    * however this seems as good a place as any to capture location changes
-   * for now. Note that XP and rank aren't supported yet so for the moment
-   * they're hardcoded to 0.
+   * for now.
    */
 
   bleGapUpdateState ((uint16_t)p->vecPosition.x,
@@ -318,33 +323,38 @@ static void enemy_list_refresh(void) {
       /* addresses are 48 bit / 6 bytes */
       if ((e = enemy_find_by_peer(&p->ble_peer_addr[0])) != NULL) {
 #ifdef DEBUG_ENEMY_DISCOVERY
-        printf("enemy: found old enemy %x:%x:%x:%x:%x:%x\n",
+        printf("enemy: found old enemy %x:%x:%x:%x:%x:%x (TTL %d)\n",
           p->ble_peer_addr[5],
           p->ble_peer_addr[4],
           p->ble_peer_addr[3],
           p->ble_peer_addr[2],
           p->ble_peer_addr[1],
-          p->ble_peer_addr[0]);
+          p->ble_peer_addr[0],
+          p->ble_ttl);
 #endif
         // is this dude in combat? Get rid of him.
         if (p->ble_game_state.ble_ides_incombat) {
           e->ttl = 0;
         }
+        /* yes, update state */
+        e->ttl = p->ble_ttl;
+
         // we expire 3 seconds earlier than the ble peer checker...
         if (e->ttl < 3) {
           // erase the old position
+#ifdef DEBUG_ENEMY_TTL
+          printf("remove enemy due to ttl was: %d \n",e->ttl);
+#endif
           putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, FB_X, FB_Y, e->e.pix_old);
-
+          printf("%d\n", enemy_find_ll_pos((ble_gap_addr_t *)&p->ble_peer_addr));
           gll_remove(enemies, enemy_find_ll_pos((ble_gap_addr_t *)&p->ble_peer_addr));
           continue;
         }
 
-        /* yes, update state */
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
 
         e->xp = p->ble_game_state.ble_ides_xp;
-        e->ttl = p->ble_ttl;
 
         if (e->e.prevPos.x != e->e.vecPosition.x ||
             e->e.prevPos.y != e->e.vecPosition.y) {
@@ -504,6 +514,11 @@ battle_start (OrchardAppContext *context)
   /* start the timer - 30 fps */
   orchardAppTimer(context, FRAME_DELAY * 1000000, true);
 
+  /* stand up ugfx */
+  geventListenerInit (&bh->gl);
+  gwinAttachListener (&bh->gl);
+  geventRegisterCallback (&bh->gl, orchardAppUgfxCallback, &bh->gl);
+
   changeState(WORLD_MAP);
   return;
 }
@@ -619,73 +634,107 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   uint8_t i;
   ENEMY *nearest;
   battle_ui_t *bh;
+  GEvent * pe;
+  GEventGWinButton * be;
+
 	OrchardAppRadioEvent * radio;
 	ble_evt_t * evt;
 	ble_gatts_evt_rw_authorize_request_t * rw;
 	ble_gatts_evt_write_t * req;
+
   char msg[32];
   char tmp[40];
   bh = (battle_ui_t *) context->priv;
 
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
-    animtick++;
 
+    // handle tick for current state
+    animtick++;
     if (battle_funcs[current_battle_state].tick != NULL) // some states lack a tick call
       battle_funcs[current_battle_state].tick();
 
-    // refresh world map enemy positions every 500mS
-    if (animtick % 12 == 0) {
-      enemy_list_refresh();
-    }
-
-    // player update
-    entity_update(&me, FRAME_DELAY);
-
-    // check for collison with enemies
-    player_render(&me);
-
-    // bullets
-    for (i=0; i < MAX_BULLETS; i++) {
-      if (bullet[i].visible == true) {
-        entity_update(&bullet[i], FRAME_DELAY);
-        if (entity_OOB(&bullet[i])) {
-          // out of bounds, remove.
-          bullet[i].visible = false;
-        }
-
-        // do we have an impact?
-        // ...
-
-        getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
+    // player and enemy update
+    if (current_battle_state == COMBAT || current_battle_state == WORLD_MAP) {
+      if (animtick % 12 == 0) {
+        // refresh world map enemy positions every 500mS
+        enemy_list_refresh();
       }
-    }
-    bullets_render();
 
-    // render enemies
-    if (current_battle_state == WORLD_MAP) {
-      enemy_clearall_blink();
-      nearest = getNearestEnemy();
+      // move player
+      entity_update(&me, FRAME_DELAY);
+      // check for collison with enemies
+      player_render(&me);
 
-      if (nearest != NULL)
-        nearest->e.blinking = true;
+      // bullets
+      for (i=0; i < MAX_BULLETS; i++) {
+        if (bullet[i].visible == true) {
+          entity_update(&bullet[i], FRAME_DELAY);
+          if (entity_OOB(&bullet[i])) {
+            // out of bounds, remove.
+            bullet[i].visible = false;
+          }
 
-      if (nearest != last_near) {
-        last_near = nearest;
+          // do we have an impact?
+          // ...
 
-        // if our state has changed, update the UI
-        if (nearest == NULL) {
-          gwinSetText(bh->ghTitleR, "Find an enemy!", TRUE);
-          gwinRedraw(bh->ghTitleR);
-        } else {
-          // update UI
-          strcpy(tmp, "Engage: ");
-          strcat(tmp, nearest->name);
-          gwinSetText(bh->ghTitleR, tmp, TRUE);
-          gwinRedraw(bh->ghTitleR);
+          getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
         }
       }
+      bullets_render();
+      // render enemies
+      if (current_battle_state == WORLD_MAP) {
+        enemy_clearall_blink();
+        nearest = getNearestEnemy();
+
+        if (nearest != NULL)
+          nearest->e.blinking = true;
+
+        if (nearest != last_near) {
+          last_near = nearest;
+
+          // if our state has changed, update the UI
+          if (nearest == NULL) {
+            gwinSetText(bh->ghTitleR, "Find an enemy!", TRUE);
+            gwinRedraw(bh->ghTitleR);
+          } else {
+            // update UI
+            strcpy(tmp, "Engage: ");
+            strcat(tmp, nearest->name);
+            gwinSetText(bh->ghTitleR, tmp, TRUE);
+            gwinRedraw(bh->ghTitleR);
+          }
+        }
+      }
     }
+  }
+
+  // handle uGFX events
+  if (event->type == ugfxEvent) {
+    if (current_battle_state == APPROVAL_DEMAND) {
+  		pe = event->ugfx.pEvent;
+  		if (pe->type == GEVENT_GWIN_BUTTON) {
+  			be = (GEventGWinButton *)pe;
+  			if (be->gwin == bh->ghACCEPT) {
+          // we will send an accept packet
+          msg[0] = BLE_IDES_GAMEATTACK_ACCEPT;
+  				bleGattcWrite (gm_handle.value_handle,
+  				    (uint8_t *)msg, 1, FALSE);
+
+          // on return of that packet, we'll have a l2CapConnection
+          // and we'll switch to combat state.
+  			}
+
+  			if (be->gwin == bh->ghDECLINE) {
+          // send a decline and go back to the map.
+          msg[0] = BLE_IDES_GAMEATTACK_DECLINE;
+  				bleGattcWrite (gm_handle.value_handle,
+  				     (uint8_t *)msg, 1, FALSE);
+  				bleGapDisconnect ();
+          changeState(WORLD_MAP);
+  			}
+      }
+		}
   }
 
   // deal with the radio
@@ -700,7 +749,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     // PERIPH is the one that accepts.
   	switch (radio->type) {
       case connectEvent:
-        if (current_state == APPROVAL_WAIT) {
+        if (current_battle_state == APPROVAL_WAIT) {
           // fires when we succeed on a connect i think.
           screen_alert_draw (FALSE, "Sending Challenge...");
           msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
@@ -713,13 +762,18 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
          &evt->evt.gatts_evt.params.authorize_request;
         req = &rw->request.write;
         if (rw->request.write.handle ==
-            ot_handle.value_handle &&
+            gm_handle.value_handle &&
             req->data[0] == BLE_IDES_GAMEATTACK_ACCEPT) {
           screen_alert_draw (FALSE,
               "Battle Accepted!");
-          /* Offer accepted - create L2CAP link*/
+          /* Offer accepted - create L2CAP link */
+          /* the attacker makes the connect first */
           bleL2CapConnect (BLE_IDES_BATTLE_PSM);
-        } else {
+        }
+
+        if (rw->request.write.handle ==
+            gm_handle.value_handle &&
+            req->data[0] == BLE_IDES_GAMEATTACK_DECLINE) {
           screen_alert_draw (FALSE,
               "Battle Declined.");
           chThdSleepMilliseconds (2000);
@@ -728,6 +782,13 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             draw_world_map();
           }
           changeState(WORLD_MAP);
+        }
+
+        // we under attack, yo.
+        if (rw->request.write.handle ==
+            gm_handle.value_handle &&
+            req->data[0] == BLE_IDES_GAMEATTACK_CHALLENGE) {
+            changeState(APPROVAL_DEMAND);
         }
         break;
       case l2capRxEvent:
@@ -741,6 +802,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       case l2capConnectEvent:
         // now we have a peer connection.
         // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
+        printf("BATTLE: l2CapConnection Success\n");
+        if (current_enemy == NULL) {
+          // copy his data over and start the battle.
+          current_enemy = enemy_find_by_peer(&ble_peer_addr.addr[0]);
+        }
         changeState(COMBAT);
         break;
       default:
@@ -861,12 +927,18 @@ static void changeState(battle_state nextstate) {
   }
 }
 
+static void free_enemy(void *e) {
+  ENEMY *en = e;
+  free(en);
+}
 
 static void battle_exit(OrchardAppContext *context)
 {
   userconfig *config = getConfig();
   battle_ui_t *bh;
 
+  // free the UI
+  bh = (battle_ui_t *)context->priv;
   // store the last x/y of this guy
   config->last_x = me.vecPosition.x;
   config->last_y = me.vecPosition.y;
@@ -876,11 +948,11 @@ static void battle_exit(OrchardAppContext *context)
   changeState(NONE);
 
   // free the enemy list
-  if (enemies)
+  if (enemies) {
+    gll_each(enemies, free_enemy);
     gll_destroy(enemies);
-
-  // free the UI
-  bh = (battle_ui_t *)context->priv;
+    free(enemies);
+  }
 
   if (bh->fontXS)
     gdispCloseFont (bh->fontXS);
@@ -897,11 +969,8 @@ static void battle_exit(OrchardAppContext *context)
   if (bh->ghTitleR)
     gwinDestroy (bh->ghTitleR);
 
-#ifdef notyet
-  /* NB: add back if/when ugfx touch panel events are supported */
   geventRegisterCallback (&bh->gl, NULL, NULL);
   geventDetachSource (&bh->gl, NULL);
-#endif
 
   free (context->priv);
   context->priv = NULL;
@@ -911,12 +980,28 @@ static void battle_exit(OrchardAppContext *context)
   return;
 }
 
+
+static void
+render_enemy(void *e) {
+  ENEMY *en = e;
+  gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, COLOR_ENEMY);
+}
+
+static void
+render_all_enemies(void) {
+  // @brief clear enemy blink state
+  gll_each(enemies, render_enemy);
+}
+
 /* state change and tick functions go here ----------------------------------- */
 
 // WORLDMAP ------------------------------------------------------------------
 void state_worldmap_enter(void) {
+  current_enemy = NULL;
+
   gdispClear(Black);
   draw_world_map();
+  render_all_enemies();
 }
 
 void state_worldmap_tick(void) {
@@ -929,7 +1014,12 @@ void state_worldmap_tick(void) {
 }
 
 void state_worldmap_exit(void) {
-  if (bh->ghTitleL)
+  battle_ui_t *bh;
+
+  // get private memory
+  bh = (battle_ui_t *)mycontext->priv;
+
+  if (bh->ghTitleL) {
     gwinDestroy (bh->ghTitleL);
     bh->ghTitleL= NULL;
   }
@@ -957,28 +1047,101 @@ void state_approval_wait_enter(void) {
   bleGapConnect (&current_enemy->ble_peer_addr);
   // when the gap connection is accepted, we will attempt a
   // l2cap connect
+
+  animtick = 0;
 }
 
-void state_approval_wait_tick(void) {}
+void state_approval_wait_tick(void) {
+  // we shouldn't be in this state for more than five seconds or so.
+  if (animtick > NETWORK_TIMEOUT) {
+    // forget it.
+    screen_alert_draw(TRUE, "TIMED OUT");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    changeState(WORLD_MAP);
+  }
+}
 
-void state_approval_wait_exit(void) {}
+void state_approval_wait_exit(void) {
+  bleGapDisconnect ();
+}
 
 // APPOVAL_DEMAND ------------------------------------------------------------
 // Someone is attacking us.
 void state_approval_demand_enter(void) {
-    gdispClear(Black);
-    gdispDrawStringBox (0,
-                        0,
-                        gdispGetWidth(),
-                        gdispGetFontMetric(p->fontFF, fontHeight),
-                        "YOU ARE BEING ATTACKED!",
-                        p->fontFF, Red, justifyCenter);
+  battle_ui_t *bh;
+	ble_peer_entry * peer;
+  char buf[36];
+	int fHeight;
+	GWidgetInit wi;
+
+  animtick = 0;
+  bh = (battle_ui_t *)mycontext->priv;
+  gdispClear(Black);
+  printf("entered approval demand 3\n");
+  peer = blePeerFind (ble_peer_addr.addr);
+  if (peer == NULL)
+		snprintf (buf, 36, "Badge %X:%X:%X:%X:%X:%X",
+		    ble_peer_addr.addr[5],  ble_peer_addr.addr[4],
+		    ble_peer_addr.addr[3],  ble_peer_addr.addr[2],
+		    ble_peer_addr.addr[1],  ble_peer_addr.addr[0]);
+	else
+		snprintf (buf, 36, "%s", peer->ble_peer_name);
+  printf("entered approvald demand 4\n");
+  putImageFile ("images/undrattk.rgb", 0, 0);
+  i2sPlay("sound/klaxon.snd");
+
+  fHeight = gdispGetFontMetric (bh->fontSM, fontHeight);
+  printf("approval demand5\n");
+
+  gdispDrawStringBox (0, 50 -
+    fHeight,
+    gdispGetWidth(), fHeight,
+    buf, bh->fontSM, White, justifyCenter);
+
+  gdispDrawStringBox (0, 50, gdispGetWidth(), fHeight,
+      "IS CHALLENGING YOU", bh->fontSM, White, justifyCenter);
+
+  gwinSetDefaultStyle (&RedButtonStyle, FALSE);
+  gwinSetDefaultFont (bh->fontSM);
+  gwinWidgetClearInit (&wi);
+
+  wi.g.show = TRUE;
+  wi.g.x = 0;
+  wi.g.y = 210;
+  wi.g.width = 150;
+  wi.g.height = 30;
+  wi.text = "DECLINE";
+  bh->ghDECLINE = gwinButtonCreate(0, &wi);
+
+  wi.g.x = 170;
+  wi.text = "ACCEPT";
+  bh->ghACCEPT = gwinButtonCreate(0, &wi);
+
+  gwinSetDefaultStyle (&BlackWidgetStyle, FALSE);
+
 }
 
 void state_approval_demand_tick(void) {
+  if (animtick > NETWORK_TIMEOUT) {
+    // user chose nothing.
+    screen_alert_draw(TRUE, "TIMED OUT");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    changeState(WORLD_MAP);
+  }
 }
 
 void state_approval_demand_exit(void) {
+  battle_ui_t *bh;
+
+  bh = mycontext->priv;
+
+  gwinDestroy (bh->ghACCEPT);
+  gwinDestroy (bh->ghDECLINE);
+
+  geventDetachSource (&bh->gl, NULL);
+  geventRegisterCallback (&bh->gl, NULL, NULL);
+
+  bleGapDisconnect ();
 }
 
 // COMBAT --------------------------------------------------------------------
@@ -1007,6 +1170,6 @@ void state_combat_exit(void) {
 
 orchard_app("Sea Battle",
             "icons/ship.rgb",
-            APP_FLAG_AUTOINIT,
+            0,
             battle_init, battle_start,
             battle_event, battle_exit, 1);

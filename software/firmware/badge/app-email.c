@@ -33,7 +33,7 @@
 #include "orchard-app.h"
 #include "orchard-ui.h"
 #include "video_lld.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 static uint32_t
 email_init(OrchardAppContext *context)

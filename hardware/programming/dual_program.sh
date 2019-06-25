@@ -20,7 +20,9 @@ do
         -c "nrf5 mass_erase" \
 	-c "flash banks"				\
 	-c "flash write_bank 0 ../../software/firmware/badge/build/badge.bin" \
+        -c "program ../../software/firmware/badge/build/badge.elf" \
 	-c "reset init"					\
 	-c "resume"					\
 	-c "exit" &
 done
+

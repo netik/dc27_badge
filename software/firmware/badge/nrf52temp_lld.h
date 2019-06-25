@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018
+ * Copyright (c) 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,48 +30,16 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string.h>
+#ifndef _NRF52TEMP_LLD_H_
+#define _NRF52TEMP_LLD_H_
 
-#include "ch.h"
-#include "hal.h"
-#include "shell.h"
+#define MASK_SIGN		0x00000200UL
+#define MASK_SIGN_EXTENSION	0xFFFFFC00UL
 
-#include "nrf52i2s_lld.h"
+extern void nrf52TempStart (void);
+extern void nrf52TempStop (void);
+extern int nrf52TempGet (int32_t *);
 
-#include "badge.h"
+extern int tempGet (int32_t *);
 
-static void
-audio_play (int argc, char *argv[])
-{
-	i2sPlay (argv[1]);
-	return;
-}
-
-static void
-audio_stop (int argc, char *argv[])
-{
-	i2sPlay (NULL);
-	return;
-}
-
-static void
-cmd_audio(BaseSequentialStream *chp, int argc, char *argv[])
-{
-	if (argc == 0) {
-		printf ("Audio commands:\r\n");
-		printf ("play <filename>      Play tune\r\n");
-		printf ("stop                 Stop playing\r\n");
-                return;
-        }
-
-	if (strcmp (argv[0], "play") == 0)
-		audio_play (argc, argv);
-	else if (strcmp (argv[0], "stop") == 0)
-		audio_stop (argc, argv);
-	else
-		printf ("Unrecognized audio command\r\n");
-
-	return;
-}
-
-orchard_command("audio", cmd_audio);
+#endif /* _NRF52TEMP_LLD_H_ */

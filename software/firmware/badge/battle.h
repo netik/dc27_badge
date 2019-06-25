@@ -46,10 +46,4 @@ typedef struct _bullet {
   ENTITY b;
 } BULLET;
 
-#define HARBOR_LWR_X 24
-#define HARBOR_LWR_Y 225
-
-#define HARBOR_UPP_X 252
-#define HARBOR_UPP_Y 60
-
 #endif /* _BATTLE_H_ */

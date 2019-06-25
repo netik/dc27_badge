@@ -63,6 +63,8 @@
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
+#include "nrf52temp_lld.h"
+
 #include "userconfig.h"
 #include "badge.h"
 
@@ -331,6 +333,7 @@ bleEnable (void)
 
 	rngAcquireUnit (&RNGD1);
 	rngStop (&RNGD1);
+	nrf52TempStop ();
 	r = sd_softdevice_enable (&clock_source, nordic_fault_handler);
 	rngReleaseUnit (&RNGD1);
 
@@ -430,6 +433,7 @@ bleDisable (void)
 	rngAcquireUnit (&RNGD1);
 	r = sd_softdevice_disable ();
 	rngStart (&RNGD1, NULL);
+	nrf52TempStart ();
 	rngReleaseUnit (&RNGD1);
 
 	if (r == NRF_SUCCESS)

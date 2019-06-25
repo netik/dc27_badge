@@ -30,9 +30,10 @@
 #include "userconfig.h"
 
 #include "nrf52flash_lld.h"
+#include "nrf52temp_lld.h"
 #include "hal_flash.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include "badge.h"
 #include "splash.h"
@@ -369,6 +370,12 @@ int main(void)
     rngStart (&RNGD1, NULL);
 
     printf ("Random number generator enabled\n");
+
+    /* Enable temperature sensor */
+
+    nrf52TempStart ();
+
+    printf ("Temperature sensor enabled\n");
 
     /* Set up I/O pins */
 

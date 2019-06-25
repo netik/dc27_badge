@@ -37,7 +37,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "fontlist.h"
 
 typedef struct _ListHandles {

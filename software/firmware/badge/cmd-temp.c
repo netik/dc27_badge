@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018
+ * Copyright (c) 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,48 +30,32 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string.h>
-
 #include "ch.h"
 #include "hal.h"
 #include "shell.h"
 
-#include "nrf52i2s_lld.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "nrf_soc.h"
+#include "nrf52temp_lld.h"
 
 #include "badge.h"
 
 static void
-audio_play (int argc, char *argv[])
+cmd_temp(BaseSequentialStream *chp, int argc, char *argv[])
 {
-	i2sPlay (argv[1]);
+	int32_t temp;
+	float ftemp;
+
+	if (tempGet (&temp) != NRF_SUCCESS) {
+		printf ("Reading temperature failed\n");
+	} else {
+		ftemp = ((temp /4.00) * 9/5) + 32;
+		printf ("Current CPU temperature: %f degrees celsius, %f farenheit.\n",
+		    temp / 4.00, ftemp);
+	}
 	return;
 }
 
-static void
-audio_stop (int argc, char *argv[])
-{
-	i2sPlay (NULL);
-	return;
-}
-
-static void
-cmd_audio(BaseSequentialStream *chp, int argc, char *argv[])
-{
-	if (argc == 0) {
-		printf ("Audio commands:\r\n");
-		printf ("play <filename>      Play tune\r\n");
-		printf ("stop                 Stop playing\r\n");
-                return;
-        }
-
-	if (strcmp (argv[0], "play") == 0)
-		audio_play (argc, argv);
-	else if (strcmp (argv[0], "stop") == 0)
-		audio_stop (argc, argv);
-	else
-		printf ("Unrecognized audio command\r\n");
-
-	return;
-}
-
-orchard_command("audio", cmd_audio);
+orchard_command("temp", cmd_temp);

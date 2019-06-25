@@ -183,7 +183,7 @@ void set_names( const char *storyname )
 
 void open_story( const char *storyname )
 {
-   char *path, *p;
+   char *path = NULL, *p;
    char tmp[Z_FILENAME_MAX + Z_PATHNAME_MAX + 1];
 
    if ( !STANDALONE_FLAG )

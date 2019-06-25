@@ -149,7 +149,7 @@ cmd_xyzzy (BaseSequentialStream *chp, int argc, char *argv[])
   char storyfile[200];
 
   // handle arg here if necessary
-  printf("\nzmachine!\nPlease set your terminal to 80 rows, 20 cols, and use an ANSI compatible\nterminal program. Or things won't look right. We recommend Kermit.\n\n");
+  printf("\nzmachine!\nPlease set your terminal to 80 rows, 24 cols, and use an ANSI compatible\nterminal program, or things won't look right. We recommend Kermit.\n\n");
 
   // prompt for theme
   theme = selectTheme();

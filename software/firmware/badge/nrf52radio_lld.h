@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018
+ * Copyright (c) 2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,48 +30,24 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string.h>
+#ifndef _NRF52RADIO_LLD_H_
+#define _NRF52RADIO_LLD_H_
 
-#include "ch.h"
-#include "hal.h"
-#include "shell.h"
+/*
+ * This is the access address used to send BLE advertisement
+ * packets on channels 37, 38 and 39.
+ */
 
-#include "nrf52i2s_lld.h"
+#define BLE_ADV_ACCESS_ADDRESS		0x8E89BED6
+#define BLE_CHANNELS			40
 
-#include "badge.h"
+extern void nrf52radioStart (void);
+extern void nrf52radioStop (void);
+extern int nrf52radioRx (void);
+extern void nrf52radioTx (int);
+extern void nrf52radioRxEnable (void);
+extern void nrf52radioRxDisable (void);
+extern int nrf52radioRssiGet (int8_t *);
+extern int nrf52radioChanSet (uint16_t);
 
-static void
-audio_play (int argc, char *argv[])
-{
-	i2sPlay (argv[1]);
-	return;
-}
-
-static void
-audio_stop (int argc, char *argv[])
-{
-	i2sPlay (NULL);
-	return;
-}
-
-static void
-cmd_audio(BaseSequentialStream *chp, int argc, char *argv[])
-{
-	if (argc == 0) {
-		printf ("Audio commands:\r\n");
-		printf ("play <filename>      Play tune\r\n");
-		printf ("stop                 Stop playing\r\n");
-                return;
-        }
-
-	if (strcmp (argv[0], "play") == 0)
-		audio_play (argc, argv);
-	else if (strcmp (argv[0], "stop") == 0)
-		audio_stop (argc, argv);
-	else
-		printf ("Unrecognized audio command\r\n");
-
-	return;
-}
-
-orchard_command("audio", cmd_audio);
+#endif /* _NRF52RADIO_LLD_H_ */
