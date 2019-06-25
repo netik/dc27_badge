@@ -17,7 +17,7 @@
 #include "orchard-app.h"
 #include "orchard-ui.h"
 #include "fontlist.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "ides_gfx.h"
 #include "images.h"
 #include "battle.h"

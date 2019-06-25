@@ -301,7 +301,14 @@ cmd_radio (BaseSequentialStream *chp, int argc, char *argv[])
 		radio_read (chp, argc, argv);
 	else if (strcmp (argv[0], "write") == 0)
 		radio_write (chp, argc, argv);
-	else
+	else if (strcmp (argv[0], "blah") == 0) {
+
+		radioReset ();
+		radioInit (2);
+		radioRx ();
+		radioReset ();
+
+	} else
 		printf ("Unrecognized radio command\n");
 
 	return;

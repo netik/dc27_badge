@@ -34,7 +34,7 @@
 #include "hal.h"
 #include "orchard-app.h"
 #include "orchard-ui.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include "ff.h"
 #include "ffconf.h"

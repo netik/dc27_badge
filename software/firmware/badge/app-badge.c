@@ -22,7 +22,7 @@
 #include "datetime.h"
 #include "src/gdisp/gdisp_driver.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include "nrf_soc.h"
 #include "nrf52temp_lld.h"

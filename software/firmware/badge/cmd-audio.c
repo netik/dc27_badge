@@ -36,7 +36,7 @@
 #include "hal.h"
 #include "shell.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include "badge.h"
 

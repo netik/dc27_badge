@@ -42,7 +42,7 @@
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "fontlist.h"
 #include "ides_gfx.h"
 

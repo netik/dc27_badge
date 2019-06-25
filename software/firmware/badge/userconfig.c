@@ -5,7 +5,7 @@
 
 #include "joypad_lld.h"
 #include "nrf52flash_lld.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include "unlocks.h"
 #include "userconfig.h"

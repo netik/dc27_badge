@@ -220,8 +220,8 @@ CSRC += main.c \
 	ble_gatts_lld.c \
 	ble_lld.c \
 	ble_peer.c \
-	i2s_lld.c \
 	mmc_spi_lld.c \
+	nrf52i2s_lld.c \
 	nrf52flash_lld.c \
 	nrf52temp_lld.c \
 	nullprot_lld.c \

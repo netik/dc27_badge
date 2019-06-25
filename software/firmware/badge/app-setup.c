@@ -20,7 +20,7 @@
 #include "src/gdriver/gdriver.h"
 #include "src/ginput/ginput_driver_mouse.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "ble_lld.h"
 
 /* the amount that we increase or decrease brightness by */

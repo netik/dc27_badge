@@ -33,7 +33,7 @@
 #include "nrf52temp_lld.h"
 #include "hal_flash.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 #include "badge.h"
 #include "splash.h"

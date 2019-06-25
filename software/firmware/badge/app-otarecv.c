@@ -37,7 +37,7 @@
 #include "ble_gap_lld.h"
 #include "ble_gattc_lld.h"
 #include "ble_gatts_lld.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "ides_gfx.h"
 #include "ff.h"
 #include "crc32.h"

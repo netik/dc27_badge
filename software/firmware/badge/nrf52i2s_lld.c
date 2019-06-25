@@ -32,7 +32,7 @@
 
 #include "hal.h"
 #include "hal_i2s.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "ff.h"
 
 #include <stdlib.h>

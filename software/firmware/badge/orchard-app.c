@@ -9,7 +9,7 @@
 #include "orchard-events.h"
 #include "orchard-ui.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "joypad_lld.h"
 
 extern OrchardAppEvent joyEvent;

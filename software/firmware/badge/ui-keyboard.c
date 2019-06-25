@@ -41,7 +41,7 @@
 #include "src/gdisp/gdisp_driver.h"
 #include "src/gwin/gwin_class.h"
 
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 
 /*
  * We need two widgets: a console and the keyboard.

@@ -15,7 +15,7 @@
 #include "images.h"
 #include "led.h"
 #include "unlocks.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "fontlist.h"
 
 extern systime_t char_reset_at;

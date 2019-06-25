@@ -8,7 +8,7 @@
 #include "src/gdisp/gdisp_driver.h"
 #include "src/gwin/gwin_class.h"
 #include "userconfig.h"
-#include "i2s_lld.h"
+#include "nrf52i2s_lld.h"
 #include "ble_lld.h"
 #include "unlocks.h"
 
