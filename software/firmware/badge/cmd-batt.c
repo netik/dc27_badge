@@ -41,9 +41,10 @@ cmd_batt (BaseSequentialStream *chp, int argc, char *argv[])
    * VBAT is on QFN pin 11, pin 7 on the TSSOP, or pin G6 on the VFBGA
    * 
    * The xptGET call truncates this to 12 bits.
+
    */
 
-  battv = xptGet(XPT_CHAN_VBAT);
+  battv = xptGet(XPT_CHAN_VBAT | XPT_CTL_SDREF | );
   printf ("battery voltage = %d\n", battv);
   return;
 }
