@@ -4,3 +4,5 @@ build/
 dac/*.snd
 photos/
 dac/game/*.snd
+photos_src/cards.tif
+photos_src/letters.tif
