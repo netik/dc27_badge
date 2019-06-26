@@ -141,6 +141,8 @@ static void init_config(userconfig *config) {
   // touch_data will be ignored for now.
   memset(config->led_string, 0, CONFIG_LEDSIGN_MAXLEN);
 
+  config->puz_enabled = 0;
+
   /* game */
   memset(config->name, 0, CONFIG_NAME_MAXLEN);
   config->level = 1;
@@ -164,6 +166,8 @@ static void init_config(userconfig *config) {
   config->hp = 0;
   config->won = 0;
   config->lost= 0;
+
+  config->end_signature = CONFIG_END_SIGNATURE;
 }
 
 
@@ -196,7 +200,8 @@ void configStart(void) {
     wipeconfig = true;
   }
 
-  if ( (config->signature != CONFIG_SIGNATURE) || (wipeconfig)) {
+  if ( (config->signature != CONFIG_SIGNATURE) ||
+   (config->end_signature != CONFIG_END_SIGNATURE) || (wipeconfig)) {
     printf("Config not found, Initializing!\n");
     init_config(&config_cache);
     memcpy(config, &config_cache, sizeof(userconfig));
@@ -209,6 +214,9 @@ void configStart(void) {
   } else {
     printf("Config OK!\n");
     memcpy(&config_cache, config, sizeof(userconfig));
+
+    if (config_cache.puz_enabled)
+      printf("Puzzle mode has been enabled!\n");
 
     // you can't leave combat if your name isn't set.
     if (config_cache.in_combat != 0 && strlen(config_cache.name) > 0) {
@@ -235,7 +243,9 @@ struct userconfig *getConfig(void) {
    */
 
   if (config_cache.signature != CONFIG_SIGNATURE &&
-      config->signature == CONFIG_SIGNATURE)
+      config_cache.end_signature != CONFIG_END_SIGNATURE &&
+      config->signature == CONFIG_SIGNATURE &&
+      config->end_signature == CONFIG_END_SIGNATURE)
     return (config);
 
   return &config_cache;
