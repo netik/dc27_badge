@@ -80,12 +80,31 @@ rgb/images/%.rgb : tif/images/%.tif
 # credits app.
 #
 photos/%.rgb: photos_src/%.tif
-	convert $< -resize \!320x240 -rotate 90 -flop $(subst photos_src/,photos/,$<)
+	convert $< -resize 320x240 -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop $(subst photos_src/,photos/,$<)
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $(subst photos_src/,photos/,$<)
 	rm $(subst photos_src/,photos/,$<)
 
+photos/%.rgb: photos_src/%.jpg
+	convert "$<" -resize 320x240 -gravity center -background black -extent 320x240 -fill white -undercolor black -gravity southwest -annotate +0+0 "$(notdir $<)" -rotate 90 -flop "$(subst photos_src/,photos/,$<)"
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh "$(subst photos_src/,photos/,$<)"
+	rm "$(subst photos_src/,photos/,$<)"
+
+photos_src/letters.tif:
+	convert -compress lzw -gravity west -background black -fill white -font CourierNew -size 320x240 label:"$$(for i in $$(jot 26 1); do	\
+	printf "%b=%2d%s" \\0$$(				\
+		printf %o $$((64 + $$i))			\
+		) "$$i" "$$(					\
+			if [ $$(($$i % 4)) == 0 ]; then		\
+				printf "\\\\n";			\
+			else					\
+				printf " ";			\
+			fi)";					\
+	done )" photos_src/letters.tif
+
+photos_src/cards.tif: cardgen.py
+	convert -compress lzw -gravity northwest -background black -fill white -font CourierNew -size 320x240 caption:"$$(python cardgen.py)" photos_src/cards.tif
 # User supplied photos if any.
-photos: tools_dep $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.tif)))))
+photos: tools_dep $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.tif))))) $(addprefix photos/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard photos_src/*.jpg))))) photos/letters.rgb photos/cards.rgb
 
 
 # the credits image, if needed
