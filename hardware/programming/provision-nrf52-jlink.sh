@@ -108,6 +108,8 @@ openocd -f interface/jlink.cfg				\
 	-c "mdw 0x10001094"				\
 	-c "mww 0x10001098 0x00000000"			\
 	-c "mdw 0x10001098"				\
+	-c "mww 0x100010FC 0x30303030"			\
+	-c "mdw 0x100010FC"				\
 	-c "mww 0x4001E504 0x00000000"			\
 	-c "mdw 0x4001E400"				\
 	-c "reset init"					\
