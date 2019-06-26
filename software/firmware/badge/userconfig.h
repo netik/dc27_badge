@@ -12,7 +12,8 @@
 #define CONFIG_FLASH_ADDR 0xFF000
 #define CONFIG_FLASH_SECTOR 255
 #define CONFIG_SIGNATURE  0xdeadbeef  // duh
-#define CONFIG_VERSION    3
+#define CONFIG_END_SIGNATURE  0xdeadfa11
+#define CONFIG_VERSION    4
 #define CONFIG_NAME_MAXLEN 20
 
 #define CONFIG_LEDSIGN_MAXLEN	124
@@ -48,6 +49,9 @@ typedef struct userconfig {
   /* saved LED sign string */
   char led_string[CONFIG_LEDSIGN_MAXLEN];
 
+  /* NCS puzzles */
+  uint8_t puz_enabled;
+
   /* game */
   char name[CONFIG_NAME_MAXLEN+1];
   uint8_t level;
@@ -69,6 +73,8 @@ typedef struct userconfig {
   uint16_t won;
   uint16_t lost;
 
+  /* end of config */
+  uint32_t end_signature;
 } userconfig;
 
 /* prototypes */
