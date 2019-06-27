@@ -265,5 +265,5 @@ spapin_exit(OrchardAppContext *context)
 }
 
 /* XXX - graphic for pin pad */
-orchard_app("Pin Entry", "icons/bell.rgb", 0, spapin_init,
+orchard_app("Pin Entry", "icons/bell.rgb", APP_FLAG_PUZZLE, spapin_init,
              spapin_start, spapin_event, spapin_exit, 9999);
