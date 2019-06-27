@@ -49,6 +49,8 @@
 #define UL_CODE_9  (&NRF_UICR->CUSTOMER[29])
 #define UL_CODE_10 (&NRF_UICR->CUSTOMER[30])
 
+#define UL_PUZPIN_KEY	((((uint64_t)NRF_UICR->CUSTOMER[19]) << 16) | \
+			    (NRF_UICR->CUSTOMER[18] >> 16))
 #define UL_PUZMODE_PIN	(&NRF_UICR->CUSTOMER[31])
 
 #endif

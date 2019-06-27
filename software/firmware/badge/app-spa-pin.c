@@ -7,13 +7,18 @@
 
 #include "ble_lld.h"
 
+#include "chprintf.h"
+#include "unlocks.h"
+#include "badge.h"
+
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 #include <math.h>
 
 #define SPAPIN_PINLEN	4
-static const char correctPin[] = "1952";
 
 typedef struct spapin_button {
 	coord_t		button_x;
@@ -54,7 +59,9 @@ typedef struct _DHandles {
 	font_t			font;
 
 	int			pinpos;
-	char			pintext[5];
+	char			pintext[SPAPIN_PINLEN + 1];
+	char			correctPin[SPAPIN_PINLEN + 1];
+	char			correctString[10 + 48 / 4];
 
 	orientation_t		o;
 	uint8_t			sound;
@@ -143,6 +150,16 @@ static void spapin_start(OrchardAppContext *context)
 	p->font = gdispOpenFont (FONT_KEYBOARD);
 
 	/*
+	 * Extract the correct pin.
+	 */
+#define	UL_PUZPIN_KEY_HIGH	((uint32_t)(UL_PUZPIN_KEY >> 32))
+#define	UL_PUZPIN_KEY_LOW	((uint32_t)(UL_PUZPIN_KEY & 0xffffffff))
+	snprintf(p->correctPin, sizeof p->correctPin, "%d",
+	    (int)(UL_PUZPIN_KEY % 10000));
+	snprintf(p->correctString, sizeof p->correctString,
+	    "Correct! %04lx%08lx", UL_PUZPIN_KEY_HIGH, UL_PUZPIN_KEY_LOW);
+
+	/*
 	 * Clear the screen, and rotate to portrait mode.
 	 */
 
@@ -205,17 +222,17 @@ spapin_event(OrchardAppContext *context, const OrchardAppEvent *event)
 				p->pintext[p->pinpos++] = buttons[i].button_text[0];
 				if (p->pinpos == SPAPIN_PINLEN) {
 					/* Check pin */
-					gwinSetText(p->ghPin, "Testing...", TRUE);
+					gwinSetText(p->ghPin, "Testing...", FALSE);
 					for (i = 0; i < SPAPIN_PINLEN; i++) {
-						if (correctPin[i] == p->pintext[i]) {
+						if (p->correctPin[i] == p->pintext[i]) {
 							gfxSleepMilliseconds(1000);
 						} else
 							break;
 					}
 					if (i == SPAPIN_PINLEN)
-						gwinSetText(p->ghPin, "Correct!", TRUE);
+						gwinSetText(p->ghPin, p->correctString, FALSE);
 					else
-						gwinSetText(p->ghPin, "Failure", TRUE);
+						gwinSetText(p->ghPin, "Failure", FALSE);
 					p->pinpos = 0;
 					strcpy(p->pintext, "____");
 				} else
