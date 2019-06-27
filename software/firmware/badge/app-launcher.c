@@ -271,7 +271,7 @@ launcher_init (OrchardAppContext *context)
 	(((app)->flags & APP_FLAG_UNLOCK) && \
 	    (config->unlocks & UL_VIDEO1)) || \
 	(((app)->flags & (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE)) && \
-	    (config->unlocks & UL_BLACKBADGE))
+	    (config->unlocks & UL_BLACKBADGE)))
 
 static void
 launcher_start (OrchardAppContext *context)
