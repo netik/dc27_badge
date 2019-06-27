@@ -61,6 +61,9 @@ static ENEMY *current_enemy = NULL;
 // if true, we initiated combat.
 static bool started_it = false;
 
+// time left in combat
+static uint8_t combat_time_left = 0;
+
 OrchardAppContext *mycontext;
 
 extern mutex_t peer_mutex;
@@ -75,6 +78,11 @@ typedef struct {
   GHandle	ghTitleR;
   GHandle	ghACCEPT;
   GHandle	ghDECLINE;
+
+  // these are the top row, player stats frame buffers.
+  pixel_t       *l_pxbuf;
+  pixel_t       *c_pxbuf;
+  pixel_t       *r_pxbuf;
 } battle_ui_t;
 
 // enemies -- linked list
@@ -240,11 +248,13 @@ player_render(ENTITY *p) {
    * for now.
    */
 
-  bleGapUpdateState ((uint16_t)p->vecPosition.x,
-                     (uint16_t)p->vecPosition.y,
-                     config->xp,
-                     config->level,
-                     config->in_combat);
+  if (current_battle_state != COMBAT) {
+    bleGapUpdateState ((uint16_t)p->vecPosition.x,
+                       (uint16_t)p->vecPosition.y,
+                       config->xp,
+                       config->level,
+                       config->in_combat);
+  }
 
   return;
 }
@@ -546,35 +556,32 @@ ENEMY *getNearestEnemy(void) {
 
 static void
 draw_hud(OrchardAppContext *context) {
-        userconfig *config = getConfig();
-        battle_ui_t *bh;
+  userconfig *config = getConfig();
+  battle_ui_t *bh;
 
   // get private memory
   bh = (battle_ui_t *)context->priv;
 
   // top bar
-  gdispDrawStringBox (0, 0,
-                      105, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-                      config->name,
-                      bh->fontSM,
-                      White,
-                      justifyLeft);
+  drawBufferedStringBox (&bh->l_pxbuf,
+    0,
+    0,
+    129,
+    gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+    config->name,
+    bh->fontSM,
+    White,
+    justifyLeft);
 
-
-  gdispDrawStringBox (0, 0,
-                      215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-                      "00:60",
-                      bh->fontSM,
-                      Yellow,
-                      justifyCenter);
-
-
-  gdispDrawStringBox (0, 0,
-                      215, gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-                      current_enemy->name,
-                      bh->fontSM,
-                      White,
-                      justifyRight);
+  drawBufferedStringBox (&bh->r_pxbuf,
+    190,
+    0,
+    130,
+    gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+    current_enemy->name,
+    bh->fontSM,
+    White,
+    justifyRight);
 }
 
 static ENEMY *
@@ -637,10 +644,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   GEvent * pe;
   GEventGWinButton * be;
 
-	OrchardAppRadioEvent * radio;
-	ble_evt_t * evt;
-	ble_gatts_evt_rw_authorize_request_t * rw;
-	ble_gatts_evt_write_t * req;
+  OrchardAppRadioEvent * radio;
+  ble_evt_t * evt;
+  ble_gatts_evt_rw_authorize_request_t * rw;
+  ble_gatts_evt_write_t * req;
 
   char msg[32];
   char tmp[40];
@@ -656,7 +663,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
     // player and enemy update
     if (current_battle_state == COMBAT || current_battle_state == WORLD_MAP) {
-      if (animtick % 12 == 0) {
+      if (animtick % (FPS/2) == 0) {
         // refresh world map enemy positions every 500mS
         enemy_list_refresh();
       }
@@ -681,6 +688,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
         }
       }
+
       bullets_render();
       // render enemies
       if (current_battle_state == WORLD_MAP) {
@@ -1006,8 +1014,8 @@ void state_worldmap_enter(void) {
 
 void state_worldmap_tick(void) {
 #ifdef ENABLE_MAP_PING
-  /* every four seconds (120 frames) */
-  if ((animtick % 120 == 0) && (current_battle_state == WORLD_MAP)) {
+  /* every four seconds (120 frames) go ping */
+  if (animtick % (FPS*4) == 0) {
     i2sPlay("game/map_ping.snd");
   }
 #endif
@@ -1132,7 +1140,6 @@ void state_approval_demand_tick(void) {
 
 void state_approval_demand_exit(void) {
   battle_ui_t *bh;
-
   bh = mycontext->priv;
 
   gwinDestroy (bh->ghACCEPT);
@@ -1149,6 +1156,19 @@ void state_approval_demand_exit(void) {
 void state_combat_enter(void) {
   char fnbuf[30];
   int newmap;
+  userconfig *config = getConfig();
+
+  // we're in combat now, send our last advertisement.
+  combat_time_left = 60;
+
+  config->in_combat = 1;
+  configSave(config);
+
+  bleGapUpdateState ((uint16_t)me.vecPosition.x,
+                     (uint16_t)me.vecPosition.y,
+                     config->xp,
+                     config->level,
+                     config->in_combat);
 
   newmap = getMapTile(&me);
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
@@ -1161,9 +1181,45 @@ void state_combat_enter(void) {
 
 
 void state_combat_tick(void) {
+  char tmp[10];
+  battle_ui_t *bh;
+  bh = mycontext->priv;
+
+  if (animtick % FPS == 0) {
+    combat_time_left--;
+    sprintf(tmp, "00:%02d", combat_time_left);
+
+    // update clock
+    drawBufferedStringBox (&bh->c_pxbuf,
+      130,
+      0,
+      60,
+      gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+      tmp,
+      bh->fontSM,
+      Yellow,
+      justifyCenter);
+
+    if (combat_time_left == 0) {
+      // time up.
+      i2sPlay("sound/foghrn.snd");
+      changeState(SHOW_RESULTS);
+    }
+  }
 }
 
 void state_combat_exit(void) {
+  battle_ui_t *bh;
+  bh = mycontext->priv;
+
+  free(bh->l_pxbuf);
+  bh->l_pxbuf = NULL;
+
+  free(bh->c_pxbuf);
+  bh->c_pxbuf = NULL;
+
+  free(bh->r_pxbuf);
+  bh->r_pxbuf = NULL;
 }
 
 // -------------------------------------------------------------------------
