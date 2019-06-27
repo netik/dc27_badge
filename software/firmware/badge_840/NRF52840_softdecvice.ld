@@ -27,7 +27,7 @@ MEMORY
   flash5  : org = 0x00000000, len = 0
   flash6  : org = 0x00000000, len = 0
   flash7  : org = 0x00000000, len = 0
-  ram0    : org = 0x20002B90, len = 0x3D470 /* Reserve ~10K for SoftDevice */
+  ram0    : org = 0x20002BE8, len = 0x3D418 /* Reserve ~10K for SoftDevice */
   ram1    : org = 0x00000000, len = 0
   ram2    : org = 0x00000000, len = 0
   ram3    : org = 0x00000000, len = 0
@@ -113,11 +113,11 @@ SECTIONS
     {
         KEEP(*(.softdevice))
         /*
-         * The offset 0x26000 comes from the Nordic S140 SoftDevice
+         * The offset 0x27000 comes from the Nordic S140 SoftDevice
          * documentation. This is the address where "application" code
          * must begin.
          */
-        . = 0x26000;
+        . = 0x27000;
         KEEP(*(.vectors))
     } > VECTORS_FLASH AT > VECTORS_FLASH_LMA
 
