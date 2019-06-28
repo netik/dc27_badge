@@ -57,6 +57,9 @@
 #define BUTTON_B_RIGHT_PIN	(IOPORT2_BTN9 & 0x1F)
 #define BUTTON_B_ENTER_PIN	(IOPORT2_BTN10 & 0x1F)
 
+#define PUZ_PORT		IOPORT1
+#define PUZ_PIN			IOPORT1_SAO_GPIO2
+
 /* Joypad event codes */
 
 typedef enum _OrchardAppEventKeyFlag {
@@ -75,6 +78,7 @@ typedef enum _OrchardAppEventKeyCode {
 	keyBLeft = 0x87,
 	keyBRight = 0x88,
 	keyBSelect = 0x89,
+	keyPuz = 0x90
 } OrchardAppEventKeyCode;
 
 /* Joypad events */

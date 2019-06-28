@@ -102,7 +102,8 @@ static const EXTConfig ext_config = {
 	{
 		{ EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART |
 		  IOPORT2_JOYINTR << EXT_MODE_GPIO_OFFSET, joyInterrupt },
-		{ 0 , NULL },
+		{ EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART |
+		  IOPORT1_SAO_GPIO2 << EXT_MODE_GPIO_OFFSET, joyInterrupt },
 		{ 0 , NULL },
 		{ 0 , NULL },
 		{ 0 , NULL },
@@ -195,6 +196,7 @@ joyHandle (uint8_t s)
 static THD_FUNCTION(joyThread, arg)
 {
 	int i;
+	uint8_t service;
 
 	(void)arg;
     
@@ -207,12 +209,21 @@ static THD_FUNCTION(joyThread, arg)
 
 		if (joyService == 0 && plevel)
 			osalThreadSuspendS (&joyThreadReference);
+		service = joyService;
 		joyService = 0;
 		osalSysUnlock ();
 
 		/* Delay a little bit for debouncing. */
 
 		chThdSleep (1);
+
+		if (service & 0x2) {
+			joyEvent.key.code = keyPuz;
+			joyEvent.key.flags = keyPress;
+			joyEvent.type = keyEvent;
+			if (orchard_app_key.next != NULL)
+				chEvtBroadcast (&orchard_app_key);
+		}
 
 		/* Poll all the inputs */
 
@@ -257,6 +268,8 @@ joyStart (void)
 	palSetPad (BUTTON_B_LEFT_PORT, BUTTON_B_LEFT_PIN);
 	palSetPad (BUTTON_B_RIGHT_PORT, BUTTON_B_RIGHT_PIN);
 	palSetPad (BUTTON_B_ENTER_PORT, BUTTON_B_ENTER_PIN);
+
+	palSetPad (PUZ_PORT, PUZ_PIN);
 
 	palSetPad (IOPORT2, (IOPORT2_JOYINTR & 0x1F));
 

@@ -41,7 +41,7 @@ const PALConfig pal_default_config =
         PAL_MODE_INPUT_PULLUP,        /* P0.12: BTN2 (A:down)  */
         PAL_MODE_OUTPUT_PULLUP,       /* P0.13: SD card CS     */
         PAL_MODE_OUTPUT_PUSHPULL,     /* P0.14: SAO GPIO1      */
-        PAL_MODE_OUTPUT_PUSHPULL,     /* P0.15: SAO GPIO2      */
+        PAL_MODE_INPUT_PULLUP,        /* P0.15: SAO GPIO2      */
         PAL_MODE_UNCONNECTED,         /* P0.16: <unused>       */
         PAL_MODE_UNCONNECTED,         /* P0.17: <unused>       */
         PAL_MODE_UNCONNECTED,         /* P0.18: RESET          */

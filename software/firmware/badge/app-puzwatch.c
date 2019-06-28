@@ -24,8 +24,6 @@
 #include <math.h>
 
 #define PUZWAT_PINLEN	4
-static int puzwat_running = 0;
-static THD_WORKING_AREA(waPuzWThread, 512);
 
 typedef struct puzwat_button {
 	coord_t		button_x;
@@ -72,41 +70,9 @@ typedef struct _DHandles {
 	uint8_t			sound;
 } DHandles;
 
-static THD_FUNCTION(puzwThread, arg)
-{
-
-	(void)arg;
-
-	chRegSetThreadName ("PuzWatch");
-
-	while (1) {
-		chThdSleepMilliseconds(500);
-		if (!puzwat_running && palReadPad (IOPORT1, IOPORT1_SAO_GPIO2) == 0) {
-			/* palSetPadMode(IOPORT1, IOPORT1_SAO_GPIO2, PAL_MODE_INPUT_PULLUP); */
-			chThdSleepMilliseconds(10);
-			if (palReadPad (IOPORT1, IOPORT1_SAO_GPIO2) == 0) {
-				orchardAppRun(orchardAppByName("Puzzle Watch"));
-			}
-		}
-	}
-}
-
 static uint32_t
 puzwat_init(OrchardAppContext *context)
 {
-
-	if (context != NULL) {
-		/* app start up */
-		puzwat_running = 1;
-	} else {
-		/* required as the pins are set to output on reset */
-		palSetPadMode(IOPORT1, IOPORT1_SAO_GPIO1, PAL_MODE_INPUT_PULLUP);
-		palSetPadMode(IOPORT1, IOPORT1_SAO_GPIO2, PAL_MODE_INPUT_PULLUP);
-
-		chThdCreateStatic (waPuzWThread, sizeof(waPuzWThread),
-		    NORMALPRIO + 1, puzwThread, NULL);
-	}
-
 	return (0);
 }
 
@@ -166,6 +132,8 @@ static void destroy_screen(OrchardAppContext *context)
 
 	for (i = 0; i < PUZWAT_MAXBUTTONS; i++)
 		gwinDestroy (p->ghButtons[i]);
+
+	gwinDestroy (p->ghPin);
 
 	return;
 }
@@ -286,8 +254,6 @@ puzwat_exit(OrchardAppContext *context)
 	DHandles *p;
 	p = context->priv;
 
-	puzwat_running = 0;
-
 	destroy_screen (context);
 
 	gdispSetOrientation (p->o);
@@ -303,5 +269,5 @@ puzwat_exit(OrchardAppContext *context)
 }
 
 /* XXX - graphic for pin pad */
-orchard_app("Puzzle Watch", "icons/bell.rgb", APP_FLAG_HIDDEN|APP_FLAG_AUTOINIT, puzwat_init,
+orchard_app("Puzzle Watch", "icons/bell.rgb", APP_FLAG_HIDDEN, puzwat_init,
              puzwat_start, puzwat_event, puzwat_exit, 9999);

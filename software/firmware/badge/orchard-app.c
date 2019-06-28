@@ -189,6 +189,11 @@ static void key_event(eventid_t id) {
 
   (void) id;
 
+  if (joyEvent.key.code == keyPuz) {
+    orchardAppRun (orchardAppByName ("Puzzle Watch"));
+    return;
+  }
+
   if (instance.context != NULL) {
     //      if (strcmp (instance.app->name, "Launcher") == 0 &&
     //          joyEvent.key.flags == keyPress)
