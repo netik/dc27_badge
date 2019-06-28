@@ -1,41 +1,36 @@
 /* copied from app-dialer.c */
 /* Copyright 2019 New Context Services, Inc. */
 
-#include "ch.h"
-#include "hal.h"
-#include "hal_spi.h"
-#include "chprintf.h"
-
-#include "badge.h"
-
-#include "userconfig.h"
-
-#include "unlocks.h"
-
 #include "orchard-app.h"
 #include "ides_gfx.h"
 #include "fontlist.h"
 
 #include "ble_lld.h"
 
+#include "chprintf.h"
+#include "unlocks.h"
+#include "badge.h"
+
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 #include <math.h>
 
-#define PUZWAT_PINLEN	4
+#define SPAPIN_PINLEN	4
 
-typedef struct puzwat_button {
+typedef struct spapin_button {
 	coord_t		button_x;
 	coord_t		button_y;
 	char *		button_text;
-} PUZWAT_BUTTON;
+} SPAPIN_BUTTON;
 
-#define PUZWAT_MAXBUTTONS 12
-#define PUZWAT_EXITBUTTON 9
-#define PUZWAT_BSBUTTON 11
+#define SPAPIN_MAXBUTTONS 12
+#define SPAPIN_EXITBUTTON 9
+#define SPAPIN_BSBUTTON 11
 
-static const PUZWAT_BUTTON buttons[] =  {
+static const SPAPIN_BUTTON buttons[] =  {
 	{ 30,   60,   "1",    },
 	{ 90,  60,   "2",    },
 	{ 150, 60,   "3",    },
@@ -58,21 +53,30 @@ typedef struct _DHandles {
 	GListener		glDListener;
 
 	/* GHandles */
-	GHandle			ghButtons[PUZWAT_MAXBUTTONS];
+	GHandle			ghButtons[SPAPIN_MAXBUTTONS];
 	GHandle			ghPin;
 
 	font_t			font;
 
 	int			pinpos;
-	char			pintext[5];
+	char			pintext[SPAPIN_PINLEN + 1];
+	char			correctPin[SPAPIN_PINLEN + 1];
+	char			correctString[10 + 48 / 4];
 
 	orientation_t		o;
 	uint8_t			sound;
 } DHandles;
 
 static uint32_t
-puzwat_init(OrchardAppContext *context)
+spapin_init(OrchardAppContext *context)
 {
+	(void)context;
+
+	/*
+	 * We don't want any extra stack space allocated for us.
+	 * We'll use the heap.
+	 */
+
 	return (0);
 }
 
@@ -81,7 +85,7 @@ draw_screen(OrchardAppContext *context)
 {
 	DHandles *p;
 	GWidgetInit wi;
-	const PUZWAT_BUTTON * b;
+	const SPAPIN_BUTTON * b;
 	int i;
 
 	p = context->priv;
@@ -97,9 +101,9 @@ draw_screen(OrchardAppContext *context)
 
 	wi.customStyle = &DarkGreyStyle;
 
-	for (i = 0; i < PUZWAT_MAXBUTTONS; i++) {
+	for (i = 0; i < SPAPIN_MAXBUTTONS; i++) {
 #if 0
-		if (i > PUZWAT_EXITBUTON) {
+		if (i > SPAPIN_EXITBUTON) {
 			wi.g.width = 110;
 			wi.g.height = 40;
 		}
@@ -130,7 +134,7 @@ static void destroy_screen(OrchardAppContext *context)
 
 	p = context->priv;
 
-	for (i = 0; i < PUZWAT_MAXBUTTONS; i++)
+	for (i = 0; i < SPAPIN_MAXBUTTONS; i++)
 		gwinDestroy (p->ghButtons[i]);
 
 	gwinDestroy (p->ghPin);
@@ -138,7 +142,7 @@ static void destroy_screen(OrchardAppContext *context)
 	return;
 }
 
-static void puzwat_start(OrchardAppContext *context)
+static void spapin_start(OrchardAppContext *context)
 {
 	DHandles * p;
 
@@ -146,6 +150,16 @@ static void puzwat_start(OrchardAppContext *context)
 	memset (p, 0, sizeof(DHandles));
 	context->priv = p;
 	p->font = gdispOpenFont (FONT_KEYBOARD);
+
+	/*
+	 * Extract the correct pin.
+	 */
+#define	UL_PUZPIN_KEY_HIGH	((uint32_t)(UL_PUZPIN_KEY >> 32))
+#define	UL_PUZPIN_KEY_LOW	((uint32_t)(UL_PUZPIN_KEY & 0xffffffff))
+	snprintf(p->correctPin, sizeof p->correctPin, "%d",
+	    (int)(UL_PUZPIN_KEY % 10000));
+	snprintf(p->correctString, sizeof p->correctString,
+	    "Correct! %04lx%08lx", UL_PUZPIN_KEY_HIGH, UL_PUZPIN_KEY_LOW);
 
 	/*
 	 * Clear the screen, and rotate to portrait mode.
@@ -158,7 +172,7 @@ static void puzwat_start(OrchardAppContext *context)
 	gwinSetDefaultFont (p->font);
 
 	draw_screen (context);
-
+  
 	geventListenerInit(&p->glDListener);
 	gwinAttachListener(&p->glDListener);
 
@@ -169,23 +183,7 @@ static void puzwat_start(OrchardAppContext *context)
 }
 
 static void
-puzwat_unlock_puzzle(void)
-{
-	userconfig *conf;
-
-	conf = getConfig();
-	if (!conf->puz_enabled) {
-		conf->puz_enabled = 1;
-		configSave(conf);
-	}
-
-	chThdSleepMilliseconds(3000);
-
-	NVIC_SystemReset ();
-}
-
-static void
-puzwat_event(OrchardAppContext *context, const OrchardAppEvent *event)
+spapin_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
 	GEvent * pe;
 	DHandles *p;
@@ -198,45 +196,45 @@ puzwat_event(OrchardAppContext *context, const OrchardAppEvent *event)
 	if (event->type == keyEvent) {
 		if (event->key.flags == keyPress) {
 			/* any key to exit */
-			orchardAppExit();
-		}
+      			orchardAppExit();
+    		}
 	}
 
 	/* Handle uGFX events  */
 
 	if (event->type == ugfxEvent) {
-
+    
 		pe = event->ugfx.pEvent;
 
 		if (pe->type == GEVENT_GWIN_BUTTON) {
-			for (i = 0; i < PUZWAT_MAXBUTTONS; i++) {
+			for (i = 0; i < SPAPIN_MAXBUTTONS; i++) {
 				if (((GEventGWinButton*)pe)->gwin ==
 				    p->ghButtons[i])
 					break;
 			}
-			if (i == PUZWAT_BSBUTTON) {
+			if (i == SPAPIN_BSBUTTON) {
 				if (p->pinpos > 0) {
 					p->pinpos--;
 					p->pintext[p->pinpos] = '_';
 					gwinSetText(p->ghPin, p->pintext, TRUE);
 				}
-			} else if (i == PUZWAT_EXITBUTTON) {
+			} else if (i == SPAPIN_EXITBUTTON) {
 				orchardAppExit();
 			} else {
 				p->pintext[p->pinpos++] = buttons[i].button_text[0];
-				if (p->pinpos == PUZWAT_PINLEN) {
+				if (p->pinpos == SPAPIN_PINLEN) {
 					/* Check pin */
-					gwinSetText(p->ghPin, "Testing...",
-					    TRUE);
-					if (memcmp((const void *)UL_PUZMODE_PIN,
-					    p->pintext, PUZWAT_PINLEN) == 0) {
-						gwinSetText(p->ghPin,
-						    "Unlocked Puzzle mode!",
-						    TRUE);
-						puzwat_unlock_puzzle();
-					} else
-						gwinSetText(p->ghPin,
-						    "Incorrect PIN", TRUE);
+					gwinSetText(p->ghPin, "Testing...", FALSE);
+					for (i = 0; i < SPAPIN_PINLEN; i++) {
+						if (p->correctPin[i] == p->pintext[i]) {
+							gfxSleepMilliseconds(1000);
+						} else
+							break;
+					}
+					if (i == SPAPIN_PINLEN)
+						gwinSetText(p->ghPin, p->correctString, FALSE);
+					else
+						gwinSetText(p->ghPin, "Failure", FALSE);
 					p->pinpos = 0;
 					strcpy(p->pintext, "____");
 				} else
@@ -249,7 +247,7 @@ puzwat_event(OrchardAppContext *context, const OrchardAppEvent *event)
 }
 
 static void
-puzwat_exit(OrchardAppContext *context)
+spapin_exit(OrchardAppContext *context)
 {
 	DHandles *p;
 	p = context->priv;
@@ -269,5 +267,5 @@ puzwat_exit(OrchardAppContext *context)
 }
 
 /* XXX - graphic for pin pad */
-orchard_app("Puzzle Watch", "icons/bell.rgb", APP_FLAG_HIDDEN, puzwat_init,
-             puzwat_start, puzwat_event, puzwat_exit, 9999);
+orchard_app("Pin Entry", "icons/bell.rgb", APP_FLAG_PUZZLE, spapin_init,
+             spapin_start, spapin_event, spapin_exit, 9999);

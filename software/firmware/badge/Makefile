@@ -213,6 +213,7 @@ CSRC += main.c \
 	app-radiounlock.c \
 	app-spectrum.c \
 	app-puzwatch.c \
+	app-spa-pin.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \

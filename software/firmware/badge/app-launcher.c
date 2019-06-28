@@ -262,6 +262,17 @@ launcher_init (OrchardAppContext *context)
 	return (0);
 }
 
+#define IS_APP_VISIBLE(app, include_puzzles)	\
+	(((((app)->flags & APP_FLAG_PUZZLE) == APP_FLAG_PUZZLE) && \
+	    (include_puzzles)) || \
+	(((app)->flags & APP_FLAG_HIDDEN) == 0 && \
+	    ! (current->flags & APP_FLAG_UNLOCK) && \
+	    ! (current->flags & APP_FLAG_BLACKBADGE)) || \
+	(((app)->flags & APP_FLAG_UNLOCK) && \
+	    (config->unlocks & UL_VIDEO1)) || \
+	(((app)->flags & (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE)) && \
+	    (config->unlocks & UL_BLACKBADGE)))
+
 static void
 launcher_start (OrchardAppContext *context)
 {
@@ -282,16 +293,7 @@ launcher_start (OrchardAppContext *context)
 	 */
 	current = orchard_app_list;
 	while (current->name) {
-		if (  (current->flags & APP_FLAG_HIDDEN) == 0 &&
-				  ! (current->flags & APP_FLAG_UNLOCK) &&
-				  ! (current->flags & APP_FLAG_BLACKBADGE))
-			total_apps++;
-		else if ((current->flags & APP_FLAG_UNLOCK) &&
-		    (config->unlocks & UL_VIDEO1))
-			total_apps++;
-		else if ((current->flags &
-		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE)) &&
-		    (config->unlocks & UL_BLACKBADGE))
+		if (IS_APP_VISIBLE(current, config->puz_enabled))
 			total_apps++;
 		current++;
 	}
@@ -309,21 +311,7 @@ launcher_start (OrchardAppContext *context)
 	current = orchard_app_list;
 	list->total = 0;
 	while (current->name) {
-		if (((current->flags & APP_FLAG_HIDDEN) == 0) &&
-				 ! (current->flags & (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE))) {
-			list->items[list->total].name = current->name;
-			list->items[list->total].entry = current;
-			list->total++;
-		}
-		else if ((current->flags & APP_FLAG_UNLOCK) &&
-		    (config->unlocks & UL_VIDEO1)) {
-			list->items[list->total].name = current->name;
-			list->items[list->total].entry = current;
-			list->total++;
-		}
-		else if ((current->flags &
-		    (APP_FLAG_UNLOCK|APP_FLAG_BLACKBADGE)) &&
-		    (config->unlocks & UL_BLACKBADGE)) {
+		if (IS_APP_VISIBLE(current, config->puz_enabled)) {
 			list->items[list->total].name = current->name;
 			list->items[list->total].entry = current;
 			list->total++;

@@ -6,7 +6,7 @@
 # handler in the SoftDevice module. This address was obtained by
 # doing a hex dump of the first few bytes of the object file.
 #
-# Note: The s140_nrf52_6.1.1_softdevice.hex file actually contains
+# Note: The s140_nrf52_7.0.0_softdevice.hex file actually contains
 # two things: the master boot record at address 0x0 and the SoftDevice
 # code at address 0x1000. There is a gap between the two. When we
 # convert the .hex file to a binary image, we need to fill the gap
@@ -34,7 +34,7 @@
 # checks these new locations first to see if they too are 0xFFFFFFFF.
 # If so, it then checks the UICR locations as well. If those are
 # also 0xFFFFFFFF, then the MBR launches the user application code
-# (which for this release is at 0x26000). The locations from the
+# (which for this release is at 0x27000). The locations from the
 # end of the MBR code (0xb00) to the start of the SoftDevice (0x1000)
 # would end up being 0xFFFFFFFF because normally a programmer reading
 # directly from the .hex file would leave that location unset, so it
@@ -46,7 +46,7 @@
 # launch the application code. So we must use the --gap-fill option
 # to preserve the expected default behavior.
 
-arm-none-eabi-objcopy -I ihex -O binary --gap-fill 0xFF s140_nrf52_6.1.1_softdevice.hex softdevice.bin
+arm-none-eabi-objcopy -I ihex -O binary --gap-fill 0xFF s140_nrf52_7.0.0_softdevice.hex softdevice.bin
 arm-none-eabi-objcopy -I binary -O elf32-littlearm -B arm softdevice.bin softdevice.o
 rm -f softdevice.bin
 arm-none-eabi-objcopy -I elf32-littlearm --rename-section .data=.softdevice softdevice.o

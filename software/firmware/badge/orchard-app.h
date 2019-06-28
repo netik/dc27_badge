@@ -11,6 +11,7 @@
 #define APP_FLAG_AUTOINIT	0x00000002 /* apps with autoinit methods */
 #define APP_FLAG_UNLOCK		0x00000004 /* apps that must be unlocked */
 #define APP_FLAG_BLACKBADGE	0x00000008 /* black badge apps only */
+#define APP_FLAG_PUZZLE		(0x00000010|APP_FLAG_HIDDEN)
 
 #define PING_MIN_INTERVAL  3000 // base time between pings
 #define PING_RAND_INTERVAL 2000 // randomization zone for pings
