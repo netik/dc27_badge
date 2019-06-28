@@ -137,6 +137,8 @@ static void destroy_screen(OrchardAppContext *context)
 	for (i = 0; i < SPAPIN_MAXBUTTONS; i++)
 		gwinDestroy (p->ghButtons[i]);
 
+	gwinDestroy (p->ghPin);
+
 	return;
 }
 
