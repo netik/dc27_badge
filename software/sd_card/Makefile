@@ -23,7 +23,7 @@ TOOLS_DIR = ../tools
 STAGING_DIR = build
 
 # The name of the sdcard to copy to (OSX only)
-VOLNAME= /Volumes/NO\ NAME
+VOLNAME= /Volumes/DA_BOMB
 
 .PHONY: tools_dep dirs
 
@@ -187,7 +187,7 @@ sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 # copy the card to the right folder on my osx box
 osxsd:	sdcard
 	@echo "Copying to $(VOLNAME)"
-	rsync -crvv $(STAGING_DIR)/ $(VOLNAME)/
+	rsync -crvv --delete $(STAGING_DIR)/ $(VOLNAME)/
 	@sync
 
 # copy only binaries and the updater to the card (reduces dev time

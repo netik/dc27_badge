@@ -348,6 +348,15 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
             (code[3] << 4) +
             code[4]);
 
+  if (mycode == 0x9000) {
+    // party code
+    putImageFile("images/missing.rgb", 0, 0);
+    i2sPlay("sound/levelup.snd");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppRun(orchardAppByName("Badge"));
+    return true;
+  }
+
   for (i=0; i < MAX_ULCODES; i++) {
     if (*unlock_codes[i] == mycode) {
       // set bit
@@ -513,6 +522,7 @@ static void unlock_exit(OrchardAppContext *context) {
   context->priv = NULL;
 
   // put the LEDs back
+  led_clear();
   ledSetPattern(config->led_pattern);
 }
 
