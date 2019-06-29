@@ -414,3 +414,48 @@ void drawBufferedStringBox(
     // paint the text
     gdispDrawStringBox(x,y,cx,cy,str,font,color,justify);
 }
+
+char *getAvatarImage(int shipclass, bool is_player, char frame, bool is_right) {
+  static char fname[25];
+
+  /*
+   * Ships are identified by the following filename structure: game/ + ...
+   *   s2e-h-l.tif
+   *    ^^ ^ ^
+   *    || | +---- Orientation (L)eft facing or (R)ight facing
+   *    || +------ Frame Type (see below)
+   *    |+-------- 'e' enemy or 'p' player. Basically, Red, or Black.
+   *    +--------- Ship class number (see ships.c/ships.h)
+   *    Ship class numbers
+   *
+   * 0:   PT_Boat
+   * 1:   Patrol_Ship
+   * 2:   Destroyer
+   * 3:   ruiser
+   * 4:   Frigate
+   * 5:   Battleship
+   * 6:   Submarine
+   * 7:   Tesla_Ship
+   *
+   * Frame type
+   * This indicates which animation frame this image is for.
+   *
+   * n    normal
+   * h    ship was hit
+   * d    ship was destroyed
+   * g    ship is regenerating
+   * t    ship is teleporting
+   * s    ship has shields up
+   * u    (u-boat) ship is submerged
+   *
+   */
+
+  sprintf(fname,
+          "game/s%d%c-%c-%c.rgb",
+          shipclass - 1,
+          is_player ? 'p' : 'e',
+          frame,
+          is_right ? 'r' : 'l');
+
+  return(fname);
+}

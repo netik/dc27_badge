@@ -122,13 +122,17 @@ static void zoomEntity(ENTITY *e) {
 }
 
 static void
-entity_init(ENTITY *p) {
+entity_init(ENTITY *p, int16_t size_x, int16_t size_y) {
   p->visible = false;
   p->blinking = false;
   p->ttl = -1;
 
-  p->vecVelocity.x = 0 ;
-  p->vecVelocity.y = 0 ;
+  p->size_x = size_x;
+  p->size_y = size_y;
+  p->pix_old = (pixel_t *)malloc(sizeof(pixel_t) * size_x * size_y);
+
+  p->vecVelocity.x = 0;
+  p->vecVelocity.y = 0;
 
   p->vecVelocityGoal.x = 0;
   p->vecVelocityGoal.y = 0;
@@ -141,6 +145,7 @@ entity_init(ENTITY *p) {
   p->vecGravity.x = VDRAG;
   p->vecGravity.y = VDRAG;
   p->pix_inited = false;
+
 }
 
 /* approach lets us interpolate smoothly between positions */
@@ -168,7 +173,7 @@ check_land_collision(ENTITY *p) {
 
   // 0x1f28 or 0x3f20 is blue water in rgb565 land. There's some random
   // variation here maybe due to coloring?
-  for (int i = 0; i < FB_X * FB_Y; i++) {
+  for (int i = 0; i < p->size_x * p->size_y; i++) {
     if (p->pix_old[i] != 0x1f28 &&
         p->pix_old[i] != 0x3f20 &&
         p->pix_old[i] != 0xffff) {
@@ -191,7 +196,7 @@ static void
 entity_update(ENTITY *p, float dt) {
 
   if (! p->pix_inited) {
-    getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+    getPixelBlock (p->vecPosition.x, p->vecPosition.y, p->size_x, p->size_y, p->pix_old);
     p->pix_inited = true;
   }
 
@@ -224,12 +229,12 @@ entity_update(ENTITY *p, float dt) {
   if (p->prevPos.x != p->vecPosition.x ||
       p->prevPos.y != p->vecPosition.y) {
       // erase the old position
-      putPixelBlock (p->prevPos.x, p->prevPos.y, FB_X, FB_Y, p->pix_old);
+      putPixelBlock (p->prevPos.x, p->prevPos.y, p->size_x, p->size_y, p->pix_old);
 
       // check for collision with land
-      getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+      getPixelBlock (p->vecPosition.x, p->vecPosition.y, p->size_x, p->size_y, p->pix_old);
       if (check_land_collision(p)) {
-            getPixelBlock (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, p->pix_old);
+            getPixelBlock (p->vecPosition.x, p->vecPosition.y, p->size_x, p->size_y, p->pix_old);
       };
   }
 }
@@ -237,9 +242,6 @@ entity_update(ENTITY *p, float dt) {
 static void
 player_render(ENTITY *p) {
   userconfig *config = getConfig();
-
-  /* Draw ship */
-  gdispFillArea (p->vecPosition.x, p->vecPosition.y, FB_X, FB_Y, COLOR_PLAYER);
 
   /*
    * Broadcast our location.
@@ -249,11 +251,33 @@ player_render(ENTITY *p) {
    */
 
   if (current_battle_state != COMBAT) {
+    /* Draw ship */
+    gdispFillArea (p->vecPosition.x, p->vecPosition.y, p->size_x, p->size_y, COLOR_PLAYER);
+
     bleGapUpdateState ((uint16_t)p->vecPosition.x,
                        (uint16_t)p->vecPosition.y,
                        config->xp,
                        config->level,
                        config->in_combat);
+  }
+
+  if (current_battle_state == COMBAT) {
+
+    /* Draw ship */
+    printf("%s",
+      getAvatarImage(config->current_ship,
+                                true,
+                                'n',
+                                (p->vecVelocityGoal.x > 0)));
+
+    putImageFile(getAvatarImage(config->current_ship,
+                                true,
+                                'n',
+                                (p->vecVelocityGoal.x > 0)),
+                p->vecPosition.x,
+                p->vecPosition.y
+    );
+      // send game packet.
   }
 
   return;
@@ -263,7 +287,7 @@ static void
 bullets_render(void) {
   for (int i=0; i < MAX_BULLETS; i++) {
     if (bullet[i].visible == true)
-      gdispFillCircle (bullet[i].vecPosition.x+(FB_X/2), bullet[i].vecPosition.y+(FB_X/2), FB_X/2-1, Black);
+      gdispFillCircle (bullet[i].vecPosition.x+(bullet[i].size_x/2), bullet[i].vecPosition.y+(bullet[i].size_x/2), bullet[i].size_x/2-1, Black);
   }
 }
 
@@ -318,7 +342,7 @@ static void enemy_list_refresh(void) {
   ble_peer_entry * p;
 
   // copy enemies from BLE
-	osalMutexLock (&peer_mutex);
+  osalMutexLock (&peer_mutex);
 
   for (int i = 0; i < BLE_PEER_LIST_SIZE; i++) {
     p = &ble_peer_list[i];
@@ -355,7 +379,7 @@ static void enemy_list_refresh(void) {
 #ifdef DEBUG_ENEMY_TTL
           printf("remove enemy due to ttl was: %d \n",e->ttl);
 #endif
-          putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, FB_X, FB_Y, e->e.pix_old);
+          putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, e->e.size_x, e->e.size_y, e->e.pix_old);
           printf("%d\n", enemy_find_ll_pos((ble_gap_addr_t *)&p->ble_peer_addr));
           gll_remove(enemies, enemy_find_ll_pos((ble_gap_addr_t *)&p->ble_peer_addr));
           continue;
@@ -369,11 +393,11 @@ static void enemy_list_refresh(void) {
         if (e->e.prevPos.x != e->e.vecPosition.x ||
             e->e.prevPos.y != e->e.vecPosition.y) {
             // erase the old position
-            putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, FB_X, FB_Y, e->e.pix_old);
+            putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, e->e.size_x, e->e.size_y, e->e.pix_old);
             // grab the new data
-            getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, e->e.pix_old);
+            getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, e->e.pix_old);
             /* Draw ship */
-            gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, COLOR_ENEMY);
+            gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, COLOR_ENEMY);
             // update
             e->e.prevPos.x = e->e.vecPosition.x;
             e->e.prevPos.y = e->e.vecPosition.y;
@@ -384,27 +408,31 @@ static void enemy_list_refresh(void) {
         if (p->ble_game_state.ble_ides_incombat) {
 #ifdef DEBUG_ENEMY_DISCOVERY
           printf("enemy: ignoring in-combat %x:%x:%x:%x:%x:%x\n",
-            e->ble_peer_addr.addr[5],
-            e->ble_peer_addr.addr[4],
-            e->ble_peer_addr.addr[3],
-            e->ble_peer_addr.addr[2],
-            e->ble_peer_addr.addr[1],
-            e->ble_peer_addr.addr[0]);
+            p->ble_peer_addr[5],
+            p->ble_peer_addr[4],
+            p->ble_peer_addr[3],
+            p->ble_peer_addr[2],
+            p->ble_peer_addr[1],
+            p->ble_peer_addr[0]);
 #endif
           continue;
         }
+
         e = malloc(sizeof(ENEMY));
-        entity_init(&(e->e));
+        entity_init(&(e->e),10,10);
+
         e->e.visible = true;
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
         e->e.prevPos.x = e->e.vecPosition.x;
         e->e.prevPos.y = e->e.vecPosition.y;
 
-        /* load the frame buffer */
-        getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, e->e.pix_old);
+        /* load the frame buffer for the first time */
+        getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, e->e.pix_old);
+        e->e.pix_inited = true;
+        
         /* Draw ship */
-        gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, FB_X, FB_Y, COLOR_ENEMY);
+        gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, COLOR_ENEMY);
 
         e->xp = p->ble_game_state.ble_ides_xp;
         memcpy(&e->ble_peer_addr.addr, p->ble_peer_addr, 6);
@@ -428,7 +456,7 @@ static void enemy_list_refresh(void) {
     }
   }
 
-	osalMutexUnlock (&peer_mutex);
+  osalMutexUnlock (&peer_mutex);
 }
 
 static uint32_t
@@ -493,13 +521,13 @@ battle_start (OrchardAppContext *context)
 
   mycontext = context;
 
-  entity_init(&me);
+  entity_init(&me, 10, 10);
   me.vecPosition.x = config->last_x;
   me.vecPosition.y = config->last_y;
   me.visible = true;
 
   for (int i=0; i < MAX_BULLETS; i++) {
-    entity_init(&bullet[i]);
+    entity_init(&bullet[i], 10 ,10);
   }
 
   // load the enemy list
@@ -605,7 +633,7 @@ fire_bullet(ENTITY *from, VECTOR *bullet_pending) {
   for (int i=0; i < MAX_BULLETS; i++) {
     // find the first available bullet structure
     if (bullet[i].visible == false) {
-      entity_init(&bullet[i]);
+      entity_init(&bullet[i],10,10);
       bullet[i].visible = true;
       bullet[i].ttl = 30; // about a second
       // start the bullet from player position
@@ -625,10 +653,10 @@ fire_bullet(ENTITY *from, VECTOR *bullet_pending) {
 bool
 entity_OOB(ENTITY *e) {
   // returns true if entity is out of bounds
-  if ( (e->vecPosition.x >= SCREEN_W - FB_X) ||
+  if ( (e->vecPosition.x >= SCREEN_W - e->size_x) ||
        (e->vecPosition.x < 0) ||
        (e->vecPosition.y < 0) ||
-       (e->vecPosition.y >= SCREEN_H - FB_Y))
+       (e->vecPosition.y >= SCREEN_H - e->size_y))
     return true;
 
   return false;
@@ -685,7 +713,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           // do we have an impact?
           // ...
 
-          getPixelBlock(bullet[i].vecPosition.x, bullet[i].vecPosition.y, FB_X, FB_Y, bullet[i].pix_old);
+          getPixelBlock(bullet[i].vecPosition.x,
+              bullet[i].vecPosition.y,
+              bullet[i].size_x, bullet[i].size_x,
+              bullet[i].pix_old);
         }
       }
 
@@ -755,71 +786,71 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     // It can be BLE_GAP_ROLE_CENTRAL or BLE_GAP_ROLE_PERIPH.
     // CENTRAL is the one that initiates the connection.
     // PERIPH is the one that accepts.
-  	switch (radio->type) {
-      case connectEvent:
-        if (current_battle_state == APPROVAL_WAIT) {
-          // fires when we succeed on a connect i think.
-          screen_alert_draw (FALSE, "Sending Challenge...");
-          msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
-          bleGattcWrite (gm_handle.value_handle,
-              (uint8_t *)msg, 1, FALSE);
-        }
-        break;
-      case gattsReadWriteAuthEvent:
-        rw =
-         &evt->evt.gatts_evt.params.authorize_request;
-        req = &rw->request.write;
-        if (rw->request.write.handle ==
-            gm_handle.value_handle &&
-            req->data[0] == BLE_IDES_GAMEATTACK_ACCEPT) {
-          screen_alert_draw (FALSE,
-              "Battle Accepted!");
-          /* Offer accepted - create L2CAP link */
-          /* the attacker makes the connect first */
-          bleL2CapConnect (BLE_IDES_BATTLE_PSM);
-        }
-
-        if (rw->request.write.handle ==
-            gm_handle.value_handle &&
-            req->data[0] == BLE_IDES_GAMEATTACK_DECLINE) {
-          screen_alert_draw (FALSE,
-              "Battle Declined.");
-          chThdSleepMilliseconds (2000);
-          bleGapDisconnect ();
-          if (current_battle_state == WORLD_MAP) {
-            draw_world_map();
-          }
-          changeState(WORLD_MAP);
-        }
-
-        // we under attack, yo.
-        if (rw->request.write.handle ==
-            gm_handle.value_handle &&
-            req->data[0] == BLE_IDES_GAMEATTACK_CHALLENGE) {
-            changeState(APPROVAL_DEMAND);
-        }
-        break;
-      case l2capRxEvent:
-        // we then get a radio event
-        // MTU is 1024 bytes.
-        // radio->pkt and radio->pktlen
-        break;
-      case l2capTxEvent:
-        // after transmit... they got the data.
-        break;
-      case l2capConnectEvent:
-        // now we have a peer connection.
-        // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
-        printf("BATTLE: l2CapConnection Success\n");
-        if (current_enemy == NULL) {
-          // copy his data over and start the battle.
-          current_enemy = enemy_find_by_peer(&ble_peer_addr.addr[0]);
-        }
-        changeState(COMBAT);
-        break;
-      default:
-        break;
+    switch (radio->type) {
+    case connectEvent:
+      if (current_battle_state == APPROVAL_WAIT) {
+        // fires when we succeed on a connect i think.
+        screen_alert_draw (FALSE, "Sending Challenge...");
+        msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
+        bleGattcWrite (gm_handle.value_handle,
+                       (uint8_t *)msg, 1, FALSE);
       }
+      break;
+    case gattsReadWriteAuthEvent:
+      rw =
+        &evt->evt.gatts_evt.params.authorize_request;
+      req = &rw->request.write;
+      if (rw->request.write.handle ==
+          gm_handle.value_handle &&
+          req->data[0] == BLE_IDES_GAMEATTACK_ACCEPT) {
+        screen_alert_draw (FALSE,
+                           "Battle Accepted!");
+        /* Offer accepted - create L2CAP link */
+
+        /* the attacker makes the connect first, when the l2cap
+           connect comes back we will switch over to a new state */
+        bleL2CapConnect (BLE_IDES_BATTLE_PSM);
+      }
+
+      if (rw->request.write.handle ==
+          gm_handle.value_handle &&
+          req->data[0] == BLE_IDES_GAMEATTACK_DECLINE) {
+        screen_alert_draw (FALSE,
+                           "Battle Declined.");
+        chThdSleepMilliseconds (2000);
+        bleGapDisconnect ();
+        
+        changeState(WORLD_MAP);
+      }
+      
+      // we under attack, yo.
+      if (rw->request.write.handle ==
+          gm_handle.value_handle &&
+          req->data[0] == BLE_IDES_GAMEATTACK_CHALLENGE) {
+        changeState(APPROVAL_DEMAND);
+      }
+      break;
+    case l2capRxEvent:
+      // we then get a radio event
+      // MTU is 1024 bytes.
+      // radio->pkt and radio->pktlen
+      break;
+    case l2capTxEvent:
+      // after transmit... they got the data.
+      break;
+    case l2capConnectEvent:
+      // now we have a peer connection.
+        // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
+      printf("BATTLE: l2CapConnection Success\n");
+      if (current_enemy == NULL) {
+        // copy his data over and start the battle.
+        current_enemy = enemy_find_by_peer(&ble_peer_addr.addr[0]);
+      }
+      changeState(COMBAT);
+      break;
+    default:
+      break;
+    }
   }
 
   // we cheat a bit here and read pins directly to see if
@@ -937,7 +968,16 @@ static void changeState(battle_state nextstate) {
 
 static void free_enemy(void *e) {
   ENEMY *en = e;
+  free(en->e.pix_old);
   free(en);
+}
+
+static void remove_all_enemies(void) {
+  /* remove all enemies. */
+  if (enemies) {
+    gll_each(enemies, free_enemy);
+    gll_destroy(enemies);
+  }
 }
 
 static void battle_exit(OrchardAppContext *context)
@@ -956,11 +996,7 @@ static void battle_exit(OrchardAppContext *context)
   changeState(NONE);
 
   // free the enemy list
-  if (enemies) {
-    gll_each(enemies, free_enemy);
-    gll_destroy(enemies);
-    free(enemies);
-  }
+  remove_all_enemies();
 
   if (bh->fontXS)
     gdispCloseFont (bh->fontXS);
@@ -992,7 +1028,7 @@ static void battle_exit(OrchardAppContext *context)
 static void
 render_enemy(void *e) {
   ENEMY *en = e;
-  gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, FB_X, FB_Y, COLOR_ENEMY);
+  gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, en->e.size_x, en->e.size_y, COLOR_ENEMY);
 }
 
 static void
@@ -1009,6 +1045,7 @@ void state_worldmap_enter(void) {
 
   gdispClear(Black);
   draw_world_map();
+  enemy_list_refresh();
   render_all_enemies();
 }
 
@@ -1036,6 +1073,10 @@ void state_worldmap_exit(void) {
     gwinDestroy (bh->ghTitleR);
     bh->ghTitleR = NULL;
   }
+
+  /* wipe enemies */
+  remove_all_enemies();
+
 }
 
 // APPROVAL_WAIT -------------------------------------------------------------
@@ -1170,6 +1211,13 @@ void state_combat_enter(void) {
                      config->level,
                      config->in_combat);
 
+
+  /* rebuild the player pixmap */
+  free(me.pix_old);
+  me.pix_old = malloc(40*40);
+  me.size_x = 40;
+  me.size_y = 40;
+
   newmap = getMapTile(&me);
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
   putImageFile(fnbuf, 0,0);
@@ -1220,6 +1268,14 @@ void state_combat_exit(void) {
 
   free(bh->r_pxbuf);
   bh->r_pxbuf = NULL;
+
+  // todo:free the enemy
+
+  // downsize the player
+  free(me.pix_old);
+  me.pix_old = malloc(10*10);
+  me.size_x = 10;
+  me.size_y = 10;
 }
 
 // -------------------------------------------------------------------------
