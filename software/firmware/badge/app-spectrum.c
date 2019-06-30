@@ -204,5 +204,5 @@ spectrum_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("RF Spectrum", "icons/mask.rgb", 0, spectrum_init,
+orchard_app("RF Spectrum", "icons/rf.rgb", 0, spectrum_init,
     spectrum_start, spectrum_event, spectrum_exit, 9999);

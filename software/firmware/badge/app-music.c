@@ -442,8 +442,8 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		chThdSetPriority (HIGHPRIO - 5);
 
 		strcpy(musicfn, MUSICDIR);
-    strcat(musicfn, "/");
-    strcat(musicfn, p->listitems[uiContext->selected +1]);
+		strcat(musicfn, "/");
+		strcat(musicfn, p->listitems[uiContext->selected +1]);
 
 		if (musicPlay (p, musicfn) != 0)
 			i2sPlay ("sound/click.snd");
@@ -478,5 +478,5 @@ music_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Play Music", "icons/jelly.rgb", 0, music_init, music_start,
+orchard_app("Play Music", "icons/spectrum.rgb", 0, music_init, music_start,
     music_event, music_exit, 9999);
