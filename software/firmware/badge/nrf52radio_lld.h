@@ -41,6 +41,13 @@
 #define BLE_ADV_ACCESS_ADDRESS		0x8E89BED6
 #define BLE_CHANNELS			40
 
+typedef struct ble_chan {
+        uint16_t        ble_freq;
+        uint8_t         ble_chan;
+} BLE_CHAN;
+
+extern const BLE_CHAN ble_chan_map[BLE_CHANNELS];
+
 extern void nrf52radioStart (void);
 extern void nrf52radioStop (void);
 extern int nrf52radioRx (uint8_t *, uint8_t, int8_t *, uint32_t);

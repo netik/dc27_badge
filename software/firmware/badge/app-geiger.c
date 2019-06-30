@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 
 #define GEIGER_PKTLEN		37
+#define GEIGER_DELAY		5
 
 #define RX_ACTION_NONE		0x00
 #define RX_ACTION_SENSE_UPDATE	0x01
@@ -83,9 +84,13 @@ geigerScan (GHandles * p, uint16_t freq)
 
 	nrf52radioChanSet (freq);
 
-	/* Check for a packet */
+	/*
+	 * Check for a packet. If we don't receive a valid
+	 * packet before the timeout, then just return.
+	 */
 
-	if (nrf52radioRx (p->rxpkt, GEIGER_PKTLEN, &rssi, 5) != NRF_SUCCESS)
+	if (nrf52radioRx (p->rxpkt, GEIGER_PKTLEN,
+	    &rssi, GEIGER_DELAY) != NRF_SUCCESS)
 		return;
 
 	rssi = 127 - rssi;
@@ -134,9 +139,9 @@ static THD_FUNCTION(geigerThread, arg)
 
 		p->rxAction = RX_ACTION_NONE;
 
-		geigerScan (p, 2402);
-		geigerScan (p, 2496);
-		geigerScan (p, 2480);
+		geigerScan (p, ble_chan_map[37].ble_freq);
+		geigerScan (p, ble_chan_map[38].ble_freq);
+		geigerScan (p, ble_chan_map[39].ble_freq);
 	}
 
 	i2sAudioAmpCtl (I2S_AMP_OFF);

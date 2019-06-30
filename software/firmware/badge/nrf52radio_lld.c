@@ -42,12 +42,7 @@
 
 static thread_reference_t radioThreadReference;
 
-typedef struct ble_chan {
-	uint16_t	ble_freq;
-	uint8_t		ble_chan;
-} BLE_CHAN;
-
-static const BLE_CHAN ble_chan_map[BLE_CHANNELS] =  {
+const BLE_CHAN ble_chan_map[BLE_CHANNELS] =  {
 	{ 2404, 	 0 },
 	{ 2406, 	 1 },
 	{ 2408, 	 2 },
