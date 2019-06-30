@@ -39,6 +39,8 @@
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
 #include "fontlist.h"
+#include "userconfig.h"
+#include "led.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +51,8 @@
 #include <sys/stat.h>
 
 #define GEIGER_PKTLEN		37
-#define GEIGER_DELAY		5
+#define GEIGER_DELAY		3
+#define GEIGER_CYCLE		5
 
 #define RX_ACTION_NONE		0x00
 #define RX_ACTION_SENSE_UPDATE	0x01
@@ -63,6 +66,9 @@ typedef struct geiger_handles {
 	GHandle		ghDown;
 	font_t		font;
 	int8_t		rxThreshold;
+	uint16_t	intensity;
+	uint16_t	cycles;
+	uint32_t	lastcnt;
 	bool		badgesOnly;
 	volatile int	rxAction;
 	char *		click;
@@ -71,6 +77,32 @@ typedef struct geiger_handles {
 	uint8_t		rxpkt[GEIGER_PKTLEN + 3];
 	thread_t *	pThread;
 } GHandles;
+
+static void
+ledDraw (short amp)
+{
+	int i;
+
+	if (amp > LED_COUNT_INTERNAL)
+		amp = LED_COUNT_INTERNAL;
+
+	for (i = LED_COUNT_INTERNAL; i >= 0; i--) {
+		if (i > amp) {
+			led_set (i - 1, 0, 0, 0);
+		} else {
+			if (i >= 1 && i <= 8)
+				led_set (i - 1, 0, 255, 0);
+			if (i >= 9 && i <= 16)
+				led_set (i - 1, 255, 255, 0);
+			if (i >= 17 && i <= 32)
+				led_set (i - 1, 255, 0, 0);
+		}
+	}
+
+	led_show ();
+	
+	return;
+}
 
 static void
 geigerScan (GHandles * p, uint16_t freq)
@@ -113,8 +145,17 @@ geigerScan (GHandles * p, uint16_t freq)
 			return;
 	}
 
-	if (rssi >= p->rxThreshold)
+	if (rssi >= p->rxThreshold) {
+		uint32_t cur;
 		i2sSamplesPlay (p->click, p->clickLen);
+		cur = gptGetCounterX (&GPTD2);
+		if ((cur - p->lastcnt) < 600000) {
+			p->intensity += 5;
+		} else {
+			p->intensity += 1;
+		}
+		p->lastcnt = cur;
+	}
 
 	return;
 }
@@ -133,6 +174,8 @@ static THD_FUNCTION(geigerThread, arg)
 
 	i2sAudioAmpCtl (I2S_AMP_ON);
 
+	gptStartContinuous (&GPTD2, NRF5_GPT_FREQ_16MHZ);
+
 	while (1) {
 		if (p->rxAction == RX_ACTION_EXIT)
 			break;
@@ -142,7 +185,16 @@ static THD_FUNCTION(geigerThread, arg)
 		geigerScan (p, ble_chan_map[37].ble_freq);
 		geigerScan (p, ble_chan_map[38].ble_freq);
 		geigerScan (p, ble_chan_map[39].ble_freq);
+
+		p->cycles++;
+		if (p->cycles > GEIGER_CYCLE) {
+			ledDraw (p->intensity);
+			p->cycles = 0;
+			p->intensity = 0;
+		}
 	}
+
+	gptStopTimer (&GPTD2);
 
 	i2sAudioAmpCtl (I2S_AMP_OFF);
 
@@ -252,6 +304,7 @@ geiger_start (OrchardAppContext *context)
 	i2sPlay (NULL);
 	p->i2sEnable = i2sEnabled;
 	i2sEnabled = FALSE;
+	ledStop ();
 
 	p->font = gdispOpenFont (FONT_XS);
 
@@ -348,6 +401,7 @@ static void
 geiger_exit (OrchardAppContext *context)
 {
 	GHandles * p;
+	userconfig * config;
 
 	p = context->priv;
 
@@ -356,6 +410,9 @@ geiger_exit (OrchardAppContext *context)
 
 	i2sEnabled = p->i2sEnable;
 	i2sPlay ("/sound/click.snd");
+
+	config = getConfig();
+	ledSetPattern (config->led_pattern);
 
 	geigerUiDestroy (p);
 
