@@ -6,8 +6,8 @@ echo "daBomb cp2102 provision Ready."
 while [ /bin/true ];
 do
     
-    echo "Connect cable and hit ENTER or Q to quit."
-    echo -n "==> "
+    /bin/echo "Connect cable and hit ENTER or Q to quit."
+    /bin/echo -n "==> "
     
     read X
     

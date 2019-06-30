@@ -50,6 +50,10 @@
 #define COLOR_ENEMY  Red
 #define COLOR_PLAYER HTML2COLOR(0xeeeeee) // light grey
 
+#define SHIP_SIZE_WORLDMAP 10
+#define SHIP_SIZE_ZOOMED   40
+#define BULLET_SIZE        10
+
 /* single player on this badge */
 static ENTITY me;
 static ENTITY bullet[MAX_BULLETS];
@@ -95,6 +99,8 @@ static int16_t animtick = 0;
 /* prototypes */
 static void changeState(battle_state nextstate);
 static ENEMY *enemy_find_by_peer(uint8_t *addr);
+static void render_all_enemies(void);
+/* end protos */
 
 static
 int getMapTile(ENTITY *e) {
@@ -177,6 +183,7 @@ check_land_collision(ENTITY *p) {
     if (p->pix_old[i] != 0x1f28 &&
         p->pix_old[i] != 0x3f20 &&
         p->pix_old[i] != 0xffff) {
+      printf("collide - %02X\n", p->pix_old[i]);
       // collide
       p->vecVelocity.x = 0;
       p->vecVelocity.y = 0;
@@ -262,33 +269,18 @@ player_render(ENTITY *p) {
   }
 
   if (current_battle_state == COMBAT) {
-
     /* Draw ship */
-    printf("%s",
-      getAvatarImage(config->current_ship,
-                                true,
-                                'n',
-                                (p->vecVelocityGoal.x > 0)));
-
     putImageFile(getAvatarImage(config->current_ship,
                                 true,
                                 'n',
                                 (p->vecVelocityGoal.x > 0)),
-                p->vecPosition.x,
-                p->vecPosition.y
+                                p->vecPosition.x,
+                                p->vecPosition.y
     );
       // send game packet.
   }
 
   return;
-}
-
-static void
-bullets_render(void) {
-  for (int i=0; i < MAX_BULLETS; i++) {
-    if (bullet[i].visible == true)
-      gdispFillCircle (bullet[i].vecPosition.x+(bullet[i].size_x/2), bullet[i].vecPosition.y+(bullet[i].size_x/2), bullet[i].size_x/2-1, Black);
-  }
 }
 
 static void
@@ -337,6 +329,25 @@ static int enemy_find_ll_pos(ble_gap_addr_t *ble_peer_addr) {
   return -1;
 }
 
+static void
+expire_enemies(void *e) {
+  ENEMY *en = e;
+  int position;
+  // we expire 3 seconds earlier than the ble peer checker...
+  if (en->ttl < 3) {
+    // erase the old position
+#ifdef DEBUG_ENEMY_TTL
+    printf("remove enemy due to ttl was: %d \n",en->ttl);
+#endif
+    putPixelBlock (en->e.prevPos.x, en->e.prevPos.y, en->e.size_x, en->e.size_y, en->e.pix_old);
+    position = enemy_find_ll_pos(&(en->ble_peer_addr));
+    if (position > -1) {
+      printf("%d\n", position);
+      gll_remove(enemies, position);
+    }
+  }
+}
+
 static void enemy_list_refresh(void) {
   ENEMY *e;
   ble_peer_entry * p;
@@ -352,7 +363,6 @@ static void enemy_list_refresh(void) {
 
     if (p->ble_isbadge == TRUE) {
       /* this is one of us, copy data over. */
-
       /* have we seen this address ? */
       /* addresses are 48 bit / 6 bytes */
       if ((e = enemy_find_by_peer(&p->ble_peer_addr[0])) != NULL) {
@@ -369,40 +379,14 @@ static void enemy_list_refresh(void) {
         // is this dude in combat? Get rid of him.
         if (p->ble_game_state.ble_ides_incombat) {
           e->ttl = 0;
-        }
-        /* yes, update state */
-        e->ttl = p->ble_ttl;
-
-        // we expire 3 seconds earlier than the ble peer checker...
-        if (e->ttl < 3) {
-          // erase the old position
-#ifdef DEBUG_ENEMY_TTL
-          printf("remove enemy due to ttl was: %d \n",e->ttl);
-#endif
-          putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, e->e.size_x, e->e.size_y, e->e.pix_old);
-          printf("%d\n", enemy_find_ll_pos((ble_gap_addr_t *)&p->ble_peer_addr));
-          gll_remove(enemies, enemy_find_ll_pos((ble_gap_addr_t *)&p->ble_peer_addr));
-          continue;
+        } else {
+          e->ttl = p->ble_ttl;
         }
 
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
 
         e->xp = p->ble_game_state.ble_ides_xp;
-
-        if (e->e.prevPos.x != e->e.vecPosition.x ||
-            e->e.prevPos.y != e->e.vecPosition.y) {
-            // erase the old position
-            putPixelBlock (e->e.prevPos.x, e->e.prevPos.y, e->e.size_x, e->e.size_y, e->e.pix_old);
-            // grab the new data
-            getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, e->e.pix_old);
-            /* Draw ship */
-            gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, COLOR_ENEMY);
-            // update
-            e->e.prevPos.x = e->e.vecPosition.x;
-            e->e.prevPos.y = e->e.vecPosition.y;
-        }
-
       } else {
         /* no, add him */
         if (p->ble_game_state.ble_ides_incombat) {
@@ -418,21 +402,29 @@ static void enemy_list_refresh(void) {
           continue;
         }
 
+        #ifdef DEBUG_ENEMY_DISCOVERY
+          printf("enemy: found new enemy (ic=%d) %x:%x:%x:%x:%x:%x\n",
+            p->ble_game_state.ble_ides_incombat,
+            p->ble_peer_addr[5],
+            p->ble_peer_addr[4],
+            p->ble_peer_addr[3],
+            p->ble_peer_addr[2],
+            p->ble_peer_addr[1],
+            p->ble_peer_addr[0]);
+        #endif
         e = malloc(sizeof(ENEMY));
-        entity_init(&(e->e),10,10);
+
+        if (current_battle_state == COMBAT) {
+          entity_init(&(e->e),SHIP_SIZE_ZOOMED,SHIP_SIZE_ZOOMED);
+        } else {
+          entity_init(&(e->e),SHIP_SIZE_WORLDMAP,SHIP_SIZE_WORLDMAP);
+        }
 
         e->e.visible = true;
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
-        e->e.prevPos.x = e->e.vecPosition.x;
-        e->e.prevPos.y = e->e.vecPosition.y;
-
-        /* load the frame buffer for the first time */
-        getPixelBlock (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, e->e.pix_old);
-        e->e.pix_inited = true;
-        
-        /* Draw ship */
-        gdispFillArea (e->e.vecPosition.x, e->e.vecPosition.y, e->e.size_x, e->e.size_y, COLOR_ENEMY);
+        e->e.prevPos.x = p->ble_game_state.ble_ides_x;
+        e->e.prevPos.y = p->ble_game_state.ble_ides_y;
 
         e->xp = p->ble_game_state.ble_ides_xp;
         memcpy(&e->ble_peer_addr.addr, p->ble_peer_addr, 6);
@@ -441,21 +433,11 @@ static void enemy_list_refresh(void) {
         e->ble_peer_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
 
         strcpy(e->name, (char *)p->ble_peer_name);
-#ifdef DEBUG_ENEMY_DISCOVERY
-        printf("enemy: found new enemy (ic=%d) %x:%x:%x:%x:%x:%x\n",
-          p->ble_game_state.ble_ides_incombat,
-          e->ble_peer_addr.addr[5],
-          e->ble_peer_addr.addr[4],
-          e->ble_peer_addr.addr[3],
-          e->ble_peer_addr.addr[2],
-          e->ble_peer_addr.addr[1],
-          e->ble_peer_addr.addr[0]);
-#endif
+
         gll_push(enemies, e);
       }
     }
   }
-
   osalMutexUnlock (&peer_mutex);
 }
 
@@ -527,11 +509,8 @@ battle_start (OrchardAppContext *context)
   me.visible = true;
 
   for (int i=0; i < MAX_BULLETS; i++) {
-    entity_init(&bullet[i], 10 ,10);
+    entity_init(&bullet[i], BULLET_SIZE, BULLET_SIZE);
   }
-
-  // load the enemy list
-  enemies = gll_init();
 
   // turn off the LEDs
   ledSetPattern(LED_PATTERN_WORLDMAP);
@@ -628,12 +607,15 @@ enemy_engage(OrchardAppContext *context) {
   return e;
 }
 
+#ifdef notyet
 static void
 fire_bullet(ENTITY *from, VECTOR *bullet_pending) {
   for (int i=0; i < MAX_BULLETS; i++) {
     // find the first available bullet structure
     if (bullet[i].visible == false) {
-      entity_init(&bullet[i],10,10);
+      // bug: we should not init this again
+      entity_init(&bullet[i],BULLET_SIZE,BULLET_SIZE);
+
       bullet[i].visible = true;
       bullet[i].ttl = 30; // about a second
       // start the bullet from player position
@@ -649,6 +631,7 @@ fire_bullet(ENTITY *from, VECTOR *bullet_pending) {
     }
   }
 }
+#endif
 
 bool
 entity_OOB(ENTITY *e) {
@@ -666,7 +649,6 @@ static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
   (void) context;
-  uint8_t i;
   ENEMY *nearest;
   battle_ui_t *bh;
   GEvent * pe;
@@ -683,70 +665,55 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
-
-    // handle tick for current state
+    /* animtick increments on every frame. It is reset to zero on changeState() */
     animtick++;
-    if (battle_funcs[current_battle_state].tick != NULL) // some states lack a tick call
+    /* some states lack a tick function */
+    if (battle_funcs[current_battle_state].tick != NULL)
       battle_funcs[current_battle_state].tick();
 
     // player and enemy update
-    if (current_battle_state == COMBAT || current_battle_state == WORLD_MAP) {
+    if (current_battle_state == WORLD_MAP) {
       if (animtick % (FPS/2) == 0) {
         // refresh world map enemy positions every 500mS
         enemy_list_refresh();
+        render_all_enemies();
       }
 
       // move player
       entity_update(&me, FRAME_DELAY);
       // check for collison with enemies
       player_render(&me);
+      enemy_clearall_blink();
+      nearest = getNearestEnemy();
 
-      // bullets
-      for (i=0; i < MAX_BULLETS; i++) {
-        if (bullet[i].visible == true) {
-          entity_update(&bullet[i], FRAME_DELAY);
-          if (entity_OOB(&bullet[i])) {
-            // out of bounds, remove.
-            bullet[i].visible = false;
-          }
+      if (nearest != NULL)
+        nearest->e.blinking = true;
 
-          // do we have an impact?
-          // ...
+      if (nearest != last_near) {
+        last_near = nearest;
 
-          getPixelBlock(bullet[i].vecPosition.x,
-              bullet[i].vecPosition.y,
-              bullet[i].size_x, bullet[i].size_x,
-              bullet[i].pix_old);
+        // if our state has changed, update the UI
+        if (nearest == NULL) {
+          gwinSetText(bh->ghTitleR, "Find an enemy!", TRUE);
+          gwinRedraw(bh->ghTitleR);
+        } else {
+          // update UI
+          strcpy(tmp, "Engage: ");
+          strcat(tmp, nearest->name);
+          gwinSetText(bh->ghTitleR, tmp, TRUE);
+          gwinRedraw(bh->ghTitleR);
         }
       }
+    } /* WORLD_MAP */
 
-      bullets_render();
-      // render enemies
-      if (current_battle_state == WORLD_MAP) {
-        enemy_clearall_blink();
-        nearest = getNearestEnemy();
-
-        if (nearest != NULL)
-          nearest->e.blinking = true;
-
-        if (nearest != last_near) {
-          last_near = nearest;
-
-          // if our state has changed, update the UI
-          if (nearest == NULL) {
-            gwinSetText(bh->ghTitleR, "Find an enemy!", TRUE);
-            gwinRedraw(bh->ghTitleR);
-          } else {
-            // update UI
-            strcpy(tmp, "Engage: ");
-            strcat(tmp, nearest->name);
-            gwinSetText(bh->ghTitleR, tmp, TRUE);
-            gwinRedraw(bh->ghTitleR);
-          }
-        }
-      }
+    if (current_battle_state == COMBAT) {
+      /* in combat we only have to render the player and enemy */
+      // move player
+      entity_update(&me, FRAME_DELAY);
+      // check for collison with enemies
+      player_render(&me);
     }
-  }
+  } /* timerEvent */
 
   // handle uGFX events
   if (event->type == ugfxEvent) {
@@ -819,10 +786,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
                            "Battle Declined.");
         chThdSleepMilliseconds (2000);
         bleGapDisconnect ();
-        
+
         changeState(WORLD_MAP);
       }
-      
+
       // we under attack, yo.
       if (rw->request.write.handle ==
           gm_handle.value_handle &&
@@ -840,7 +807,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       break;
     case l2capConnectEvent:
       // now we have a peer connection.
-        // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
+      // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
       printf("BATTLE: l2CapConnection Success\n");
       if (current_enemy == NULL) {
         // copy his data over and start the battle.
@@ -877,59 +844,82 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     }
   }
 
-  // movement works in both modes
-  if (current_battle_state == WORLD_MAP || current_battle_state == COMBAT)
+  // Handle keypresses based on state
     if (event->type == keyEvent) {
-      if (event->key.flags == keyPress)  {
+
+      /* if the user lets go, we release the "throttle" */
+      if ((event->key.flags == keyRelease) &&
+          (current_battle_state == WORLD_MAP || current_battle_state == COMBAT)) {
         switch (event->key.code) {
         case keyALeft:
-          me.vecVelocityGoal.x = -VGOAL;
+          me.vecVelocityGoal.x = 0;
           break;
         case keyARight:
-          me.vecVelocityGoal.x = VGOAL;
+          me.vecVelocityGoal.x = 0;
           break;
         case keyAUp:
-          me.vecVelocityGoal.y = -VGOAL;
+          me.vecVelocityGoal.y = 0;
           break;
         case keyADown:
-          me.vecVelocityGoal.y = VGOAL;
-          break;
-        case keyASelect:
-          if (current_battle_state == WORLD_MAP) {
-            i2sPlay ("sound/click.snd");
-            orchardAppExit ();
-          }
-          break;
-        case keyBSelect:
-          if (current_battle_state != COMBAT) {
-            if ((current_enemy = enemy_engage(context)) != NULL) {
-              // outgoing challenge
-              started_it = true;
-              changeState(APPROVAL_WAIT);
-            }
-          }
+          me.vecVelocityGoal.y = 0;
           break;
         default:
           break;
         }
       }
 
-      if (event->key.flags == keyRelease) {
-        switch (event->key.code) {
-        case keyALeft:
-          me.vecVelocityGoal.x = 0;
-          break;
-        case keyARight:
-          me.vecVelocityGoal.x = 0;
-          break;
-        case keyAUp:
-          me.vecVelocityGoal.y = 0;
-          break;
-        case keyADown:
-          me.vecVelocityGoal.y = 0;
-          break;
-        default:
-          break;
+      if (event->key.flags == keyPress)  {
+        if (current_battle_state == WORLD_MAP || current_battle_state == COMBAT) {
+          /* on keypress, we'll throttle up */
+          switch (event->key.code) {
+          case keyALeft:
+            me.vecVelocityGoal.x = -VGOAL;
+            break;
+          case keyARight:
+            me.vecVelocityGoal.x = VGOAL;
+            break;
+          case keyAUp:
+            me.vecVelocityGoal.y = -VGOAL;
+            break;
+          case keyADown:
+            me.vecVelocityGoal.y = VGOAL;
+            break;
+          case keyASelect:
+            if (current_battle_state == WORLD_MAP) {
+              i2sPlay ("sound/click.snd");
+              orchardAppExit ();
+            }
+            break;
+          case keyBSelect:
+            if (current_battle_state == WORLD_MAP) {
+              if ((nearest = enemy_engage(context)) != NULL) {
+                // outgoing challenge
+                started_it = true;
+
+                /* we need to preserve the current enemy so we have things like
+                 * their address and name. The pointer to the pixmp will be lost
+                 * as changeState flushes the enemy list, but we don't use
+                 * that for enemy drawing until we are in the combat state.
+                 *
+                 * We'll alloc some new space below, which we will release
+                 * when we return to the world map.
+                 */
+
+                 /* convert the enemy struct to the larger combat version */
+                 current_enemy = malloc(sizeof(ENEMY));
+                 memcpy(current_enemy, nearest, sizeof(ENEMY));
+                 current_enemy->e.size_x = SHIP_SIZE_ZOOMED;
+                 current_enemy->e.size_y = SHIP_SIZE_ZOOMED;
+                 current_enemy->e.pix_inited = false;
+                 current_enemy->e.pix_old = malloc(sizeof(pixel_t) * SHIP_SIZE_ZOOMED * SHIP_SIZE_ZOOMED);
+
+                 changeState(APPROVAL_WAIT);
+              }
+            }
+            break;
+          default:
+            break;
+          }
         }
       }
     }
@@ -977,6 +967,7 @@ static void remove_all_enemies(void) {
   if (enemies) {
     gll_each(enemies, free_enemy);
     gll_destroy(enemies);
+    enemies = NULL;
   }
 }
 
@@ -993,10 +984,8 @@ static void battle_exit(OrchardAppContext *context)
   configSave(config);
 
   // reset this state or we won't init properly next time.
+  // Do not free state-objects here, let the state-exit functions do that!
   changeState(NONE);
-
-  // free the enemy list
-  remove_all_enemies();
 
   if (bh->fontXS)
     gdispCloseFont (bh->fontXS);
@@ -1028,24 +1017,96 @@ static void battle_exit(OrchardAppContext *context)
 static void
 render_enemy(void *e) {
   ENEMY *en = e;
-  gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y, en->e.size_x, en->e.size_y, COLOR_ENEMY);
+
+  /* at this point we have the enemy table loaded with
+   * what could be either new or old enemies.
+   *
+   * if pix_inited is false, it's a new enemy. All we have to
+   * is grab the pixbuf data and render
+   *
+   */
+
+  if (!en->e.pix_inited) {
+    /* load the frame buffer for the first time */
+    printf("get intiial pixmap at %f, %f for enemy previous was %f,%f\n",
+      en->e.vecPosition.x, en->e.vecPosition.y,
+      en->e.prevPos.x, en->e.prevPos.y);
+
+    getPixelBlock (en->e.vecPosition.x, en->e.vecPosition.y,
+                  en->e.size_x, en->e.size_y, en->e.pix_old);
+    en->e.pix_inited = true;
+
+    /* Draw ship */
+    if (current_battle_state == COMBAT) {
+      putImageFile(getAvatarImage(en->ship_type,
+                                  false, // is_enemy
+                                  'n',   // normal frame
+                                  (en->e.vecVelocityGoal.x > 0)),
+                                   en->e.vecPosition.x,
+                                   en->e.vecPosition.y);
+    } else {
+      /* draw the square radar blip */
+      gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y,
+                     en->e.size_x, en->e.size_y, COLOR_ENEMY);
+    }
+    return;
+  }
+
+  /* otherwise, this is an existing enemy. Did he move? If so, redraw. */
+  if (en->e.prevPos.x != en->e.vecPosition.x ||
+      en->e.prevPos.y != en->e.vecPosition.y) {
+        // erase the old position
+        putPixelBlock (en->e.prevPos.x, en->e.prevPos.y,
+                       en->e.size_x, en->e.size_y, en->e.pix_old);
+        // grab the new data
+        getPixelBlock (en->e.vecPosition.x, en->e.vecPosition.y,
+                       en->e.size_x, en->e.size_y, en->e.pix_old);
+        if (current_battle_state == COMBAT) {
+          putImageFile(getAvatarImage(en->ship_type,
+                                      false, // is_enemy
+                                      'n',   // normal frame
+                                      (en->e.vecVelocityGoal.x > 0)),
+                                       en->e.vecPosition.x,
+                                       en->e.vecPosition.y);
+        } else {
+          /* draw the square radar blip */
+          gdispFillArea (en->e.vecPosition.x, en->e.vecPosition.y,
+                         en->e.size_x, en->e.size_y, COLOR_ENEMY);
+        }
+
+        // store this for later.
+        en->e.prevPos.x = en->e.vecPosition.x;
+        en->e.prevPos.y = en->e.vecPosition.y;
+  }
 }
 
 static void
 render_all_enemies(void) {
-  // @brief clear enemy blink state
+  // renders all enemies based on enemy linked list
+  // will not update unless enemy moves
+  gll_each(enemies, expire_enemies);
   gll_each(enemies, render_enemy);
 }
 
-/* state change and tick functions go here ----------------------------------- */
+/* state change and tick functions go here -------------------------------- */
 
-// WORLDMAP ------------------------------------------------------------------
+// WORLDMAP ---------------------------------------------------------------
 void state_worldmap_enter(void) {
-  current_enemy = NULL;
+  if (current_enemy != NULL) {
+    /* we most likely came here from an approval_wait state
+     * or the end of a battle. Release the enemy. */
+
+    free_enemy(current_enemy);
+    current_enemy = NULL;
+  }
 
   gdispClear(Black);
   draw_world_map();
+
+  // load the enemy list
+  enemies = gll_init();
   enemy_list_refresh();
+
   render_all_enemies();
 }
 
@@ -1074,15 +1135,15 @@ void state_worldmap_exit(void) {
     bh->ghTitleR = NULL;
   }
 
-  /* wipe enemies */
+  /* wipe enemies and clear current enemy */
   remove_all_enemies();
-
+  current_enemy = NULL;
 }
 
 // APPROVAL_WAIT -------------------------------------------------------------
 // we are attacking someone, wait for consent.
 void state_approval_wait_enter(void) {
-  // we will now attempt to open a BLE gap connecto to the user.
+  // we will now attempt to open a BLE gap connect to the user.
   started_it = true;
   printf("engage: %x:%x:%x:%x:%x:%x\n",
     current_enemy->ble_peer_addr.addr[5],
@@ -1126,7 +1187,7 @@ void state_approval_demand_enter(void) {
   animtick = 0;
   bh = (battle_ui_t *)mycontext->priv;
   gdispClear(Black);
-  printf("entered approval demand 3\n");
+
   peer = blePeerFind (ble_peer_addr.addr);
   if (peer == NULL)
 		snprintf (buf, 36, "Badge %X:%X:%X:%X:%X:%X",
@@ -1135,12 +1196,11 @@ void state_approval_demand_enter(void) {
 		    ble_peer_addr.addr[1],  ble_peer_addr.addr[0]);
 	else
 		snprintf (buf, 36, "%s", peer->ble_peer_name);
-  printf("entered approvald demand 4\n");
+
   putImageFile ("images/undrattk.rgb", 0, 0);
   i2sPlay("sound/klaxon.snd");
 
   fHeight = gdispGetFontMetric (bh->fontSM, fontHeight);
-  printf("approval demand5\n");
 
   gdispDrawStringBox (0, 50 -
     fHeight,
@@ -1200,7 +1260,7 @@ void state_combat_enter(void) {
   userconfig *config = getConfig();
 
   // we're in combat now, send our last advertisement.
-  combat_time_left = 60;
+  combat_time_left = 120;
 
   config->in_combat = 1;
   configSave(config);
@@ -1211,31 +1271,44 @@ void state_combat_enter(void) {
                      config->level,
                      config->in_combat);
 
-
   /* rebuild the player pixmap */
   free(me.pix_old);
-  me.pix_old = malloc(40*40);
-  me.size_x = 40;
-  me.size_y = 40;
+  me.pix_old = malloc(sizeof(pixel_t) * SHIP_SIZE_ZOOMED * SHIP_SIZE_ZOOMED);
+  me.size_x = SHIP_SIZE_ZOOMED;
+  me.size_y = SHIP_SIZE_ZOOMED;
 
   newmap = getMapTile(&me);
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
   putImageFile(fnbuf, 0,0);
   zoomEntity(&me);
 
+  /* TODO: put players in starting positions */
+  /* I need to make this table... */
+#ifdef notyet
+  current_enemy->e.vecPosition.x = legal_start[newmap][1].x
+  current_enemy->e.vecPosition.y = legal_start[newmap][1].y
+  me.vecPosition.x = legal_start[newmap][0].x;
+  me.vecPosition.y = legal_start[newmap][0].y;
+#endif
+
   draw_hud(mycontext);
   enemy_clearall_blink();
 }
 
-
 void state_combat_tick(void) {
   char tmp[10];
+  int min;
+
   battle_ui_t *bh;
   bh = mycontext->priv;
 
   if (animtick % FPS == 0) {
     combat_time_left--;
-    sprintf(tmp, "00:%02d", combat_time_left);
+    min = combat_time_left / 60;
+
+    sprintf(tmp, "%02d:%02d",
+      min,
+      combat_time_left - (min * 60));
 
     // update clock
     drawBufferedStringBox (&bh->c_pxbuf,
@@ -1273,7 +1346,8 @@ void state_combat_exit(void) {
 
   // downsize the player
   free(me.pix_old);
-  me.pix_old = malloc(10*10);
+  me.pix_old = (pixel_t *)malloc(sizeof(pixel_t) * 10 * 10);
+
   me.size_x = 10;
   me.size_y = 10;
 }
