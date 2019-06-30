@@ -43,7 +43,7 @@
 
 extern void nrf52radioStart (void);
 extern void nrf52radioStop (void);
-extern int nrf52radioRx (void);
+extern int nrf52radioRx (uint8_t *, uint8_t, int8_t *, uint32_t);
 extern void nrf52radioTx (int);
 extern void nrf52radioRxEnable (void);
 extern void nrf52radioRxDisable (void);

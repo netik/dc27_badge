@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static uint8_t rxpkt[256];
 static thread_reference_t radioThreadReference;
 
 typedef struct ble_chan {
@@ -171,17 +170,7 @@ radioInit (void)
 	NRF_RADIO->FREQUENCY = 0;
 	NRF_RADIO->DATAWHITEIV = 0x40;
 
-	/* Set up shortcuts */
-
-	NRF_RADIO->SHORTS  = (1 << RADIO_SHORTS_READY_START_Pos) |
-            (1 << RADIO_SHORTS_END_DISABLE_Pos);
-
-	/* Setting packet pointer starts radio */
-
-	NRF_RADIO->PACKETPTR = (uint32_t)rxpkt;
-	NRF_RADIO->EVENTS_READY = 0;
-
-	NRF_RADIO->EVENTS_DISABLED = 0;
+	/* Force disable */
 
 	NRF_RADIO->TASKS_DISABLE = 1;
 	while (NRF_RADIO->STATE) {
@@ -294,7 +283,6 @@ nrf52radioRssiGet (int8_t * rssi)
 	if (rssi == NULL)
 		return (NRF_ERROR_INVALID_PARAM);
 
-
 	/* Enable RSSI done interrupt */
 
 	NRF_RADIO->INTENSET = RADIO_INTENSET_RSSIEND_Enabled <<
@@ -306,7 +294,7 @@ nrf52radioRssiGet (int8_t * rssi)
 	(void) osalThreadSuspendS (&radioThreadReference);
 	NRF_RADIO->TASKS_RSSISTOP = 0;
 	NRF_RADIO->EVENTS_RSSIEND = 0;
-	NRF_RADIO->TASKS_RXEN = 1;
+	/*NRF_RADIO->TASKS_RXEN = 1;*/
 	osalSysUnlock ();
 
 	*rssi = NRF_RADIO->RSSISAMPLE;
@@ -315,8 +303,12 @@ nrf52radioRssiGet (int8_t * rssi)
 }
 
 int
-nrf52radioRx (void)
+nrf52radioRx (uint8_t * pkt, uint8_t len, int8_t * rssi, uint32_t timeout)
 {
+	msg_t r;
+
+	*rssi = 0xFF;
+
 	NRF_RADIO->PREFIX0 &= ~RADIO_PREFIX0_AP0_Msk;
 	NRF_RADIO->PREFIX0 |=
 	    (BLE_ADV_ACCESS_ADDRESS >> 24) & RADIO_PREFIX0_AP0_Msk;
@@ -325,18 +317,65 @@ nrf52radioRx (void)
 	NRF_RADIO->RXADDRESSES = RADIO_RXADDRESSES_ADDR0_Enabled <<
 	    RADIO_RXADDRESSES_ADDR0_Pos;
 
-	NRF_RADIO->INTENSET = RADIO_INTENSET_END_Enabled <<
-	    RADIO_INTENSET_END_Pos;
-	NRF_RADIO->EVENTS_END = 0;
+	NRF_RADIO->PCNF1 = NRF_RADIO->PCNF1 & ~(RADIO_PCNF1_MAXLEN_Msk);
+	NRF_RADIO->PCNF1 |= len << RADIO_PCNF1_MAXLEN_Pos;
+
+	NRF_RADIO->PACKETPTR = (uint32_t)pkt;
+
+	/*
+	 * Set up shortcuts
+	 * The Nordic radio goes through several states, and can
+	 * generate an interrupt when it goes from one state to
+	 * another. We don't want to have to check for interrupt
+	 * events and walk the chip through each stage of transition
+	 * though.
+	 *
+	 * That's where the shortcuts come in. You can use them
+	 * to tell the chip to automatically trigger tasks when
+	 * certain events occur, rather than have software do it
+	 * manually, which is slow.
+	 *
+	 * In our case, we want to start the receiver, wait for
+	 * an address match on a packet (an advertisement), then
+	 * trigger an RSSI reading, so that when the packet is
+	 * received, we can tell what the received signal strength
+	 * was.
+	 */
+
+	NRF_RADIO->SHORTS =
+	    ((1 << RADIO_SHORTS_READY_START_Pos) |
+	    (1 << RADIO_SHORTS_ADDRESS_RSSISTART_Pos) |
+	    (1 << RADIO_SHORTS_END_DISABLE_Pos) |
+	    (1 << RADIO_SHORTS_DISABLED_RSSISTOP_Pos));
+
+	NRF_RADIO->INTENSET = RADIO_INTENSET_CRCOK_Enabled <<
+	    RADIO_INTENSET_CRCOK_Pos;
+	NRF_RADIO->EVENTS_CRCOK = 0;
 
 	osalSysLock ();
 	NRF_RADIO->TASKS_RXEN = 1;
-	(void) osalThreadSuspendS (&radioThreadReference);
-	NRF_RADIO->EVENTS_END = 0;
+	r = osalThreadSuspendTimeoutS (&radioThreadReference,
+	    OSAL_MS2I(timeout));
+	if (r == MSG_TIMEOUT) {
+		NRF_RADIO->SHORTS = 0;
+		NRF_RADIO->INTENSET = RADIO_INTENSET_DISABLED_Enabled <<
+		    RADIO_INTENSET_DISABLED_Pos;
+		NRF_RADIO->EVENTS_DISABLED = 0;
+		NRF_RADIO->TASKS_DISABLE = 1;
+		(void) osalThreadSuspendS (&radioThreadReference);
+		NRF_RADIO->EVENTS_DISABLED = 0;
+	} else {
+		NRF_RADIO->EVENTS_CRCOK = 0;
+	}
 	osalSysUnlock ();
 
-	if (NRF_RADIO->CRCSTATUS == 1)
+	if (r == MSG_TIMEOUT)
+		return (NRF_ERROR_TIMEOUT);
+
+	if (NRF_RADIO->CRCSTATUS == 1) {
+		*rssi = NRF_RADIO->RSSISAMPLE;
 		return (NRF_SUCCESS);
+	}
 
 	return (NRF_ERROR_INVALID_DATA);
 }

@@ -73,7 +73,7 @@ static THD_FUNCTION(asyncIoThread, arg)
 		f_read (async_f, async_buf, async_btr, &br);
 	}
 
-	chThdExit (MSG_OK);
+	chThdExitS (MSG_OK);
 
         return;
 }
