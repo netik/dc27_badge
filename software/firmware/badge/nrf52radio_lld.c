@@ -353,12 +353,7 @@ nrf52radioRx (uint8_t * pkt, uint8_t len, int8_t * rssi, uint32_t timeout)
 	    OSAL_MS2I(timeout));
 	if (r == MSG_TIMEOUT) {
 		NRF_RADIO->SHORTS = 0;
-		NRF_RADIO->INTENSET = RADIO_INTENSET_DISABLED_Enabled <<
-		    RADIO_INTENSET_DISABLED_Pos;
-		NRF_RADIO->EVENTS_DISABLED = 0;
 		NRF_RADIO->TASKS_DISABLE = 1;
-		(void) osalThreadSuspendS (&radioThreadReference);
-		NRF_RADIO->EVENTS_DISABLED = 0;
 	} else {
 		NRF_RADIO->EVENTS_CRCOK = 0;
 	}
