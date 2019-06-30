@@ -234,6 +234,7 @@ CSRC += main.c \
 	xpt2046_lld.c \
 	video_lld.c \
 	badge_vectors.c \
+	ides_sprite.c \
 	ides_gfx.c \
 	newlib_syscall.c \
         $(GFXSRC) \
