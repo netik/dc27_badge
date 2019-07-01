@@ -42,6 +42,9 @@
 #include "userconfig.h"
 #include "led.h"
 
+#include "gfx.h"
+#include "src/gdisp/gdisp_driver.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -356,10 +359,19 @@ geiger_event (OrchardAppContext *context,
 				return;
 			}
 			if (be->gwin == p->ghBadgesOnly) {
-				if (p->badgesOnly == FALSE)
+				if (p->badgesOnly == FALSE) {
 					p->badgesOnly = TRUE;
-				else
+					putImageFile ("/images/bomb.gif",
+					    235, 145);
+				} else {
 					p->badgesOnly = FALSE;
+					GDISP->clipx0 = 0;
+					GDISP->clipy0 = 0;
+					GDISP->clipx1 = 320;
+					GDISP->clipy1 = 240;
+					gdispFillArea (235, 145,
+					    80, 45, Yellow);
+				}
 			}
 			if (be->gwin == p->ghUp) {
 				if (p->rxThreshold < 127) {
