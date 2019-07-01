@@ -55,7 +55,7 @@
 #define GEIGER_CYCLE		5
 
 #define RX_ACTION_NONE		0x00
-#define RX_ACTION_SENSE_UPDATE	0x01
+#define RX_ACTION_PLAY_CLICK	0x01
 #define RX_ACTION_EXIT		0x02
 
 typedef struct geiger_handles {
@@ -73,7 +73,6 @@ typedef struct geiger_handles {
 	volatile int	rxAction;
 	char *		click;
 	int		clickLen;
-	uint8_t		i2sEnable;
 	uint8_t		rxpkt[GEIGER_PKTLEN + 3];
 	thread_t *	pThread;
 } GHandles;
@@ -180,6 +179,12 @@ static THD_FUNCTION(geigerThread, arg)
 		if (p->rxAction == RX_ACTION_EXIT)
 			break;
 
+		if (p->rxAction == RX_ACTION_PLAY_CLICK) {
+			i2sPlay ("/sound/click.snd");
+			i2sWait ();
+			i2sAudioAmpCtl (I2S_AMP_ON);
+		}
+
 		p->rxAction = RX_ACTION_NONE;
 
 		geigerScan (p, ble_chan_map[37].ble_freq);
@@ -195,8 +200,6 @@ static THD_FUNCTION(geigerThread, arg)
 	}
 
 	gptStopTimer (&GPTD2);
-
-	i2sAudioAmpCtl (I2S_AMP_OFF);
 
 	nrf52radioStop ();
 	bleEnable ();
@@ -302,8 +305,6 @@ geiger_start (OrchardAppContext *context)
 	context->priv = p;
 
 	i2sPlay (NULL);
-	p->i2sEnable = i2sEnabled;
-	i2sEnabled = FALSE;
 	ledStop ();
 
 	p->font = gdispOpenFont (FONT_XS);
@@ -348,6 +349,7 @@ geiger_event (OrchardAppContext *context,
 	if (event->type == ugfxEvent) {
 		pe = event->ugfx.pEvent;
 		if (pe->type == GEVENT_GWIN_BUTTON) {
+			p->rxAction = RX_ACTION_PLAY_CLICK;
 			be = (GEventGWinButton *)pe;
 			if (be->gwin == p->ghExit) {
 				orchardAppExit ();
@@ -378,7 +380,10 @@ geiger_event (OrchardAppContext *context,
 
 	if (event->type == keyEvent && event->key.flags == keyPress) {
 		if (event->key.code == keyADown ||
- 		    event->key.code == keyBDown) {
+ 		    event->key.code == keyBDown ||
+ 		    event->key.code == keyALeft ||
+ 		    event->key.code == keyBLeft) {
+			p->rxAction = RX_ACTION_PLAY_CLICK;
 			if (p->rxThreshold > 0 ) {
 				p->rxThreshold--;
 				geigerSenseAdjust (p);
@@ -386,7 +391,10 @@ geiger_event (OrchardAppContext *context,
 		}
 
 		if (event->key.code == keyAUp ||
- 		    event->key.code == keyBUp) {
+ 		    event->key.code == keyBUp ||
+ 		    event->key.code == keyARight ||
+ 		    event->key.code == keyBRight) {
+			p->rxAction = RX_ACTION_PLAY_CLICK;
 			if (p->rxThreshold < 127) {
 				p->rxThreshold++;
 				geigerSenseAdjust (p);
@@ -408,7 +416,6 @@ geiger_exit (OrchardAppContext *context)
 	p->rxAction = RX_ACTION_EXIT;
 	chThdWait (p->pThread);
 
-	i2sEnabled = p->i2sEnable;
 	i2sPlay ("/sound/click.snd");
 
 	config = getConfig();
