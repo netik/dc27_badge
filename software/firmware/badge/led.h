@@ -35,6 +35,7 @@ extern void led_set (uint8_t index, uint8_t r, uint8_t g, uint8_t b);
 extern void ledStart(void);
 extern uint8_t ledStop(void);
 extern void ledSetPattern(uint8_t pattern);
+extern void ledDraw (short amplitude);
 extern uint8_t led_brightness_get(void);
 extern void led_brightness_set(uint8_t brightness);
 extern void led_clear(void);
