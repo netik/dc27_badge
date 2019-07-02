@@ -19,6 +19,7 @@
 #include "fontlist.h"
 #include "nrf52i2s_lld.h"
 #include "ides_gfx.h"
+#include "images.h"
 #include "ides_sprite.h"
 #include "images.h"
 #include "battle.h"
@@ -132,7 +133,7 @@ static void zoomEntity(ENTITY *e) {
 static void
 entity_init(ENTITY *p, int16_t size_x, int16_t size_y, enum entity_type t) {
   pixel_t *buf;
-  color_t color;
+  color_t color = Black;
 
   p->type = t;
   p->visible = false;
@@ -350,8 +351,16 @@ static void enemy_list_refresh(void) {
           e->ttl = p->ble_ttl;
         }
 
+        e->e.prevPos.x = e->e.vecPosition.x;
+        e->e.prevPos.y = e->e.vecPosition.y;
+
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
+
+        isp_set_sprite_xy(sprites,
+          e->e.sprite_id,
+          e->e.vecPosition.x,
+          e->e.vecPosition.y);
 
         e->xp = p->ble_game_state.ble_ides_xp;
       } else {
@@ -369,7 +378,7 @@ static void enemy_list_refresh(void) {
           continue;
         }
 
-        #ifdef DEBUG_ENEMY_DISCOVERY
+#ifdef DEBUG_ENEMY_DISCOVERY
           printf("enemy: found new enemy (ic=%d) %x:%x:%x:%x:%x:%x\n",
             p->ble_game_state.ble_ides_incombat,
             p->ble_peer_addr[5],
@@ -378,7 +387,7 @@ static void enemy_list_refresh(void) {
             p->ble_peer_addr[2],
             p->ble_peer_addr[1],
             p->ble_peer_addr[0]);
-        #endif
+#endif
         e = malloc(sizeof(ENEMY));
 
         if (current_battle_state == COMBAT) {

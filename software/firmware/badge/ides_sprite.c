@@ -16,6 +16,7 @@
 
 #include "async_io_lld.h"
 #include "badge.h"
+#include "images.h"
 #include "ides_sprite.h"
 #include <math.h>
 
@@ -34,6 +35,7 @@ const ISPRITE isprite_default = {
   .bgtype = ISP_BG_DYNAMIC,
   .active = FALSE,
   .visible = FALSE,
+  .auto_bg = FALSE,
   .bgcolor = HTML2COLOR(0x000000),
   .fname[0] = '\0'
 };
@@ -99,6 +101,229 @@ s3 = isp_make_sprite(sl);
 */
 
 
+WMAP *wm_make_wmap(void)
+{
+  WMAP *w;
+  w = calloc(1, sizeof(WMAP));
+  w->h = SCREEN_H;
+  w->w = SCREEN_W;
+
+  return(w);
+}
+
+/* so far just a free, but if this chjanges later, this would handle shutdown cleanly. */
+void wm_close_wmap(WMAP *w)
+{
+  if(NULL != w)
+  {
+    free(w);
+  }
+}
+
+
+
+/* iv v is 0 or 1, it sets the value.  if it's > 1, it GETS the value. */
+bool_t wm_value(WMAP *w, coord_t x, coord_t y, uint8_t v)
+{
+  bool_t ret;
+  int  offs = 0, bit=0;
+  offs = WM_STEP(x);
+  bit  = WM_BIT(x);
+  ret=v;
+
+  if( (y < w->h) && (x < w->w) )
+  {
+    if(0 == v)
+    {
+      w->map[y].row[offs] &= ~(1 << bit);
+    }
+    else if(1 == v)
+    {
+      w->map[y].row[offs] |= 1<< bit;
+
+    }
+    else
+    {
+      ret = (w->map[y].row[offs] >> bit) & 1;
+    }
+/*
+printf("x%u, y%u, v%u off%u bit %u ret:%u-- %lx\n", x,y,v, offs, bit, ret, w->map[y].row[offs]);
+*/
+  }
+  return(ret);
+}
+
+
+
+/*
+void wm_is_all_water(RECT b)
+{
+
+}
+*/
+
+WMAP *wm_build_land_map_from_screen(void)
+{
+  int i,j, pos;
+  coord_t x,y;
+  pixel_t *buf, px;
+  WMAP *w;
+
+  x=0;
+  y=0;
+  buf = calloc(20 * SCREEN_W, sizeof(pixel_t));
+
+  w = wm_make_wmap();
+
+  for(i=0; i < SCREEN_H; i += 20)
+  {
+    /* grab 20 rows at a time */
+    getPixelBlock(0, i, SCREEN_W, 20, buf);
+
+    for(j=0; j < 20; j++)
+    {
+
+      for(x=0; x < SCREEN_W; x++)
+      {
+        pos = (j*SCREEN_W)+x;
+        px=buf[pos];
+        if( (GET_PX_BLUE(px) < BLUE_THRESH ) ||
+              (GET_PX_GREEN(px) > NOTBLUE_THRESH) ||
+              (GET_PX_RED(px) > NOTBLUE_THRESH) )
+        {
+          wm_value(w, x, y, 1);
+        }
+      }
+
+      y++;
+    }
+  }
+  return(w);
+}
+
+
+/* pass valid rect to limit collision test to those coords */
+/* currenly uses that as course guide, it starts at the (int) containing that coord.
+ * so in this case, we say 45, but this will start at 32, which is the start of that
+ * int boundary.  to do it fully proper, we should mask off the extra bits on either side.  But if
+ * we are not packing more than one shape into the comparison map at a time, it will be fine.
+ *  01234567890123456789801234567891  23456789012345678901234567890123
+ * [................................][.............|||||||||||........]
+ *
+ */
+bool_t wm_collision_check_maps(WMAP *mapa, WMAP *mapb, RECT r)
+{
+  coord_t x=0, y=0, xmax=0, ymax=0, xstart=0;
+  bool_t ret=FALSE;
+
+
+  if(is_valid_rect(r))
+  {
+    xstart = WM_STEP(r.x);
+    y = r.y;
+    xmax = WM_STEP(r.xr);
+    ymax = r.yb;
+  }
+  else
+  {
+    xmax = WM_STEP(mapa->w);
+    ymax = mapa->h;
+  }
+
+
+
+  for( ; y < ymax; y++)
+  {
+    for(x=xstart ; x <= xmax; x++)
+    {
+      if(mapa->map[y].row[x] & mapb->map[y].row[x])
+      {
+        ret = TRUE;
+        break;
+      }
+    }
+    if(TRUE == ret)
+    {
+
+
+      break;
+    }
+  }
+  return(ret);
+}
+
+
+void print_wmap_hits(WMAP *w)
+{
+  coord_t x,y;
+  char s[200], st[200];
+  int t=FALSE;
+  for(y=0; y < w->h; y++)
+  {
+    strcpy(s, "");
+    strcpy(st, "");
+    for(x=0; x < WMAP_W; x++)
+    {
+      if(w->map[y].row[x])
+      {
+        if(t==FALSE)
+        {
+          sprintf(s, "x=%d ", x);
+        }
+
+        sprintf(st, "%lx ", w->map[y].row[x]);
+        strcat(s, st);
+        t=TRUE;
+      }
+    }
+    if(t)
+    {
+      printf("y:%d - %s\n", y, s);
+      t=FALSE;
+    }
+  }
+}
+
+bool_t wm_make_collision_box(WMAP *w, RECT r)
+{
+  coord_t x,y,first;
+  bool_t ret=FALSE;
+  if(is_valid_rect(r))
+  {
+    first=r.y;
+    /* it's a box.  properly set the first row, then duplicate that into the rest for speed. */
+
+    for(x=r.x; x < r.xr; x++)
+    {
+      wm_value(w, x, first, 1);
+    }
+    for(y=first+1; y < r.yb; y++)
+    {
+      memcpy(w->map[y].row, w->map[first].row, sizeof(WROW));
+    }
+    ret=TRUE;
+  }
+  return(ret);
+}
+
+bool_t wm_check_box_for_land_collision(WMAP *map, RECT r)
+{
+  bool_t ret = false;
+  WMAP *test;
+  if(FALSE != map)
+  {
+    test = wm_make_wmap();
+    wm_make_collision_box(test, r);
+/*
+  print_wmap_hits(test);
+*/
+  /* make a single row that has 1 in every X coord where the RECT covers.
+   * no need to do this for every row, it's box, every row is the osalMutexLock */
+    ret = wm_collision_check_maps(map, test, r);
+    wm_close_wmap(test);
+  }
+  return(ret);
+}
 
 
 /*
@@ -160,6 +385,19 @@ RECT make_bounding_rect(ISPBUF a, ISPBUF b)
   bb = b.y + b.ys;
   r.yb = (aa > bb) ? aa : bb;
   return(r);
+}
+
+
+/* return false if RECT is offscreen or invalid shape - i.e. X (left) is to the right of xr (right) */
+bool_t is_valid_rect(RECT r)
+{
+  bool_t ret = FALSE;
+  if( (r.x < r.xr) && (r.y < r.yb) &&
+      (r.xr < SCREEN_W) && (r.yb < SCREEN_H) )
+  {
+    ret = TRUE;
+  }
+  return(ret);
 }
 
 FOUR_RECTS get_exposed_bg_boxes(ISPRITESYS *iss, ISPID id)
@@ -369,6 +607,7 @@ ISPRITESYS *isp_init(void)
   iss = (ISPRITESYS *)malloc(sizeof(ISPRITESYS));
   if(NULL != iss)
   {
+    iss->wm = NULL;
     for(i=0; i < ISP_MAX_SPRITES; i++)
     {
       iss->list[i] = isprite_default;
@@ -377,6 +616,11 @@ ISPRITESYS *isp_init(void)
     }
   }
   return(iss);
+}
+
+void isp_scan_screen_for_water(ISPRITESYS *iss)
+{
+  iss->wm = wm_build_land_map_from_screen();
 }
 
 static bool_t isp_is_live(ISPRITESYS *iss, ISPID id)
@@ -393,8 +637,10 @@ bool_t isp_is_sprite_visible(ISPRITESYS *iss, ISPID id)
 
 
 /* overlap is TRUE if they have to overlap, not just touch to be considered a colision */
-/* TODO: make overlap do something. have to adjust one set of values
-  * currently it only detects overlaps, not touch
+/* if drawtest is TRUE, it tests against both sprite and BG for collsions.  this is because
+ * a spite that previously occupied the same space as anopther sprite in the last frame
+ * will trigger a background restoration in it's previous location, which will end up drawBufferedStringBox
+ * on top of the other sptite - so BOTH have to be flagged dirty.
  */
 bool_t isp_check_sprites_collision(ISPRITESYS *iss, ISPID id1, ISPID id2, bool_t overlap, bool_t drawtest)
 {
@@ -425,14 +671,13 @@ bool_t isp_check_sprites_collision(ISPRITESYS *iss, ISPID id1, ISPID id2, bool_t
     if(drawtest)
     {
       a = make_bounding_rect(iss->list[id1].sp_buf, iss->list[id1].bg_buf);
-      b = make_bounding_rect(iss->list[id2].sp_buf, iss->list[id1].bg_buf);
+      b = make_bounding_rect(iss->list[id2].sp_buf, iss->list[id2].bg_buf);
     }
     else
     {
       a = make_rect(iss->list[id1].sp_buf);
       b = make_rect(iss->list[id2].sp_buf);
     }
-
     if(overlap)
     {
       a.xr -= 1;
@@ -627,6 +872,18 @@ void isp_set_sprite_bgcolor(ISPRITESYS *iss, ISPID id, color_t col)
   }
 }
 
+/* feed this a color_t value.  like from HTML2COLOR(h) or RGB2COLOR(r,g,b);
+ *  it will fill the sprite's former position with solid block of that color.
+ */
+void isp_set_sprite_wmap_bgcolor(ISPRITESYS *iss, ISPID id, color_t col)
+{
+  if(id < ISP_MAX_SPRITES)
+  {
+    iss->list[id].bgcolor = col;
+    iss->list[id].auto_bg = TRUE;
+  }
+}
+
 /* releases the background color mode, and switches sprite to dynamic background mode
  */
 
@@ -640,13 +897,32 @@ void isp_release_sprite_bgcolor(ISPRITESYS *iss, ISPID id)
 }
 
 
+bool_t test_sprite_for_land_collision(ISPRITESYS *iss, ISPID id)
+{
+  RECT r;
+  ISPBUF *buf;
+  bool_t ret=FALSE;
+  if(id < ISP_MAX_SPRITES)
+  {
+    buf = &iss->list[id].sp_buf;
+    if( (NULL != iss->wm) &&
+        (buf->xs >0) &&
+        (buf->ys >0) )
+    {
+      r.x = buf->x;
+      r.y = buf->y;
+      r.xr = buf->x + buf->xs;
+      r.yb = buf->y + buf->ys;
 
-
+      ret = wm_check_box_for_land_collision(iss->wm, r);
+    }
+  }
+  return(ret);
+}
 
 void  isp_draw_all_sprites(ISPRITESYS *iss)
 {
   ISPID i, id, max, slist[ISP_MAX_SPRITES];
-
   /* make list of active only.  This way we don't have to perform that check constantly */
   max=0;
   for(i=0; i< ISP_MAX_SPRITES; i++)
@@ -686,6 +962,32 @@ void  isp_draw_all_sprites(ISPRITESYS *iss)
       isp_restore_bg(iss, id);
     }
   }
+
+  /* Now that BG is restored, check if we have a WMAP, and then test all auto_bg sprites against it and set their
+   * BG modes accordingly.
+   TODO: something here is broken, and the first time it switches to DYNAMIC, is restores from garbage memory.
+         like it isnt capturing the |BG block right that first pass?
+   */
+  if(NULL != iss->wm)
+  {
+    for(i=0; i< max; i++)
+    {
+      id = slist[i];
+      if(iss->list[id].auto_bg)
+      {
+        if(test_sprite_for_land_collision(iss, id))
+        {
+          iss->list[id].bgtype = ISP_BG_DYNAMIC;
+          //iss->list[id].status = ISP_STAT_DIRTY_BOTH;
+        }
+        else
+        {
+          iss->list[id].bgtype = ISP_BG_FIXEDCOLOR;
+        }
+      }
+    }
+  }
+
   /* now collect BG block from new sprite postitions */
   for(i=0; i< max; i++)
   {
@@ -709,11 +1011,18 @@ void  isp_draw_all_sprites(ISPRITESYS *iss)
   }
 }
 
+
+
 void isp_shutdown(ISPRITESYS *iss)
 {
   ISPID i;
   if(NULL != iss)
   {
+    if(NULL != iss->wm)
+    {
+      free(iss->wm);
+      iss->wm = NULL;
+    }
     for(i=0; i < ISP_MAX_SPRITES; i++)
     {
       isp_destroy_sprite(iss, i);
@@ -851,6 +1160,55 @@ if(col > 0xffffff)
 }
 
   i += 0.15;
+
+  isp_draw_all_sprites(sl);
+
+}
+
+
+void sprite_tester_mapaware(void)
+{
+  static ISPRITESYS *sl=NULL;
+  static double i = 0.0;
+  static ISPID s1;
+  static pixel_t *land, *water;
+  coord_t xs,ys, x,y;
+
+  xs=15;
+  ys=15;
+
+  if(NULL == sl)
+  {
+
+    sl = isp_init();
+    s1 = isp_make_sprite(sl); // make sprites.  none are drawn yet.
+
+water = boxmaker(xs,ys, HTML2COLOR(0xff0000));
+land = boxmaker(xs,ys, HTML2COLOR(0x00FFff));
+    isp_scan_screen_for_water(sl);
+    isp_set_sprite_wmap_bgcolor(sl, s1, HTML2COLOR(0x0000ff));
+
+  }
+  x=160 + (sin(-i+4.5) * 75);
+  y=120 + (cos(-i+4) * 60);
+
+
+  isp_set_sprite_xy(sl, s1, x, y );
+  if(test_sprite_for_land_collision(sl, s1))
+  {
+    isp_set_sprite_block(sl, s1, xs, ys, land, FALSE);
+  }
+  else
+  {
+    isp_set_sprite_block(sl, s1, xs, ys, water, FALSE);
+  }
+/*  isp_set_sprite_block(sl, s1, xs, ys, buf, TRUE);
+  free(buf);
+*/
+
+
+
+  i += 0.01;
 
   isp_draw_all_sprites(sl);
 
