@@ -168,5 +168,5 @@ photos_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Photos", "icons/helmet.rgb", 0, photos_init,
+orchard_app("Photos", "icons/film.rgb", 0, photos_init,
     photos_start, photos_event, photos_exit, 9999);

@@ -132,7 +132,7 @@ static void update_temp(DefaultHandles *p) {
   } else {
     if (temp == p->prevtemp)
         return;
-    p->prevtemp = temp; 
+    p->prevtemp = temp;
     fh = gdispGetFontMetric(p->fontSYS, fontHeight);
 
     ftemp = ((temp /4.00) * 9/5) + 32;
@@ -352,5 +352,5 @@ static void default_exit(OrchardAppContext *context) {
   return;
 }
 
-orchard_app("Badge", "icons/anchor.rgb", 0, default_init, default_start,
+orchard_app("Badge", "icons/abomb.rgb", 0, default_init, default_start,
 	default_event, default_exit, 0);

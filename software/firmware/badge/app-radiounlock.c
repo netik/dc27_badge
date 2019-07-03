@@ -315,6 +315,6 @@ radiounlock_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Radio Unlock", "icons/wheel.rgb", APP_FLAG_BLACKBADGE,
+orchard_app("Radio Unlock", "icons/radio.rgb", APP_FLAG_BLACKBADGE,
     radiounlock_init, radiounlock_start, radiounlock_event,
     radiounlock_exit, 2);

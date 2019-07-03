@@ -233,8 +233,8 @@ orchard_app("Be Prepared!", "icons/cd.rgb", APP_FLAG_UNLOCK,
     video_civildef, video_start,
     video_event, video_exit, 0);
 
-orchard_app("Da Bomb!", "icons/mask.rgb", 0, video_dabomb, video_start,
+orchard_app("Da Bomb!", "icons/energy.rgb", 0, video_dabomb, video_start,
     video_event, video_exit, 0);
 
-orchard_app("Misc Videos", "icons/mask.rgb", 0, video_misc, video_start,
+orchard_app("Misc Videos", "icons/tv.rgb", 0, video_misc, video_start,
     video_event, video_exit, 0);
