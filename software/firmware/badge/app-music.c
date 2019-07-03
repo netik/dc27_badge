@@ -182,6 +182,32 @@ columnDraw (int col, short amp)
 }
 
 static void
+musicLedDraw (short amp)
+{
+	int i;
+
+	if (amp > LED_COUNT_INTERNAL)
+		amp = LED_COUNT_INTERNAL;
+
+	for (i = LED_COUNT_INTERNAL; i >= 0; i--) {
+		if (i > amp) {
+			led_set (i - 1, 0, 0, 0);
+		} else {
+			if (i >= 1 && i <= 8)
+				led_set (i - 1, 0, 255, 0);
+			if (i >= 9 && i <= 16)
+				led_set (i - 1, 255, 255, 0);
+			if (i >= 17 && i <= 32)
+				led_set (i - 1, 255, 0, 0);
+		}
+	}
+
+	led_show ();
+	
+	return;
+}
+
+static void
 musicVisualize (MusicHandles * p, uint16_t * samples)
 {
 	unsigned int sum;
@@ -237,9 +263,9 @@ musicVisualize (MusicHandles * p, uint16_t * samples)
 	 * frob the LEDs.
 	 */
 
-	r = r / (MUSIC_SAMPLES / 4);
+	r >>= 9;
 	b = r;
-	ledDraw (b);
+	musicLedDraw (b);
 
 	/*
 	 * Draw the bar graph. We draw 160 bars that are each one pixel
