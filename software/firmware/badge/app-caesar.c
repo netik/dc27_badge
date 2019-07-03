@@ -45,7 +45,7 @@ static const char *casear_keyboarduitext[] = {
 	[CB_CAESAR] = "Enter rotation value.\nValue 0 through 25.",
 };
 
-static const char special_message[] = "guvfvfnohapubsenaqbzgrkgfbjrjvyyabgyrnxfrpergf";
+static const char special_message[] = "jusnlplntafaiibeexcmbdj";
 
 static const struct caesar_buttons caesar_buttons[] = {
 	{   0,   0, 259,  59, "Input Text" },
@@ -392,7 +392,6 @@ caesar_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
 	p = context->priv;
 
-	printf("testing\n");
 	/* Handle joypad events  */
 	if (event->type == keyEvent) {
 		if (event->key.flags == keyPress) {
