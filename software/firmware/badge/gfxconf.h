@@ -146,6 +146,7 @@
 //    #define GDISP_DONT_WAIT_FOR_NET_DISPLAY          FALSE
 //    #define GDISP_GFXNET_UNSAFE_SOCKETS              FALSE
 
+#define GDISP_NEED_TEXT_WORDWRAP TRUE
 
 ///////////////////////////////////////////////////////////////////////////
 // GWIN                                                                  //
@@ -214,7 +215,7 @@
 #define GFX_USE_GTIMER                               TRUE
 
 #define GTIMER_THREAD_PRIORITY                       NORMAL_PRIORITY
-#define GTIMER_THREAD_WORKAREA_SIZE                  0x400
+#define GTIMER_THREAD_WORKAREA_SIZE                  0x500
 
 
 ///////////////////////////////////////////////////////////////////////////

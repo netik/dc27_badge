@@ -348,9 +348,9 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
             (code[3] << 4) +
             code[4]);
 
-  if (mycode == 0x9000) {
+  if (mycode == 0x9000 && mycode == 0x0000) {
     // party code
-    putImageFile("images/missing.rgb", 0, 0);
+    putImageFile("images/invite.rgb", 0, 0);
     i2sPlay("sound/levelup.snd");
     chThdSleepMilliseconds(ALERT_DELAY);
     orchardAppRun(orchardAppByName("Badge"));
