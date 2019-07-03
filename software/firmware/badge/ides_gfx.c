@@ -1,8 +1,9 @@
-/* Ides of March Badge
+/* ides_gfx.c
  *
  * Shared Graphics Routines
- * J. Adams <1/2017>
+ * J. Adams (dc25: 1/2017, dc27: 6/2019)
  */
+ 
 #include "ch.h"
 #include "hal.h"
 
@@ -21,7 +22,10 @@
 #include "async_io_lld.h"
 #include "badge.h"
 
+#include <stdio.h>
+
 // WidgetStyle: RedButton, the only button we really use
+
 const GWidgetStyle RedButtonStyle = {
   HTML2COLOR(0xff0000),              // background
   HTML2COLOR(0xff6666),              // focus
@@ -48,6 +52,35 @@ const GWidgetStyle RedButtonStyle = {
     HTML2COLOR(0x800000),         // edge
     HTML2COLOR(0xff6a71),         // fill
     HTML2COLOR(0x008000),         // progress (active area)
+  }
+};
+
+const GWidgetStyle GreenButtonStyle = {
+    HTML2COLOR(0x00ff00),          // background
+    HTML2COLOR(0x66ff66),          // focus
+
+  // Enabled color set
+  {
+    HTML2COLOR(0xffffff),         // text
+    HTML2COLOR(0x008000),         // edge
+    HTML2COLOR(0x00ff00),         // fill
+    HTML2COLOR(0x800000),         // progress (inactive area)
+  },
+
+  // Disabled color set
+  {
+    HTML2COLOR(0x808080),         // text
+    HTML2COLOR(0x404040),         // edge
+    HTML2COLOR(0x404040),         // fill
+    HTML2COLOR(0x004000),         // progress (active area)
+  },
+
+  // Pressed color set
+  {
+    HTML2COLOR(0xFFFFFF),         // text
+    HTML2COLOR(0x008000),         // edge
+    HTML2COLOR(0x6aff71),         // fill
+    HTML2COLOR(0x800000),         // progress (active area)
   }
 };
 
@@ -277,17 +310,20 @@ void drawProgressBar(coord_t x, coord_t y,
   // for overflow here.
 
   color_t c = Lime;
+  int16_t remain;
   float remain_f;
 
-  if (currentval < 0) { currentval = 0; } // never overflow
+  if (currentval < 0)
+    currentval = 0; // never overflow
+
   if (currentval > maxval) {
     // prevent bar overflow
     remain_f = 1;
   } else {
-    remain_f = (float) currentval / (float)maxval;
+    remain_f = (float)currentval / (float)maxval;
   }
 
-  int16_t remain = width * remain_f;
+  remain = width * remain_f;
 
 #ifdef notdef
   if (use_leds == 1) {
@@ -310,9 +346,9 @@ void drawProgressBar(coord_t x, coord_t y,
    */
 
   GDISP->clipx0 = 0;
-	GDISP->clipy0 = 0;
-	GDISP->clipx1 = 320;
-	GDISP->clipy1 = 240;
+  GDISP->clipy0 = 0;
+  GDISP->clipx1 = 320;
+  GDISP->clipy1 = 240;
 
   if (reverse) {
     gdispFillArea(x,y+1,(width - remain)-1,height-2, Black);
@@ -322,7 +358,8 @@ void drawProgressBar(coord_t x, coord_t y,
     gdispFillArea(x,y,remain,height, c);
   }
 
-  gdispDrawBox(x,y,width,height, c);
+  gdispDrawBox (x, y, width, height, c);
+  gdispDrawBox (x - 1, y - 1, width + 2, height + 2, Black);
 }
 
 /*
@@ -413,4 +450,49 @@ void drawBufferedStringBox(
 
     // paint the text
     gdispDrawStringBox(x,y,cx,cy,str,font,color,justify);
+}
+
+char *getAvatarImage(int shipclass, bool is_player, char frame, bool is_right) {
+  static char fname[64];
+
+  /*
+   * Ships are identified by the following filename structure: game/ + ...
+   *   s2e-h-l.tif
+   *    ^^ ^ ^
+   *    || | +---- Orientation (L)eft facing or (R)ight facing
+   *    || +------ Frame Type (see below)
+   *    |+-------- 'e' enemy or 'p' player. Basically, Red, or Black.
+   *    +--------- Ship class number (see ships.c/ships.h)
+   *    Ship class numbers
+   *
+   * 0:   PT_Boat
+   * 1:   Patrol_Ship
+   * 2:   Destroyer
+   * 3:   ruiser
+   * 4:   Frigate
+   * 5:   Battleship
+   * 6:   Submarine
+   * 7:   Tesla_Ship
+   *
+   * Frame type
+   * This indicates which animation frame this image is for.
+   *
+   * n    normal
+   * h    ship was hit
+   * d    ship was destroyed
+   * g    ship is regenerating
+   * t    ship is teleporting
+   * s    ship has shields up
+   * u    (u-boat) ship is submerged
+   *
+   */
+
+  sprintf(fname,
+          "game/s%d%c-%c-%c.rgb",
+          shipclass - 1,
+          is_player ? 'p' : 'e',
+          frame,
+          is_right ? 'r' : 'l');
+
+  return(fname);
 }

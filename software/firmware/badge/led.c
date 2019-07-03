@@ -43,6 +43,7 @@ void led_show(void);
 void led_reset(void);
 void led_reinit(void);
 void ledSetPattern(uint8_t);
+void ledDraw (short);
 
 void led_pattern_balls_init(led_pattern_balls_t *);
 void led_pattern_balls(led_pattern_balls_t*);
@@ -276,6 +277,32 @@ void ledSetPattern(uint8_t patt) {
     // our thread is stopped.
     ledStart();
   }
+}
+
+void
+ledDraw (short amp)
+{
+	int i;
+
+	if (amp > LED_COUNT_INTERNAL)
+		amp = LED_COUNT_INTERNAL;
+
+	for (i = LED_COUNT_INTERNAL; i >= 0; i--) {
+		if (i > amp) {
+			led_set (i - 1, 0, 0, 0);
+		} else {
+			if (i >= 1 && i <= 8)
+				led_set (i - 1, 0, 255, 0);
+			if (i >= 9 && i <= 16)
+				led_set (i - 1, 255, 255, 0);
+			if (i >= 17 && i <= 32)
+				led_set (i - 1, 255, 0, 0);
+		}
+	}
+
+	led_show ();
+	
+	return;
 }
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {

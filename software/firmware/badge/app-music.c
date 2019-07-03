@@ -182,32 +182,6 @@ columnDraw (int col, short amp)
 }
 
 static void
-ledDraw (short amp)
-{
-	int i;
-
-	if (amp > LED_COUNT_INTERNAL)
-		amp = LED_COUNT_INTERNAL;
-
-	for (i = LED_COUNT_INTERNAL; i >= 0; i--) {
-		if (i > amp) {
-			led_set (i - 1, 0, 0, 0);
-		} else {
-			if (i >= 1 && i <= 8)
-				led_set (i - 1, 0, 255, 0);
-			if (i >= 9 && i <= 16)
-				led_set (i - 1, 255, 255, 0);
-			if (i >= 17 && i <= 32)
-				led_set (i - 1, 255, 0, 0);
-		}
-	}
-
-	led_show ();
-	
-	return;
-}
-
-static void
 musicVisualize (MusicHandles * p, uint16_t * samples)
 {
 	unsigned int sum;
@@ -442,8 +416,8 @@ music_event(OrchardAppContext *context, const OrchardAppEvent *event)
 		chThdSetPriority (HIGHPRIO - 5);
 
 		strcpy(musicfn, MUSICDIR);
-    strcat(musicfn, "/");
-    strcat(musicfn, p->listitems[uiContext->selected +1]);
+		strcat(musicfn, "/");
+		strcat(musicfn, p->listitems[uiContext->selected +1]);
 
 		if (musicPlay (p, musicfn) != 0)
 			i2sPlay ("sound/click.snd");
@@ -478,5 +452,5 @@ music_exit(OrchardAppContext *context)
 	return;
 }
 
-orchard_app("Play Music", "icons/jelly.rgb", 0, music_init, music_start,
+orchard_app("Play Music", "icons/spectrum.rgb", 0, music_init, music_start,
     music_event, music_exit, 9999);

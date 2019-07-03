@@ -8,16 +8,19 @@
 #include "vector.h"
 #include "gfx.h"
 
-#define FB_X 10
-#define FB_Y 10
+#include "ides_sprite.h"
 
 enum entity_type { T_PLAYER, T_ENEMY, T_BULLET, T_SPECIAL };
 
 typedef struct _entity {
   enum entity_type type;
+
+  ISPID sprite_id;               /* sprite id */
+
   bool visible;
   bool blinking;
   int ttl;                /* if -1, always visible, else a number of frames */
+
   VECTOR vecVelocity;     /* current velocity */
   VECTOR vecVelocityGoal; /* goal velocity */
   VECTOR vecPosition;     /* position */
@@ -25,9 +28,8 @@ typedef struct _entity {
   VECTOR vecGravity;
   VECTOR vecPositionLast; /* if this doesn't match, we'll erase and repaint */
 
-  /* contents of the previous area */
-  bool pix_inited;
-  pixel_t pix_old[FB_X * FB_Y]; /* frame buffer */
+  uint8_t size_x;
+  uint8_t size_y;
 
 } ENTITY;
 

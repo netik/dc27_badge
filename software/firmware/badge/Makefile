@@ -216,6 +216,7 @@ CSRC += main.c \
 	app-puzwatch.c \
 	app-spa-pin.c \
 	app-caesar.c \
+	app-geiger.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \
@@ -235,6 +236,7 @@ CSRC += main.c \
 	xpt2046_lld.c \
 	video_lld.c \
 	badge_vectors.c \
+	ides_sprite.c \
 	ides_gfx.c \
 	newlib_syscall.c \
         $(GFXSRC) \
