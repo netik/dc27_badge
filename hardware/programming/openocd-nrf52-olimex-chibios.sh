@@ -15,4 +15,4 @@ openocd -f interface/ftdi/olimex-arm-usb-ocd-h.cfg	\
 	-f target/nrf52.cfg				\
 	-c "gdb_flash_program enable"			\
 	-c "gdb_breakpoint_override hard"		\
-	-c "nrf52.cpu configure -rtos ChibiOS"	$*
+	-c "nrf52.cpu configure -rtos ChibiOS"	"$@"
