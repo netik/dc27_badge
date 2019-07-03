@@ -49,6 +49,7 @@
 #include "../updater/updater.h"
 
 #include <string.h>
+#include <stdio.h>
 
 typedef struct _VHandles {
 	GListener glCtListener;
@@ -127,10 +128,11 @@ update (VHandles * p)
 	    " THE UPDATE IS FINISHED");
 
 	chThdSleepMilliseconds (2000);
-
 	f_open (&f, UPDATER_NAME, FA_READ);
 	f_read (&f, (char *)UPDATER_BASE, UPDATER_SIZE, &br);
 	f_close (&f);
+
+	__ISB();
 
 	/*
 	 * Now that we've loaded the updater, turn off the SPI
