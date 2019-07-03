@@ -52,10 +52,10 @@ static const struct caesar_buttons caesar_buttons[] = {
 	{   0,  60, 259, 119, "Key" },
 	{   0, 120, 259, 179, "Output" },
 	{ 260,   0, 319, 179, "Swap" },
-	{   0, 180,  79, 239, "Caesar" },
-	{  80, 180, 159, 239, "Encipher" },
-	{ 160, 180, 239, 239, "Decipher" },
-	{ 240, 180, 319, 239, "Exit" },
+	{   0, 180,  69, 239, "Caesar" },
+	{  70, 180, 159, 239, "Encipher" },
+	{ 160, 180, 249, 239, "Decipher" },
+	{ 250, 180, 319, 239, "Exit" },
 };
 
 #define	CB_MAXLEN 81
