@@ -421,5 +421,5 @@ geiger_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("RF Counter", "icons/danger.rgb",
+orchard_app("RF Counter", "icons/rad.rgb",
     0, geiger_init, geiger_start, geiger_event, geiger_exit, 9999);
