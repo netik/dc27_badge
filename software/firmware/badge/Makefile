@@ -356,7 +356,7 @@ include $(RULESPATH)/rules.mk
 PRE_MAKE_ALL_RULE_HOOK: buildtime.h
 
 buildtime.h: updatebuildtime
-	echo "#define BUILDTIME \"Built: `/bin/date` (`/bin/hostname -s | cut -c -20`)\"" > $@
+	echo "#define BUILDTIME \"Built: `/bin/date`\"" > $@
 	echo "#define BUILDVER `/bin/date +%s`" >> $@
 	echo "#define BUILDMAGIC 0xCAFEBABE" >> $@
 
