@@ -3,8 +3,6 @@
 const char* battle_state_name[]  = {
   "NONE"  ,             // 0 - Not started yet.
   "WORLD_MAP"  ,        // 1 - we're in the lobby
-  "GRANT_ACCEPT" ,      // 2 - Shown when you get an unlock from a BLACK_BADGE
-  "GRANT_SCREEN"  ,     // 3 - Choose grant to send to user
   "APPROVAL_DEMAND"  ,  // 4 - I want to fight you!
   "APPROVAL_WAIT"  ,    // 5 - I am waiting to see if you want to fight me
   "VS_SCREEN"  ,        // 6 - I am showing the versus screen.
@@ -19,8 +17,6 @@ const char* battle_state_name[]  = {
 typedef enum _battle_state {
   NONE,             // 0 - Not started yet.
   WORLD_MAP,        // 1 - We're in the lobby.
-  GRANT_ACCEPT,     // 2 - We're getting a grant
-  GRANT_SCREEN,     // 3 - We're sending a grant
   APPROVAL_DEMAND,  // 4 - I want to fight you!
   APPROVAL_WAIT,    // 5 - I am waiting to see if you want to fight me
   VS_SCREEN,        // 6 - I am showing the versus screen.
@@ -51,9 +47,18 @@ static void state_approval_demand_enter(void);
 static void state_approval_demand_tick(void);
 static void state_approval_demand_exit(void);
 
+static void state_vs_enter(void);
+static void state_vs_tick(void);
+static void state_vs_exit(void);
+
 static void state_combat_enter(void);
 static void state_combat_tick(void);
 static void state_combat_exit(void);
+
+static void state_levelup_enter(void);
+static void state_levelup_tick(void);
+static void state_levelup_exit(void);
+
 
 /* The function state table, a list of pointers to functions to run
  * the game.
@@ -78,16 +83,6 @@ state_funcs battle_funcs[] = {
     state_worldmap_tick,
     state_worldmap_exit
   },
-  { // grant accept
-    NULL,
-    NULL,
-    NULL
-  },
-  { // grant screen
-    NULL,
-    NULL,
-    NULL
-  },
   { // approval_demand - you are attacking us, we need to prompt
     state_approval_demand_enter,
     state_approval_demand_tick,
@@ -99,9 +94,9 @@ state_funcs battle_funcs[] = {
     state_approval_wait_exit,
   },
   {  // vs_screen
-    NULL,
-    NULL,
-    NULL
+    state_vs_enter,
+    state_vs_tick,
+    state_vs_exit
   },
   {  // combat
     state_combat_enter,
@@ -124,9 +119,9 @@ state_funcs battle_funcs[] = {
     NULL
   },
   {  // levelup
-    NULL,
-    NULL,
-    NULL
+    state_levelup_enter,
+    state_levelup_tick,
+    state_levelup_exit
   },
 
 };

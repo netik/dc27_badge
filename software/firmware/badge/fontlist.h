@@ -3,6 +3,7 @@
 #define FONT_LG           "Futura_Medium_0136"
 #define FONT_SM           "Futura_Medium_0120"  
 #define FONT_XS           "Futura_Medium_0112"
+#define FONT_STENCIL      "octin_stencil_rg24"
 
 /* manteka has no lowercase, which sucks.  */
 #define FONT_FIXED        "manteka20"
