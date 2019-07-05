@@ -352,7 +352,7 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
     // party code
     putImageFile("images/invite.rgb", 0, 0);
     i2sPlay("sound/levelup.snd");
-    chThdSleepMilliseconds(ALERT_DELAY);
+    chThdSleepMilliseconds(ALERT_DELAY * 2);
     orchardAppRun(orchardAppByName("Badge"));
     return true;
   }
