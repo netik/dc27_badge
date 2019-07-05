@@ -116,14 +116,18 @@
  * save FPU state during a context switch.
  */
 
-#define PORT_INT_REQUIRED_STACK 104
+#define PORT_INT_REQUIRED_STACK 128
 
 /*
  * We would like the idle thread to put the CPU to sleep during idle
  * periods instead of busy-waiting. This saves power.
+ *
+ * Note: We now use a custom idle loop for this, because we sometimes
+ * need to temporarily keep the CPU from sleeping to avoid the added
+ * latency incurred when waking up.
  */
 
-#define CORTEX_ENABLE_WFI_IDLE TRUE
+#define CORTEX_ENABLE_WFI_IDLE FALSE
 
 /*
  * Don't remap the interrupt vector table. The SoftDevice greedily wants
@@ -623,6 +627,8 @@
  */
 #define CH_CFG_IDLE_LOOP_HOOK() {                                           \
   /* Idle loop code here.*/                                                 \
+  extern void badge_idle (void);                                            \
+  badge_idle ();                                                            \
 }
 
 /**

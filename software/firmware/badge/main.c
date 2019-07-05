@@ -238,10 +238,16 @@ int main(void)
         SCB_SHCSR_BUSFAULTENA_Msk |
         SCB_SHCSR_MEMFAULTENA_Msk;
 
+    /* Enable deep sleep mode when we execute a WFI */
+
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+
     /*
      * Enable FPU interrupts. These signal events like underflow and
      * overflow. Technically it's safe to ignore them, but we really
-     * should at mimimum clear them when they occur.
+     * should at mimimum clear them when they occur. If we don't,
+     * by leaving the interrupt outstanding, we won't be able to
+     * enter low power sleep mode.
      */
 
     NVIC_SetPriority (FPU_IRQn, NRF5_FPU_IRQ_PRIORITY);
@@ -253,7 +259,7 @@ int main(void)
     chSysInit();
     shellInit();
 
-    /* Initialize newlib facilities. */
+    /* Initialize newlib (libc) facilities. */
 
     newlibStart ();
 
