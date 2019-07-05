@@ -236,6 +236,7 @@ CSRC += main.c \
 	badge_vectors.c \
 	ides_sprite.c \
 	ides_gfx.c \
+	strutil.c \
 	newlib_syscall.c \
         $(GFXSRC) \
 	$(FATFSSRC) \

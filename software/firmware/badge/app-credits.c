@@ -63,7 +63,7 @@ credits_start(OrchardAppContext *context)
 
 	i2sWait ();
 	i2sPlay ("sound/fflost.snd");
-	r = scrollImage ("images/credits.rgb", 15);
+	r = scrollImage ("images/credits.rgb", 25);
 
 	chThdSleepMilliseconds (800);
 

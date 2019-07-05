@@ -35,6 +35,8 @@
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 
+#include "strutil.h"
+
 // debugs the discovery process
 #define DEBUG_ENEMY_DISCOVERY
 #define DEBUG_BATTLE_STATE 1
@@ -81,6 +83,7 @@ typedef struct {
   font_t	fontLG;
   font_t	fontXS;
   font_t	fontSM;
+  font_t  fontSTENCIL;
   GHandle	ghTitleL;
   GHandle	ghTitleR;
   GHandle	ghACCEPT;
@@ -104,6 +107,21 @@ static void changeState(battle_state nextstate);
 static ENEMY *enemy_find_by_peer(uint8_t *addr);
 static void render_all_enemies(void);
 /* end protos */
+
+static uint16_t xp_for_level(uint8_t level) {
+  // return the required amount of XP for a given level
+  uint16_t xp_req[] = {
+  //1    2    3     4     5     6     7     8     9    10
+    0, 400, 880, 1440, 2080, 2800, 3600, 4480, 5440, 6480
+  };
+
+  if ((level <= 10) && (level >= 1)) {
+    return xp_req[level-1];
+  } else {
+    return 0;
+  }
+
+}
 
 static
 int getMapTile(ENTITY *e) {
@@ -493,6 +511,7 @@ battle_start (OrchardAppContext *context)
   bh->fontXS = gdispOpenFont (FONT_XS);
   bh->fontLG = gdispOpenFont (FONT_LG);
   bh->fontSM = gdispOpenFont (FONT_SM);
+  bh->fontSTENCIL = gdispOpenFont (FONT_STENCIL);
 
   // gtfo if in airplane mode.
   if (config->airplane_mode) {
@@ -510,7 +529,8 @@ battle_start (OrchardAppContext *context)
   gwinAttachListener (&bh->gl);
   geventRegisterCallback (&bh->gl, orchardAppUgfxCallback, &bh->gl);
 
-  changeState(WORLD_MAP);
+  changeState(LEVELUP);
+  //changeState(WORLD_MAP);
   return;
 }
 
@@ -963,6 +983,9 @@ static void battle_exit(OrchardAppContext *context)
   if (bh->fontSM)
     gdispCloseFont (bh->fontSM);
 
+  if (bh->fontSTENCIL)
+      gdispCloseFont (bh->fontSTENCIL);
+
   if (bh->ghTitleL)
     gwinDestroy (bh->ghTitleL);
 
@@ -1277,6 +1300,131 @@ void state_combat_exit(void) {
   me.size_x = 10;
   me.size_y = 10;
 }
+
+static void state_levelup_enter(void) {
+  GWidgetInit wi;
+  battle_ui_t *p = mycontext->priv;
+  userconfig *config = getConfig();
+  char tmp[40];
+  int curpos;
+
+  gdispClear(Black);
+  i2sPlay("game/levelup.snd");
+  putImageFile("game/map-07.rgb",0,0);
+  putImageFile(getAvatarImage(config->level+1, true, 'n', false),
+               270,79);
+  // insiginia
+  sprintf(tmp, "game/rank-%d.rgb", config->level+1);
+  putImageFile(tmp, 35, 79);
+  gdispDrawBox(35, 79, 53, 95,Grey);
+
+  curpos = 10;
+  gdispDrawStringBox (35,
+		                  curpos,
+                      300,
+                      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+		                  "RANK UP!",
+                      p->fontSTENCIL,
+                      Yellow,
+                      justifyLeft);
+
+  curpos = curpos + gdispGetFontMetric(p->fontSTENCIL, fontHeight);
+
+  gdispDrawStringBox (35,
+		                  curpos,
+                      300,
+                      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+		                  rankname[config->level+1],
+                      p->fontSTENCIL,
+                      Yellow,
+                      justifyLeft);
+
+  curpos = 85;
+  strncpy(tmp, shiptable[config->level+1].type_name,40);
+  strntoupper(tmp, 40);
+
+  gdispDrawStringBox (110,
+		                  curpos,
+                      210,
+                      gdispGetFontMetric(p->fontSM, fontHeight),
+		                  tmp,
+                      p->fontSM,
+                      White,
+                      justifyLeft);
+
+  curpos = curpos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
+
+  gdispDrawStringBox (110,
+		                  curpos,
+                      210,
+                      gdispGetFontMetric(p->fontSM, fontHeight),
+		                  "UNLOCKED!",
+                      p->fontSM,
+                      White,
+                      justifyLeft);
+
+  curpos = 145;
+  gdispDrawStringBox (110,
+		                  curpos,
+                      210,
+                      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+		                  "NEXT LEVEL",
+                      p->fontSTENCIL,
+                      Yellow,
+                      justifyLeft);
+
+  curpos = curpos + gdispGetFontMetric(p->fontSTENCIL, fontHeight) + 2;
+
+  sprintf(tmp, "AT %d XP",  xp_for_level(config->level+1));
+  gdispDrawStringBox (110,
+		                  curpos,
+                      210,
+                      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+		                  tmp,
+                      p->fontSTENCIL,
+                      Yellow,
+                      justifyLeft);
+
+  // draw UI
+  gwinSetDefaultStyle(&RedButtonStyle, FALSE);
+  gwinWidgetClearInit(&wi);
+  wi.g.show = TRUE;
+  wi.g.x = 110;
+  wi.g.y = 210;
+  wi.g.width = 150;
+  wi.g.height = 30;
+  wi.text = "CONTINUE";
+
+  p->ghACCEPT = gwinButtonCreate(0, &wi);
+
+  gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
+}
+
+static void state_levelup_tick(void) {
+  /* no-op we will hold the levelup screen indefinately until the user
+   * chooses. the user is also in-combat and cannot accept new fights
+   */
+}
+
+static void state_levelup_exit(void) {
+  battle_ui_t *p = mycontext->priv;
+
+  if (p->ghACCEPT != NULL)
+    gwinDestroy (p->ghACCEPT);
+}
+
+static void state_vs_enter(void) {
+
+}
+
+static void state_vs_tick(void) {
+
+}
+
+static void state_vs_exit(void) {
+
+}
+
 
 // -------------------------------------------------------------------------
 

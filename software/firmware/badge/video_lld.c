@@ -44,6 +44,8 @@
 #include "async_io_lld.h"
 #include "nrf52i2s_lld.h"
 
+#include "badge.h"
+
 #include <stdlib.h>
 
 int
@@ -134,6 +136,8 @@ videoWinPlay (char * fname, int x, int y)
 
 	i2sAudioAmpCtl (I2S_AMP_ON);
 
+	badge_sleep_disable ();
+
 	while (1) {
 
 		if (br == 0)
@@ -219,6 +223,8 @@ videoWinPlay (char * fname, int x, int y)
 		if (me != NULL && me->buttons & GMETA_MOUSE_DOWN)
 			break;
 	}
+
+	badge_sleep_enable ();
 
 	/* Drain any pending I/O */
 

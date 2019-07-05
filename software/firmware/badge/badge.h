@@ -33,4 +33,7 @@
 
 extern void newlibStart (void);
 
+extern void badge_sleep_enable (void);
+extern void badge_sleep_disable (void);
+
 #endif /* _BADGE_H_ */

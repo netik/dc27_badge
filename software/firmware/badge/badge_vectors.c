@@ -32,8 +32,10 @@
 
 #include "ch.h"
 #include "hal.h"
+#include "gfx.h"
 
 #include <stdio.h>
+#include <stdint.h>
 
 /*
  * Information on fault handling comes from the Cortex-M4 Generic User Guide
@@ -100,6 +102,25 @@ static char * exc_msg[] = {
 };
 
 static char exc_msgbuf[80];
+
+/*
+ * This global controls whether or not the idle thread will execute
+ * a WFI instruction to put the CPU to sleep when we're idle. This
+ * is generally a good idea for power saving. However, it takes a
+ * certain amount of time for the CPU to begin executing instructions
+ * again after you wake it up, and that can be bad for certain places
+ * where we need low latency. For example, the music player app has
+ * to read data from the SD card, draw the spectrograph on the screen,
+ * update the LED array, and send audio samples through the I2S
+ * controller. We need to keep writing samples into the I2S controller
+ * on a regular basis in order to avoid the audio sounding warbly.
+ * Sometimes it takes the CPU too long to wake up after sleeping and
+ * we can't meet the deadline, so in those cases, we can set this
+ * variable to false temporarily in order to prevent the CPU from
+ * sleeping.
+ */
+
+static volatile bool_t badge_sleep = TRUE;
 
 /*
  * FPU interrupt
@@ -177,6 +198,27 @@ OSAL_IRQ_HANDLER(VectorD8)
 
 	OSAL_IRQ_EPILOGUE();
 
+	return;
+}
+
+void
+badge_idle (void)
+{
+	if (badge_sleep == TRUE)
+		__WFI();
+}
+
+void
+badge_sleep_enable (void)
+{
+	badge_sleep = TRUE;
+	return;
+}
+
+void
+badge_sleep_disable (void)
+{
+	badge_sleep = FALSE;
 	return;
 }
 

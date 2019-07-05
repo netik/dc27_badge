@@ -4,7 +4,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "chprintf.h"
 
 #include "orchard-app.h"
 #include "orchard-events.h"
@@ -196,17 +195,17 @@ static void redraw_badge(DefaultHandles *p) {
 
   /* XP/WON */
   ypos=210;
-  chsnprintf(tmp, sizeof(tmp), "%3d", config->xp);
+  snprintf(tmp, sizeof(tmp), "%3d", config->xp);
   draw_stat (p, 50, ypos, "XP", tmp);
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
 
   // WON
-  chsnprintf(tmp, sizeof(tmp), "%3d", config->won);
+  snprintf(tmp, sizeof(tmp), "%3d", config->won);
   draw_stat (p, 50, ypos, "WON", tmp);
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
 
   // LOST
-  chsnprintf(tmp, sizeof(tmp), "%3d", config->lost);
+  snprintf(tmp, sizeof(tmp), "%3d", config->lost);
   draw_stat (p, 50, ypos, "LOST", tmp);
   ypos = ypos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
 

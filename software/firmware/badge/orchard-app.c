@@ -4,7 +4,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "chprintf.h"
 #include "orchard-app.h"
 #include "orchard-events.h"
 #include "orchard-ui.h"

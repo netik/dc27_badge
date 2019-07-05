@@ -3,7 +3,7 @@
  * Shared Graphics Routines
  * J. Adams (dc25: 1/2017, dc27: 6/2019)
  */
- 
+
 #include "ch.h"
 #include "hal.h"
 
