@@ -7,7 +7,6 @@
 #include "hal.h"
 #include "shell.h"
 
-#include "chprintf.h"
 #include "userconfig.h"
 #include "shell.h"
 
@@ -28,7 +27,7 @@ void cmd_whoami(BaseSequentialStream *chp, int argc, char *argv[])
   (void)argc;
   (void)argv;
 
-  chprintf(chp, "%s\r\n", config->name);
+  printf ("%s\r\n", config->name);
 
 }
 
@@ -39,7 +38,7 @@ void cmd_uname(BaseSequentialStream *chp, int argc, char *argv[])
   (void)argc;
   (void)argv;
 
-  chprintf(chp, "ChibiOS %s %s; %s %s %s\r\n",
+  printf ("ChibiOS %s %s; %s %s %s\r\n",
            CH_KERNEL_VERSION,
            BOARD_NAME,
            PORT_ARCHITECTURE_NAME,

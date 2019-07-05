@@ -5,7 +5,6 @@
 #include "ch.h"
 #include "hal.h"
 #include "hal_spi.h"
-#include "chprintf.h"
 #include "shell.h"
 
 #include "gfx.h"

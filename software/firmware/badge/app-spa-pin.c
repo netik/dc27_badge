@@ -7,7 +7,6 @@
 
 #include "ble_lld.h"
 
-#include "chprintf.h"
 #include "unlocks.h"
 #include "badge.h"
 

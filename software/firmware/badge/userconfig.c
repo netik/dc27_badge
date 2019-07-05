@@ -1,7 +1,6 @@
 #include "ch.h"
 #include "hal.h"
 #include "shell.h"
-#include "chprintf.h"
 
 #include "joypad_lld.h"
 #include "nrf52flash_lld.h"
