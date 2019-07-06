@@ -642,6 +642,7 @@ static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
   (void) context;
+  userconfig *config = getConfig();
   ENEMY *nearest;
   battle_ui_t *bh;
   GEvent * pe;
@@ -731,6 +732,21 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   			}
       }
 		}
+
+    if (current_battle_state == LEVELUP) {
+  		pe = event->ugfx.pEvent;
+  		if (pe->type == GEVENT_GWIN_BUTTON) {
+  			be = (GEventGWinButton *)pe;
+  			if (be->gwin == bh->ghACCEPT) {
+          // now that they've accepted, actually do the level-up.
+          i2sPlay ("sound/click.snd");
+          config->level++;
+          configSave(config);
+          changeState(WORLD_MAP);
+        }
+      }
+    }
+
   }
 
   // deal with the radio
@@ -1309,10 +1325,9 @@ static void state_levelup_enter(void) {
   int curpos;
 
   gdispClear(Black);
-  i2sPlay("game/levelup.snd");
+  i2sPlay("sound/levelup.snd");
   putImageFile("game/map-07.rgb",0,0);
-  putImageFile(getAvatarImage(config->level+1, true, 'n', false),
-               270,79);
+
   // insiginia
   sprintf(tmp, "game/rank-%d.rgb", config->level+1);
   putImageFile(tmp, 35, 79);
@@ -1339,31 +1354,40 @@ static void state_levelup_enter(void) {
                       Yellow,
                       justifyLeft);
 
-  curpos = 85;
-  strncpy(tmp, shiptable[config->level+1].type_name,40);
-  strntoupper(tmp, 40);
 
-  gdispDrawStringBox (110,
-		                  curpos,
-                      210,
-                      gdispGetFontMetric(p->fontSM, fontHeight),
-		                  tmp,
-                      p->fontSM,
-                      White,
-                      justifyLeft);
+  if (config->level+1 < 6) {
+    // this unlocks a ship
+    putImageFile(getAvatarImage(config->level+1, true, 'n', false),
+                 270,79);
+    gdispDrawBox(270, 79, 40, 40, White);
+    curpos = 79;
+    strncpy(tmp, shiptable[config->level+1].type_name,40);
+    strntoupper(tmp, 40);
 
-  curpos = curpos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
+    gdispDrawStringBox (110,
+  		                  curpos,
+                        210,
+                        gdispGetFontMetric(p->fontSM, fontHeight),
+  		                  tmp,
+                        p->fontSM,
+                        White,
+                        justifyLeft);
 
-  gdispDrawStringBox (110,
-		                  curpos,
-                      210,
-                      gdispGetFontMetric(p->fontSM, fontHeight),
-		                  "UNLOCKED!",
-                      p->fontSM,
-                      White,
-                      justifyLeft);
+    curpos = curpos + gdispGetFontMetric(p->fontSM, fontHeight) + 2;
 
-  curpos = 145;
+    gdispDrawStringBox (110,
+  		                  curpos,
+                        210,
+                        gdispGetFontMetric(p->fontSM, fontHeight),
+  		                  "UNLOCKED!",
+                        p->fontSM,
+                        White,
+                        justifyLeft);
+    curpos = 145;
+  } else {
+    // we'll draw the next level message in it's place.
+    curpos = 79;
+  }
   gdispDrawStringBox (110,
 		                  curpos,
                       210,
@@ -1389,10 +1413,10 @@ static void state_levelup_enter(void) {
   gwinSetDefaultStyle(&RedButtonStyle, FALSE);
   gwinWidgetClearInit(&wi);
   wi.g.show = TRUE;
-  wi.g.x = 110;
-  wi.g.y = 210;
+  wi.g.x = 85;
+  wi.g.y = 206;
   wi.g.width = 150;
-  wi.g.height = 30;
+  wi.g.height = 34;
   wi.text = "CONTINUE";
 
   p->ghACCEPT = gwinButtonCreate(0, &wi);

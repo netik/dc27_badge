@@ -18,7 +18,7 @@ void splash_footer(void) {
   gdispDrawStringBox (0, 210, gdispGetWidth(),
 		      gdispGetFontMetric(font, fontHeight),
 		      "DA BOMB! DC 27 (2019)",
-		      font, Cyan, justifyCenter);
+		      font, Red, justifyCenter);
 
   gdispDrawStringBox (0, 225, gdispGetWidth(),
 		      gdispGetFontMetric(font, fontHeight),
