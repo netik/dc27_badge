@@ -159,7 +159,7 @@ static void redraw_badge(DefaultHandles *p) {
   putImageFile("images/badge.rgb",0,0);
 
   // Rank
-  sprintf(tmp, "%s", rankname[config->level-1]);
+  sprintf(tmp, "%s", rankname[config->level]);
   gdispDrawStringBox (5,
 		      ypos,
 		      gdispGetWidth(),
@@ -180,7 +180,7 @@ static void redraw_badge(DefaultHandles *p) {
   ypos = 77;
 
   // level
-  sprintf(tmp, "LEVEL %d", config->level);
+  sprintf(tmp, "LEVEL %d", config->level+1);
   gdispDrawStringBox (0,
           ypos,
           gdispGetWidth(),
@@ -189,7 +189,8 @@ static void redraw_badge(DefaultHandles *p) {
           p->fontSM, White, justifyCenter);
 
   // insignia
-  sprintf(tmp, "game/rank-%d.rgb", config->level);
+  // level is base-0. rank images are base-1
+  sprintf(tmp, "game/rank-%d.rgb", config->level+1); // level is base-0. rank images are base-1
   putImageFile(tmp, 92, 106);
   gdispDrawBox(91,105,53,95,Grey);
 

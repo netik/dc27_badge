@@ -144,7 +144,7 @@ static void init_config(userconfig *config) {
 
   /* game */
   memset(config->name, 0, CONFIG_NAME_MAXLEN);
-  config->level = 1;
+  config->level = 0;
   config->lastdeath = 0; // last death time to calc healing
   config->in_combat = 1; // we are incombat until name is set.
 #ifdef BLACK_BADGE

@@ -1,3 +1,4 @@
+
 /* ides_gfx.c
  *
  * Shared Graphics Routines
@@ -489,10 +490,11 @@ char *getAvatarImage(int shipclass, bool is_player, char frame, bool is_right) {
 
   sprintf(fname,
           "game/s%d%c-%c-%c.rgb",
-          shipclass - 1,
+          shipclass,
           is_player ? 'p' : 'e',
           frame,
           is_right ? 'r' : 'l');
 
+  printf("%s\n", fname);
   return(fname);
 }

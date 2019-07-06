@@ -239,13 +239,14 @@ static void unlock_start(OrchardAppContext *context)
 {
   UnlockHandles *p;
 
-  gdispClear(Black);
-
-  // aha, you found us! make some noise.
-  i2sPlay("sound/levelup.snd");
+  chThdSleepMilliseconds(250);
 
   // fill background
   putImageFile(IMG_UNLOCKBG, 0, 0);
+  chThdSleepMilliseconds(100);
+  // aha, you found us! make some noise.
+  i2sPlay("sound/levelup.snd");
+  i2sPlay("sound/trioxin.snd");
 
   // draw UI
   /* starting code */
@@ -361,18 +362,16 @@ static uint8_t validate_code(OrchardAppContext *context, userconfig *config) {
     if (*unlock_codes[i] == mycode) {
       // set bit
       config->unlocks |= (1 << i);
-
       strcpy(tmp, unlock_desc[i]);
       strcat(tmp, " unlocked!");
       unlock_result(p, tmp);
-
+      chThdSleepMilliseconds(100);
       ledSetPattern(LED_PATTERN_LEVELUP);
-
-      i2sPlay("sound/levelup.snd");
 
       // save to config
       configSave(config);
-
+      chThdSleepMilliseconds(100);
+      i2sPlay("sound/levelup.snd");
       chThdSleepMilliseconds(ALERT_DELAY);
 
       orchardAppRun(orchardAppByName("Badge"));
@@ -524,6 +523,7 @@ static void unlock_exit(OrchardAppContext *context) {
   // put the LEDs back
   led_clear();
   ledSetPattern(config->led_pattern);
+  i2sPlay(NULL);
 }
 
 /* We are a hidden app, only accessible through the konami code on the

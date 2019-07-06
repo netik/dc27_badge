@@ -13,7 +13,7 @@
 #define CONFIG_FLASH_SECTOR 255
 #define CONFIG_SIGNATURE  0xdeadbeef  // duh
 #define CONFIG_END_SIGNATURE  0xdeadfa11
-#define CONFIG_VERSION    4
+#define CONFIG_VERSION    5
 #define CONFIG_NAME_MAXLEN 20
 
 #define CONFIG_LEDSIGN_MAXLEN	124
@@ -22,12 +22,6 @@
  * above so that the config is automatically init'd with the new
  * else, the config struct will be misaligned and full of garbage.
  */
-
-typedef struct ship_t {
-  char name[16];
-  uint8_t max_bullets;
-  uint8_t velocity;
-} ship_t;
 
 typedef struct userconfig {
   uint32_t signature;

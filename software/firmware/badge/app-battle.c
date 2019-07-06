@@ -110,13 +110,14 @@ static void render_all_enemies(void);
 
 static uint16_t xp_for_level(uint8_t level) {
   // return the required amount of XP for a given level
+  // level should be given starting with index 1
   uint16_t xp_req[] = {
   //1    2    3     4     5     6     7     8     9    10
     0, 400, 880, 1440, 2080, 2800, 3600, 4480, 5440, 6480
   };
 
   if ((level <= 10) && (level >= 1)) {
-    return xp_req[level-1];
+    return xp_req[level];
   } else {
     return 0;
   }
@@ -529,8 +530,9 @@ battle_start (OrchardAppContext *context)
   gwinAttachListener (&bh->gl);
   geventRegisterCallback (&bh->gl, orchardAppUgfxCallback, &bh->gl);
 
-  changeState(LEVELUP);
+  changeState(VS_SCREEN);
   //changeState(WORLD_MAP);
+
   return;
 }
 
@@ -1399,7 +1401,7 @@ static void state_levelup_enter(void) {
 
   curpos = curpos + gdispGetFontMetric(p->fontSTENCIL, fontHeight) + 2;
 
-  sprintf(tmp, "AT %d XP",  xp_for_level(config->level+1));
+  sprintf(tmp, "AT %d XP",  xp_for_level(config->level+2));
   gdispDrawStringBox (110,
 		                  curpos,
                       210,
@@ -1437,8 +1439,127 @@ static void state_levelup_exit(void) {
     gwinDestroy (p->ghACCEPT);
 }
 
-static void state_vs_enter(void) {
 
+static void draw_vs_screen(void) {
+  battle_ui_t *p = mycontext->priv;
+  int curpos;
+  char tmp[40];
+
+}
+
+static void state_vs_enter(void) {
+  battle_ui_t *p = mycontext->priv;
+  int curpos;
+  char tmp[40];
+  userconfig *config = getConfig();
+
+  putImageFile("game/world.rgb", 0,0);
+
+  // boxes
+  gdispFillArea(0, 14, 320, 30, Black);
+  gdispFillArea(0, 60, 320, 100, HTML2COLOR(0x151285));
+  gdispFillArea(0, 199, 320, 30, Black);
+
+  gdispDrawStringBox (0,
+                      14,
+                      320,
+                      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+                      "CONNECTED! CHOOSE SHIPS!",
+                      p->fontSTENCIL,
+                      Yellow,
+                      justifyCenter);
+
+  // us
+  putImageFile(getAvatarImage(0, true, 'n', true), 60,91);
+  gdispDrawBox(60,91, 40, 40, Black);
+  // them
+  putImageFile(getAvatarImage(0, false, 'n', false), 220, 91);
+  gdispDrawBox(220,91, 40, 40, Black);
+
+  gdispDrawStringBox (0,
+                      199,
+                      320,
+                      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+                      ":15",
+                      p->fontSTENCIL,
+                      Yellow,
+                      justifyCenter);
+
+  // names
+  gdispDrawStringBox (0,
+                      60,
+                      160,
+                      gdispGetFontMetric(p->fontSM, fontHeight),
+                      config->name,
+                      p->fontSM,
+                      White,
+                      justifyCenter);
+  gdispDrawStringBox (160,
+                      60,
+                      160,
+                      gdispGetFontMetric(p->fontSM, fontHeight),
+                      "Them",
+                      p->fontSM,
+                      White,
+                      justifyCenter);
+
+  // our stats
+  curpos=97;
+  gdispDrawStringBox (0,
+                      curpos,
+                      58,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      "HP 8888",
+                      p->fontXS,
+                      White,
+                      justifyRight);
+
+  curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
+  gdispDrawStringBox (0,
+                      curpos,
+                      58,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      "EN 8888",
+                      p->fontXS,
+                      White,
+                      justifyRight);
+  // their stats
+  curpos=97;
+  gdispDrawStringBox (262,
+                      curpos,
+                      58,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      "HP 8888",
+                      p->fontXS,
+                      White,
+                      justifyLeft);
+
+  curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
+  gdispDrawStringBox (262,
+                      curpos,
+                      58,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      "EN 8888",
+                      p->fontXS,
+                      White,
+                      justifyLeft);
+  // boat names
+  gdispDrawStringBox (0,
+                      130,
+                      160,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      "XXXXXXXXXX",
+                      p->fontXS,
+                      White,
+                      justifyCenter);
+  gdispDrawStringBox (160,
+                      130,
+                      160,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      "XXXXXXXXXX",
+                      p->fontXS,
+                      White,
+                      justifyCenter);
 }
 
 static void state_vs_tick(void) {
