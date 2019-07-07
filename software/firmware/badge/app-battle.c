@@ -150,7 +150,7 @@ static void zoomEntity(ENTITY *e) {
 }
 
 static void
-entity_init(ENTITY *p, int16_t size_x, int16_t size_y, enum entity_type t) {
+entity_init(ENTITY *p, int16_t size_x, int16_t size_y, entity_type t) {
   pixel_t *buf;
   color_t color = Black;
 
