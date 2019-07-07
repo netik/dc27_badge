@@ -109,6 +109,14 @@ ledInit (void)
 
 	ledRegSet (ISSI_REG_GCC, 0xFF);
 
+	/* Set pullups */
+
+	ledRegSet (ISSI_REG_SWY_PULLUP, 0xFF);
+
+	/* Set pulldowns */
+
+	ledRegSet (ISSI_REG_CSX_PULLDOWN, 0xFF);
+
 	/* Turn on LEDs */
 
 	ledPageSet (ISSI_PAGE_LED);

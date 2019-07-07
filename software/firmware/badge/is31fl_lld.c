@@ -132,8 +132,16 @@ bool drv_is31fl_init(void) {
     return false;
   }
 
-  // Set global current control
   drv_is31fl_set_page(ISSI_PAGE_FUNCTION);
+  // Set SWy pullups
+  hal_i2c_write_reg_byte(LED_I2C_ADDR, ISSI_REG_SWY_PULLUP, 0xFF);
+  chThdSleepMilliseconds(10);
+
+  // Set CSx pulldowns
+  hal_i2c_write_reg_byte(LED_I2C_ADDR, ISSI_REG_CSX_PULLDOWN, 0xFF);
+  chThdSleepMilliseconds(10);
+
+  // Set global current control
   hal_i2c_write_reg_byte(LED_I2C_ADDR, ISSI_REG_GCC, 0xFF);
   chThdSleepMilliseconds(10);
 
