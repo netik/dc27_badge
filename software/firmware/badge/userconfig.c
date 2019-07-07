@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "ch.h"
 #include "hal.h"
 #include "shell.h"
@@ -9,11 +11,10 @@
 #include "unlocks.h"
 #include "userconfig.h"
 #include "badge.h"
+#include "ships.h"
 
 #include "rand.h"
 #include "vector.h"
-
-#include <string.h>
 
 const char *rankname[] = {
   "Ensign",      // 0
@@ -154,15 +155,14 @@ static void init_config(userconfig *config) {
 #endif
 
   /* ship config */
-  config->current_ship = 1;
+  config->current_ship = 0;
   config->ships_enabled = 1; // just the first ship enabled
   config->energy = 100;
-  config->build_points = 40; // you can buy a few things
   config->last_x = safe_start[position].x;
   config->last_y = safe_start[position].y;
 
   config->xp = 0;
-  config->hp = 0;
+  config->hp = shiptable[0].max_hp;
   config->won = 0;
   config->lost= 0;
 

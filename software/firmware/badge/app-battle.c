@@ -1381,7 +1381,7 @@ static void state_levelup_enter(void) {
   		                  curpos,
                         210,
                         gdispGetFontMetric(p->fontSM, fontHeight),
-  		                  "UNLOCKED!",
+    		                  "UNLOCKED!",
                         p->fontSM,
                         White,
                         justifyLeft);
@@ -1439,19 +1439,11 @@ static void state_levelup_exit(void) {
     gwinDestroy (p->ghACCEPT);
 }
 
-
-static void draw_vs_screen(void) {
-  battle_ui_t *p = mycontext->priv;
-  int curpos;
-  char tmp[40];
-
-}
-
 static void state_vs_enter(void) {
   battle_ui_t *p = mycontext->priv;
   int curpos;
-  char tmp[40];
   userconfig *config = getConfig();
+  combat_time_left = 15;
 
   putImageFile("game/world.rgb", 0,0);
 
@@ -1563,6 +1555,36 @@ static void state_vs_enter(void) {
 }
 
 static void state_vs_tick(void) {
+  // update the clock
+  battle_ui_t *p = mycontext->priv;
+  char tmp[40];
+
+  if (animtick % FPS == 0) {
+    combat_time_left--;
+    sprintf(tmp, ":%02d",
+      combat_time_left);
+
+    gdispFillArea(150,
+      199,
+      100,
+      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+      Black);
+
+    gdispDrawStringBox (0,
+                        199,
+                        320,
+                        gdispGetFontMetric(p->fontSTENCIL, fontHeight),
+                        tmp,
+                        p->fontSTENCIL,
+                        Yellow,
+                        justifyCenter);
+  }
+
+  if (combat_time_left == 0) {
+    // time up -- force to next screen.
+    i2sPlay("game/engage.snd");
+    changeState(COMBAT);
+  }
 
 }
 
