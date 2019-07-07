@@ -96,3 +96,30 @@ const ship_type_t shiptable[8] = {
   }
 
 };
+
+/*
+ * Initial combat positions
+ * When combat begins, combatants will be on one of 16 possible
+ * grid rectangles on the world map. These are the initial positions
+ * for each grid, with attacker (BLE central) first and defender
+ * (BLE peripheral) second.
+ */
+
+const ship_init_pos_t ship_init_pos_table[SHIP_INIT_POS_COUNT] = {
+   { { 54, 162 }, { 270, 72 } },	/* Grid 0 */
+   { { 36, 180 }, { 216, 35 } },	/* Grid 1 */
+   { { 19, 160 }, { 252, 36 } },	/* Grid 2 */
+   { { 53, 198 }, { 216, 54 } },	/* Grid 3 */
+   { { 17, 163 }, { 252, 54 } },	/* Grid 4 */
+   { { 54, 180 }, { 252, 54 } },	/* Grid 5 */
+   { { 72, 180 }, { 252, 54 } },	/* Grid 6 */
+   { { 36, 181 }, { 179, 54 } },	/* Grid 7 */
+   { { 36, 180 }, { 233, 36 } },	/* Grid 8 */
+   { { 18, 162 }, { 233, 36 } },	/* Grid 9 */
+   { { 18, 162 }, { 270, 72 } },	/* Grid 10 */
+   { { 36, 178 }, { 144, 72 } },	/* Grid 11 */
+   { { 35, 144 }, { 233, 37 } },	/* Grid 12 */
+   { { 18, 162 }, { 234, 54 } },	/* Grid 13 */
+   { { 18, 144 }, { 252, 54 } },	/* Grid 14 */
+   { { 18, 182 }, { 218, 37 } }		/* Grid 15 */
+};

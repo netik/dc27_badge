@@ -2,6 +2,7 @@
 #define _SHIPS_H_
 
 #include <stdio.h>
+#include "vector.h"
 #include "ch.h"
 
 /* ships.h */
@@ -67,7 +68,15 @@ typedef struct {
 
 } ship_type_t;
 
+typedef struct ship_init_pos {
+  VECTOR attacker;
+  VECTOR defender;
+} ship_init_pos_t;
+
+#define SHIP_INIT_POS_COUNT 16
+
 extern const ship_type_t shiptable[];
+extern const ship_init_pos_t ship_init_pos_table[];
 
 #define DEFAULT_VRATES VGOAL,VDRAG,VAPPROACH,VMULT
 
