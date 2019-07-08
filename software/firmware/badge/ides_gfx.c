@@ -495,6 +495,5 @@ char *getAvatarImage(int shipclass, bool is_player, char frame, bool is_right) {
           frame,
           is_right ? 'r' : 'l');
 
-  printf("%s\n", fname);
   return(fname);
 }

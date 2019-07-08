@@ -7,19 +7,38 @@
 /* 0 water, 1 land */
 #define WMAP_W SCREEN_W / 32
 #define WMAP_H SCREEN_H
-#define BLUE_THRESH 200
-#define NOTBLUE_THRESH 30
+#define BLUE_THRESH 190
+#define NOTBLUE_THRESH 44
 
+/* jna: some notes here after a call with Devon...  */
 
-#define GET_PX_GREEN( p ) ( ( ((p & 7) << 3) | ((p & 57344) >> 13) )* 4)
-#define GET_PX_BLUE( p ) ( ( (p & 7963) >> 8) * 8)
-#define GET_PX_RED( p ) ( ( (p & 248) >> 3 ) * 8)
+/* Pixels are stored on the screen in RGB565 format, but they are stored as
+ * big endian with the high byte transferred to us first. We have to flip
+ * this to recover the green pixel, which is split in half.
+ *
+ * The "standard 565" format is:
+ *  MSB                                  LSB
+ *  15 14 13 12 11  10 9 8 | 7 6 5  4 3 2 1 0
+ *   R  R  R  R  R   G G G | G G G  B B B B B
+ *
+ * Unfortunately what we have from the screen is
+ *  byte1 (LSB)              byte 2 (MSB)
+ *  15 14 13 12 11  10 9 8 | 7 6 5  4 3 2 1 0
+ *   G  G  G  B  B   B B B | R R R  R R G G G
+ *
+ *  Where a solid green pixel would be represented as 1110 0000 0000 0111
+ *
+ *  We multiply the green value by 4 to scale it back to 255 color levels.
+ *  and the blue and red values by 8 to scale them back to 255 levels as well.
+ */
 
+#define GET_PX_GREEN( p ) ( ( ((p & 0x07) << 3) | ((p & 0xe000) >> 10)) * 4 )
+#define GET_PX_BLUE( p ) ( ( (p & 0x1f00) >> 8) * 8 )
+#define GET_PX_RED( p ) ( ( (p & 0xf8) >> 3 ) * 8 )
 
 /* WM_STEP defines which array index a particular coord is in. */
 #define WM_BIT(c)  ( (uint32_t)( (c) % 32) )
 #define WM_STEP(c) ( (uint32_t)( (c) / 32) )
-
 
 typedef struct _w_row {
   uint32_t row[WMAP_W];
@@ -96,7 +115,9 @@ extern void isp_set_sprite_bgcolor(ISPRITESYS *iss, ISPID id, color_t col);
 extern void isp_set_sprite_wmap_bgcolor(ISPRITESYS *iss, ISPID id, color_t col);
 extern void isp_release_sprite_bgcolor(ISPRITESYS *iss, ISPID id);
 extern bool_t isp_check_sprite_collision(ISPRITESYS *iss, ISPID id1, ISPID id2, bool_t overlap);
+extern bool_t test_sprite_for_land_collision(ISPRITESYS *iss, ISPID id);
 extern void isp_draw_all_sprites(ISPRITESYS *iss);
+extern void isp_draw_sprite(ISPRITESYS *iss, ISPID id);
 extern void isp_shutdown(ISPRITESYS *iss);
 extern void sprite_tester(void);
 extern bool_t is_valid_rect(RECT r);

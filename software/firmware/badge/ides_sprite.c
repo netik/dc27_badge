@@ -573,7 +573,7 @@ static bool_t isp_capture_bg(ISPRITESYS *iss, ISPID id)
 }
 
 /* */
-static void isp_draw_sprite(ISPRITESYS *iss, ISPID id)
+void isp_draw_sprite(ISPRITESYS *iss, ISPID id)
 {
   if( (id < ISP_MAX_SPRITES) &&
       (iss->list[id].active) &&

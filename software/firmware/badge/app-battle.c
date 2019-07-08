@@ -38,9 +38,9 @@
 #include "strutil.h"
 
 // debugs the discovery process
-#define DEBUG_ENEMY_DISCOVERY
+#undef DEBUG_ENEMY_DISCOVERY
 #define DEBUG_BATTLE_STATE 1
-#define DEBUG_ENEMY_TTL 1
+#undef DEBUG_ENEMY_TTL
 
 #include "gamestate.h"
 #include "ships.h"
@@ -214,7 +214,7 @@ approach(float flGoal, float flCurrent, float dt) {
 
 static bool
 check_land_collision(ENTITY *p) {
-  return false;
+  return test_sprite_for_land_collision(sprites, p->sprite_id);
 }
 
 static void
@@ -249,23 +249,27 @@ entity_update(ENTITY *p, float dt) {
   if (p->prevPos.x != p->vecPosition.x ||
       p->prevPos.y != p->vecPosition.y) {
       // check for collision with land
+      isp_set_sprite_xy(sprites,
+                        p->sprite_id,
+                        p->vecPosition.x,
+                        p->vecPosition.y);
+
       if (check_land_collision(p)) {
         // TBD
         p->vecPosition.x = p->prevPos.x;
-        p->vecPosition.y = p->prevPos.x;
+        p->vecPosition.y = p->prevPos.y;
         p->vecVelocity.x = 0;
         p->vecVelocity.y = 0;
+        p->vecVelocityGoal.x = 0;
+        p->vecVelocityGoal.y = 0;
+        return;
       };
 
-//      printf("move: %d %f %f",
-//      p->sprite_id,
-//      p->vecPosition.x,
-//      p->vecPosition.y);
-
       isp_set_sprite_xy(sprites,
-        p->sprite_id,
-        p->vecPosition.x,
-        p->vecPosition.y);
+                        p->sprite_id,
+                        p->vecPosition.x,
+                        p->vecPosition.y);
+
   }
 }
 
@@ -278,7 +282,9 @@ enemy_clear_blink(void *e) {
 static void
 enemy_clearall_blink(void) {
   // @brief clear enemy blink state
-  gll_each(enemies, enemy_clear_blink);
+  if (enemies) {
+    gll_each(enemies, enemy_clear_blink);
+  }
 }
 
 static ENEMY *enemy_find_by_peer(uint8_t *addr) {
@@ -410,9 +416,9 @@ static void enemy_list_refresh(void) {
         e = malloc(sizeof(ENEMY));
 
         if (current_battle_state == COMBAT) {
-          entity_init(&(e->e),SHIP_SIZE_ZOOMED,SHIP_SIZE_ZOOMED, TRUE);
+          entity_init(&(e->e),SHIP_SIZE_ZOOMED,SHIP_SIZE_ZOOMED, T_ENEMY);
         } else {
-          entity_init(&(e->e),SHIP_SIZE_WORLDMAP,SHIP_SIZE_WORLDMAP, TRUE);
+          entity_init(&(e->e),SHIP_SIZE_WORLDMAP,SHIP_SIZE_WORLDMAP, T_ENEMY);
         }
 
         e->e.visible = true;
@@ -530,9 +536,18 @@ battle_start (OrchardAppContext *context)
   gwinAttachListener (&bh->gl);
   geventRegisterCallback (&bh->gl, orchardAppUgfxCallback, &bh->gl);
 
-  changeState(VS_SCREEN);
-  //changeState(WORLD_MAP);
+  // how did we get here?
+  // if we have a bleGapConnection then we can
+  // use data from the current peer, and we start in
+  // combat instead of accept.
 
+  // if we have a peer address, we're gonna start in a handshake state.
+  if (ble_peer_addr.addr_type != 0x0) {
+    // we're gonna sit on our hands for a minute and wait for the l2cap connect.
+    changeState(HANDSHAKE);
+  } else {
+    changeState(WORLD_MAP);
+  }
   return;
 }
 
@@ -610,7 +625,7 @@ fire_bullet(ENTITY *from, VECTOR *bullet_pending) {
     // find the first available bullet structure
     if (bullet[i].visible == false) {
       // bug: we should not init this again
-      entity_init(&bullet[i],BULLET_SIZE,BULLET_SIZE);
+      entity_init(&bullet[i],BULLET_SIZE,BULLET_SIZE,T_BULLET);
 
       bullet[i].visible = true;
       bullet[i].ttl = 30; // about a second
@@ -638,6 +653,45 @@ entity_OOB(ENTITY *e) {
     return true;
 
   return false;
+}
+
+static ENEMY* getEnemyFromBLE(ble_gap_addr_t *peer) {
+  ble_peer_entry * p;
+  printf("searching for %x:%x:%x:%x:%x:%x\n",
+    peer->addr[5],
+    peer->addr[4],
+    peer->addr[3],
+    peer->addr[2],
+    peer->addr[1],
+    peer->addr[0]);
+
+  for (int i = 0; i < BLE_PEER_LIST_SIZE; i++) {
+    p = &ble_peer_list[i];
+    if (p->ble_used == 0)
+      continue;
+
+    if (p->ble_isbadge == TRUE) {
+      printf("found peer enemy %x:%x:%x:%x:%x:%x (TTL %d)\n",
+        p->ble_peer_addr[5],
+        p->ble_peer_addr[4],
+        p->ble_peer_addr[3],
+        p->ble_peer_addr[2],
+        p->ble_peer_addr[1],
+        p->ble_peer_addr[0],
+        p->ble_ttl);
+      if (memcmp(p->ble_peer_addr, peer->addr, 6) == 0) {
+        // if we match, we create an enemy
+        current_enemy = malloc(sizeof(ENEMY));
+        memcpy(current_enemy->ble_peer_addr.addr, p->ble_peer_addr, 6);
+        current_enemy->ble_peer_addr.addr_id_peer = TRUE;
+        current_enemy->ble_peer_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+        strcpy(current_enemy->name, (char *)p->ble_peer_name);
+        return current_enemy;
+      }
+    }
+  }
+
+  return NULL;
 }
 
 static void
@@ -696,7 +750,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           gwinRedraw(bh->ghTitleR);
         }
       }
-
       isp_draw_all_sprites(sprites);
     } /* WORLD_MAP */
 
@@ -734,6 +787,19 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   			}
       }
 		}
+
+    if (current_battle_state == VS_SCREEN) {
+  		pe = event->ugfx.pEvent;
+  		if (pe->type == GEVENT_GWIN_BUTTON) {
+  			be = (GEventGWinButton *)pe;
+  			if (be->gwin == bh->ghACCEPT) {
+          i2sPlay ("sound/click.snd");
+
+          // exit out for right now
+          changeState(WORLD_MAP);
+        }
+      }
+    }
 
     if (current_battle_state == LEVELUP) {
   		pe = event->ugfx.pEvent;
@@ -819,9 +885,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       printf("BATTLE: l2CapConnection Success\n");
       if (current_enemy == NULL) {
         // copy his data over and start the battle.
-        current_enemy = enemy_find_by_peer(&ble_peer_addr.addr[0]);
+        current_enemy = getEnemyFromBLE(&ble_peer_addr);
       }
-      changeState(COMBAT);
+      changeState(VS_SCREEN);
       break;
     default:
       break;
@@ -1028,6 +1094,22 @@ render_all_enemies(void) {
 }
 
 /* state change and tick functions go here -------------------------------- */
+// HANDSHAKE --------------------------------------------------------------
+void state_handshake_enter(void) {
+  gdispClear(Black);
+  screen_alert_draw(true, "HANDSHAKING...");
+  combat_time_left = 10;
+}
+
+void state_handshake_tick(void) {
+  if (animtick % FPS == 0) {
+    combat_time_left--;
+    if (combat_time_left <= 0) {
+      screen_alert_draw(true, "HANDSHAKE TIMEOUT");
+      changeState(WORLD_MAP);
+    }
+  }
+}
 
 // WORLDMAP ---------------------------------------------------------------
 void state_worldmap_enter(void) {
@@ -1044,9 +1126,11 @@ void state_worldmap_enter(void) {
   gdispClear(Black);
   draw_world_map();
 
-  // init sprite system
+  // init sprite system and capture water areas
   sprites = isp_init();
+  isp_scan_screen_for_water(sprites);
 
+  // draw player for first time.
   entity_init(&me, SHIP_SIZE_WORLDMAP, SHIP_SIZE_WORLDMAP, T_PLAYER);
   me.vecPosition.x = config->last_x;
   me.vecPosition.y = config->last_y;
@@ -1056,6 +1140,9 @@ void state_worldmap_enter(void) {
     me.sprite_id,
     me.vecPosition.x,
     me.vecPosition.y);
+
+  sprites->list[me.sprite_id].status = ISP_STAT_DIRTY_BOTH;
+  isp_draw_all_sprites(sprites);
 
   // load the enemy list
   enemies = gll_init();
@@ -1086,9 +1173,15 @@ void state_worldmap_tick(void) {
 
 void state_worldmap_exit(void) {
   battle_ui_t *bh;
+  userconfig *config = getConfig();
 
   // get private memory
   bh = (battle_ui_t *)mycontext->priv;
+
+  // store our last position for later.
+  config->last_x = me.vecPosition.x;
+  config->last_y = me.vecPosition.y;
+  configSave(config);
 
   if (bh->ghTitleL) {
     gwinDestroy (bh->ghTitleL);
@@ -1100,9 +1193,8 @@ void state_worldmap_exit(void) {
     bh->ghTitleR = NULL;
   }
 
-  /* wipe enemies and clear current enemy */
+  /* wipe enemies */
   remove_all_enemies();
-  current_enemy = NULL;
 
   /* tear down sprite system */
   isp_shutdown(sprites);
@@ -1121,6 +1213,8 @@ void state_approval_wait_enter(void) {
     current_enemy->ble_peer_addr.addr[2],
     current_enemy->ble_peer_addr.addr[1],
     current_enemy->ble_peer_addr.addr[0]);
+
+  gdispClear(Black);
   screen_alert_draw (FALSE, "Connecting...");
 
   bleGapConnect (&current_enemy->ble_peer_addr);
@@ -1264,7 +1358,6 @@ void state_combat_enter(void) {
 #endif
 
   draw_hud(mycontext);
-  enemy_clearall_blink();
 }
 
 void state_combat_tick(void) {
@@ -1435,21 +1528,132 @@ static void state_levelup_tick(void) {
 static void state_levelup_exit(void) {
   battle_ui_t *p = mycontext->priv;
 
-  if (p->ghACCEPT != NULL)
+  if (p->ghACCEPT != NULL) {
     gwinDestroy (p->ghACCEPT);
+    p->ghACCEPT = NULL;
+  }
+}
+
+static void state_vs_draw_enemy(void) {
+  battle_ui_t *p = mycontext->priv;
+  int curpos;
+  userconfig *config = getConfig();
+  char tmp[40];
+
+  // them
+  putImageFile(getAvatarImage(0, false, 'n', false), 220, 91);
+  gdispDrawBox(220,91, 40, 40, Black);
+
+  // clear right side
+  gdispFillArea(261, 95,
+                59, 26,
+               HTML2COLOR(0x151285));
+
+  // clear name area
+  gdispFillArea(160, 135,
+                160, gdispGetFontMetric(p->fontXS, fontHeight),
+                HTML2COLOR(0x151285));
+
+  // their stats
+  curpos=95;
+  sprintf(tmp, "HP %d", shiptable[config->current_ship].max_hp);
+  gdispDrawStringBox (262,
+                      curpos,
+                      58,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      "HP 8888",
+                      p->fontXS,
+                      White,
+                      justifyLeft);
+
+  curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
+  sprintf(tmp, "EN %d", shiptable[config->current_ship].max_energy);
+  gdispDrawStringBox (262,
+                        curpos,
+                        58,
+                        gdispGetFontMetric(p->fontXS, fontHeight),
+                        tmp,
+                        p->fontXS,
+                        White,
+                        justifyLeft);
+
+  // boat name
+  gdispDrawStringBox (160,
+                      130,
+                      160,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      shiptable[config->current_ship].type_name,
+                      p->fontXS,
+                      White,
+                      justifyCenter);
+}
+
+static void state_vs_draw_player(void) {
+  /* draw the player's ship and stats */
+  battle_ui_t *p = mycontext->priv;
+  int curpos;
+  userconfig *config = getConfig();
+  char tmp[40];
+
+  // us
+  putImageFile(getAvatarImage(0, true, 'n', true), 60,91);
+  gdispDrawBox(60,91, 40, 40, Black);
+
+  // clear left side
+  gdispFillArea(0, 95,
+                59, 30,
+                HTML2COLOR(0x151285));
+
+  // clear name area
+  gdispFillArea(0, 132,
+                160, gdispGetFontMetric(p->fontXS, fontHeight),
+                HTML2COLOR(0x151285));
+
+  // our stats
+  curpos=95;
+  sprintf(tmp, "HP %d", shiptable[config->current_ship].max_hp);
+  gdispDrawStringBox (0,
+                      curpos,
+                      58,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      tmp,
+                      p->fontXS,
+                      White,
+                      justifyRight);
+
+  curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
+  sprintf(tmp, "EN %d", shiptable[config->current_ship].max_energy);
+  gdispDrawStringBox (0,
+                      curpos,
+                      58,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      tmp,
+                      p->fontXS,
+                      White,
+                      justifyRight);
+  // boat name
+  gdispDrawStringBox (0,
+                      130,
+                      160,
+                      gdispGetFontMetric(p->fontXS, fontHeight),
+                      shiptable[config->current_ship].type_name,
+                      p->fontXS,
+                      White,
+                      justifyCenter);
 }
 
 static void state_vs_enter(void) {
   battle_ui_t *p = mycontext->priv;
-  int curpos;
   userconfig *config = getConfig();
+  GWidgetInit wi;
+
   combat_time_left = 15;
 
   putImageFile("game/world.rgb", 0,0);
 
   // boxes
   gdispFillArea(0, 14, 320, 30, Black);
-  gdispFillArea(0, 60, 320, 100, HTML2COLOR(0x151285));
+  gdispFillArea(0, 50, 320, 100, HTML2COLOR(0x151285));
   gdispFillArea(0, 199, 320, 30, Black);
 
   gdispDrawStringBox (0,
@@ -1460,13 +1664,6 @@ static void state_vs_enter(void) {
                       p->fontSTENCIL,
                       Yellow,
                       justifyCenter);
-
-  // us
-  putImageFile(getAvatarImage(0, true, 'n', true), 60,91);
-  gdispDrawBox(60,91, 40, 40, Black);
-  // them
-  putImageFile(getAvatarImage(0, false, 'n', false), 220, 91);
-  gdispDrawBox(220,91, 40, 40, Black);
 
   gdispDrawStringBox (0,
                       199,
@@ -1490,68 +1687,27 @@ static void state_vs_enter(void) {
                       60,
                       160,
                       gdispGetFontMetric(p->fontSM, fontHeight),
-                      "Them",
+                      current_enemy->name,
                       p->fontSM,
                       White,
                       justifyCenter);
 
-  // our stats
-  curpos=97;
-  gdispDrawStringBox (0,
-                      curpos,
-                      58,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      "HP 8888",
-                      p->fontXS,
-                      White,
-                      justifyRight);
+  state_vs_draw_player();
+  state_vs_draw_enemy();
 
-  curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
-  gdispDrawStringBox (0,
-                      curpos,
-                      58,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      "EN 8888",
-                      p->fontXS,
-                      White,
-                      justifyRight);
-  // their stats
-  curpos=97;
-  gdispDrawStringBox (262,
-                      curpos,
-                      58,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      "HP 8888",
-                      p->fontXS,
-                      White,
-                      justifyLeft);
+  // draw UI
+  gwinSetDefaultStyle(&GreenButtonStyle, FALSE);
+  gwinWidgetClearInit(&wi);
+  wi.g.show = TRUE;
+  wi.g.x = 35;
+  wi.g.y = 160;
+  wi.g.width = 90;
+  wi.g.height = 30;
+  wi.text = "SELECT";
 
-  curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
-  gdispDrawStringBox (262,
-                      curpos,
-                      58,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      "EN 8888",
-                      p->fontXS,
-                      White,
-                      justifyLeft);
-  // boat names
-  gdispDrawStringBox (0,
-                      130,
-                      160,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      "XXXXXXXXXX",
-                      p->fontXS,
-                      White,
-                      justifyCenter);
-  gdispDrawStringBox (160,
-                      130,
-                      160,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      "XXXXXXXXXX",
-                      p->fontXS,
-                      White,
-                      justifyCenter);
+  gwinSetDefaultFont(p->fontSM);
+  p->ghACCEPT = gwinButtonCreate(0, &wi);
+  gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
 }
 
 static void state_vs_tick(void) {
@@ -1560,7 +1716,7 @@ static void state_vs_tick(void) {
   char tmp[40];
 
   if (animtick % FPS == 0) {
-    combat_time_left--;
+  //  combat_time_left--;
     sprintf(tmp, ":%02d",
       combat_time_left);
 
@@ -1589,7 +1745,12 @@ static void state_vs_tick(void) {
 }
 
 static void state_vs_exit(void) {
+  battle_ui_t *p = mycontext->priv;
 
+  if (p->ghACCEPT != NULL) {
+    gwinDestroy (p->ghACCEPT);
+    p->ghACCEPT = NULL;
+  }
 }
 
 
