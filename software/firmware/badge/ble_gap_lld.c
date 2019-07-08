@@ -1,5 +1,3 @@
-#define BLE_GAP_VERBOSE 1
-
 /*-
  * Copyright (c) 2017-2019
  *      Bill Paul <wpaul@windriver.com>.  All rights reserved.
