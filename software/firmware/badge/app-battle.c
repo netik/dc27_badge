@@ -194,7 +194,7 @@ entity_init(ENTITY *p, int16_t size_x, int16_t size_y, entity_type t) {
   }
 
   buf = boxmaker(size_x, size_y, color);
-  isp_set_sprite_block(sprites, p->sprite_id, size_x, size_y, buf, TRUE);
+  isp_set_sprite_block(sprites, p->sprite_id, size_x, size_y, buf);
   free(buf);
 }
 

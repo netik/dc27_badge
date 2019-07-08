@@ -40,14 +40,18 @@
 #define WM_BIT(c)  ( (uint32_t)( (c) % 32) )
 #define WM_STEP(c) ( (uint32_t)( (c) / 32) )
 
+
 typedef struct _w_row {
   uint32_t row[WMAP_W];
+  coord_t first_px; /* shortcut, to first solid pixel */
+  coord_t last_px;
+  bool_t notblank; /* shortcut for telling if a row is blank */
 } WROW;
 
 typedef struct _w_map {
-  coord_t h;
-  coord_t w; /* might switch to adjustable size. */
-   WROW map[WMAP_H];
+  coord_t h; /* these are the number of total bits (coords) in the map */
+  coord_t w; /* # of bits used in Row, not number of indexes. */
+  WROW *map;
 } WMAP;
 
 enum ides_sprite_status_t {
@@ -56,11 +60,6 @@ enum ides_sprite_status_t {
   ISP_STAT_CLEAN      /* nothing changed since last repaint */
 } ;
 
-enum ides_sprite_draw_type{
-  ISP_DRAW_BLOCK, /* dump block in here, data is copied, stored, and managed internally */
-  ISP_DRAW_PTR,   /* image data is merely a pointer, can be updated externally, but need to flag it dirty for redraw */
-  ISP_DRAW_GIF   /* uses GIF library for alpha .*/
-} ;
 
 enum ides_sprite_bg_type {
   ISP_BG_DYNAMIC,
@@ -80,14 +79,17 @@ typedef struct _ides_sprite_buffer {
 typedef struct _ides_sprite {
   ISPBUF bg_buf; /* background buffer */
   ISPBUF sp_buf; /* sprite buffer */
-  enum ides_sprite_draw_type type;
+  WMAP *alphamap;
+  coord_t xoffs;
+  coord_t yoffs;
   enum ides_sprite_bg_type bgtype;
   enum ides_sprite_status_t status;
   bool_t active;
   bool_t visible;
   bool_t auto_bg;
+  bool_t mode_switch;
+  bool_t full_restore; /* flag to fully restore the BG. */
   color_t bgcolor;
-  char fname[ISP_PATH_LENGTH];
 } ISPRITE;
 
 typedef struct _rectangle {
@@ -108,24 +110,27 @@ extern ISPRITESYS *isp_init(void);
 extern void isp_scan_screen_for_water(ISPRITESYS *iss);
 extern ISPID isp_make_sprite(ISPRITESYS *iss);
 extern void isp_hide_sprite(ISPRITESYS *iss, ISPID id);
+extern void isp_show_sprite(ISPRITESYS *iss, ISPID id);
 extern void isp_destroy_sprite(ISPRITESYS *iss, ISPID id);
 extern void isp_set_sprite_xy(ISPRITESYS *iss, ISPID id, coord_t x, coord_t y);
-extern void isp_set_sprite_block(ISPRITESYS *iss, ISPID id, coord_t xs, coord_t ys, pixel_t * buf, bool_t copy_buf);
+extern void isp_set_sprite_block(ISPRITESYS *iss, ISPID id, coord_t xs, coord_t ys, pixel_t * buf);
 extern void isp_set_sprite_bgcolor(ISPRITESYS *iss, ISPID id, color_t col);
 extern void isp_set_sprite_wmap_bgcolor(ISPRITESYS *iss, ISPID id, color_t col);
 extern void isp_release_sprite_bgcolor(ISPRITESYS *iss, ISPID id);
 extern bool_t isp_check_sprite_collision(ISPRITESYS *iss, ISPID id1, ISPID id2, bool_t overlap);
 extern bool_t test_sprite_for_land_collision(ISPRITESYS *iss, ISPID id);
 extern void isp_draw_all_sprites(ISPRITESYS *iss);
-extern void isp_draw_sprite(ISPRITESYS *iss, ISPID id);
 extern void isp_shutdown(ISPRITESYS *iss);
 extern void sprite_tester(void);
 extern bool_t is_valid_rect(RECT r);
 extern RECT make_rect(ISPBUF ib);
-extern WMAP *wm_make_wmap(void);
+extern WMAP *wm_make_wmap_size(coord_t width, coord_t height);
+extern WMAP *wm_make_screensize_wmap(void);
 extern void sprite_tester_mapaware(void);
 extern bool_t wm_value(WMAP *w, coord_t x, coord_t y, uint8_t v);
 extern WMAP *wm_build_land_map_from_screen(void);
 extern bool_t wm_check_box_for_land_collision(WMAP *map, RECT r);
 extern pixel_t *boxmaker(coord_t x, coord_t y, color_t col);
+extern int isp_load_image_from_file(ISPRITESYS *iss, ISPID id, char *name);
+
 #endif
