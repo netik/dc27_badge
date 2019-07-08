@@ -1,4 +1,4 @@
-/*
+ /*
  * app-battle.c
  *
  * Multiplayer, peer-to-peer rewrite similar to the old "Sea Battle"
@@ -49,7 +49,7 @@
 
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
-#define NETWORK_TIMEOUT 450  // number of ticks to timeout (15 seconds)
+#define NETWORK_TIMEOUT (FPS*10)  // number of ticks to timeout (10 seconds)
 
 #define COLOR_ENEMY  Red
 #define COLOR_PLAYER HTML2COLOR(0xeeeeee) // light grey

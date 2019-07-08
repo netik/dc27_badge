@@ -161,7 +161,7 @@ socEventDispatch (enum NRF_SOC_EVTS evt)
 			break;
 		default:
 			break;
-	}		
+	}
 
 	return;
 }
@@ -187,7 +187,7 @@ static THD_FUNCTION(sdThread, arg)
 	int r2;
 
 	(void)arg;
-    
+
 	chRegSetThreadName ("SDEvent");
 
 	while (1) {
@@ -243,7 +243,7 @@ OSAL_IRQ_HANDLER(Vector98)
 	osalSysLockFromISR ();
 	radio_evt = 1;
 	osalThreadResumeI (&sdThreadReference, MSG_OK);
-	osalSysUnlockFromISR (); 
+	osalSysUnlockFromISR ();
 	OSAL_IRQ_EPILOGUE();
 	return;
 }
@@ -287,7 +287,6 @@ bleStart (void)
 	ble_unlocks = __builtin_bswap32 (config->unlocks);
 
 	/* Initialize peer list handling */
-
 	blePeerStart ();
 
 	/* Initialize current password */
@@ -403,7 +402,7 @@ bleEnable (void)
 
 	cfg.gatts_cfg.attr_tab_size.attr_tab_size = 1024;
 	r = sd_ble_cfg_set (BLE_GATTS_CFG_ATTR_TAB_SIZE, &cfg, ram_start);
-	
+
 	/* Enable BLE support in SoftDevice */
 
 	r = sd_ble_enable (&ram_start);

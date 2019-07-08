@@ -86,7 +86,7 @@ bleL2CapDispatch (ble_evt_t * evt)
 
 		case BLE_L2CAP_EVT_CH_SETUP_REFUSED:
 #ifdef BLE_L2CAP_VERBOSE
-                        refused = &evt->evt.l2cap_evt.params.ch_setup_refused;
+      refused = &evt->evt.l2cap_evt.params.ch_setup_refused;
 			printf ("L2CAP setup refused: %x %x\n",
 			    refused->source, refused->status);
 #endif
