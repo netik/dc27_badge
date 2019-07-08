@@ -230,6 +230,9 @@ bleGapDispatch (ble_evt_t * evt)
 			ble_conn_handle = BLE_CONN_HANDLE_INVALID;
 			ble_gap_role = BLE_GAP_ROLE_INVALID;
 
+			/* jna: clear out the address on disconnect */
+			memset (&ble_peer_addr, 0, sizeof(ble_gap_addr_t));
+
 			orchardAppRadioCallback (disconnectEvent, evt,
 			    NULL, 0);
 

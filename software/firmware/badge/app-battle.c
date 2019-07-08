@@ -1309,9 +1309,6 @@ void state_approval_demand_exit(void) {
   gwinDestroy (bh->ghACCEPT);
   gwinDestroy (bh->ghDECLINE);
 
-  geventDetachSource (&bh->gl, NULL);
-  geventRegisterCallback (&bh->gl, NULL, NULL);
-
   bleGapDisconnect ();
 }
 
