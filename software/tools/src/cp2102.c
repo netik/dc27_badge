@@ -40,7 +40,7 @@
  *
  * For the CP2102N, there are two main commands: read configuration block
  * (0x000E) and write configuration block (0x370F). These can be used to
- * obtain a manipulate a block of 678 bytes, which contain the vendor
+ * obtain and manipulate a block of 678 bytes, which contains the vendor
  * string, product string, serial number string, USB vendor/device ID,
  * GPIO configuration, power configuration, and various other settings.
  * Some of these (like the USB vendor and device ID) should _never_ be
