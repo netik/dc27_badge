@@ -26,10 +26,16 @@ Things currently completed:
 - Video app
 - Extend button support to handle extra buttons requested by John
 - Music player app
+- BLE GATTC support
+- Setup app
+- Geiger counter app
+- RF spectrum display app
+- I2C support
+- LED array support
+- Infocom Z-Machine support
+- OTA firmware update support
 
 Things still to do:
 
-- BLE GATTC support (?)
 - BLE pairing PIN support
-- Setup app
-- Game app
+- Game app (in progress)
