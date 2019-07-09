@@ -145,6 +145,11 @@ static THD_FUNCTION(geigerThread, arg)
 
 	chRegSetThreadName ("GeigerEvent");
 
+	/*
+	 * Switch off the SoftDevice and take over
+	 * manual control of the radio.
+	 */
+
 	bleDisable ();
 	nrf52radioStart ();
 
@@ -164,9 +169,13 @@ static THD_FUNCTION(geigerThread, arg)
 
 		p->rxAction = RX_ACTION_NONE;
 
+		/* Scan the three advertising channels */
+
 		geigerScan (p, ble_chan_map[37].ble_freq);
 		geigerScan (p, ble_chan_map[38].ble_freq);
 		geigerScan (p, ble_chan_map[39].ble_freq);
+
+		/* Try to reflect intensity on the LED array. */
 
 		p->cycles++;
 		if (p->cycles > GEIGER_CYCLE) {
@@ -177,6 +186,10 @@ static THD_FUNCTION(geigerThread, arg)
 	}
 
 	gptStopTimer (&GPTD2);
+
+	i2sAudioAmpCtl (I2S_AMP_OFF);
+
+	/* Give the SoftDevice control of the radio again. */
 
 	nrf52radioStop ();
 	bleEnable ();
