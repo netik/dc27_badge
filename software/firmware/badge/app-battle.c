@@ -777,7 +777,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           // and we'll switch to combat state.
 
           // we keep our gatt connection open as we'll need it to ID
-          // the other user. 
+          // the other user.
         }
 
         if (be->gwin == bh->ghDECLINE) {
@@ -1100,14 +1100,17 @@ render_all_enemies(void) {
 void state_handshake_enter(void) {
   gdispClear(Black);
   screen_alert_draw(true, "HANDSHAKING...");
-  combat_time_left = 10;
+  combat_time_left = 5;
 }
 
 void state_handshake_tick(void) {
+  // in this state we are being attacked and we are holding pending a
+  // l2cap connection with a battle in it. It's still possible to TIMEOUT
+  // and we have to handle that if it happens. We'l hold for five seconds.
   if (animtick % FPS == 0) {
     combat_time_left--;
     if (combat_time_left <= 0) {
-      screen_alert_draw(true, "HANDSHAKE TIMEOUT");
+      screen_alert_draw(true, "HS TIMEOUT :(");
       changeState(WORLD_MAP);
     }
   }
