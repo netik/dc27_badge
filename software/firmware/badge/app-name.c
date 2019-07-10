@@ -109,8 +109,11 @@ static void name_event(OrchardAppContext *context,
 
 				bleGapUpdateName ();
 				bleGapUpdateState (config->last_x,
-				    config->last_y, config->xp, 
-				    config->level, config->in_combat);
+				    							 config->last_y,
+													 config->xp,
+				                   config->level,
+													 config->current_ship,
+													 config->in_combat);
 			}
 
 			/*

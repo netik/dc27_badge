@@ -4,6 +4,7 @@
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
 #include "ble_peer.h"
+#include "userconfig.h"
 
 #include "vector.h"
 #include "gfx.h"
@@ -12,7 +13,7 @@
 
 /*
  * We define these as macros rather than using an enum, because
- * these type definitions will also be used as part of the 
+ * these type definitions will also be used as part of the
  * network protocol packets, and using enums for over-the-wire
  * data structures is a bad idea. The internal storage format
  * for a C enum is Implemantation Defined (tm), which means
@@ -50,10 +51,16 @@ typedef struct _entity {
 
 typedef struct _enemy {
   ble_gap_addr_t  ble_peer_addr;
-  char     name[16];
+  char     name[CONFIG_NAME_MAXLEN];
   uint8_t  level;
-  uint16_t xp;
+
+  // these represent the current state of the user.
+  int16_t  hp;
+  int16_t  xp;
+  int16_t  energy;
   uint8_t  ship_type;
+
+  bool     ship_locked_in; // if the enemy has locked in their ship type
   uint8_t  ttl;
   ENTITY   e;
 } ENEMY;

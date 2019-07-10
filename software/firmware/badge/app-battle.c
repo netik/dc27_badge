@@ -58,27 +58,29 @@
 #define SHIP_SIZE_ZOOMED   40
 #define BULLET_SIZE        10
 
-/* single player on this badge */
+/* the sprite system */
 static ISPRITESYS *sprites = NULL;
-static ENTITY me;
+
+/* single player on this badge */
 static ENTITY bullet[MAX_BULLETS];
 static VECTOR bullet_pending = {0,0};
 
 static ENEMY *last_near = NULL;
+
+// yes, yes, everyone is an enemy
+// this way, the same code works for both users.
+static ENEMY *player = NULL;
 static ENEMY *current_enemy = NULL;
 
-// if true, we initiated combat.
-static bool started_it = false;
-
-// time left in combat
-static uint8_t combat_time_left = 0;
+// time left in combat (or in various related states)
+static uint8_t state_time_left = 0;
 
 OrchardAppContext *mycontext;
 
 extern mutex_t peer_mutex;
 
 /* private memory */
-typedef struct {
+typedef struct _BattleHandles {
   GListener	gl;
   font_t	fontLG;
   font_t	fontXS;
@@ -93,7 +95,10 @@ typedef struct {
   pixel_t       *l_pxbuf;
   pixel_t       *c_pxbuf;
   pixel_t       *r_pxbuf;
-} battle_ui_t;
+
+  // misc variables
+	uint16_t		cid;  // l2capchannelid for combat
+} BattleHandles;
 
 // enemies -- linked list
 gll_t *enemies = NULL;
@@ -387,7 +392,11 @@ static void enemy_list_refresh(void) {
           e->e.vecPosition.x,
           e->e.vecPosition.y);
 
-        e->xp = p->ble_game_state.ble_ides_xp;
+          e->xp = p->ble_game_state.ble_ides_xp;
+          e->level = p->ble_game_state.ble_ides_level;
+          e->hp = shiptable[p->ble_game_state.ble_ides_ship_type].max_hp;
+          e->energy = shiptable[p->ble_game_state.ble_ides_ship_type].max_energy;
+          e->ship_type = p->ble_game_state.ble_ides_ship_type;
       } else {
         /* no, add him */
         if (p->ble_game_state.ble_ides_incombat) {
@@ -425,8 +434,6 @@ static void enemy_list_refresh(void) {
         e->e.vecPosition.x = p->ble_game_state.ble_ides_x;
         e->e.vecPosition.y = p->ble_game_state.ble_ides_y;
 
-        me.visible = true;
-
         isp_set_sprite_xy(sprites,
           e->e.sprite_id,
           e->e.vecPosition.x,
@@ -435,14 +442,19 @@ static void enemy_list_refresh(void) {
         e->e.prevPos.x = p->ble_game_state.ble_ides_x;
         e->e.prevPos.y = p->ble_game_state.ble_ides_y;
 
-        e->xp = p->ble_game_state.ble_ides_xp;
+
         memcpy(&e->ble_peer_addr.addr, p->ble_peer_addr, 6);
 
         e->ble_peer_addr.addr_id_peer = TRUE;
         e->ble_peer_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
 
+        // copy over game data
         strcpy(e->name, (char *)p->ble_peer_name);
-
+        e->xp = p->ble_game_state.ble_ides_xp;
+        e->level = p->ble_game_state.ble_ides_level;
+        e->ship_type = p->ble_game_state.ble_ides_ship_type;
+        e->hp = shiptable[e->ship_type].max_hp;
+        e->energy = shiptable[e->ship_type].max_energy;
         gll_push(enemies, e);
       }
     }
@@ -461,10 +473,10 @@ static void draw_world_map(void) {
   const userconfig *config = getConfig();
   GWidgetInit wi;
   char tmp[40];
-  battle_ui_t *bh;
+  BattleHandles *bh;
 
   // get private memory
-  bh = (battle_ui_t *)mycontext->priv;
+  bh = (BattleHandles *)mycontext->priv;
 
   // draw map
   putImageFile("game/world.rgb", 0,0);
@@ -502,13 +514,36 @@ static void draw_world_map(void) {
 }
 
 static void
+copy_config_to_player(void) {
+  userconfig *config = getConfig();
+
+  player = malloc(sizeof(ENEMY));
+  // this is done once at startup. These are the "live" values used in game,
+  // where as the config is the long-term/stored value.
+  memset(&(player->ble_peer_addr), 0, sizeof(ble_gap_addr_t));
+  strncpy(player->name, config->name, CONFIG_NAME_MAXLEN);
+  player->level = config->level;
+
+  // we cannot determine hp or xp until ship has been selected but we can
+  // guess based on last used.
+  player->hp = shiptable[config->current_ship].max_hp;
+  player->energy = shiptable[config->current_ship].max_energy;
+  player->xp = config->xp;
+  player->ship_type = config->current_ship;
+  player->ship_locked_in = FALSE;
+  player->ttl = -1;
+
+  // ENTITY player.e will be init'd during combat
+}
+
+static void
 battle_start (OrchardAppContext *context)
 {
   userconfig *config = getConfig();
-  battle_ui_t *bh;
-  bh = malloc(sizeof(battle_ui_t));
-  memset(bh, 0, sizeof(battle_ui_t));
-
+  BattleHandles *bh;
+  bh = malloc(sizeof(BattleHandles));
+  memset(bh, 0, sizeof(BattleHandles));
+  bh->cid = BLE_L2CAP_CID_INVALID;
   mycontext = context;
 
   // turn off the LEDs
@@ -536,6 +571,9 @@ battle_start (OrchardAppContext *context)
   gwinAttachListener (&bh->gl);
   geventRegisterCallback (&bh->gl, orchardAppUgfxCallback, &bh->gl);
 
+  // stand us up.
+  copy_config_to_player();
+
   // how did we get here?
   // if we have a bleGapConnection then we can
   // use data from the current peer, and we start in
@@ -561,10 +599,10 @@ ENEMY *getNearestEnemy(void) {
     // does not account for screen edges -- but might be ok?
     // also does not attempt to sort the enemy list. if two people in same place
     // we'll have an issue.
-    if ((e->e.vecPosition.x >= (me.vecPosition.x - (ENGAGE_BB/2))) &&
-        (e->e.vecPosition.x <= (me.vecPosition.x + (ENGAGE_BB/2))) &&
-        (e->e.vecPosition.y >= (me.vecPosition.y - (ENGAGE_BB/2))) &&
-        (e->e.vecPosition.y <= (me.vecPosition.y + (ENGAGE_BB/2)))) {
+    if ((e->e.vecPosition.x >= (player->e.vecPosition.x - (ENGAGE_BB/2))) &&
+        (e->e.vecPosition.x <= (player->e.vecPosition.x + (ENGAGE_BB/2))) &&
+        (e->e.vecPosition.y >= (player->e.vecPosition.y - (ENGAGE_BB/2))) &&
+        (e->e.vecPosition.y <= (player->e.vecPosition.y + (ENGAGE_BB/2)))) {
       return e;
     }
     currNode = currNode->next;
@@ -575,10 +613,10 @@ ENEMY *getNearestEnemy(void) {
 static void
 draw_hud(OrchardAppContext *context) {
   userconfig *config = getConfig();
-  battle_ui_t *bh;
+  BattleHandles *bh;
 
   // get private memory
-  bh = (battle_ui_t *)context->priv;
+  bh = (BattleHandles *)context->priv;
 
   // top bar
   drawBufferedStringBox (&bh->l_pxbuf,
@@ -686,6 +724,12 @@ static ENEMY* getEnemyFromBLE(ble_gap_addr_t *peer) {
         current_enemy->ble_peer_addr.addr_id_peer = TRUE;
         current_enemy->ble_peer_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
         strcpy(current_enemy->name, (char *)p->ble_peer_name);
+        current_enemy->ship_type = p->ble_game_state.ble_ides_ship_type;
+        current_enemy->xp = p->ble_game_state.ble_ides_xp;
+        current_enemy->hp = shiptable[current_enemy->ship_type].max_hp;
+        current_enemy->energy = shiptable[current_enemy->ship_type].max_energy;
+        current_enemy->level = p->ble_game_state.ble_ides_level;
+
         return current_enemy;
       }
     }
@@ -700,7 +744,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   (void) context;
   userconfig *config = getConfig();
   ENEMY *nearest;
-  battle_ui_t *bh;
+  BattleHandles *bh;
   GEvent * pe;
   GEventGWinButton * be;
   OrchardAppRadioEvent * radio;
@@ -709,7 +753,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ble_gatts_evt_write_t * req;
   char msg[32];
   char tmp[40];
-  bh = (battle_ui_t *) context->priv;
+  bh = (BattleHandles *) context->priv;
 
   /* MAIN GAME EVENT LOOP */
   if (event->type == timerEvent) {
@@ -727,7 +771,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         gll_each(enemies, expire_enemies);
       }
 
-      entity_update(&me, FRAME_DELAY);
+      entity_update(&(player->e), FRAME_DELAY);
 
       enemy_clearall_blink();
       nearest = getNearestEnemy();
@@ -756,7 +800,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     if (current_battle_state == COMBAT) {
       /* in combat we only have to render the player and enemy */
       // move player
-      entity_update(&me, FRAME_DELAY);
+      entity_update(&(player->e), FRAME_DELAY);
     }
 
   } /* timerEvent */
@@ -885,6 +929,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       // now we have a peer connection.
       // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
       printf("BATTLE: l2CapConnection Success\n");
+      // stash the channel id
+    	bh->cid = evt->evt.l2cap_evt.local_cid;
       if (current_enemy == NULL) {
         // copy his data over and start the battle.
         current_enemy = getEnemyFromBLE(&ble_peer_addr);
@@ -928,16 +974,16 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           (current_battle_state == WORLD_MAP || current_battle_state == COMBAT)) {
         switch (event->key.code) {
         case keyALeft:
-          me.vecVelocityGoal.x = 0;
+          player->e.vecVelocityGoal.x = 0;
           break;
         case keyARight:
-          me.vecVelocityGoal.x = 0;
+          player->e.vecVelocityGoal.x = 0;
           break;
         case keyAUp:
-          me.vecVelocityGoal.y = 0;
+          player->e.vecVelocityGoal.y = 0;
           break;
         case keyADown:
-          me.vecVelocityGoal.y = 0;
+          player->e.vecVelocityGoal.y = 0;
           break;
         default:
           break;
@@ -949,16 +995,16 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           /* on keypress, we'll throttle up */
           switch (event->key.code) {
           case keyALeft:
-            me.vecVelocityGoal.x = -VGOAL;
+            player->e.vecVelocityGoal.x = -VGOAL;
             break;
           case keyARight:
-            me.vecVelocityGoal.x = VGOAL;
+            player->e.vecVelocityGoal.x = VGOAL;
             break;
           case keyAUp:
-            me.vecVelocityGoal.y = -VGOAL;
+            player->e.vecVelocityGoal.y = -VGOAL;
             break;
           case keyADown:
-            me.vecVelocityGoal.y = VGOAL;
+            player->e.vecVelocityGoal.y = VGOAL;
             break;
           case keyASelect:
             if (current_battle_state == WORLD_MAP) {
@@ -969,9 +1015,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           case keyBSelect:
             if (current_battle_state == WORLD_MAP) {
               if ((nearest = enemy_engage(context)) != NULL) {
-                // outgoing challenge
-                started_it = true;
-
                 /* we need to preserve the current enemy so we have things like
                  * their address and name. The pointer to the pixmp will be lost
                  * as changeState flushes the enemy list, but we don't use
@@ -1047,13 +1090,13 @@ static void remove_all_enemies(void) {
 static void battle_exit(OrchardAppContext *context)
 {
   userconfig *config = getConfig();
-  battle_ui_t *bh;
+  BattleHandles *bh;
 
   // free the UI
-  bh = (battle_ui_t *)context->priv;
+  bh = (BattleHandles *)context->priv;
   // store the last x/y of this guy
-  config->last_x = me.vecPosition.x;
-  config->last_y = me.vecPosition.y;
+  config->last_x = player->e.vecPosition.x;
+  config->last_y = player->e.vecPosition.y;
   configSave(config);
 
   // reset this state or we won't init properly next time.
@@ -1081,6 +1124,15 @@ static void battle_exit(OrchardAppContext *context)
   geventRegisterCallback (&bh->gl, NULL, NULL);
   geventDetachSource (&bh->gl, NULL);
 
+
+  if (player) {
+    free(player);
+  }
+
+  if (current_enemy) {
+    free(current_enemy);
+  }
+
   free (context->priv);
   context->priv = NULL;
 
@@ -1100,7 +1152,7 @@ render_all_enemies(void) {
 void state_handshake_enter(void) {
   gdispClear(Black);
   screen_alert_draw(true, "HANDSHAKING...");
-  combat_time_left = 5;
+  state_time_left = 5;
 }
 
 void state_handshake_tick(void) {
@@ -1108,8 +1160,8 @@ void state_handshake_tick(void) {
   // l2cap connection with a battle in it. It's still possible to TIMEOUT
   // and we have to handle that if it happens. We'l hold for five seconds.
   if (animtick % FPS == 0) {
-    combat_time_left--;
-    if (combat_time_left <= 0) {
+    state_time_left--;
+    if (state_time_left <= 0) {
       screen_alert_draw(true, "HS TIMEOUT :(");
       changeState(WORLD_MAP);
     }
@@ -1135,18 +1187,18 @@ void state_worldmap_enter(void) {
   sprites = isp_init();
   isp_scan_screen_for_water(sprites);
 
-  // draw player for first time.
-  entity_init(&me, SHIP_SIZE_WORLDMAP, SHIP_SIZE_WORLDMAP, T_PLAYER);
-  me.vecPosition.x = config->last_x;
-  me.vecPosition.y = config->last_y;
-  me.visible = true;
+  // draw player for first tiplayer.e.
+  entity_init(&player->e, SHIP_SIZE_WORLDMAP, SHIP_SIZE_WORLDMAP, T_PLAYER);
+  player->e.vecPosition.x = config->last_x;
+  player->e.vecPosition.y = config->last_y;
+  player->e.visible = true;
 
   isp_set_sprite_xy(sprites,
-    me.sprite_id,
-    me.vecPosition.x,
-    me.vecPosition.y);
+    player->e.sprite_id,
+    player->e.vecPosition.x,
+    player->e.vecPosition.y);
 
-  sprites->list[me.sprite_id].status = ISP_STAT_DIRTY_BOTH;
+  sprites->list[player->e.sprite_id].status = ISP_STAT_DIRTY_BOTH;
   isp_draw_all_sprites(sprites);
 
   // load the enemy list
@@ -1166,26 +1218,27 @@ void state_worldmap_tick(void) {
 #endif
   // Update BLE
   // if we moved, we have to update BLE.
-  if (me.vecPosition.x != me.prevPos.x ||
-      me.vecPosition.y != me.prevPos.y) {
-        bleGapUpdateState ((uint16_t)me.vecPosition.x,
-                           (uint16_t)me.vecPosition.y,
+  if (player->e.vecPosition.x != player->e.prevPos.x ||
+      player->e.vecPosition.y != player->e.prevPos.y) {
+        bleGapUpdateState ((uint16_t)player->e.vecPosition.x,
+                           (uint16_t)player->e.vecPosition.y,
                            config->xp,
                            config->level,
+                           config->current_ship,
                            config->in_combat);
   }
 }
 
 void state_worldmap_exit(void) {
-  battle_ui_t *bh;
+  BattleHandles *bh;
   userconfig *config = getConfig();
 
   // get private memory
-  bh = (battle_ui_t *)mycontext->priv;
+  bh = (BattleHandles *)mycontext->priv;
 
   // store our last position for later.
-  config->last_x = me.vecPosition.x;
-  config->last_y = me.vecPosition.y;
+  config->last_x = player->e.vecPosition.x;
+  config->last_y = player->e.vecPosition.y;
   configSave(config);
 
   if (bh->ghTitleL) {
@@ -1210,7 +1263,6 @@ void state_worldmap_exit(void) {
 // we are attacking someone, wait for consent.
 void state_approval_wait_enter(void) {
   // we will now attempt to open a BLE gap connect to the user.
-  started_it = true;
   printf("engage: %x:%x:%x:%x:%x:%x\n",
     current_enemy->ble_peer_addr.addr[5],
     current_enemy->ble_peer_addr.addr[4],
@@ -1247,14 +1299,14 @@ void state_approval_wait_exit(void) {
 // APPOVAL_DEMAND ------------------------------------------------------------
 // Someone is attacking us.
 void state_approval_demand_enter(void) {
-  battle_ui_t *bh;
+  BattleHandles *bh;
 	ble_peer_entry * peer;
   char buf[36];
 	int fHeight;
 	GWidgetInit wi;
 
   animtick = 0;
-  bh = (battle_ui_t *)mycontext->priv;
+  bh = (BattleHandles *)mycontext->priv;
   gdispClear(Black);
 
   peer = blePeerFind (ble_peer_addr.addr);
@@ -1309,7 +1361,7 @@ void state_approval_demand_tick(void) {
 }
 
 void state_approval_demand_exit(void) {
-  battle_ui_t *bh;
+  BattleHandles *bh;
   bh = mycontext->priv;
 
   gwinDestroy (bh->ghACCEPT);
@@ -1326,39 +1378,40 @@ void state_combat_enter(void) {
   userconfig *config = getConfig();
 
   // we're in combat now, send our last advertisement.
-  combat_time_left = 120;
+  state_time_left = 120;
   config->in_combat = 1;
   configSave(config);
 
-  bleGapUpdateState ((uint16_t)me.vecPosition.x,
-                     (uint16_t)me.vecPosition.y,
-                     config->xp,
-                     config->level,
-                     config->in_combat);
-
+  bleGapUpdateState ((uint16_t)player->e.vecPosition.x,
+                     (uint16_t)player->e.vecPosition.y,
+    								 config->xp,
+    								 config->level,
+    								 config->current_ship,
+    								 config->in_combat);
 
   /* rebuild the player pixmap */
-  me.size_x = SHIP_SIZE_ZOOMED;
-  me.size_y = SHIP_SIZE_ZOOMED;
+  player->e.size_x = SHIP_SIZE_ZOOMED;
+  player->e.size_y = SHIP_SIZE_ZOOMED;
 
-  newmap = getMapTile(&me);
+  newmap = getMapTile(&player->e);
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
   putImageFile(fnbuf, 0,0);
-  zoomEntity(&me);
+  zoomEntity(&player->e);
 
-  /* init bullets */
-//  for (int i=0; i < MAX_BULLETS; i++) {
-//    entity_init(&bullet[i], BULLET_SIZE, BULLET_SIZE, T_BULLET);
-//  }
-
-  /* TODO: put players in starting positions */
-  /* I need to make this table... */
-#ifdef notyet
-  current_enemy->e.vecPosition.x = legal_start[newmap][1].x
-  current_enemy->e.vecPosition.y = legal_start[newmap][1].y
-  me.vecPosition.x = legal_start[newmap][0].x;
-  me.vecPosition.y = legal_start[newmap][0].y;
-#endif
+  /* move the player to the starting position */
+	if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
+    // Attacker (the central) gets left.
+    player->e.vecPosition.x = ship_init_pos_table[newmap].attacker.x;
+    player->e.vecPosition.y = ship_init_pos_table[newmap].attacker.y;
+    current_enemy->e.vecPosition.x = ship_init_pos_table[newmap].defender.x;
+    current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].defender.y;
+  } else {
+    // Defender gets on the right.
+    player->e.vecPosition.x = ship_init_pos_table[newmap].defender.x;
+    player->e.vecPosition.y = ship_init_pos_table[newmap].defender.y;
+    current_enemy->e.vecPosition.x = ship_init_pos_table[newmap].attacker.x;
+    current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].attacker.y;
+  }
 
   draw_hud(mycontext);
 }
@@ -1367,16 +1420,16 @@ void state_combat_tick(void) {
   char tmp[10];
   int min;
 
-  battle_ui_t *bh;
+  BattleHandles *bh;
   bh = mycontext->priv;
 
   if (animtick % FPS == 0) {
-    combat_time_left--;
-    min = combat_time_left / 60;
+    state_time_left--;
+    min = state_time_left / 60;
 
     sprintf(tmp, "%02d:%02d",
       min,
-      combat_time_left - (min * 60));
+      state_time_left - (min * 60));
 
     // update clock
     drawBufferedStringBox (&bh->c_pxbuf,
@@ -1389,7 +1442,7 @@ void state_combat_tick(void) {
       Yellow,
       justifyCenter);
 
-    if (combat_time_left == 0) {
+    if (state_time_left == 0) {
       // time up.
       i2sPlay("sound/foghrn.snd");
       changeState(SHOW_RESULTS);
@@ -1398,7 +1451,7 @@ void state_combat_tick(void) {
 }
 
 void state_combat_exit(void) {
-  battle_ui_t *bh;
+  BattleHandles *bh;
   bh = mycontext->priv;
 
   free(bh->l_pxbuf);
@@ -1411,13 +1464,13 @@ void state_combat_exit(void) {
   bh->r_pxbuf = NULL;
 
   // todo:free the enemy
-  me.size_x = 10;
-  me.size_y = 10;
+  player->e.size_x = 10;
+  player->e.size_y = 10;
 }
 
 static void state_levelup_enter(void) {
   GWidgetInit wi;
-  battle_ui_t *p = mycontext->priv;
+  BattleHandles *p = mycontext->priv;
   userconfig *config = getConfig();
   char tmp[40];
   int curpos;
@@ -1529,7 +1582,7 @@ static void state_levelup_tick(void) {
 }
 
 static void state_levelup_exit(void) {
-  battle_ui_t *p = mycontext->priv;
+  BattleHandles *p = mycontext->priv;
 
   if (p->ghACCEPT != NULL) {
     gwinDestroy (p->ghACCEPT);
@@ -1537,120 +1590,107 @@ static void state_levelup_exit(void) {
   }
 }
 
-static void state_vs_draw_enemy(void) {
-  battle_ui_t *p = mycontext->priv;
-  int curpos;
-  userconfig *config = getConfig();
-  char tmp[40];
-
-  // them
-  putImageFile(getAvatarImage(0, false, 'n', false), 220, 91);
-  gdispDrawBox(220,91, 40, 40, Black);
-
-  // clear right side
-  gdispFillArea(261, 95,
-                59, 26,
-               HTML2COLOR(0x151285));
-
-  // clear name area
-  gdispFillArea(160, 135,
-                160, gdispGetFontMetric(p->fontXS, fontHeight),
-                HTML2COLOR(0x151285));
-
-  // their stats
-  curpos=95;
-  sprintf(tmp, "HP %d", shiptable[config->current_ship].max_hp);
-  gdispDrawStringBox (262,
-                      curpos,
-                      58,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      "HP 8888",
-                      p->fontXS,
-                      White,
-                      justifyLeft);
-
-  curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
-  sprintf(tmp, "EN %d", shiptable[config->current_ship].max_energy);
-  gdispDrawStringBox (262,
-                        curpos,
-                        58,
-                        gdispGetFontMetric(p->fontXS, fontHeight),
-                        tmp,
-                        p->fontXS,
-                        White,
-                        justifyLeft);
-
-  // boat name
-  gdispDrawStringBox (160,
-                      130,
-                      160,
-                      gdispGetFontMetric(p->fontXS, fontHeight),
-                      shiptable[config->current_ship].type_name,
-                      p->fontXS,
-                      White,
-                      justifyCenter);
-}
-
-static void state_vs_draw_player(void) {
+static void state_vs_draw_enemy(ENEMY *e, bool is_player) {
   /* draw the player's ship and stats */
-  battle_ui_t *p = mycontext->priv;
+  BattleHandles *p = mycontext->priv;
+
   int curpos;
-  userconfig *config = getConfig();
+  int curpos_x;
+
   char tmp[40];
+
+  if (is_player) {
+    curpos_x = 60;
+  } else {
+    curpos_x = 220;
+  }
 
   // us
-  putImageFile(getAvatarImage(0, true, 'n', true), 60,91);
-  gdispDrawBox(60,91, 40, 40, Black);
+  putImageFile(getAvatarImage(0, true, 'n', true), curpos_x, 91);
+  gdispDrawBox(curpos_x, 91, 40, 40, Black);
 
-  // clear left side
-  gdispFillArea(0, 95,
-                59, 30,
-                HTML2COLOR(0x151285));
+  if (is_player) {
+    // clear left side
+    gdispFillArea(0, 95,
+                  59, 30,
+                  HTML2COLOR(0x151285));
 
-  // clear name area
-  gdispFillArea(0, 132,
-                160, gdispGetFontMetric(p->fontXS, fontHeight),
-                HTML2COLOR(0x151285));
+    // clear name area
+    gdispFillArea(0, 132,
+                  160, gdispGetFontMetric(p->fontXS, fontHeight),
+                  HTML2COLOR(0x151285));
+    curpos_x = 0;
+  } else {
+    // clear right side
+    gdispFillArea(261, 95,
+                  59, 26,
+                 HTML2COLOR(0x151285));
+
+    // clear name area
+    gdispFillArea(160, 135,
+                  160, gdispGetFontMetric(p->fontXS, fontHeight),
+                  HTML2COLOR(0x151285));
+    curpos_x = 262;
+  }
 
   // our stats
   curpos=95;
-  sprintf(tmp, "HP %d", shiptable[config->current_ship].max_hp);
-  gdispDrawStringBox (0,
+
+  sprintf(tmp, "HP %d", e->hp);
+  gdispDrawStringBox (curpos_x,
                       curpos,
                       58,
                       gdispGetFontMetric(p->fontXS, fontHeight),
                       tmp,
                       p->fontXS,
                       White,
-                      justifyRight);
+                      is_player ? justifyRight : justifyLeft);
 
   curpos = curpos + gdispGetFontMetric(p->fontXS, fontHeight);
-  sprintf(tmp, "EN %d", shiptable[config->current_ship].max_energy);
-  gdispDrawStringBox (0,
+  sprintf(tmp, "EN %d", e->energy);
+  gdispDrawStringBox (curpos_x,
                       curpos,
                       58,
                       gdispGetFontMetric(p->fontXS, fontHeight),
                       tmp,
                       p->fontXS,
                       White,
-                      justifyRight);
+                      is_player ? justifyRight : justifyLeft);
+  if (is_player) {
+    curpos_x = 0;
+  } else {
+    curpos_x = 160;
+  }
+
   // boat name
-  gdispDrawStringBox (0,
+  gdispDrawStringBox (curpos_x,
                       130,
                       160,
                       gdispGetFontMetric(p->fontXS, fontHeight),
-                      shiptable[config->current_ship].type_name,
+                      shiptable[e->ship_type].type_name,
                       p->fontXS,
                       White,
                       justifyCenter);
+
+  if (!is_player) {
+    gdispFillArea(115, 160, 90, 30, Red);
+    gdispDrawStringBox (115,
+                        160,
+                        90,
+                        gdispGetFontMetric(p->fontSM, fontHeight),
+                        "WAITING",
+                        p->fontSM,
+                        White,
+                        justifyCenter);
+  }
 }
 
 static void state_vs_enter(void) {
-  battle_ui_t *p = mycontext->priv;
+  BattleHandles *p = mycontext->priv;
   userconfig *config = getConfig();
   GWidgetInit wi;
 
-  combat_time_left = 15;
+  state_time_left = 15;
 
   putImageFile("game/world.rgb", 0,0);
 
@@ -1695,8 +1735,8 @@ static void state_vs_enter(void) {
                       White,
                       justifyCenter);
 
-  state_vs_draw_player();
-  state_vs_draw_enemy();
+  state_vs_draw_enemy(player, TRUE);
+  state_vs_draw_enemy(current_enemy, FALSE);
 
   // draw UI
   gwinSetDefaultStyle(&GreenButtonStyle, FALSE);
@@ -1711,17 +1751,20 @@ static void state_vs_enter(void) {
   gwinSetDefaultFont(p->fontSM);
   p->ghACCEPT = gwinButtonCreate(0, &wi);
   gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
+
+  // we'll now tell them what our ship is.
+  // TBD NETWORK CODE
 }
 
 static void state_vs_tick(void) {
   // update the clock
-  battle_ui_t *p = mycontext->priv;
+  BattleHandles *p = mycontext->priv;
   char tmp[40];
 
   if (animtick % FPS == 0) {
-  //  combat_time_left--;
+  //  state_time_left--;
     sprintf(tmp, ":%02d",
-      combat_time_left);
+      state_time_left);
 
     gdispFillArea(150,
       199,
@@ -1739,7 +1782,7 @@ static void state_vs_tick(void) {
                         justifyCenter);
   }
 
-  if (combat_time_left == 0) {
+  if (state_time_left == 0) {
     // time up -- force to next screen.
     i2sPlay("game/engage.snd");
     changeState(COMBAT);
@@ -1748,7 +1791,7 @@ static void state_vs_tick(void) {
 }
 
 static void state_vs_exit(void) {
-  battle_ui_t *p = mycontext->priv;
+  BattleHandles *p = mycontext->priv;
 
   if (p->ghACCEPT != NULL) {
     gwinDestroy (p->ghACCEPT);

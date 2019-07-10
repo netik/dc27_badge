@@ -181,10 +181,10 @@ blePeerShow (void)
 		printf ("[%d] ", p->ble_ttl);
 		if (p->ble_isbadge == TRUE) {
 			t = &p->ble_game_state;
-			printf ("Badge: X/Y: %d/%d XP: %d"
+			printf ("Badge: X/Y: %d/%d SHIPTYPE: %d XP: %d"
 			    " RANK: %d INCOMBAT: %d",
-			    t->ble_ides_x, t->ble_ides_y, t->ble_ides_xp,
-			    t->ble_ides_rank, t->ble_ides_incombat);
+			    t->ble_ides_x, t->ble_ides_y, t->ble_ides_ship_type,
+					t->ble_ides_xp,t->ble_ides_level, t->ble_ides_incombat);
 		}
 		printf ("\n");
 	}
