@@ -129,7 +129,7 @@ typedef struct _bp_vs_pkt {
 	bp_header_t	bp_header;
 	uint16_t	bp_shiptype;
 	uint16_t	bp_pad;
-} bp_vs_pkt;
+} bp_vs_pkt_t;
 
 /*
  * State packets. These are used to keep the state machine
@@ -138,6 +138,6 @@ typedef struct _bp_vs_pkt {
 
 typedef struct _bp_state_pkt {
 	bp_header_t	bp_header;
-} bp_state_pkt;
+} bp_state_pkt_t;
 
 #endif /* _BATTLE_H_ */
