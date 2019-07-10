@@ -70,7 +70,7 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
   printf ("Game\n");
   printf ("----\n");
   printf ("level      %s (%d)\n",
-           rankname[config->level-1],
+           rankname[config->level],
            config->level);
   printf ("currship   %d (enabled: %x)\n",
            config->current_ship,
@@ -105,16 +105,6 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     return;
   }
 
-  if (!strcasecmp(argv[1], "pingdump")) {
-    if (!strcmp(argv[2], "1")) {
-      config->unlocks |= UL_PINGDUMP;
-    } else {
-      config->unlocks &= ~(UL_PINGDUMP);
-    }
-    printf ("Pingdump set.\n");
-    return;
-  }
-
   if (!strcasecmp(argv[1], "name")) {
     strncpy(config->name, argv[2], CONFIG_NAME_MAXLEN);
     printf ("Name set.\n");
@@ -142,9 +132,9 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     return;
   }
 
-  if (!strcasecmp(argv[1], "ships")) {
-    config->ships_enabled = val;
-    printf ("Enabled ships set to %d.\n", config->ships_enabled);
+  if (!strcasecmp(argv[1], "ship_type")) {
+    config->current_ship_type = val;
+    printf ("Current Ship set to %d.\n", config->current_ship_type);
     return;
   }
 
