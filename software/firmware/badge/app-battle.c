@@ -764,35 +764,38 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   // handle uGFX events
   if (event->type == ugfxEvent) {
     if (current_battle_state == APPROVAL_DEMAND) {
-  		pe = event->ugfx.pEvent;
-  		if (pe->type == GEVENT_GWIN_BUTTON) {
-  			be = (GEventGWinButton *)pe;
-  			if (be->gwin == bh->ghACCEPT) {
+      pe = event->ugfx.pEvent;
+      if (pe->type == GEVENT_GWIN_BUTTON) {
+        be = (GEventGWinButton *)pe;
+        if (be->gwin == bh->ghACCEPT) {
           // we will send an accept packet
           msg[0] = BLE_IDES_GAMEATTACK_ACCEPT;
-  				bleGattcWrite (gm_handle.value_handle,
-  				    (uint8_t *)msg, 1, FALSE);
+          bleGattcWrite (gm_handle.value_handle,
+                         (uint8_t *)msg, 1, FALSE);
 
           // on return of that packet, we'll have a l2CapConnection
           // and we'll switch to combat state.
-  			}
 
-  			if (be->gwin == bh->ghDECLINE) {
+          // we keep our gatt connection open as we'll need it to ID
+          // the other user.
+        }
+
+        if (be->gwin == bh->ghDECLINE) {
           // send a decline and go back to the map.
           msg[0] = BLE_IDES_GAMEATTACK_DECLINE;
-  				bleGattcWrite (gm_handle.value_handle,
-  				     (uint8_t *)msg, 1, FALSE);
-  				bleGapDisconnect ();
+          bleGattcWrite (gm_handle.value_handle,
+                         (uint8_t *)msg, 1, FALSE);
+          bleGapDisconnect ();
           changeState(WORLD_MAP);
-  			}
+        }
       }
-		}
+    }
 
     if (current_battle_state == VS_SCREEN) {
-  		pe = event->ugfx.pEvent;
-  		if (pe->type == GEVENT_GWIN_BUTTON) {
-  			be = (GEventGWinButton *)pe;
-  			if (be->gwin == bh->ghACCEPT) {
+      pe = event->ugfx.pEvent;
+      if (pe->type == GEVENT_GWIN_BUTTON) {
+        be = (GEventGWinButton *)pe;
+        if (be->gwin == bh->ghACCEPT) {
           i2sPlay ("sound/click.snd");
 
           // exit out for right now
@@ -802,10 +805,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     }
 
     if (current_battle_state == LEVELUP) {
-  		pe = event->ugfx.pEvent;
-  		if (pe->type == GEVENT_GWIN_BUTTON) {
-  			be = (GEventGWinButton *)pe;
-  			if (be->gwin == bh->ghACCEPT) {
+      pe = event->ugfx.pEvent;
+      if (pe->type == GEVENT_GWIN_BUTTON) {
+        be = (GEventGWinButton *)pe;
+        if (be->gwin == bh->ghACCEPT) {
           // now that they've accepted, actually do the level-up.
           i2sPlay ("sound/click.snd");
           config->level++;
@@ -814,7 +817,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         }
       }
     }
-
   }
 
   // deal with the radio
@@ -1098,14 +1100,17 @@ render_all_enemies(void) {
 void state_handshake_enter(void) {
   gdispClear(Black);
   screen_alert_draw(true, "HANDSHAKING...");
-  combat_time_left = 10;
+  combat_time_left = 5;
 }
 
 void state_handshake_tick(void) {
+  // in this state we are being attacked and we are holding pending a
+  // l2cap connection with a battle in it. It's still possible to TIMEOUT
+  // and we have to handle that if it happens. We'l hold for five seconds.
   if (animtick % FPS == 0) {
     combat_time_left--;
     if (combat_time_left <= 0) {
-      screen_alert_draw(true, "HANDSHAKE TIMEOUT");
+      screen_alert_draw(true, "HS TIMEOUT :(");
       changeState(WORLD_MAP);
     }
   }
@@ -1230,12 +1235,13 @@ void state_approval_wait_tick(void) {
     // forget it.
     screen_alert_draw(TRUE, "TIMED OUT");
     chThdSleepMilliseconds(ALERT_DELAY);
+    bleGapDisconnect ();
     changeState(WORLD_MAP);
   }
 }
 
 void state_approval_wait_exit(void) {
-  bleGapDisconnect ();
+  // no-op.
 }
 
 // APPOVAL_DEMAND ------------------------------------------------------------
