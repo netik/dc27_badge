@@ -757,7 +757,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ble_gatts_evt_rw_authorize_request_t * rw;
   ble_gatts_evt_write_t * req;
 
-  bp_vs_pkt *pkt_vs;
+  bp_vs_pkt_t *pkt_vs;
 
   char msg[32];
   char tmp[40];
@@ -928,7 +928,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             /* intentional fall-through */
           case BATTLE_OP_SHIP_SELECT:
             printf("got ship type packet\n");
-            pkt_vs = (bp_vs_pkt *) &bh->rxbuf;
+            pkt_vs = (bp_vs_pkt_t *) &bh->rxbuf;
             current_enemy->ship_type = pkt_vs->bp_shiptype;
             current_enemy->hp = shiptable[current_enemy->ship_type].max_hp;
             current_enemy->energy = shiptable[current_enemy->ship_type].max_energy;
@@ -1790,16 +1790,16 @@ static void send_ship_type(uint16_t type, bool final) {
 
   // get private memory
   p = (BattleHandles *)mycontext->priv;
-  bp_vs_pkt pkt;
+  bp_vs_pkt_t pkt;
 
   memset (p->txbuf, 0, sizeof(p->txbuf));
   pkt.bp_header.bp_opcode = final ? BATTLE_OP_SHIP_CONFIRM : BATTLE_OP_SHIP_SELECT;
   pkt.bp_header.bp_type = T_ENEMY; // always enemy.
   pkt.bp_shiptype = type;
   pkt.bp_pad = 0xffff;
-  memcpy (p->txbuf, &pkt, sizeof(bp_vs_pkt));
+  memcpy (p->txbuf, &pkt, sizeof(bp_vs_pkt_t));
 
-  if (bleL2CapSend ((uint8_t *)p->txbuf, sizeof(bp_vs_pkt)) != NRF_SUCCESS) {
+  if (bleL2CapSend ((uint8_t *)p->txbuf, sizeof(bp_vs_pkt_t)) != NRF_SUCCESS) {
     screen_alert_draw(true, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
     orchardAppExit ();
