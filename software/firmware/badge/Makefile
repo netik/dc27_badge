@@ -152,7 +152,7 @@ ZMACHINE = $(CHIBIOS)/../zmachine
 include $(ZMACHINE)/build.mk
 
 # Define linker script file here
-LDSCRIPT= NRF52840_softdecvice.ld
+LDSCRIPT= NRF52840_softdevice.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
