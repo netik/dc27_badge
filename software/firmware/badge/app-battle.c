@@ -1851,7 +1851,7 @@ static void state_vs_tick(void) {
   char tmp[40];
 
   if (animtick % FPS == 0) {
-  //  state_time_left--;
+    state_time_left--;
     sprintf(tmp, ":%02d",
       state_time_left);
 
