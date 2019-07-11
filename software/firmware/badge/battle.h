@@ -22,7 +22,6 @@
  */
 
 typedef uint16_t entity_type;
-
 #define T_PLAYER	0x01
 #define T_ENEMY		0x02
 #define T_BULLET	0x03
@@ -84,15 +83,13 @@ typedef struct _bullet {
  */
 
 /* Entity opcodes */
-
 #define BATTLE_OP_ENTITY_CREATE		0x01 /* New entity in play */
 #define BATTLE_OP_ENTITY_DESTROY	0x02 /* Discard existing entity */
 #define BATTLE_OP_ENTITY_UPDATE		0x03 /* Entity state update */
 
 /* VS opcodes */
-
 #define BATTLE_OP_SHIP_SELECT		0x04 /* Current ship selection */
-#define BATTLE_OP_SHIP_CONFIRM		0x05 /* Final ship choice */
+#define BATTLE_OP_SHIP_CONFIRM	0x05 /* Final ship choice */
 
 /* State opcodes */
 

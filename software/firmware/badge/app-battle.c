@@ -79,6 +79,9 @@ OrchardAppContext *mycontext;
 
 extern mutex_t peer_mutex;
 
+#define PEER_ADDR_LEN	12 + 5
+#define MAX_PEERMEM	(PEER_ADDR_LEN + BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_MAX_SUPPORTED + 1)
+
 /* private memory */
 typedef struct _BattleHandles {
   GListener	gl;
@@ -97,7 +100,9 @@ typedef struct _BattleHandles {
   pixel_t       *r_pxbuf;
 
   // misc variables
-	uint16_t		cid;  // l2capchannelid for combat
+	uint16_t cid;  // l2capchannelid for combat
+  char		 txbuf[MAX_PEERMEM + BLE_IDES_L2CAP_MTU + 3];
+  char		 rxbuf[BLE_IDES_L2CAP_MTU];
 } BattleHandles;
 
 // enemies -- linked list
@@ -111,6 +116,8 @@ static int16_t animtick = 0;
 static void changeState(battle_state nextstate);
 static ENEMY *enemy_find_by_peer(uint8_t *addr);
 static void render_all_enemies(void);
+static void send_ship_type(uint16_t type, bool final);
+static void state_vs_draw_enemy(ENEMY *e, bool is_player);
 /* end protos */
 
 static uint16_t xp_for_level(uint8_t level) {
@@ -453,6 +460,7 @@ static void enemy_list_refresh(void) {
         e->xp = p->ble_game_state.ble_ides_xp;
         e->level = p->ble_game_state.ble_ides_level;
         e->ship_type = p->ble_game_state.ble_ides_ship_type;
+        e->ship_locked_in = FALSE;
         e->hp = shiptable[e->ship_type].max_hp;
         e->energy = shiptable[e->ship_type].max_energy;
         gll_push(enemies, e);
@@ -729,7 +737,7 @@ static ENEMY* getEnemyFromBLE(ble_gap_addr_t *peer) {
         current_enemy->hp = shiptable[current_enemy->ship_type].max_hp;
         current_enemy->energy = shiptable[current_enemy->ship_type].max_energy;
         current_enemy->level = p->ble_game_state.ble_ides_level;
-
+        current_enemy->ship_locked_in = FALSE;
         return current_enemy;
       }
     }
@@ -751,6 +759,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ble_evt_t * evt;
   ble_gatts_evt_rw_authorize_request_t * rw;
   ble_gatts_evt_write_t * req;
+
+  bp_vs_pkt *pkt_vs;
+
   char msg[32];
   char tmp[40];
   bh = (BattleHandles *) context->priv;
@@ -918,9 +929,31 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       }
       break;
     case l2capRxEvent:
-      // we then get a radio event
-      // MTU is 1024 bytes.
-      // radio->pkt and radio->pktlen
+      // VS_SCREEN
+      memcpy(bh->rxbuf, radio->pkt, radio->pktlen);
+
+      printf("recv packet with type %d, length %d\n",
+        ((bp_header_t *)&bh->rxbuf)->bp_type,
+        radio->pktlen
+      );
+
+      switch (((bp_header_t *)&bh->rxbuf)->bp_opcode) {
+        case BATTLE_OP_SHIP_CONFIRM:
+          current_enemy->ship_locked_in = TRUE;
+          /* intentional fall-through */
+        case BATTLE_OP_SHIP_SELECT:
+          printf("got ship type packet\n");
+          pkt_vs = (bp_vs_pkt *) &bh->rxbuf;
+          current_enemy->ship_type = pkt_vs->bp_shiptype;
+          current_enemy->hp = shiptable[current_enemy->ship_type].max_hp;
+          current_enemy->energy = shiptable[current_enemy->ship_type].max_energy;
+          state_vs_draw_enemy(current_enemy, false);
+        break;
+      }
+
+      // COMBAT
+      // ... TBD ...
+
       break;
     case l2capTxEvent:
       // after transmit... they got the data.
@@ -941,6 +974,39 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       break;
     }
   }
+
+  // handle ship selection screen (VS_SCREEN) ------------------------------
+  if (current_battle_state == VS_SCREEN && player->ship_locked_in == FALSE) {
+    if (event->type == keyEvent) {
+      if (event->key.flags == keyPress) {
+        switch (event->key.code) {
+        case keyALeft:
+          player->ship_type--;
+          break;
+        case keyARight:
+          player->ship_type++;
+          break;
+        case keyBSelect:
+          player->ship_locked_in = TRUE;
+  				i2sPlay ("sound/ping.snd");
+          state_vs_draw_enemy(player, TRUE);
+          send_ship_type(player->ship_type, TRUE);
+          break;
+        default:
+          break;
+        }
+
+        if (player->ship_type == 255) { player->ship_type = 5; } // underflow
+        if (player->ship_type > 5) { player->ship_type = 0; }
+        player->hp = shiptable[player->ship_type].max_hp;
+        player->energy = shiptable[player->ship_type].max_energy;
+
+        state_vs_draw_enemy(player, TRUE);
+        send_ship_type(player->ship_type, FALSE);
+      }
+    }
+  }
+  // end handle ship selection screen (VS_SCREEN) -------------------------
 
   // we cheat a bit here and read pins directly to see if
   // the joystick is in a corner.
@@ -1356,6 +1422,7 @@ void state_approval_demand_tick(void) {
     // user chose nothing.
     screen_alert_draw(TRUE, "TIMED OUT");
     chThdSleepMilliseconds(ALERT_DELAY);
+    bleGapDisconnect();
     changeState(WORLD_MAP);
   }
 }
@@ -1366,8 +1433,6 @@ void state_approval_demand_exit(void) {
 
   gwinDestroy (bh->ghACCEPT);
   gwinDestroy (bh->ghDECLINE);
-
-  bleGapDisconnect ();
 }
 
 // COMBAT --------------------------------------------------------------------
@@ -1606,8 +1671,8 @@ static void state_vs_draw_enemy(ENEMY *e, bool is_player) {
   }
 
   // us
-  putImageFile(getAvatarImage(0, true, 'n', true), curpos_x, 91);
-  gdispDrawBox(curpos_x, 91, 40, 40, Black);
+  putImageFile(getAvatarImage(e->ship_type, is_player, 'n', true), curpos_x, 89);
+  gdispDrawBox(curpos_x, 89, 40, 40, White);
 
   if (is_player) {
     // clear left side
@@ -1626,10 +1691,6 @@ static void state_vs_draw_enemy(ENEMY *e, bool is_player) {
                   59, 26,
                  HTML2COLOR(0x151285));
 
-    // clear name area
-    gdispFillArea(160, 135,
-                  160, gdispGetFontMetric(p->fontXS, fontHeight),
-                  HTML2COLOR(0x151285));
     curpos_x = 262;
   }
 
@@ -1662,7 +1723,11 @@ static void state_vs_draw_enemy(ENEMY *e, bool is_player) {
     curpos_x = 160;
   }
 
-  // boat name
+  // clear name area
+  gdispFillArea(curpos_x, 130,
+                160, gdispGetFontMetric(p->fontXS, fontHeight),
+                HTML2COLOR(0x151285));
+  // draw name
   gdispDrawStringBox (curpos_x,
                       130,
                       160,
@@ -1672,27 +1737,65 @@ static void state_vs_draw_enemy(ENEMY *e, bool is_player) {
                       White,
                       justifyCenter);
 
-  if (!is_player) {
-    gdispFillArea(115, 160, 90, 30, Red);
-    gdispDrawStringBox (115,
-                        160,
-                        90,
+  if (! e->ship_locked_in) {
+    gdispFillArea(curpos_x + 25, 160, 110, 30, Red);
+    gdispDrawStringBox (curpos_x + 25,
+                        164,
+                        110,
                         gdispGetFontMetric(p->fontSM, fontHeight),
                         "WAITING",
                         p->fontSM,
                         White,
                         justifyCenter);
+  } else {
+    gdispFillArea(curpos_x + 25, 160, 110, 30, Green);
+    gdispDrawStringBox (curpos_x + 25,
+                        164,
+                        110,
+                        gdispGetFontMetric(p->fontSM, fontHeight),
+                        "READY",
+                        p->fontSM,
+                        White,
+                        justifyCenter);
+
+  }
+}
+
+static void send_ship_type(uint16_t type, bool final) {
+  BattleHandles *p;
+
+  // get private memory
+  p = (BattleHandles *)mycontext->priv;
+  bp_vs_pkt pkt;
+
+  memset (p->txbuf, 0, sizeof(p->txbuf));
+  pkt.bp_header.bp_opcode = final ? BATTLE_OP_SHIP_CONFIRM : BATTLE_OP_SHIP_SELECT;
+  pkt.bp_header.bp_type = T_ENEMY; // always enemy.
+  pkt.bp_shiptype = type;
+  pkt.bp_pad = 0xffff;
+  memcpy (p->txbuf, &pkt, sizeof(bp_vs_pkt));
+
+  if (bleL2CapSend ((uint8_t *)p->txbuf, sizeof(bp_vs_pkt)) != NRF_SUCCESS) {
+    screen_alert_draw(true, "BLE XMIT FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit ();
+    return;
   }
 }
 
 static void state_vs_enter(void) {
   BattleHandles *p = mycontext->priv;
   userconfig *config = getConfig();
-  GWidgetInit wi;
 
-  state_time_left = 15;
+  state_time_left = 20;
 
   putImageFile("game/world.rgb", 0,0);
+
+	if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
+    // Was gonna play this on both devices, but then
+    // it sounds out of sync and crazy.
+    i2sPlay("sound/ffenem.snd");
+  }
 
   // boxes
   gdispFillArea(0, 14, 320, 30, Black);
@@ -1738,22 +1841,8 @@ static void state_vs_enter(void) {
   state_vs_draw_enemy(player, TRUE);
   state_vs_draw_enemy(current_enemy, FALSE);
 
-  // draw UI
-  gwinSetDefaultStyle(&GreenButtonStyle, FALSE);
-  gwinWidgetClearInit(&wi);
-  wi.g.show = TRUE;
-  wi.g.x = 35;
-  wi.g.y = 160;
-  wi.g.width = 90;
-  wi.g.height = 30;
-  wi.text = "SELECT";
-
-  gwinSetDefaultFont(p->fontSM);
-  p->ghACCEPT = gwinButtonCreate(0, &wi);
-  gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
-
   // we'll now tell them what our ship is.
-  // TBD NETWORK CODE
+	send_ship_type(player->ship_type, false);
 }
 
 static void state_vs_tick(void) {
@@ -1791,12 +1880,7 @@ static void state_vs_tick(void) {
 }
 
 static void state_vs_exit(void) {
-  BattleHandles *p = mycontext->priv;
-
-  if (p->ghACCEPT != NULL) {
-    gwinDestroy (p->ghACCEPT);
-    p->ghACCEPT = NULL;
-  }
+  // no-op for now
 }
 
 
