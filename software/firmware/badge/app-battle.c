@@ -750,6 +750,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   userconfig *config = getConfig();
   ENEMY *nearest;
   BattleHandles *bh;
+  bp_header_t * ph;
   GEvent * pe;
   GEventGWinButton * be;
   OrchardAppRadioEvent * radio;
@@ -917,12 +918,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       if (current_battle_state == VS_SCREEN) {
         memcpy(bh->rxbuf, radio->pkt, radio->pktlen);
 
+        ph = (bp_header_t *)bh->rxbuf;
         printf("recv packet with type %d, length %d\n",
-          ((bp_header_t *)&bh->rxbuf)->bp_type,
-          radio->pktlen
-        );
+          ph->bp_type, radio->pktlen);
 
-        switch (((bp_header_t *)&bh->rxbuf)->bp_opcode) {
+        switch (ph->bp_opcode) {
           case BATTLE_OP_SHIP_CONFIRM:
             current_enemy->ship_locked_in = TRUE;
             /* intentional fall-through */
