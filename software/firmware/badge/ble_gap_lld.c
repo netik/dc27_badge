@@ -757,7 +757,7 @@ bleGapDisconnect (void)
 
 void
 bleGapUpdateState (uint16_t x, uint16_t y, uint16_t xp,
-    uint8_t rank, uint8_t type,  bool in_combat)
+    uint8_t rank, uint8_t type, uint8_t in_combat)
 {
 	ble_ides_state.ble_ides_x = x;
 	ble_ides_state.ble_ides_y = y;
