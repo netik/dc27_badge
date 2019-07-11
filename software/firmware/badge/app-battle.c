@@ -145,22 +145,6 @@ int getMapTile(ENTITY *e) {
   return ( (( y / TILE_H ) * 4) + ( x / TILE_W ));
 }
 
-static void zoomEntity(ENTITY *e) {
-  /* if you are at some x,y on the world map and we zoom in to a sub-map
-   * translate that coordinate to the new map
-   *
-   * Your point on the world map could represent any of NxM pixels in the
-   * submap.
-   */
-
-  float scalechange = 0.25;
-  float offsetX = -(e->vecPosition.x * scalechange);
-  float offsetY = -(e->vecPosition.y * scalechange);
-
-  e->vecPosition.x += offsetX;
-  e->vecPosition.y += offsetY;
-}
-
 static void
 entity_init(ENTITY *p, int16_t size_x, int16_t size_y, entity_type t) {
   pixel_t *buf;
@@ -646,6 +630,14 @@ draw_hud(OrchardAppContext *context) {
     bh->fontSM,
     White,
     justifyRight);
+
+  // player's stats
+  drawProgressBar(0,26,120,6,shiptable[player->ship_type].max_hp, player->hp, false, false);
+  drawProgressBar(0,34,120,6,shiptable[player->ship_type].max_energy, player->energy, false, false);
+
+  // enemy stats
+  drawProgressBar(200,26,120,6,shiptable[current_enemy->ship_type].max_hp, current_enemy->hp, false, true);
+  drawProgressBar(200,34,120,6,shiptable[current_enemy->ship_type].max_energy, current_enemy->energy, false, true);
 }
 
 static ENEMY *
@@ -736,6 +728,11 @@ static ENEMY* getEnemyFromBLE(ble_gap_addr_t *peer) {
         current_enemy->xp = p->ble_game_state.ble_ides_xp;
         current_enemy->hp = shiptable[current_enemy->ship_type].max_hp;
         current_enemy->energy = shiptable[current_enemy->ship_type].max_energy;
+        current_enemy->level = p->ble_game_state.ble_ides_level;
+
+        current_enemy->e.vecPosition.x = p->ble_game_state.ble_ides_x;
+        current_enemy->e.vecPosition.y = p->ble_game_state.ble_ides_y;
+
         current_enemy->level = p->ble_game_state.ble_ides_level;
         current_enemy->ship_locked_in = FALSE;
         return current_enemy;
@@ -846,19 +843,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       }
     }
 
-    if (current_battle_state == VS_SCREEN) {
-      pe = event->ugfx.pEvent;
-      if (pe->type == GEVENT_GWIN_BUTTON) {
-        be = (GEventGWinButton *)pe;
-        if (be->gwin == bh->ghACCEPT) {
-          i2sPlay ("sound/click.snd");
-
-          // exit out for right now
-          changeState(WORLD_MAP);
-        }
-      }
-    }
-
     if (current_battle_state == LEVELUP) {
       pe = event->ugfx.pEvent;
       if (pe->type == GEVENT_GWIN_BUTTON) {
@@ -930,25 +914,32 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       break;
     case l2capRxEvent:
       // VS_SCREEN
-      memcpy(bh->rxbuf, radio->pkt, radio->pktlen);
+      if (current_battle_state == VS_SCREEN) {
+        memcpy(bh->rxbuf, radio->pkt, radio->pktlen);
 
-      printf("recv packet with type %d, length %d\n",
-        ((bp_header_t *)&bh->rxbuf)->bp_type,
-        radio->pktlen
-      );
+        printf("recv packet with type %d, length %d\n",
+          ((bp_header_t *)&bh->rxbuf)->bp_type,
+          radio->pktlen
+        );
 
-      switch (((bp_header_t *)&bh->rxbuf)->bp_opcode) {
-        case BATTLE_OP_SHIP_CONFIRM:
-          current_enemy->ship_locked_in = TRUE;
-          /* intentional fall-through */
-        case BATTLE_OP_SHIP_SELECT:
-          printf("got ship type packet\n");
-          pkt_vs = (bp_vs_pkt *) &bh->rxbuf;
-          current_enemy->ship_type = pkt_vs->bp_shiptype;
-          current_enemy->hp = shiptable[current_enemy->ship_type].max_hp;
-          current_enemy->energy = shiptable[current_enemy->ship_type].max_energy;
-          state_vs_draw_enemy(current_enemy, false);
-        break;
+        switch (((bp_header_t *)&bh->rxbuf)->bp_opcode) {
+          case BATTLE_OP_SHIP_CONFIRM:
+            current_enemy->ship_locked_in = TRUE;
+            /* intentional fall-through */
+          case BATTLE_OP_SHIP_SELECT:
+            printf("got ship type packet\n");
+            pkt_vs = (bp_vs_pkt *) &bh->rxbuf;
+            current_enemy->ship_type = pkt_vs->bp_shiptype;
+            current_enemy->hp = shiptable[current_enemy->ship_type].max_hp;
+            current_enemy->energy = shiptable[current_enemy->ship_type].max_energy;
+            state_vs_draw_enemy(current_enemy, false);
+
+            if (current_enemy->ship_locked_in && player->ship_locked_in) {
+              changeState(COMBAT);
+              return;
+            }
+          break;
+        }
       }
 
       // COMBAT
@@ -989,8 +980,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         case keyBSelect:
           player->ship_locked_in = TRUE;
   				i2sPlay ("sound/ping.snd");
-          state_vs_draw_enemy(player, TRUE);
           send_ship_type(player->ship_type, TRUE);
+
+          if (current_enemy->ship_locked_in && player->ship_locked_in) {
+            changeState(COMBAT);
+            return;
+          } else {
+            state_vs_draw_enemy(player, TRUE);
+          }
           break;
         default:
           break;
@@ -1251,6 +1248,7 @@ void state_worldmap_enter(void) {
 
   // init sprite system and capture water areas
   sprites = isp_init();
+  // PERFORMANCE: this call is VERY SLOW. NEEDS WORK.
   isp_scan_screen_for_water(sprites);
 
   // draw player for first tiplayer.e.
@@ -1458,10 +1456,33 @@ void state_combat_enter(void) {
   player->e.size_x = SHIP_SIZE_ZOOMED;
   player->e.size_y = SHIP_SIZE_ZOOMED;
 
-  newmap = getMapTile(&player->e);
+  /* the attacker's position is what we base the starting map on.
+   * we have to pick one, because if we pick two, and players are in
+   * different quads, we're in trouble.
+   */
+	if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
+    newmap = getMapTile(&player->e);
+    printf("BLECENTRAL: map %d from player at %f, %f\n",
+       newmap,
+       player->e.vecPosition.x,
+       player->e.vecPosition.y
+    );
+  } else {
+    newmap = getMapTile(&current_enemy->e);
+    printf("BLEPREPH: map %d from player at %f, %f\n",
+       newmap,
+       current_enemy->e.vecPosition.x,
+       current_enemy->e.vecPosition.y
+    );
+  }
+
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
   putImageFile(fnbuf, 0,0);
-  zoomEntity(&player->e);
+
+  // re-init the sprite system
+  sprites = isp_init();
+  // PERFORMANCE: this call is VERY SLOW. NEEDS WORK.
+  isp_scan_screen_for_water(sprites);
 
   /* move the player to the starting position */
 	if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
@@ -1528,7 +1549,10 @@ void state_combat_exit(void) {
   free(bh->r_pxbuf);
   bh->r_pxbuf = NULL;
 
-  // todo:free the enemy
+  /* tear down sprite system */
+  isp_shutdown(sprites);
+
+  // this can probably be removed?
   player->e.size_x = 10;
   player->e.size_y = 10;
 }

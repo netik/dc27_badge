@@ -326,13 +326,6 @@ void drawProgressBar(coord_t x, coord_t y,
 
   remain = width * remain_f;
 
-#ifdef notdef
-  if (use_leds == 1) {
-    ledSetFunction(handle_progress);
-    ledSetProgress(100 * remain_f);
-  }
-#endif
-
   if (remain_f >= 0.8) {
     c = Lime;
   } else if (remain_f >= 0.5) {
