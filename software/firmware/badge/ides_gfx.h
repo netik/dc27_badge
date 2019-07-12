@@ -14,6 +14,12 @@ extern const GWidgetStyle DarkPurpleStyle;
 extern const GWidgetStyle DarkPurpleFilledStyle;
 extern const GWidgetStyle IvoryStyle;
 
+#pragma pack(1)
+typedef struct _rgbpixel {
+        uint8_t p[3];
+} rgbpixel;
+#pragma pack()
+
 /* Graphics */
 extern int putImageFile (char *name, int16_t x, int16_t y);
 extern void drawProgressBar(coord_t x, coord_t y, coord_t width, coord_t height, int32_t maxval, int32_t currentval, uint8_t use_leds, uint8_t reverse);
