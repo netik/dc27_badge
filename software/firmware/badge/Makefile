@@ -191,6 +191,8 @@ CSRC += main.c \
 	gll.c \
 	splash.c \
 	ships.c \
+	enemy.c \
+	entity.c \
 	app-badge.c \
 	app-battle.c \
 	app-launcher.c \

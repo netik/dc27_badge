@@ -94,6 +94,26 @@ int16_t maxhp(uint16_t unlocks, uint8_t level) {
   return hp;
 }
 
+uint16_t xp_for_level(uint8_t level)
+{
+  // return the required amount of XP for a given level
+  // level should be given starting with index 1
+  uint16_t xp_req[] =
+  {
+    //1    2    3     4     5     6     7     8     9    10
+    0, 400, 880, 1440, 2080, 2800, 3600, 4480, 5440, 6480
+  };
+
+  if ((level <= 10) && (level >= 1))
+  {
+    return(xp_req[level]);
+  }
+  else
+  {
+    return(0);
+  }
+}
+
 void configSave(userconfig *newConfig) {
   int8_t ret;
   osalMutexLock(&config_mutex);

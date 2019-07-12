@@ -29,7 +29,6 @@
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
 #define VMULT       8        // on each time step, take this many steps.
-#define ENGAGE_BB   40       // If enemy is in this bounding box we can engage
 #define MAX_BULLETS 3
 
 // size of sub-map tiles
