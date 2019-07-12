@@ -61,9 +61,7 @@
 /* the sprite system */
 static ISPRITESYS *sprites = NULL;
 
-/* single player on this badge */
 static ENTITY bullet[MAX_BULLETS];
-static VECTOR bullet_pending = {0,0};
 
 static ENEMY *last_near = NULL;
 
@@ -85,14 +83,14 @@ extern mutex_t peer_mutex;
 /* private memory */
 typedef struct _BattleHandles {
   GListener	gl;
-  font_t	fontLG;
-  font_t	fontXS;
-  font_t	fontSM;
-  font_t  fontSTENCIL;
-  GHandle	ghTitleL;
-  GHandle	ghTitleR;
-  GHandle	ghACCEPT;
-  GHandle	ghDECLINE;
+  font_t   fontLG;
+  font_t   fontXS;
+  font_t   fontSM;
+  font_t   fontSTENCIL;
+  GHandle  ghTitleL;
+  GHandle  ghTitleR;
+  GHandle  ghACCEPT;
+  GHandle  ghDECLINE;
 
   // these are the top row, player stats frame buffers.
   pixel_t       *l_pxbuf;
@@ -383,11 +381,11 @@ static void enemy_list_refresh(void) {
           e->e.vecPosition.x,
           e->e.vecPosition.y);
 
-          e->xp = p->ble_game_state.ble_ides_xp;
-          e->level = p->ble_game_state.ble_ides_level;
-          e->hp = shiptable[p->ble_game_state.ble_ides_ship_type].max_hp;
-          e->energy = shiptable[p->ble_game_state.ble_ides_ship_type].max_energy;
-          e->ship_type = p->ble_game_state.ble_ides_ship_type;
+        e->xp = p->ble_game_state.ble_ides_xp;
+        e->level = p->ble_game_state.ble_ides_level;
+        e->hp = shiptable[p->ble_game_state.ble_ides_ship_type].max_hp;
+        e->energy = shiptable[p->ble_game_state.ble_ides_ship_type].max_energy;
+        e->ship_type = p->ble_game_state.ble_ides_ship_type;
       } else {
         /* no, add him */
         if (p->ble_game_state.ble_ides_incombat) {
@@ -432,7 +430,6 @@ static void enemy_list_refresh(void) {
 
         e->e.prevPos.x = p->ble_game_state.ble_ides_x;
         e->e.prevPos.y = p->ble_game_state.ble_ides_y;
-
 
         memcpy(&e->ble_peer_addr.addr, p->ble_peer_addr, 6);
 
@@ -758,9 +755,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ble_gatts_evt_rw_authorize_request_t * rw;
   ble_gatts_evt_write_t * req;
 
-  bp_vs_pkt_t *pkt_vs;
+  bp_vs_pkt_t     *pkt_vs;
+  bp_entity_pkt_t *pkt_entity;
+  bp_state_pkt_t  *pkt_state;
 
-  char msg[32];
   char tmp[40];
   bh = (BattleHandles *) context->priv;
 
@@ -822,9 +820,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         be = (GEventGWinButton *)pe;
         if (be->gwin == bh->ghACCEPT) {
           // we will send an accept packet
-          msg[0] = BLE_IDES_GAMEATTACK_ACCEPT;
+          tmp[0] = BLE_IDES_GAMEATTACK_ACCEPT;
           bleGattcWrite (gm_handle.value_handle,
-                         (uint8_t *)msg, 1, FALSE);
+                         (uint8_t *)tmp, 1, FALSE);
 
           // on return of that packet, we'll have a l2CapConnection
           // and we'll switch to combat state.
@@ -835,9 +833,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
         if (be->gwin == bh->ghDECLINE) {
           // send a decline and go back to the map.
-          msg[0] = BLE_IDES_GAMEATTACK_DECLINE;
+          tmp[0] = BLE_IDES_GAMEATTACK_DECLINE;
           bleGattcWrite (gm_handle.value_handle,
-                         (uint8_t *)msg, 1, FALSE);
+                         (uint8_t *)tmp, 1, FALSE);
           bleGapDisconnect ();
           changeState(WORLD_MAP);
         }
@@ -874,9 +872,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       if (current_battle_state == APPROVAL_WAIT) {
         // fires when we succeed on a connect i think.
         screen_alert_draw (FALSE, "Sending Challenge...");
-        msg[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
+        tmp[0] = BLE_IDES_GAMEATTACK_CHALLENGE;
         bleGattcWrite (gm_handle.value_handle,
-                       (uint8_t *)msg, 1, FALSE);
+                       (uint8_t *)tmp, 1, FALSE);
       }
       break;
     case gattsReadWriteAuthEvent:
@@ -914,14 +912,16 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       }
       break;
     case l2capRxEvent:
+      // copy the recv'd packet into the buffer for all states to use
+      memcpy(bh->rxbuf, radio->pkt, radio->pktlen);
+
       // VS_SCREEN
+      ph = (bp_header_t *)bh->rxbuf;
+      printf("L2CAP: recv packet with type %d, length %d\n",
+             ph->bp_type,
+             radio->pktlen);
+
       if (current_battle_state == VS_SCREEN) {
-        memcpy(bh->rxbuf, radio->pkt, radio->pktlen);
-
-        ph = (bp_header_t *)bh->rxbuf;
-        printf("recv packet with type %d, length %d\n",
-          ph->bp_type, radio->pktlen);
-
         switch (ph->bp_opcode) {
           case BATTLE_OP_SHIP_CONFIRM:
             current_enemy->ship_locked_in = TRUE;
@@ -943,8 +943,29 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       }
 
       // COMBAT
-      // ... TBD ...
+      if (current_battle_state == COMBAT) {
+        switch (ph->bp_opcode) {
+          case BATTLE_OP_ENTITY_UPDATE:
+            // the enemy is updating their position and velocity
+            pkt_entity = (bp_entity_pkt_t *) &bh->rxbuf;
+            if (pkt_entity->bp_header.bp_type == T_ENEMY) {
+              // copy the packet in to the current_enemy.
+              // players are authoratitive for themselves, always.
+              current_enemy->e.vecPosition.x = pkt_entity->bp_x;
+              current_enemy->e.vecPosition.y = pkt_entity->bp_y;
+              current_enemy->e.vecVelocity.x = pkt_entity->bp_velocity_x;
+              current_enemy->e.vecVelocity.y = pkt_entity->bp_velocity_y;
+              current_enemy->e.vecVelocityGoal.x = pkt_entity->bp_velogoal_x;
+              current_enemy->e.vecVelocityGoal.y = pkt_entity->bp_velogoal_y;
 
+              isp_set_sprite_xy(sprites,
+                current_enemy->e.sprite_id,
+                current_enemy->e.vecPosition.x,
+                current_enemy->e.vecPosition.y);
+            }
+          break;
+        }
+      }
       break;
     case l2capTxEvent:
       // after transmit... they got the data.
@@ -993,6 +1014,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           break;
         }
 
+        // handle rotating selection
         if (player->ship_type == 255) { player->ship_type = 5; } // underflow
         if (player->ship_type > 5) { player->ship_type = 0; }
         player->hp = shiptable[player->ship_type].max_hp;
@@ -1005,57 +1027,32 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   }
   // end handle ship selection screen (VS_SCREEN) -------------------------
 
-  // we cheat a bit here and read pins directly to see if
-  // the joystick is in a corner.
-  if (current_battle_state == COMBAT) {
+  // handle WORLD MAP and COMBAT  -----------------------------------------
+
+  if (current_battle_state == WORLD_MAP || current_battle_state == COMBAT) {
     if (event->type == keyEvent) {
-      if (event->key.flags == keyPress) {
-        // we need to figure out if the key is still held
-        // and if so, we will fire a bullet.
-        if (bullet_pending.x == 0 && bullet_pending.y == 0) {
-          if (palReadPad (BUTTON_B_UP_PORT, BUTTON_B_UP_PIN) == 0)
-            bullet_pending.y = -1;
-
-          if (palReadPad (BUTTON_B_DOWN_PORT, BUTTON_B_DOWN_PIN) == 0)
-            bullet_pending.y = 1;
-
-          if (palReadPad (BUTTON_B_LEFT_PORT, BUTTON_B_LEFT_PIN) == 0)
-            bullet_pending.x = -1;
-
-          if (palReadPad (BUTTON_B_RIGHT_PORT, BUTTON_B_RIGHT_PIN) == 0)
-            bullet_pending.x = 1;
-        }
-      }
-    }
-  }
-
-  // Handle keypresses based on state
-    if (event->type == keyEvent) {
-
-      /* if the user lets go, we release the "throttle" */
-      if ((event->key.flags == keyRelease) &&
-          (current_battle_state == WORLD_MAP || current_battle_state == COMBAT)) {
-        switch (event->key.code) {
-        case keyALeft:
-          player->e.vecVelocityGoal.x = 0;
-          break;
-        case keyARight:
-          player->e.vecVelocityGoal.x = 0;
-          break;
-        case keyAUp:
-          player->e.vecVelocityGoal.y = 0;
-          break;
-        case keyADown:
-          player->e.vecVelocityGoal.y = 0;
-          break;
-        default:
-          break;
-        }
-      }
+      // Stop motion on release.
+      if (event->key.flags == keyRelease) {
+          switch (event->key.code) {
+            case keyALeft:
+              player->e.vecVelocityGoal.x = 0;
+              break;
+            case keyARight:
+              player->e.vecVelocityGoal.x = 0;
+              break;
+            case keyAUp:
+              player->e.vecVelocityGoal.y = 0;
+              break;
+            case keyADown:
+              player->e.vecVelocityGoal.y = 0;
+              break;
+            default:
+              break;
+            }
+      }  // keyRelease
 
       if (event->key.flags == keyPress)  {
-        if (current_battle_state == WORLD_MAP || current_battle_state == COMBAT) {
-          /* on keypress, we'll throttle up */
+          /* Throttle up! */
           switch (event->key.code) {
           case keyALeft:
             player->e.vecVelocityGoal.x = -VGOAL;
@@ -1071,8 +1068,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             break;
           case keyASelect:
             if (current_battle_state == WORLD_MAP) {
+              // exit
               i2sPlay ("sound/click.snd");
               orchardAppExit ();
+              return;
             }
             break;
           case keyBSelect:
@@ -1094,6 +1093,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
                  current_enemy->e.size_y = SHIP_SIZE_ZOOMED;
 
                  changeState(APPROVAL_WAIT);
+                 return;
               }
             }
             break;
@@ -1101,9 +1101,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             break;
           }
         }
-      }
-    }
-
+      } // keyEvent
+  }
   return;
 }
 
@@ -1807,6 +1806,38 @@ static void send_ship_type(uint16_t type, bool final) {
   }
 }
 
+static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e) {
+  BattleHandles *p;
+
+  // get private memory
+  p = (BattleHandles *)mycontext->priv;
+  bp_entity_pkt_t pkt;
+
+  memset (p->txbuf, 0, sizeof(p->txbuf));
+  pkt.bp_header.bp_id = id;
+
+  // pkt.bp_header.bp_shiptype = 0x0; // we ignore this on update/create
+  pkt.bp_header.bp_opcode = opcode;
+  pkt.bp_header.bp_type = type; // always enemy.
+
+  pkt.bp_x = e->vecPosition.x;
+  pkt.bp_y = e->vecPosition.x;
+  pkt.bp_velocity_x = e->vecVelocity.x;
+  pkt.bp_velocity_y = e->vecVelocity.y;
+  pkt.bp_velogoal_x = e->vecVelocityGoal.x;
+  pkt.bp_velogoal_y = e->vecVelocityGoal.y;
+
+  pkt.bp_pad = 0xffff;
+  memcpy (p->txbuf, &pkt, sizeof(bp_entity_pkt_t));
+
+  if (bleL2CapSend ((uint8_t *)p->txbuf, sizeof(bp_entity_pkt_t)) != NRF_SUCCESS) {
+    screen_alert_draw(true, "BLE XMIT FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit ();
+    return;
+  }
+}
+
 static void state_vs_enter(void) {
   BattleHandles *p = mycontext->priv;
   userconfig *config = getConfig();
@@ -1835,14 +1866,6 @@ static void state_vs_enter(void) {
                       Yellow,
                       justifyCenter);
 
-  gdispDrawStringBox (0,
-                      199,
-                      320,
-                      gdispGetFontMetric(p->fontSTENCIL, fontHeight),
-                      ":15",
-                      p->fontSTENCIL,
-                      Yellow,
-                      justifyCenter);
 
   // names
   gdispDrawStringBox (0,
