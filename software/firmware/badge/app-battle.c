@@ -26,6 +26,7 @@
 #include "gll.h"
 #include "math.h"
 #include "led.h"
+#include "rand.h"
 #include "userconfig.h"
 
 #include "ble_lld.h"
@@ -37,9 +38,12 @@
 
 #include "strutil.h"
 
+// debugging defines go here.
 // debugs the discovery process
 #undef DEBUG_ENEMY_DISCOVERY
+// track battle state
 #define DEBUG_BATTLE_STATE 1
+// debug TTL of objects
 #undef DEBUG_ENEMY_TTL
 
 #include "gamestate.h"
@@ -50,35 +54,28 @@
 #define FRAME_DELAY 0.033f   // timer will be set to this * 1,000,000 (33mS)
 #define FPS         30       // ... which represents about 30 FPS.
 #define NETWORK_TIMEOUT (FPS*10)  // number of ticks to timeout (10 seconds)
-
-#define COLOR_ENEMY  Red
-#define COLOR_PLAYER HTML2COLOR(0xeeeeee) // light grey
-
+#define PEER_ADDR_LEN	12 + 5
+#define MAX_PEERMEM	(PEER_ADDR_LEN + BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_MAX_SUPPORTED + 1)
+#define COLOR_ENEMY  Red     // TBD: Replace this with mod-con color
+#define COLOR_PLAYER HTML2COLOR(0xeeeseee) // light grey
 #define SHIP_SIZE_WORLDMAP 10
 #define SHIP_SIZE_ZOOMED   40
 #define BULLET_SIZE        10
 
 /* the sprite system */
 static ISPRITESYS *sprites = NULL;
-
-static ENTITY bullet[MAX_BULLETS];
-
-static ENEMY *last_near = NULL;
-
 // yes, yes, everyone is an enemy
 // this way, the same code works for both users.
 static ENEMY *player = NULL;
 static ENEMY *current_enemy = NULL;
+static ENEMY *last_near = NULL;
+static ENTITY *bullet[MAX_BULLETS];
 
 // time left in combat (or in various related states)
 static uint8_t state_time_left = 0;
 
 OrchardAppContext *mycontext;
-
 extern mutex_t peer_mutex;
-
-#define PEER_ADDR_LEN	12 + 5
-#define MAX_PEERMEM	(PEER_ADDR_LEN + BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_MAX_SUPPORTED + 1)
 
 /* private memory */
 typedef struct _BattleHandles {
@@ -116,6 +113,7 @@ static ENEMY *enemy_find_by_peer(uint8_t *addr);
 static void render_all_enemies(void);
 static void send_ship_type(uint16_t type, bool final);
 static void state_vs_draw_enemy(ENEMY *e, bool is_player);
+static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e);
 /* end protos */
 
 static uint16_t xp_for_level(uint8_t level) {
@@ -148,6 +146,7 @@ entity_init(ENTITY *p, int16_t size_x, int16_t size_y, entity_type t) {
   pixel_t *buf;
   color_t color = Black;
 
+  p->id = randUInt16();
   p->type = t;
   p->visible = false;
   p->blinking = false;
@@ -249,7 +248,6 @@ entity_update(ENTITY *p, float dt) {
                         p->vecPosition.y);
 
       if (check_land_collision(p)) {
-        // TBD
         p->vecPosition.x = p->prevPos.x;
         p->vecPosition.y = p->prevPos.y;
         p->vecVelocity.x = 0;
@@ -560,6 +558,9 @@ battle_start (OrchardAppContext *context)
   gwinAttachListener (&bh->gl);
   geventRegisterCallback (&bh->gl, orchardAppUgfxCallback, &bh->gl);
 
+  // clear the bullet array`
+  memset(bullet, 0, sizeof(bullet));
+
   // stand us up.
   copy_config_to_player();
 
@@ -757,8 +758,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
   bp_vs_pkt_t     *pkt_vs;
   bp_entity_pkt_t *pkt_entity;
-  bp_state_pkt_t  *pkt_state;
-
+  
   char tmp[40];
   bh = (BattleHandles *) context->priv;
 
@@ -805,9 +805,23 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     } /* WORLD_MAP */
 
     if (current_battle_state == COMBAT) {
-      /* in combat we only have to render the player and enemy */
-      // move player
+      // in combat we only have to render the player and enemy */
       entity_update(&(player->e), FRAME_DELAY);
+      entity_update(&(current_enemy->e), FRAME_DELAY);
+
+      // move bullets if any
+
+      // check for collisions with land
+
+      // check for collisions with bullets
+
+      // check for player vs enemy collision ( ramming speed! )
+
+      // fire new bullets if any
+
+      // expire bullets if any
+
+      isp_draw_all_sprites(sprites);
     }
 
   } /* timerEvent */
@@ -1186,13 +1200,19 @@ static void battle_exit(OrchardAppContext *context)
   geventRegisterCallback (&bh->gl, NULL, NULL);
   geventDetachSource (&bh->gl, NULL);
 
-
+  // free players and related objects.
+  // the sprite system will have been brought down
+  // by the state transition to NONE above.
   if (player) {
     free(player);
   }
 
   if (current_enemy) {
     free(current_enemy);
+  }
+
+  for (int i = 0; i < MAX_BULLETS; i++) {
+    if (bullet[i]) { free(bullet[i]); }
   }
 
   free (context->priv);
@@ -1532,6 +1552,17 @@ void state_combat_tick(void) {
       i2sPlay("sound/foghrn.snd");
       changeState(SHOW_RESULTS);
     }
+  }
+
+  // update motion
+  if (player->e.vecPosition.x != player->e.prevPos.x ||
+      player->e.vecPosition.y != player->e.prevPos.y) {
+          send_position_update(
+            player->e.id,
+            BATTLE_OP_ENTITY_UPDATE,
+            T_ENEMY,
+            &(player->e)
+          );
   }
 }
 

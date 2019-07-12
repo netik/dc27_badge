@@ -30,8 +30,8 @@ typedef uint16_t entity_type;
 typedef struct _entity {
   entity_type type;
 
-  ISPID sprite_id;               /* sprite id */
-
+  uint16_t id;     /* random. used for lookups */
+  ISPID sprite_id;        /* sprite id */
   bool visible;
   bool blinking;
   int ttl;                /* if -1, always visible, else a number of frames */
