@@ -677,9 +677,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
       // VS_SCREEN
       ph = (bp_header_t *)bh->rxbuf;
-      printf("L2CAP: recv packet with type %d, length %d\n",
-             ph->bp_type,
-             radio->pktlen);
+      //printf("L2CAP: recv packet with type %d, length %d\n",
+      //       ph->bp_type,
+      //       radio->pktlen);
 
       if (current_battle_state == VS_SCREEN)
       {
@@ -748,7 +748,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       if (current_enemy == NULL)
       {
         // copy his data over and start the battle.
-        getEnemyFromBLE(&ble_peer_addr, current_enemy);
+        current_enemy = getEnemyFromBLE(&ble_peer_addr, NULL);
       }
       changeState(VS_SCREEN);
       break;
@@ -969,10 +969,6 @@ static void battle_exit(OrchardAppContext *context)
 
   // free the UI
   bh = (BattleHandles *)context->priv;
-  // store the last x/y of this guy
-  config->last_x = player->e.vecPosition.x;
-  config->last_y = player->e.vecPosition.y;
-  configSave(config);
 
   // reset this state or we won't init properly next time.
   // Do not free state-objects here, let the state-exit functions do that!
@@ -1037,6 +1033,11 @@ static void battle_exit(OrchardAppContext *context)
 
   // restore the LED pattern from config
   ledSetPattern(config->led_pattern);
+
+  // flush combat status if any
+  config->in_combat = 0;
+  configSave(config);
+
   return;
 }
 
@@ -1463,9 +1464,27 @@ void state_combat_exit(void)
   /* tear down sprite system */
   isp_shutdown(sprites);
 
-  // this can probably be removed?
-  player->e.size_x = 10;
-  player->e.size_y = 10;
+  // clean up after the game
+  free(current_enemy);
+  current_enemy = NULL;
+
+  free(player);
+  player = NULL;
+
+  if (bh->cid != BLE_L2CAP_CID_INVALID)
+    bleL2CapDisconnect (bh->cid);
+  bleGapDisconnect ();
+}
+
+static void state_show_results_enter(void) {
+  char tmp[40];
+  // figure out who won
+
+  // award xp
+  sprintf(tmp, "TIE GAME! (+%d XP!)",0);
+  screen_alert_draw(false, tmp);
+  chThdSleepMilliseconds(ALERT_DELAY);
+  orchardAppExit();
 }
 
 static void state_levelup_enter(void)
@@ -1755,7 +1774,7 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   pkt.bp_header.bp_type   = type; // always enemy.
 
   pkt.bp_x          = e->vecPosition.x;
-  pkt.bp_y          = e->vecPosition.x;
+  pkt.bp_y          = e->vecPosition.y;
   pkt.bp_velocity_x = e->vecVelocity.x;
   pkt.bp_velocity_y = e->vecVelocity.y;
   pkt.bp_velogoal_x = e->vecVelocityGoal.x;
@@ -1776,7 +1795,7 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
 static void state_vs_enter(void)
 {
   BattleHandles *p      = mycontext->priv;
-  userconfig *   config = getConfig();
+  userconfig    *config = getConfig();
 
   state_time_left = 20;
 
@@ -1863,11 +1882,6 @@ static void state_vs_tick(void)
     i2sPlay("game/engage.snd");
     changeState(COMBAT);
   }
-}
-
-static void state_vs_exit(void)
-{
-  // no-op for now
 }
 
 // -------------------------------------------------------------------------

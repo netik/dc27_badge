@@ -169,8 +169,10 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
              p->ble_ttl);
       if (memcmp(p->ble_peer_addr, peer->addr, 6) == 0)
       {
-        // if we match, we create an enemy
-        current_enemy = malloc(sizeof(ENEMY));
+        // if we match, we create an enemy, or we overwrite what was passed in.
+        if (current_enemy == NULL) {
+          current_enemy = malloc(sizeof(ENEMY));
+        }
         memcpy(current_enemy->ble_peer_addr.addr, p->ble_peer_addr, 6);
         current_enemy->ble_peer_addr.addr_id_peer = TRUE;
         current_enemy->ble_peer_addr.addr_type    = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;

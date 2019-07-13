@@ -18,7 +18,6 @@ static void state_approval_demand_exit(void);
 
 static void state_vs_enter(void);
 static void state_vs_tick(void);
-static void state_vs_exit(void);
 
 static void state_combat_enter(void);
 static void state_combat_tick(void);
@@ -27,6 +26,8 @@ static void state_combat_exit(void);
 static void state_levelup_enter(void);
 static void state_levelup_tick(void);
 static void state_levelup_exit(void);
+
+static void state_show_results_enter(void);
 
 /* The function state table, a list of pointers to functions to run
  * the game.
@@ -69,7 +70,7 @@ state_funcs battle_funcs[] = {
   {  // vs_screen
     state_vs_enter,
     state_vs_tick,
-    state_vs_exit
+    NULL,
   },
   {  // combat
     state_combat_enter,
@@ -77,7 +78,7 @@ state_funcs battle_funcs[] = {
     state_combat_exit
   },
   {  // show results
-    NULL,
+    state_show_results_enter,
     NULL,
     NULL
   },
