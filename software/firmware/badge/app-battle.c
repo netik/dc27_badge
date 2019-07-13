@@ -1478,11 +1478,16 @@ void state_combat_enter(void) {
 
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
   putImageFile(fnbuf, 0,0);
+  draw_hud(mycontext);
 
   // re-init the sprite system
   sprites = isp_init();
   // PERFORMANCE: this call is VERY SLOW. NEEDS WORK.
   isp_scan_screen_for_water(sprites);
+
+  // players
+  entity_init(&player->e, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_PLAYER);
+  entity_init(&current_enemy->e, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_ENEMY);
 
   /* move the player to the starting position */
 	if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
@@ -1499,7 +1504,27 @@ void state_combat_enter(void) {
     current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].attacker.y;
   }
 
-  draw_hud(mycontext);
+  // draw player
+  isp_load_image_from_file(sprites,
+    player->e.sprite_id,
+    getAvatarImage(player->ship_type, true, 'n', true));
+
+  isp_set_sprite_xy(sprites,
+                    player->e.sprite_id,
+                    player->e.vecPosition.x,
+                    player->e.vecPosition.y);
+
+  isp_load_image_from_file(sprites,
+    current_enemy->e.sprite_id,
+    getAvatarImage(current_enemy->ship_type, false, 'n', false));
+
+  isp_set_sprite_xy(sprites,
+                    current_enemy->e.sprite_id,
+                    current_enemy->e.vecPosition.x,
+                    current_enemy->e.vecPosition.y);
+
+  isp_draw_all_sprites(sprites);
+
 }
 
 void state_combat_tick(void) {
