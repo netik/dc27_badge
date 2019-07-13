@@ -52,9 +52,9 @@ uint8_t randByte(void) {
   sd_softdevice_is_enabled (&sdenabled);
 
   if (sdenabled == TRUE)
-    sd_rand_application_vector_get (&random_buffer, 1);
+    sd_rand_application_vector_get (&random_buffer, sizeof(random_buffer));
   else {
-    rngWrite (&RNGD1, &random_buffer, 1, OSAL_MS2I(100));
+    rngWrite (&RNGD1, &random_buffer, sizeof(random_buffer), OSAL_MS2I(100));
   }
 
   rngReleaseUnit (&RNGD1);
@@ -72,9 +72,11 @@ uint16_t randUInt16(void) {
   sd_softdevice_is_enabled (&sdenabled);
 
   if (sdenabled == TRUE)
-    sd_rand_application_vector_get ((uint8_t*)&random_buffer, 1);
+    sd_rand_application_vector_get ((uint8_t*)&random_buffer,
+      sizeof(random_buffer));
   else {
-    rngWrite (&RNGD1, (uint8_t *)&random_buffer, sizeof(uint16_t), OSAL_MS2I(100));
+    rngWrite (&RNGD1, (uint8_t *)&random_buffer,
+      sizeof(random_buffer), OSAL_MS2I(100));
   }
 
   rngReleaseUnit (&RNGD1);
