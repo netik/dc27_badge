@@ -76,6 +76,7 @@ extern void configStart(void);
 extern void configSave(userconfig *);
 extern userconfig *getConfig(void);
 extern int16_t maxhp(uint16_t, uint8_t);
+extern uint16_t xp_for_level(uint8_t level);
 
 extern const char *rankname[];
 extern unsigned long rtc;

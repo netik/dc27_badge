@@ -210,11 +210,11 @@ nrf52radioChanSet (uint16_t f)
 		NRF_RADIO->DATAWHITEIV = ble_chan_map[i].ble_chan | 0x40;
 
 	if (f < 2400)
-		NRF_RADIO->FREQUENCY = (f - 2400) ||
-		    (RADIO_FREQUENCY_MAP_Default << RADIO_FREQUENCY_MAP_Pos);
-	else
 		NRF_RADIO->FREQUENCY = (f - 2360) |
 		    (RADIO_FREQUENCY_MAP_Low << RADIO_FREQUENCY_MAP_Pos);
+	else
+		NRF_RADIO->FREQUENCY = (f - 2400) |
+		    (RADIO_FREQUENCY_MAP_Default << RADIO_FREQUENCY_MAP_Pos);
 
 	return (NRF_SUCCESS);
 }

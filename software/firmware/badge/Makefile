@@ -152,7 +152,7 @@ ZMACHINE = $(CHIBIOS)/../zmachine
 include $(ZMACHINE)/build.mk
 
 # Define linker script file here
-LDSCRIPT= NRF52840_softdecvice.ld
+LDSCRIPT= NRF52840_softdevice.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -191,6 +191,8 @@ CSRC += main.c \
 	gll.c \
 	splash.c \
 	ships.c \
+	enemy.c \
+	entity.c \
 	app-badge.c \
 	app-battle.c \
 	app-launcher.c \

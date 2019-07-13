@@ -140,6 +140,7 @@ static THD_WORKING_AREA(waGeigerThread, 512);
 static THD_FUNCTION(geigerThread, arg)
 {
 	GHandles * p;
+	userconfig * config;
 
 	p = arg;
 
@@ -150,7 +151,11 @@ static THD_FUNCTION(geigerThread, arg)
 	 * manual control of the radio.
 	 */
 
-	bleDisable ();
+	config = getConfig ();
+
+	if (config->airplane_mode == 0)
+		bleDisable ();
+
 	nrf52radioStart ();
 
 	i2sAudioAmpCtl (I2S_AMP_ON);
@@ -192,7 +197,9 @@ static THD_FUNCTION(geigerThread, arg)
 	/* Give the SoftDevice control of the radio again. */
 
 	nrf52radioStop ();
-	bleEnable ();
+
+	if (config->airplane_mode == 0)
+		bleEnable ();
 
 	chSysLock ();
 	chThdExitS (MSG_OK);
@@ -434,5 +441,5 @@ geiger_exit (OrchardAppContext *context)
 	return;
 }
 
-orchard_app("RF Counter", "icons/rad.rgb",
+orchard_app("BLE Counter", "icons/rad.rgb",
     0, geiger_init, geiger_start, geiger_event, geiger_exit, 9999);

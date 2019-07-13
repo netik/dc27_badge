@@ -69,7 +69,7 @@ extern int bleGapConnect (ble_gap_addr_t *);
 extern int bleGapDisconnect (void);
 
 extern void bleGapUpdateState (uint16_t x, uint16_t y, uint16_t xp,
-    uint8_t rank, uint8_t type,  bool in_combat);
+    uint8_t rank, uint8_t type, uint8_t in_combat);
 
 extern void bleGapUpdateName (void);
 
