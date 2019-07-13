@@ -36,9 +36,9 @@
 #include "battle.h"
 #include "battle_states.h"
 
-extern mutex_t     peer_mutex;
+extern mutex_t peer_mutex;
 
-ENEMY *enemy_find_by_peer(gll_t * enemies, uint8_t *addr)
+ENEMY *enemy_find_by_peer(gll_t *enemies, uint8_t *addr)
 {
   gll_node_t *currNode = enemies->first;
 
@@ -57,7 +57,6 @@ ENEMY *enemy_find_by_peer(gll_t * enemies, uint8_t *addr)
   return(NULL);
 }
 
-
 void enemy_clear_blink(void *e)
 {
   // @brief clear enemy blink state
@@ -66,7 +65,7 @@ void enemy_clear_blink(void *e)
   en->e.blinking = false;
 }
 
-void enemy_clearall_blink(gll_t * enemies)
+void enemy_clearall_blink(gll_t *enemies)
 {
   // @brief clear blink state of all enemies
   if (enemies)
@@ -75,7 +74,7 @@ void enemy_clearall_blink(gll_t * enemies)
   }
 }
 
-int enemy_find_ll_pos(gll_t * enemies, ble_gap_addr_t *ble_peer_addr)
+int enemy_find_ll_pos(gll_t *enemies, ble_gap_addr_t *ble_peer_addr)
 {
   gll_node_t *currNode = enemies->first;
   int         i        = 0;

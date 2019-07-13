@@ -1382,6 +1382,7 @@ void state_combat_enter(void)
                     player->e.vecPosition.x,
                     player->e.vecPosition.y);
 
+  // draw enemy
   isp_load_image_from_file(sprites,
     current_enemy->e.sprite_id,
     getAvatarImage(current_enemy->ship_type, false, 'n', false));
