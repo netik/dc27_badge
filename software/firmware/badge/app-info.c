@@ -81,6 +81,14 @@ info_start (OrchardAppContext *context)
 	DWORD sectors;
 	BYTE drv;
 
+	/*
+	 * Play a jaunty tune to keep the user entertained.
+	 * (ARE YOU NOT ENTERTAINED?!)
+	 */
+
+	i2sWait ();
+	i2sPlay ("sound/cantina.snd");
+
 	p = malloc (sizeof(IHandles));
 
 	context->priv = p;
