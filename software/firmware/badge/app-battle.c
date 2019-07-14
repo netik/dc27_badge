@@ -745,6 +745,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       printf("BATTLE: l2CapConnection Success\n");
       // stash the channel id
       bh->cid = evt->evt.l2cap_evt.local_cid;
+      // kill and restart our timer so that our timers are in sync
+      orchardAppTimer(context, 0, false); // shut down the timer
+      // start the timer again
+      orchardAppTimer(context, FRAME_DELAY * 1000000, TRUE);
+
       if (current_enemy == NULL)
       {
         // copy his data over and start the battle.
@@ -935,6 +940,8 @@ static void changeState(battle_state nextstate)
   }
 
   animtick             = 0;
+
+  // this is the only function that should be changing the state variable.
   current_battle_state = nextstate;
 
   // enter the new state
@@ -966,6 +973,9 @@ static void battle_exit(OrchardAppContext *context)
 {
   userconfig *   config = getConfig();
   BattleHandles *bh;
+
+  // kill the timer.
+  orchardAppTimer(context, 0, FALSE);
 
   // free the UI
   bh = (BattleHandles *)context->priv;
@@ -1481,7 +1491,7 @@ static void state_show_results_enter(void) {
   // figure out who won
 
   // award xp
-  sprintf(tmp, "TIE GAME! (+%d XP!)",0);
+  sprintf(tmp, "TIE GAME! (+%d XP)",0);
   screen_alert_draw(false, tmp);
   chThdSleepMilliseconds(ALERT_DELAY);
   orchardAppExit();

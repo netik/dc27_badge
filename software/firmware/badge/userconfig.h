@@ -13,7 +13,7 @@
 #define CONFIG_FLASH_SECTOR 255
 #define CONFIG_SIGNATURE  0xdeadbeef  // duh
 #define CONFIG_END_SIGNATURE  0xdeadfa11
-#define CONFIG_VERSION    5
+#define CONFIG_VERSION    6
 #define CONFIG_NAME_MAXLEN 20
 
 #define CONFIG_LEDSIGN_MAXLEN	124
@@ -82,6 +82,5 @@ extern const char *rankname[];
 extern unsigned long rtc;
 extern unsigned long rtc_set_at;
 
-#define MAX_SAFE_START 30
 extern VECTOR safe_start[];
 #endif

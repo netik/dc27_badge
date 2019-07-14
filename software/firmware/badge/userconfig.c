@@ -32,7 +32,8 @@ const char *rankname[] = {
 };
 
 // so that we don't have to search for starting places, here's a list
-// of 20 safe starting places in the world map.
+// of 28 safe starting places in the world map.
+#define MAX_SAFE_START 28
 VECTOR safe_start[MAX_SAFE_START] = {
   { 38,57 },
   { 51,47 },
@@ -145,7 +146,7 @@ static void init_config(userconfig *config) {
   /* please keep these in the same order as userconfig.h
    * so it's easier to maintain.  */
 
-  int position = randRange(0, MAX_SAFE_START);
+  int position = randRange(0, MAX_SAFE_START-1);
 
   config->signature = CONFIG_SIGNATURE;
   config->version = CONFIG_VERSION;

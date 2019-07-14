@@ -31,7 +31,7 @@ random (void)
   rngAcquireUnit (&RNGD1);
 
   sd_softdevice_is_enabled (&sdenabled);
- 
+
  if (sdenabled == TRUE)
     sd_rand_application_vector_get ((uint8_t *)&random_buffer, 4);
   else {
@@ -62,7 +62,7 @@ uint8_t randByte(void) {
   return random_buffer;
 }
 
-// mostly used for entity ID's. 
+// mostly used for entity ID's.
 uint16_t randUInt16(void) {
   uint8_t sdenabled = 0;
   uint16_t random_buffer;
@@ -72,7 +72,7 @@ uint16_t randUInt16(void) {
   sd_softdevice_is_enabled (&sdenabled);
 
   if (sdenabled == TRUE)
-    sd_rand_application_vector_get ((uint8_t*)&random_buffer, 1);
+    sd_rand_application_vector_get ((uint8_t*)&random_buffer, sizeof(uint16_t));
   else {
     rngWrite (&RNGD1, (uint8_t *)&random_buffer, sizeof(uint16_t), OSAL_MS2I(100));
   }

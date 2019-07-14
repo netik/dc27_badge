@@ -133,9 +133,9 @@ static void notify_start(OrchardAppContext *context)
 		    ble_peer_addr.addr[3],  ble_peer_addr.addr[2],
 		    ble_peer_addr.addr[1],  ble_peer_addr.addr[0]);
 	else
-		snprintf (buf, 128, "Badge %s", peer->ble_peer_name);
+		snprintf (buf, 128, "%s", peer->ble_peer_name);
 
-	p->font = gdispOpenFont(FONT_FIXED);
+	p->font = gdispOpenFont(FONT_SM);
 
 	fHeight = gdispGetFontMetric (p->font, fontHeight);
 
