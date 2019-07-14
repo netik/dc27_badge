@@ -123,7 +123,7 @@ static void render_all_enemies(void);
 static void send_ship_type(uint16_t type, bool final);
 static void state_vs_draw_enemy(ENEMY *e, bool is_player);
 static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e);
-
+bool entity_OOB(ENTITY *e);
 /* end protos */
 static
 int getMapTile(ENTITY *e)
