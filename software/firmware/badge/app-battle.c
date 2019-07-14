@@ -89,6 +89,7 @@ OrchardAppContext *mycontext;
 typedef struct _BattleHandles
 {
   GListener gl;
+  GListener gl2;
   font_t    fontLG;
   font_t    fontXS;
   font_t    fontSM;
@@ -297,6 +298,7 @@ battle_start(OrchardAppContext *context)
 {
   userconfig *   config = getConfig();
   BattleHandles *bh;
+  GSourceHandle gs;
 
   bh = malloc(sizeof(BattleHandles));
   memset(bh, 0, sizeof(BattleHandles));
@@ -328,6 +330,16 @@ battle_start(OrchardAppContext *context)
   geventListenerInit(&bh->gl);
   gwinAttachListener(&bh->gl);
   geventRegisterCallback(&bh->gl, orchardAppUgfxCallback, &bh->gl);
+
+  /*
+   * Set up a listener for mouse meta events too. We need this
+   * to detect simple screen touch events in addition to gwin
+   * widget events.
+   */
+  gs = ginputGetMouse (0);
+  geventListenerInit(&bh->gl2);
+  geventAttachSource (&bh->gl2, gs, GLISTEN_MOUSEMETA);
+  geventRegisterCallback(&bh->gl2, orchardAppUgfxCallback, &bh->gl2);
 
   // clear the bullet array`
   memset(bullet, 0, sizeof(bullet));
@@ -559,9 +571,53 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   // handle uGFX events
   if (event->type == ugfxEvent)
   {
+    pe = event->ugfx.pEvent;
+
+    if (pe->type == GEVENT_TOUCH) {
+
+      /*
+       * When the user touches the screen in the world map and
+       * there's an enemy nearby, engage them,
+       */
+
+      if (current_battle_state == WORLD_MAP) {
+        if ((nearest = enemy_engage(context, enemies, player)) != NULL) {
+          /* convert the enemy struct to the larger combat version */
+          current_enemy = malloc(sizeof(ENEMY));
+          memcpy(current_enemy, nearest, sizeof(ENEMY));
+          current_enemy->e.size_x = SHIP_SIZE_ZOOMED;
+          current_enemy->e.size_y = SHIP_SIZE_ZOOMED;
+
+          changeState(APPROVAL_WAIT);
+          return;
+        }
+      }
+
+      /*
+       * When the user touches the screen in the VS. screen and
+       * they haven't chosen a ship yet, trigger a ship select.
+       */
+
+      if (current_battle_state == VS_SCREEN &&
+          player->ship_locked_in == FALSE) {
+        player->ship_locked_in = TRUE;
+        i2sPlay("sound/ping.snd");
+        send_ship_type(player->ship_type, TRUE);
+
+        if (current_enemy->ship_locked_in && player->ship_locked_in) {
+          changeState(COMBAT);
+          return;
+        } else {
+          state_vs_draw_enemy(player, TRUE);
+        }
+      }
+
+      /* Ignore other touch events for now */
+      return;
+    }
+
     if (current_battle_state == APPROVAL_DEMAND)
     {
-      pe = event->ugfx.pEvent;
       if (pe->type == GEVENT_GWIN_BUTTON)
       {
         be = (GEventGWinButton *)pe;
@@ -632,6 +688,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
                       (uint8_t *)tmp, 1, FALSE);
       }
       break;
+
+    case disconnectEvent:
+        screen_alert_draw(FALSE, "Radio link lost");
+        chThdSleepMilliseconds(ALERT_DELAY);
+        orchardAppExit ();
+        break;
 
     case gattsReadWriteAuthEvent:
       rw =
@@ -1006,6 +1068,10 @@ static void battle_exit(OrchardAppContext *context)
 
   geventRegisterCallback(&bh->gl, NULL, NULL);
   geventDetachSource(&bh->gl, NULL);
+  geventRegisterCallback(&bh->gl2, NULL, NULL);
+  geventDetachSource(&bh->gl2, NULL);
+
+  i2sPlay (NULL);
 
   // free players and related objects.
   // the sprite system will have been brought down
