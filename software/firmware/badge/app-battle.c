@@ -1499,6 +1499,9 @@ void state_combat_tick(void)
     }
   }
 
+  if (player == NULL)
+    return;
+
   // update motion
   if (player->e.vecPosition.x != player->e.prevPos.x ||
       player->e.vecPosition.y != player->e.prevPos.y)
