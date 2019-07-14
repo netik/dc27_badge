@@ -200,8 +200,10 @@ entity_update(ENTITY *p, float dt)
                       p->vecPosition.x,
                       p->vecPosition.y);
 
-    if (check_land_collision(p))
+    if (check_land_collision(p) || entity_OOB(p))
     {
+
+      // if in combat, you take damage.
       p->vecPosition.x     = p->prevPos.x;
       p->vecPosition.y     = p->prevPos.y;
       p->vecVelocity.x     = 0;
@@ -1384,8 +1386,8 @@ void state_combat_enter(void)
   config->in_combat = 1;
   configSave(config);
 
-  bleGapUpdateState((uint16_t)player->e.vecPosition.x,
-                    (uint16_t)player->e.vecPosition.y,
+  bleGapUpdateState(config->last_x,
+                    config->last_y,
                     config->xp,
                     config->level,
                     config->current_ship,
