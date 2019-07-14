@@ -205,7 +205,7 @@
 
 //#define GEVENT_ASSERT_NO_RESOURCE                    FALSE
 //#define GEVENT_MAXIMUM_SIZE                          32
-#define GEVENT_MAX_SOURCE_LISTENERS                  4
+#define GEVENT_MAX_SOURCE_LISTENERS                  8
 
 
 ///////////////////////////////////////////////////////////////////////////

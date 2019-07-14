@@ -25,6 +25,8 @@ orchard_app_instance instance;
 
 /* graphics event handle */
 static OrchardAppEvent ugfx_evt;
+static thread_reference_t ugfxThreadReference;
+static int ugfxPend;
 
 /* orchard event sources */
 event_source_t unlocks_updated;
@@ -51,6 +53,19 @@ void orchardAppUgfxCallback (void * arg, GEvent * pe)
 {
   GListener * gl;
 
+  /*
+   * If there's currently an event being processed, wait
+   * for the app to finish servicing it. If we don't we might
+   * overwrite it with another event, which would mean we'd
+   * miss one.
+   */
+
+  osalSysLock ();
+  if (ugfxPend)
+    osalThreadSuspendS (&ugfxThreadReference);
+  ugfxPend++;
+  osalSysUnlock ();
+
   gl = (GListener *)arg;
 
   ugfx_evt.type = ugfxEvent;
@@ -68,6 +83,11 @@ static void ugfx_event(eventid_t id) {
 
   instance.app->event (instance.context, &ugfx_evt);
   geventEventComplete (ugfx_evt.ugfx.pListener);
+
+  osalSysLock ();
+  ugfxPend--;
+  osalThreadResumeS (&ugfxThreadReference, MSG_OK);
+  osalSysUnlock ();
 
   return;
 }
@@ -228,6 +248,13 @@ static void terminate(eventid_t id) {
   instance.app->event(instance.context, &evt);
 
   flush_radio_queue ();
+
+  /* Clear any pending uGFX event references */
+
+  osalSysLock ();
+  ugfxPend = 0;
+  osalThreadResumeS (&ugfxThreadReference, MSG_OK);
+  osalSysUnlock ();
 
   chThdTerminate(instance.thr);
 }
@@ -390,6 +417,13 @@ static THD_FUNCTION(orchard_app_thread, arg) {
     while (!chThdShouldTerminateX())
       chEvtDispatch(evtHandlers(orchard_app_events), chEvtWaitOne(ALL_EVENTS));
   }
+
+  /* Clear any pending uGFX event references */
+
+  osalSysLock ();
+  ugfxPend = 0;
+  osalThreadResumeS (&ugfxThreadReference, MSG_OK);
+  osalSysUnlock ();
 
   chVTReset(&instance->timer);
 
