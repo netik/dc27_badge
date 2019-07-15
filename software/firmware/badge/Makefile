@@ -176,6 +176,7 @@ CSRC += main.c \
 	rand.c \
 	led.c \
 	cmd-audio.c \
+	cmd-credits.c \
 	cmd-config.c \
 	cmd-radio.c \
 	cmd-reset.c \
