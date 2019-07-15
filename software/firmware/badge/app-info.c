@@ -121,8 +121,20 @@ info_start (OrchardAppContext *context)
 	gwinPrintf (p->ghConsole, "SoC: Nordic Semiconductor nRF%lx "
 	    "Variant: %c%c%c%c\n", NRF_FICR->INFO.PART,
 	    v[3], v[2], v[1], v[0]);
-	gwinPrintf (p->ghConsole, "RAM: %ldKB Flash: %ldKB\n",
+	gwinPrintf (p->ghConsole, "RAM: %ldKB Flash: %ldKB Package: ",
 	    NRF_FICR->INFO.RAM, NRF_FICR->INFO.FLASH);
+	switch (NRF_FICR->INFO.PACKAGE) {
+		case FICR_INFO_PACKAGE_PACKAGE_QI:
+			gwinPrintf (p->ghConsole, "73-pin aQFN");
+			break;
+		case 0x2005:
+			gwinPrintf (p->ghConsole, "WLCSP");
+			break;
+		default:
+			gwinPrintf (p->ghConsole, "unknown");
+			break;
+	}
+	gwinPrintf (p->ghConsole, "\n");
 	gwinPrintf (p->ghConsole, "Device ID: %lX%lX\n",
 	    NRF_FICR->DEVICEID[0], NRF_FICR->DEVICEID[1]);
 	v = (uint8_t *)&NRF_FICR->DEVICEADDR[0];
@@ -151,7 +163,7 @@ info_start (OrchardAppContext *context)
 	    CH_KERNEL_VERSION);
 	gwinPrintf (p->ghConsole, "SoftDevice S140 version: %d.%d.%d\n",
 	    SD_MAJOR_VERSION, SD_MINOR_VERSION, SD_BUGFIX_VERSION);
-	gwinPrintf (p->ghConsole, "Firmware size: %d bytes\n",
+	gwinPrintf (p->ghConsole, "Firmware image size: %d bytes\n",
 	    (uint32_t)&__ram7_init_text__ - 2);
 	gwinPrintf (p->ghConsole, "%s\n", BUILDTIME);
 	gwinPrintf (p->ghConsole, "Built with: %s\n", PORT_COMPILER_NAME);
