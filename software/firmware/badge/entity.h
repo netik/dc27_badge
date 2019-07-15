@@ -22,7 +22,8 @@ typedef struct _entity
 
   VECTOR      vecVelocity;     /* current velocity */
   VECTOR      vecVelocityGoal; /* goal velocity */
-  VECTOR      vecPosition;     /* position */
+  VECTOR      vecPosOrigin;    /* for bullets, this is their starting position */
+  VECTOR      vecPosition;     /* current position */
   VECTOR      prevPos;         /* where we were on the last frame */
   VECTOR      vecGravity;
   VECTOR      vecPositionLast; /* if this doesn't match, we'll erase and repaint */

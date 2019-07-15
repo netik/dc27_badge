@@ -22,7 +22,7 @@ const ship_type_t shiptable[8] = {
     "PT Boat",
     200, 10, 100, 3,
     500, 150, 50,
-    DEFAULT_VRATES,
+    10, -0.05, 12, 8, // PT boat is swiftest but does least damage. 
     30, 40, 25, -1,
     20, SP_SHOT_RESTRICT
   },

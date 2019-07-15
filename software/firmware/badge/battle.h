@@ -46,6 +46,8 @@ typedef struct _enemy
   int16_t        energy;
   uint8_t        ship_type;
 
+  systime_t      last_shot_ms;
+
   bool           ship_locked_in; // if the enemy has locked in their ship type
   uint8_t        ttl;
   ENTITY         e;
@@ -65,9 +67,9 @@ typedef struct _enemy
  */
 
 /* Entity opcodes */
-#define BATTLE_OP_ENTITY_CREATE     0x01     /* New entity in play */
-#define BATTLE_OP_ENTITY_DESTROY    0x02     /* Discard existing entity */
-#define BATTLE_OP_ENTITY_UPDATE     0x03     /* Entity state update */
+#define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
+#define BATTLE_OP_ENTITY_DESTROY    0x02 /* Discard existing entity */
+#define BATTLE_OP_ENTITY_UPDATE     0x03 /* Entity state update */
 
 /* VS opcodes */
 #define BATTLE_OP_SHIP_SELECT       0x04 /* Current ship selection */
@@ -76,7 +78,8 @@ typedef struct _enemy
 /* State opcodes */
 #define BATTLE_OP_IAMDEAD           0x06 /* I've been killed */
 #define BATTLE_OP_YOUAREDEAD        0x07 /* You've been killed */
-
+#define BATTLE_OP_CLOCKUPDATE       0x08 /* this is the current game time. */
+#define BATTLE_OP_ENDGAME           0x10 /* this ends the game */
 /*
  * Battle packet header
  * This is common to all packet types
@@ -123,12 +126,14 @@ typedef struct _bp_vs_pkt
 
 /*
  * State packets. These are used to keep the state machine
- * from possibly getting stuck.
+ * from possibly getting stuck and to update game timers.
  */
 
 typedef struct _bp_state_pkt
 {
   bp_header_t bp_header;
+  uint16_t    bp_operand;
+  uint16_t    bp_pad;
 } bp_state_pkt_t;
 
 #endif /* _BATTLE_H_ */
