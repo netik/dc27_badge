@@ -51,12 +51,6 @@ typedef struct _enemy
   ENTITY         e;
 } ENEMY;
 
-typedef struct _bullet
-{
-  uint8_t kind;
-  ENTITY  b;
-} BULLET;
-
 /*
  * Game network protocol definitions
  *

@@ -4,10 +4,11 @@
 #include "vector.h"
 
 typedef uint16_t entity_type;
-#define T_PLAYER     0x01
-#define T_ENEMY      0x02
-#define T_BULLET     0x03
-#define T_SPECIAL    0x04
+#define T_PLAYER        0x01
+#define T_ENEMY         0x02
+#define T_BULLET_PLAYER 0x03
+#define T_BULLET_ENEMY  0x04
+#define T_SPECIAL       0x05
 
 typedef struct _entity
 {

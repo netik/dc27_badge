@@ -160,8 +160,7 @@ check_land_collision(ENTITY *p)
   return(test_sprite_for_land_collision(sprites, p->sprite_id));
 }
 
-static void
-entity_update(ENTITY *p, float dt)
+static void entity_update(ENTITY *p, float dt)
 {
   if ((p->ttl > -1) && (p->visible))
   {
@@ -170,6 +169,7 @@ entity_update(ENTITY *p, float dt)
     {
       p->visible = FALSE;
       i2sPlay("game/splash.snd");
+      return;
     }
   }
 
@@ -200,17 +200,19 @@ entity_update(ENTITY *p, float dt)
                       p->vecPosition.x,
                       p->vecPosition.y);
 
-    if (check_land_collision(p) || entity_OOB(p))
-    {
+    if (p->type == T_PLAYER || p->type == T_ENEMY) {
+      if (check_land_collision(p) || entity_OOB(p))
+      {
 
-      // if in combat, you take damage.
-      p->vecPosition.x     = p->prevPos.x;
-      p->vecPosition.y     = p->prevPos.y;
-      p->vecVelocity.x     = 0;
-      p->vecVelocity.y     = 0;
-      p->vecVelocityGoal.x = 0;
-      p->vecVelocityGoal.y = 0;
-      return;
+        // if in combat, you take damage.
+        p->vecPosition.x     = p->prevPos.x;
+        p->vecPosition.y     = p->prevPos.y;
+        p->vecVelocity.x     = 0;
+        p->vecVelocity.y     = 0;
+        p->vecVelocityGoal.x = 0;
+        p->vecVelocityGoal.y = 0;
+        return;
+      }
     }
 
     isp_set_sprite_xy(sprites,
@@ -343,7 +345,7 @@ battle_start(OrchardAppContext *context)
   geventAttachSource (&bh->gl2, gs, GLISTEN_MOUSEMETA);
   geventRegisterCallback(&bh->gl2, orchardAppUgfxCallback, &bh->gl2);
 
-  // clear the bullet array`
+  // clear the bullet array
   memset(bullet, 0, sizeof(bullet));
 
   // stand us up.
@@ -407,34 +409,147 @@ draw_hud(OrchardAppContext *context)
 }
 
 
-#ifdef notyet
 static void
-fire_bullet(ENTITY *from, VECTOR *bullet_pending)
+fire_bullet(ENEMY *e, int dir_x, int dir_y)
 {
+  int count = 0;
+  // first thing, how many bullets do we have outstanding?
+  for (int i = 0; i < MAX_BULLETS; i++) {
+    if (bullet[i] != NULL && bullet[i]->type == T_BULLET_PLAYER) {
+      count++;
+    }
+  }
+
+  if (count >= shiptable[e->ship_type].max_bullets) {
+    // no more for you.
+    return;
+  }
+
+  // TBD: has enough time passed since the last shot?
+
   for (int i = 0; i < MAX_BULLETS; i++)
   {
     // find the first available bullet structure
-    if (bullet[i].visible == FALSE)
-    {
-      // bug: we should not init this again
-      entity_init(&bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, T_BULLET);
+    // create a new entity and fire something from it.
+    if (bullet[i] == NULL) {
+      bullet[i] = malloc(sizeof(ENTITY));
+      entity_init(bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, T_BULLET_PLAYER);
+      bullet[i]->visible = TRUE;
 
-      bullet[i].visible = TRUE;
-      bullet[i].ttl     = 30; // about a second
-      // start the bullet from player position
-      bullet[i].vecPosition.x = from->vecPosition.x;
-      bullet[i].vecPosition.y = from->vecPosition.y;
-      // copy the frame buffer from the parent.
-      bullet[i].vecVelocityGoal.x = bullet_pending->x * 50;
-      bullet[i].vecVelocityGoal.y = bullet_pending->y * 50;
-      bullet_pending->x           = bullet_pending->y = 0;
+      // bullets don't use TTL, they are ranged (see update_bullets)
+      bullet[i]->ttl     = -1;
+      // bullets start from the edge of the direction of fire.
+      bullet[i]->vecPosition.x = e->e.vecPosition.x;
+      bullet[i]->vecPosition.y = e->e.vecPosition.y;
+
+      // and it's fired from the ship, so that velocity is added in.
+      bullet[i]->vecVelocity.x = e->e.vecVelocity.x;
+      bullet[i]->vecVelocity.y = e->e.vecVelocity.y;
+
+      if (dir_x < 0) {
+        bullet[i]->vecPosition.x = e->e.vecPosition.x - BULLET_SIZE;
+      }
+
+      if (dir_x > 0) {
+        bullet[i]->vecPosition.x = e->e.vecPosition.x + SHIP_SIZE_ZOOMED;
+      }
+
+      if (dir_y < 0) {
+        bullet[i]->vecPosition.y = e->e.vecPosition.y - BULLET_SIZE;
+      }
+
+      if (dir_y > 0) {
+        bullet[i]->vecPosition.y = e->e.vecPosition.y + SHIP_SIZE_ZOOMED;
+      }
+
+      // center the bullet
+      if (dir_x == 0) { bullet[i]->vecPosition.x += ((SHIP_SIZE_ZOOMED/2) - (BULLET_SIZE/2)); }
+      if (dir_y == 0) { bullet[i]->vecPosition.y += ((SHIP_SIZE_ZOOMED/2) - (BULLET_SIZE/2)); }
+
+      bullet[i]->vecVelocityGoal.x = dir_x * shiptable[e->ship_type].shot_speed;
+      bullet[i]->vecVelocityGoal.y = dir_y * shiptable[e->ship_type].shot_speed;
+
+      isp_set_sprite_xy(sprites,
+                        bullet[i]->sprite_id,
+                        bullet[i]->vecPosition.x,
+                        bullet[i]->vecPosition.y);
+
       i2sPlay("game/shot.snd");
       return;
     }
   }
 }
 
-#endif
+void update_bullets(void) {
+  int i;
+  uint16_t dmg;
+  uint16_t max_range,range;
+
+  for (i = 0; i < MAX_BULLETS; i++) {
+    if (bullet[i]) {
+      entity_update(bullet[i], FRAME_DELAY);
+
+      // figure out how far away the bullet is using Pythagorean theorem.
+      if (bullet[i]->type == T_BULLET_PLAYER) {
+        range = sqrt(
+          pow(player->e.vecPosition.x - bullet[i]->vecPosition.x, 2) +
+          pow(player->e.vecPosition.y - bullet[i]->vecPosition.y, 2));
+          max_range = shiptable[player->ship_type].shot_range;
+      } else {
+        range = sqrt(
+          pow(current_enemy->e.vecPosition.x - bullet[i]->vecPosition.x, 2) +
+          pow(current_enemy->e.vecPosition.y - bullet[i]->vecPosition.y, 2));
+          max_range = shiptable[current_enemy->ship_type].shot_range;
+      }
+
+      if ((range > max_range) ||
+          (entity_OOB(bullet[i]))) {
+        // expire bullet
+        isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+        i2sPlay("game/splash.snd");
+        free(bullet[i]);
+        bullet[i] = NULL;
+        continue;
+      }
+
+      // did this bullet hit anything?
+      if (bullet[i]->type == T_BULLET_PLAYER) {
+        if (isp_check_sprites_collision(sprites,
+                                        current_enemy->e.sprite_id,
+                                        bullet[i]->sprite_id,
+                                        FALSE,
+                                        FALSE)) {
+
+          // TODO: calc random damage amount, send damage over to other side.
+          // players are authoratitive for thier own objects, so if they hit,
+          // we tell the other side to update their damage.
+
+          // damage is random, half to full damage.
+          dmg = randRange(shiptable[player->ship_type].max_dmg * .5,
+                          shiptable[player->ship_type].max_dmg);
+
+          current_enemy->hp = current_enemy->hp - dmg;
+          
+          i2sPlay("game/explode2.snd");
+          printf("HIT for %d Damage, HP: %d / %d\n",
+            dmg,
+            current_enemy->hp,
+            shiptable[current_enemy->ship_type].max_hp
+          );
+          drawProgressBar(200, 26, 120, 6,
+            shiptable[current_enemy->ship_type].max_hp,
+            current_enemy->hp, FALSE, TRUE);
+
+          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+          free(bullet[i]);
+          bullet[i] = NULL;
+        }
+      }
+
+    }
+  }
+}
+
 
 bool
 entity_OOB(ENTITY *e)
@@ -555,16 +670,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       entity_update(&(current_enemy->e), FRAME_DELAY);
 
       // move bullets if any
-
-      // check for collisions with land
+      update_bullets();
 
       // check for collisions with bullets
 
       // check for player vs enemy collision ( ramming speed! )
-
-      // fire new bullets if any
-
-      // expire bullets if any
 
       isp_draw_all_sprites(sprites);
     }
@@ -581,7 +691,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
        * When the user touches the screen in the world map and
        * there's an enemy nearby, engage them,
        */
-
+#ifdef TOUCH_SUPPORT
       if (current_battle_state == WORLD_MAP) {
         if ((nearest = enemy_engage(context, enemies, player)) != NULL) {
           /* convert the enemy struct to the larger combat version */
@@ -613,7 +723,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           state_vs_draw_enemy(player, TRUE);
         }
       }
-
+#endif
       /* Ignore other touch events for now */
       return;
     }
@@ -946,6 +1056,19 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           }
           break;
 
+        /* weapons system */
+        case keyBUp:
+          if (current_battle_state == COMBAT) fire_bullet(player,0,-1);
+          break;
+        case keyBDown:
+          if (current_battle_state == COMBAT) fire_bullet(player,0,1);
+          break;
+        case keyBLeft:
+          if (current_battle_state == COMBAT) fire_bullet(player,-1,0);
+          break;
+        case keyBRight:
+          if (current_battle_state == COMBAT) fire_bullet(player,1,0);
+        break;
         case keyBSelect:
           if (current_battle_state == WORLD_MAP)
           {
@@ -972,8 +1095,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           }
           break;
 
-        default:
-          break;
+          default:
+            break;
         }
       }
     }   // keyEvent

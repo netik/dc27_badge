@@ -117,7 +117,7 @@ extern void isp_set_sprite_block(ISPRITESYS *iss, ISPID id, coord_t xs, coord_t 
 extern void isp_set_sprite_bgcolor(ISPRITESYS *iss, ISPID id, color_t col);
 extern void isp_set_sprite_wmap_bgcolor(ISPRITESYS *iss, ISPID id, color_t col);
 extern void isp_release_sprite_bgcolor(ISPRITESYS *iss, ISPID id);
-extern bool_t isp_check_sprite_collision(ISPRITESYS *iss, ISPID id1, ISPID id2, bool_t overlap);
+extern bool_t isp_check_sprites_collision(ISPRITESYS *iss, ISPID id1, ISPID id2, bool_t overlap, bool_t drawtest);
 extern bool_t test_sprite_for_land_collision(ISPRITESYS *iss, ISPID id);
 extern void isp_draw_all_sprites(ISPRITESYS *iss);
 extern void isp_shutdown(ISPRITESYS *iss);
