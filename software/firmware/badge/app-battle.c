@@ -652,6 +652,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   BattleHandles *       bh;
   bp_header_t *         ph;
   GEvent *              pe;
+  GEventMouse *         me;
   GEventGWinButton *    be;
   OrchardAppRadioEvent *radio;
   ble_evt_t *           evt;
@@ -741,14 +742,15 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   if (event->type == ugfxEvent)
   {
     pe = event->ugfx.pEvent;
+    me = (GEventMouse *)event->ugfx.pEvent;
 
-    if (pe->type == GEVENT_TOUCH) {
+    if (pe->type == GEVENT_TOUCH && me->buttons & GMETA_MOUSE_DOWN) {
 
       /*
        * When the user touches the screen in the world map and
        * there's an enemy nearby, engage them,
        */
-#ifdef TOUCH_SUPPORT
+
       if (current_battle_state == WORLD_MAP) {
         if ((nearest = enemy_engage(context, enemies, player)) != NULL) {
           /* convert the enemy struct to the larger combat version */
@@ -780,7 +782,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           state_vs_draw_enemy(player, TRUE);
         }
       }
-#endif
+
       /* Ignore other touch events for now */
       return;
     }
@@ -1321,6 +1323,10 @@ static void battle_exit(OrchardAppContext *context)
   // flush combat status if any
   config->in_combat = 0;
   configSave(config);
+
+  /* Also sync our over-the-air status */
+  bleGapUpdateState(config->last_x, config->last_y,
+    config->xp, config->level, config->current_ship, config->in_combat);
 
   return;
 }

@@ -132,7 +132,13 @@ update (VHandles * p)
 	f_read (&f, (char *)UPDATER_BASE, UPDATER_SIZE, &br);
 	f_close (&f);
 
+	/* Make sure the above operations complete. */
+
 	__ISB();
+
+	/* Turn off the MPU */
+
+	mpuDisable ();
 
 	/*
 	 * Now that we've loaded the updater, turn off the SPI
