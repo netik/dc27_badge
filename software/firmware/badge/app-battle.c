@@ -731,9 +731,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       // move bullets if any
       update_bullets();
 
-      // check for collisions with bullets
+      // TBD:check for player vs enemy collision ( ramming speed! )
 
-      // check for player vs enemy collision ( ramming speed! )
+      if ((player->hp <= 0) || (current_enemy->hp <= 0)) {
+        changeState(SHOW_RESULTS);
+        return;
+      }
 
       isp_draw_all_sprites(sprites);
     }
@@ -1293,6 +1296,11 @@ static void battle_exit(OrchardAppContext *context)
 
   i2sPlay (NULL);
 
+  // disconnect anything
+  if (bh->cid != BLE_L2CAP_CID_INVALID)
+    bleL2CapDisconnect (bh->cid);
+  bleGapDisconnect ();
+
   // free players and related objects.
   // the sprite system will have been brought down
   // by the state transition to NONE above.
@@ -1768,25 +1776,24 @@ void state_combat_exit(void)
 
   /* tear down sprite system */
   isp_shutdown(sprites);
-
-  // clean up after the game
-  free(current_enemy);
-  current_enemy = NULL;
-
-  free(player);
-  player = NULL;
-
-  if (bh->cid != BLE_L2CAP_CID_INVALID)
-    bleL2CapDisconnect (bh->cid);
-  bleGapDisconnect ();
 }
 
 static void state_show_results_enter(void) {
   char tmp[40];
   // figure out who won
+  //
+  // The Attacker is responsible for game calcs.
+  //
+  if (player->hp > current_enemy->hp) {
+      sprintf(tmp, "YOU WIN! (+%d XP)",0);
+  } else {
+    sprintf(tmp, "YOU LOSE! (+%d XP)",0);
+  }
 
+  if (player->hp == current_enemy->hp) {
+      sprintf(tmp, "TIE! (+%d XP)",0);
+  }
   // award xp
-  sprintf(tmp, "TIE GAME! (+%d XP)",0);
   screen_alert_draw(false, tmp);
   chThdSleepMilliseconds(ALERT_DELAY);
   orchardAppExit();
