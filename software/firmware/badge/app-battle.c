@@ -123,6 +123,7 @@ static void render_all_enemies(void);
 static void send_ship_type(uint16_t type, bool final);
 static void state_vs_draw_enemy(ENEMY *e, bool is_player);
 static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e);
+static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y);
 static void send_state_update(uint16_t opcode, uint16_t operand);
 static void redraw_combat_clock(void);
 bool entity_OOB(ENTITY *e);
@@ -416,19 +417,21 @@ static void
 fire_bullet(ENEMY *e, int dir_x, int dir_y)
 {
   int count = 0;
-  // first thing, how many bullets do we have outstanding?
-  for (int i = 0; i < MAX_BULLETS; i++) {
-    if (bullet[i] != NULL && bullet[i]->type == T_BULLET_PLAYER) {
-      count++;
+
+  // if this is local (i.e. the player) we count to see if any more are
+  // possible for the player's current ship type.
+  if (e == player) {
+    for (int i = 0; i < MAX_BULLETS; i++) {
+      if (bullet[i] != NULL && bullet[i]->type == T_BULLET_PLAYER) {
+        count++;
+      }
+    }
+
+    if (count >= shiptable[e->ship_type].max_bullets) {
+      // no more for you.
+      return;
     }
   }
-
-  if (count >= shiptable[e->ship_type].max_bullets) {
-    // no more for you.
-    return;
-  }
-
-  // TBD: has enough time passed since the last shot?
 
   for (int i = 0; i < MAX_BULLETS; i++)
   {
@@ -436,11 +439,12 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y)
     // create a new entity and fire something from it.
     if (bullet[i] == NULL) {
       bullet[i] = malloc(sizeof(ENTITY));
-      entity_init(bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, T_BULLET_PLAYER);
+      entity_init(bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, e == player ? T_BULLET_PLAYER : T_BULLET_ENEMY);
       bullet[i]->visible = TRUE;
 
       // bullets don't use TTL, they are ranged (see update_bullets)
       bullet[i]->ttl     = -1;
+
       // bullets start from the edge of the direction of fire.
       bullet[i]->vecPosition.x = e->e.vecPosition.x;
       bullet[i]->vecPosition.y = e->e.vecPosition.y;
@@ -488,10 +492,19 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y)
       // record the shot
       e->last_shot_ms = chVTGetSystemTime();
 
+      if (e == player) {
+        // fire across network if the player is firing
+        send_bullet_create(bullet[i], dir_x, dir_y);
+      }
+
       i2sPlay("game/shot.snd");
       return;
     }
   }
+  // We failed to fire the shot becasue we're out of bullet memory.
+  // this shouldn't ever happen, but we'll make some noise anyway.
+  i2sPlay("game/error.snd");
+
 }
 
 void update_bullets(void) {
@@ -525,6 +538,20 @@ void update_bullets(void) {
       }
 
       // did this bullet hit anything?
+
+      if (bullet[i]->type == T_BULLET_ENEMY) {
+        if (isp_check_sprites_collision(sprites,
+                                        player->e.sprite_id,
+                                        bullet[i]->sprite_id,
+                                        FALSE,
+                                        FALSE)) {
+          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+          free(bullet[i]);
+          bullet[i] = NULL;
+          i2sPlay("game/explode2.snd");
+        }
+      }
+
       if (bullet[i]->type == T_BULLET_PLAYER) {
         if (isp_check_sprites_collision(sprites,
                                         current_enemy->e.sprite_id,
@@ -543,7 +570,8 @@ void update_bullets(void) {
           current_enemy->hp = current_enemy->hp - dmg;
 
           i2sPlay("game/explode2.snd");
-          // SEND TO NETWORK HERE
+
+          send_state_update(BATTLE_OP_TAKE_DMG, dmg);
           printf("HIT for %d Damage, HP: %d / %d\n",
             dmg,
             current_enemy->hp,
@@ -633,8 +661,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   bp_vs_pkt_t *    pkt_vs;
   bp_state_pkt_t *    pkt_state;
   bp_entity_pkt_t *pkt_entity;
+  bp_bullet_pkt_t *pkt_bullet;
 
   char tmp[40];
+
   bh = (BattleHandles *)context->priv;
 
   /* MAIN GAME EVENT LOOP */
@@ -910,6 +940,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       {
         switch (ph->bp_opcode)
         {
+          case BATTLE_OP_TAKE_DMG:
+            // take damage from opponent.
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            state_time_left = pkt_state->bp_operand;
+            player->hp = player->hp - pkt_state->bp_operand;
+            // player's stats
+            drawProgressBar(0, 26, 120, 6, shiptable[player->ship_type].max_hp, player->hp, FALSE, FALSE);
+          break;
           case BATTLE_OP_CLOCKUPDATE:
             // we are receiving clock from the other badge.
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
@@ -921,6 +959,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 #endif
             redraw_combat_clock();
             break;
+          case BATTLE_OP_ENTITY_CREATE:
+            // enemy is firing a bullet from their current position.
+            pkt_bullet = (bp_bullet_pkt_t *)&bh->rxbuf;
+            fire_bullet(current_enemy, pkt_bullet->bp_dir_x, pkt_bullet->bp_dir_y);
+          break;
           case BATTLE_OP_ENTITY_UPDATE:
             // the enemy is updating their position and velocity
             pkt_entity = (bp_entity_pkt_t *)&bh->rxbuf;
@@ -1659,7 +1702,7 @@ void redraw_combat_clock(void) {
                         gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
                         tmp,
                         bh->fontSM,
-                        Yellow,
+                        state_time_left > 10 ? Yellow : Red,
                         justifyCenter);
 }
 
@@ -2064,6 +2107,35 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   memcpy(p->txbuf, &pkt, sizeof(bp_entity_pkt_t));
 
   if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_entity_pkt_t)) != NRF_SUCCESS)
+  {
+    screen_alert_draw(TRUE, "BLE XMIT FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
+}
+
+static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y)
+{
+  BattleHandles *p;
+
+  // get private memory
+  p = (BattleHandles *)mycontext->priv;
+  bp_bullet_pkt_t pkt;
+
+  memset(p->txbuf, 0, sizeof(p->txbuf));
+
+  pkt.bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
+  pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
+
+  pkt.bp_header.bp_id = e->id;
+
+  pkt.bp_dir_x      = dir_x;
+  pkt.bp_dir_y      = dir_y;
+
+  memcpy(p->txbuf, &pkt, sizeof(bp_bullet_pkt_t));
+
+  if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS)
   {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
