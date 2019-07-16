@@ -1281,6 +1281,10 @@ static void battle_exit(OrchardAppContext *context)
   config->in_combat = 0;
   configSave(config);
 
+  /* Also sync our over-the-air status */
+  bleGapUpdateState(config->last_x, config->last_y,
+    config->xp, config->level, config->current_ship, config->in_combat);
+
   return;
 }
 
