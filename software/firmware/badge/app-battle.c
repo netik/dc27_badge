@@ -527,19 +527,8 @@ void update_bullets(void) {
         pow(bullet[i]->vecPosOrigin.x - bullet[i]->vecPosition.x, 2) +
         pow(bullet[i]->vecPosOrigin.y - bullet[i]->vecPosition.y, 2));
 
-      if ((travelled > max_range) ||
-          (entity_OOB(bullet[i]))) {
-        // expire bullet
-        isp_destroy_sprite(sprites, bullet[i]->sprite_id);
-        i2sPlay("game/splash.snd");
-        free(bullet[i]);
-        bullet[i] = NULL;
-        continue;
-      }
-
       // did this bullet hit anything?
-
-      if (bullet[i]->type == T_BULLET_ENEMY) {
+      if (bullet[i] && bullet[i]->type == T_BULLET_ENEMY) {
         if (isp_check_sprites_collision(sprites,
                                         player->e.sprite_id,
                                         bullet[i]->sprite_id,
@@ -552,7 +541,7 @@ void update_bullets(void) {
         }
       }
 
-      if (bullet[i]->type == T_BULLET_PLAYER) {
+      if (bullet[i] && bullet[i]->type == T_BULLET_PLAYER) {
         if (isp_check_sprites_collision(sprites,
                                         current_enemy->e.sprite_id,
                                         bullet[i]->sprite_id,
@@ -587,6 +576,18 @@ void update_bullets(void) {
         }
       }
 
+      // check for oob or max distance
+      if (bullet[i]) {
+        if ((travelled > max_range) ||
+            (entity_OOB(bullet[i]))) {
+          // expire bullet
+          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+          i2sPlay("game/splash.snd");
+          free(bullet[i]);
+          bullet[i] = NULL;
+          continue;
+        }
+      }
     }
   }
 }
@@ -945,7 +946,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           case BATTLE_OP_TAKE_DMG:
             // take damage from opponent.
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
-            state_time_left = pkt_state->bp_operand;
             player->hp = player->hp - pkt_state->bp_operand;
             // player's stats
             drawProgressBar(0, 26, 120, 6, shiptable[player->ship_type].max_hp, player->hp, FALSE, FALSE);
