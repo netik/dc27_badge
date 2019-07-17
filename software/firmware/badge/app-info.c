@@ -50,6 +50,18 @@ extern uint32_t __ram7_init_text__;
 extern char   __heap_base__; /* Set by linker */
 extern char   __heap_end__; /* Set by linker */
 
+#pragma pack(1)
+typedef struct _sd_cid {
+	uint8_t		sd_mid;		/* Manufacturer ID */
+	char		sd_oid[2];	/* OEM/Application ID */
+	char		sd_pnm[5];	/* Product name */
+	uint8_t		sd_prv;		/* Product revision */
+	uint32_t	sd_psn;		/* Product serial number */
+	uint16_t	sd_mdt;		/* Manufacture data */
+	uint8_t		sd_crc;		/* 8-bit CRC */
+} sd_cid;
+#pragma pack()
+
 typedef struct _ihandles {
 	GListener	gl;
 	GHandle		ghConsole;
@@ -80,6 +92,7 @@ info_start (OrchardAppContext *context)
 	uint64_t disksz;
 	DWORD sectors;
 	BYTE drv;
+	sd_cid cid;
 
 	/*
 	 * Play a jaunty tune to keep the user entertained.
@@ -181,11 +194,17 @@ info_start (OrchardAppContext *context)
 
 	drv = 0;
 	gwinPrintf (p->ghConsole, "SD card: ");
-	if (disk_ioctl (drv, GET_SECTOR_COUNT, &sectors) == RES_OK) {
+	if (disk_ioctl (drv, GET_SECTOR_COUNT, &sectors) == RES_OK &&
+	    disk_ioctl (drv, MMC_GET_CID, &cid) == RES_OK) {
 		disksz = sectors * 512ULL;
 		disksz /= 1048576ULL;
-		gwinPrintf (p->ghConsole, "present, capacity: %d MB\n",
-		    disksz);
+		gwinPrintf (p->ghConsole, "%d MB ", disksz);
+		gwinPrintf (p->ghConsole, "[%c%c] ", cid.sd_oid[0],
+		    cid.sd_oid[1]);
+		gwinPrintf (p->ghConsole, "[%c%c%c%c%c] ", cid.sd_pnm[0],
+		    cid.sd_pnm[1], cid.sd_pnm[2], cid.sd_pnm[3],
+		    cid.sd_pnm[4]);
+		gwinPrintf (p->ghConsole, "SN: %lx\n", cid.sd_psn);
 	} else
 		gwinPrintf (p->ghConsole, "not found\n");
 
