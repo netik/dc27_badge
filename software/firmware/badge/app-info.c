@@ -150,9 +150,20 @@ info_start (OrchardAppContext *context)
 	gwinPrintf (p->ghConsole, "\n");
 	gwinPrintf (p->ghConsole, "Device ID: %lX%lX\n",
 	    NRF_FICR->DEVICEID[0], NRF_FICR->DEVICEID[1]);
+	/*
+	 * Per the BLE spec, random static addresses must have the
+	 * two most significant bits set to 1, public addresses must
+	 * have the two most significant bits set to 0. However Nordic
+	 * doesn't follow this rule when they burn the station address
+	 * into the FICR: they just put in 6 random bytes. So it's up
+	 * to us to make this adjustment. The SoftDevice does the
+	 * same thing.
+	 */
 	v = (uint8_t *)&NRF_FICR->DEVICEADDR[0];
-	gwinPrintf (p->ghConsole, "BLE station address: %X:%X:%X:%X:%X:%X\n",
-	    v[5], v[4], v[3], v[2], v[1], v[0]);
+	gwinPrintf (p->ghConsole, "BLE station address: "
+	    "%02X:%02X:%02X:%02X:%02X:%02X\n",
+	    NRF_FICR->DEVICEADDRTYPE & FICR_DEVICEADDRTYPE_DEVICEADDRTYPE_Msk ?
+	    v[5] | 0xC0 : v[5] & ~0xC0, v[4], v[3], v[2], v[1], v[0]);
 
 	/* CPU core info */
  
