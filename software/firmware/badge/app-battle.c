@@ -108,6 +108,9 @@ typedef struct _BattleHandles
   uint16_t  cid;       // l2capchannelid for combat
   char      txbuf[MAX_PEERMEM + BLE_IDES_L2CAP_MTU + 3];
   char      rxbuf[BLE_IDES_L2CAP_MTU];
+
+  // left and right variants of the players; used in COMBAT only.
+  ISPHOLDER *pl_left, *pl_right, *ce_left, *ce_right;
 } BattleHandles;
 
 // enemies -- linked list
@@ -1605,6 +1608,8 @@ void state_combat_enter(void)
   char        fnbuf[30];
   int         newmap;
   userconfig *config = getConfig();
+  BattleHandles * bh;
+  bh       = (BattleHandles *)mycontext->priv;
 
   // we're in combat now, send our last advertisement.
   state_time_left   = 120;
@@ -1658,28 +1663,42 @@ void state_combat_enter(void)
   entity_init(&player->e, sprites, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_PLAYER);
   entity_init(&current_enemy->e, sprites, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_ENEMY);
 
+  // load sprites
+  bh->pl_left  = isp_get_spholder_from_file(
+    getAvatarImage(player->ship_type, true, 'n', false));
+  bh->pl_right = isp_get_spholder_from_file(
+    getAvatarImage(player->ship_type, true, 'n', true));
+  bh->ce_left  = isp_get_spholder_from_file(
+    getAvatarImage(current_enemy->ship_type, false, 'n', false));
+  bh->ce_right = isp_get_spholder_from_file(
+    getAvatarImage(current_enemy->ship_type, false, 'n', true));
+
   /* move the player to the starting position */
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
   {
-    // Attacker (the central) gets left.
+    // Attacker (the central) gets left side, and faces right.
     player->e.vecPosition.x        = ship_init_pos_table[newmap].attacker.x;
     player->e.vecPosition.y        = ship_init_pos_table[newmap].attacker.y;
     current_enemy->e.vecPosition.x = ship_init_pos_table[newmap].defender.x;
     current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].defender.y;
+    player->e.faces_right          = true;
+    current_enemy->e.faces_right   = false;
   }
   else
   {
-    // Defender gets on the right.
+    // Defender gets the right side, and faces left.
     player->e.vecPosition.x        = ship_init_pos_table[newmap].defender.x;
     player->e.vecPosition.y        = ship_init_pos_table[newmap].defender.y;
     current_enemy->e.vecPosition.x = ship_init_pos_table[newmap].attacker.x;
     current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].attacker.y;
+    player->e.faces_right          = false;
+    current_enemy->e.faces_right   = true;
   }
 
   // draw player
-  isp_load_image_from_file(sprites,
+  isp_set_sprite_from_spholder(sprites,
     player->e.sprite_id,
-    getAvatarImage(player->ship_type, true, 'n', true));
+    player->e.faces_right ? bh->pl_right : bh->pl_left);
 
   isp_set_sprite_xy(sprites,
                     player->e.sprite_id,
@@ -1687,9 +1706,9 @@ void state_combat_enter(void)
                     player->e.vecPosition.y);
 
   // draw enemy
-  isp_load_image_from_file(sprites,
+  isp_set_sprite_from_spholder(sprites,
     current_enemy->e.sprite_id,
-    getAvatarImage(current_enemy->ship_type, false, 'n', false));
+    current_enemy->e.faces_right ? bh->ce_right : bh->ce_left);
 
   isp_set_sprite_xy(sprites,
                     current_enemy->e.sprite_id,
