@@ -176,6 +176,7 @@ CSRC += main.c \
 	rand.c \
 	led.c \
 	cmd-audio.c \
+	cmd-credits.c \
 	cmd-config.c \
 	cmd-radio.c \
 	cmd-reset.c \
@@ -217,6 +218,7 @@ CSRC += main.c \
 	app-puzwatch.c \
 	app-spa-pin.c \
 	app-geiger.c \
+	app-info.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \

@@ -1,0 +1,5 @@
+set style enabled off
+target remote localhost:3333
+printf "\nDEVICEID %X%X\n\n", *0x10000060, *0x10000064
+monitor reset
+quit

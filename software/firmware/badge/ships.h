@@ -29,7 +29,7 @@
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
 #define VMULT       8        // on each time step, take this many steps.
-#define MAX_BULLETS 3
+#define MAX_BULLETS 16       // counts all bullets from all players.
 
 // size of sub-map tiles
 #define TILE_W 80

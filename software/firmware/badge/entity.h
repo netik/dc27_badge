@@ -4,10 +4,11 @@
 #include "vector.h"
 
 typedef uint16_t entity_type;
-#define T_PLAYER     0x01
-#define T_ENEMY      0x02
-#define T_BULLET     0x03
-#define T_SPECIAL    0x04
+#define T_PLAYER        0x01
+#define T_ENEMY         0x02
+#define T_BULLET_PLAYER 0x03
+#define T_BULLET_ENEMY  0x04
+#define T_SPECIAL       0x05
 
 typedef struct _entity
 {
@@ -21,7 +22,8 @@ typedef struct _entity
 
   VECTOR      vecVelocity;     /* current velocity */
   VECTOR      vecVelocityGoal; /* goal velocity */
-  VECTOR      vecPosition;     /* position */
+  VECTOR      vecPosOrigin;    /* for bullets, this is their starting position */
+  VECTOR      vecPosition;     /* current position */
   VECTOR      prevPos;         /* where we were on the last frame */
   VECTOR      vecGravity;
   VECTOR      vecPositionLast; /* if this doesn't match, we'll erase and repaint */

@@ -17,7 +17,6 @@
 #define NETWORK_TIMEOUT       (FPS * 10) // number of ticks to timeout (10 seconds)
 #define PEER_ADDR_LEN         12 + 5
 #define MAX_PEERMEM           (PEER_ADDR_LEN + BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_MAX_SUPPORTED + 1)
-#define COLOR_ENEMY           Red                   // TBD: Replace this with mod-con color
 #define COLOR_PLAYER          HTML2COLOR(0xeeeseee) // light grey
 #define SHIP_SIZE_WORLDMAP    10
 #define SHIP_SIZE_ZOOMED      40
@@ -46,16 +45,12 @@ typedef struct _enemy
   int16_t        energy;
   uint8_t        ship_type;
 
+  systime_t      last_shot_ms;
+
   bool           ship_locked_in; // if the enemy has locked in their ship type
   uint8_t        ttl;
   ENTITY         e;
 } ENEMY;
-
-typedef struct _bullet
-{
-  uint8_t kind;
-  ENTITY  b;
-} BULLET;
 
 /*
  * Game network protocol definitions
@@ -71,17 +66,22 @@ typedef struct _bullet
  */
 
 /* Entity opcodes */
-#define BATTLE_OP_ENTITY_CREATE     0x01     /* New entity in play */
-#define BATTLE_OP_ENTITY_DESTROY    0x02     /* Discard existing entity */
-#define BATTLE_OP_ENTITY_UPDATE     0x03     /* Entity state update */
+#define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
+#define BATTLE_OP_ENTITY_DESTROY    0x02 /* Discard existing entity */
+#define BATTLE_OP_ENTITY_UPDATE     0x03 /* Entity state update */
 
 /* VS opcodes */
-#define BATTLE_OP_SHIP_SELECT       0x04 /* Current ship selection */
-#define BATTLE_OP_SHIP_CONFIRM      0x05 /* Final ship choice */
+#define BATTLE_OP_SHIP_SELECT       0x10 /* Current ship selection */
+#define BATTLE_OP_SHIP_CONFIRM      0x11 /* Final ship choice */
 
 /* State opcodes */
-#define BATTLE_OP_IAMDEAD           0x06 /* I've been killed */
-#define BATTLE_OP_YOUAREDEAD        0x07 /* You've been killed */
+#define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
+#define BATTLE_OP_USE_ENG           0x21 /* I am using X of my energy. */
+#define BATTLE_OP_IAMDEAD           0x22 /* I've been killed */
+#define BATTLE_OP_YOUAREDEAD        0x24 /* You've been killed */
+#define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
+
+#define BATTLE_OP_ENDGAME           0xF0 /* this ends the game */
 
 /*
  * Battle packet header
@@ -114,6 +114,13 @@ typedef struct _bp_entity_pkt
   uint16_t    bp_pad;
 } bp_entity_pkt_t;
 
+typedef struct _bp_bullet_pkt
+{
+  bp_header_t bp_header;
+  int16_t    bp_dir_x;
+  int16_t    bp_dir_y;
+} bp_bullet_pkt_t;
+
 /*
  * VS. packets. These are used in the VS. select screen,
  * when players are deciding which ship in their navy to use
@@ -129,12 +136,14 @@ typedef struct _bp_vs_pkt
 
 /*
  * State packets. These are used to keep the state machine
- * from possibly getting stuck.
+ * from possibly getting stuck and to update game timers.
  */
 
 typedef struct _bp_state_pkt
 {
   bp_header_t bp_header;
+  uint16_t    bp_operand;
+  uint16_t    bp_pad;
 } bp_state_pkt_t;
 
 #endif /* _BATTLE_H_ */

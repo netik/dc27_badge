@@ -123,8 +123,12 @@ static void render_all_enemies(void);
 static void send_ship_type(uint16_t type, bool final);
 static void state_vs_draw_enemy(ENEMY *e, bool is_player);
 static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e);
+static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y);
+static void send_state_update(uint16_t opcode, uint16_t operand);
+static void redraw_combat_clock(void);
 bool entity_OOB(ENTITY *e);
 /* end protos */
+
 static
 int getMapTile(ENTITY *e)
 {
@@ -160,8 +164,7 @@ check_land_collision(ENTITY *p)
   return(test_sprite_for_land_collision(sprites, p->sprite_id));
 }
 
-static void
-entity_update(ENTITY *p, float dt)
+static void entity_update(ENTITY *p, float dt)
 {
   if ((p->ttl > -1) && (p->visible))
   {
@@ -170,6 +173,7 @@ entity_update(ENTITY *p, float dt)
     {
       p->visible = FALSE;
       i2sPlay("game/splash.snd");
+      return;
     }
   }
 
@@ -200,17 +204,19 @@ entity_update(ENTITY *p, float dt)
                       p->vecPosition.x,
                       p->vecPosition.y);
 
-    if (check_land_collision(p) || entity_OOB(p))
-    {
+    if (p->type == T_PLAYER || p->type == T_ENEMY) {
+      if (check_land_collision(p) || entity_OOB(p))
+      {
 
-      // if in combat, you take damage.
-      p->vecPosition.x     = p->prevPos.x;
-      p->vecPosition.y     = p->prevPos.y;
-      p->vecVelocity.x     = 0;
-      p->vecVelocity.y     = 0;
-      p->vecVelocityGoal.x = 0;
-      p->vecVelocityGoal.y = 0;
-      return;
+        // if in combat, you take damage.
+        p->vecPosition.x     = p->prevPos.x;
+        p->vecPosition.y     = p->prevPos.y;
+        p->vecVelocity.x     = 0;
+        p->vecVelocity.y     = 0;
+        p->vecVelocityGoal.x = 0;
+        p->vecVelocityGoal.y = 0;
+        return;
+      }
     }
 
     isp_set_sprite_xy(sprites,
@@ -291,7 +297,7 @@ copy_config_to_player(void)
   player->ship_type      = config->current_ship;
   player->ship_locked_in = FALSE;
   player->ttl            = -1;
-
+  player->last_shot_ms   = 0;
   // ENTITY player.e will be init'd during combat
 }
 
@@ -343,7 +349,7 @@ battle_start(OrchardAppContext *context)
   geventAttachSource (&bh->gl2, gs, GLISTEN_MOUSEMETA);
   geventRegisterCallback(&bh->gl2, orchardAppUgfxCallback, &bh->gl2);
 
-  // clear the bullet array`
+  // clear the bullet array
   memset(bullet, 0, sizeof(bullet));
 
   // stand us up.
@@ -407,34 +413,185 @@ draw_hud(OrchardAppContext *context)
 }
 
 
-#ifdef notyet
 static void
-fire_bullet(ENTITY *from, VECTOR *bullet_pending)
+fire_bullet(ENEMY *e, int dir_x, int dir_y)
 {
+  int count = 0;
+
+  // if this is local (i.e. the player) we count to see if any more are
+  // possible for the player's current ship type.
+  if (e == player) {
+    for (int i = 0; i < MAX_BULLETS; i++) {
+      if (bullet[i] != NULL && bullet[i]->type == T_BULLET_PLAYER) {
+        count++;
+      }
+    }
+
+    if (count >= shiptable[e->ship_type].max_bullets) {
+      // no more for you.
+      return;
+    }
+  }
+
   for (int i = 0; i < MAX_BULLETS; i++)
   {
     // find the first available bullet structure
-    if (bullet[i].visible == FALSE)
-    {
-      // bug: we should not init this again
-      entity_init(&bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, T_BULLET);
+    // create a new entity and fire something from it.
+    if (bullet[i] == NULL) {
+      bullet[i] = malloc(sizeof(ENTITY));
+      entity_init(bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, e == player ? T_BULLET_PLAYER : T_BULLET_ENEMY);
+      bullet[i]->visible = TRUE;
 
-      bullet[i].visible = TRUE;
-      bullet[i].ttl     = 30; // about a second
-      // start the bullet from player position
-      bullet[i].vecPosition.x = from->vecPosition.x;
-      bullet[i].vecPosition.y = from->vecPosition.y;
-      // copy the frame buffer from the parent.
-      bullet[i].vecVelocityGoal.x = bullet_pending->x * 50;
-      bullet[i].vecVelocityGoal.y = bullet_pending->y * 50;
-      bullet_pending->x           = bullet_pending->y = 0;
+      // bullets don't use TTL, they are ranged (see update_bullets)
+      bullet[i]->ttl     = -1;
+
+      // bullets start from the edge of the direction of fire.
+      bullet[i]->vecPosition.x = e->e.vecPosition.x;
+      bullet[i]->vecPosition.y = e->e.vecPosition.y;
+
+      // and it's fired from the ship, so that velocity is added in.
+      bullet[i]->vecVelocity.x = e->e.vecVelocity.x;
+      bullet[i]->vecVelocity.y = e->e.vecVelocity.y;
+
+      if (dir_x < 0) {
+        bullet[i]->vecPosition.x = e->e.vecPosition.x - BULLET_SIZE;
+      }
+
+      if (dir_x > 0) {
+        bullet[i]->vecPosition.x = e->e.vecPosition.x + SHIP_SIZE_ZOOMED;
+      }
+
+      if (dir_y < 0) {
+        bullet[i]->vecPosition.y = e->e.vecPosition.y - BULLET_SIZE;
+      }
+
+      if (dir_y > 0) {
+        bullet[i]->vecPosition.y = e->e.vecPosition.y + SHIP_SIZE_ZOOMED;
+      }
+
+      // center the bullet
+      if (dir_x == 0) { bullet[i]->vecPosition.x += ((SHIP_SIZE_ZOOMED/2) - (BULLET_SIZE/2)); }
+      if (dir_y == 0) { bullet[i]->vecPosition.y += ((SHIP_SIZE_ZOOMED/2) - (BULLET_SIZE/2)); }
+
+      // the goal and the current V should be the same.
+      bullet[i]->vecVelocityGoal.x = dir_x * shiptable[e->ship_type].shot_speed;
+      bullet[i]->vecVelocityGoal.y = dir_y * shiptable[e->ship_type].shot_speed;
+
+      bullet[i]->vecVelocity.x += dir_x * shiptable[e->ship_type].shot_speed;
+      bullet[i]->vecVelocity.y += dir_y * shiptable[e->ship_type].shot_speed;
+
+      // used for ranging
+      bullet[i]->vecPosOrigin.x = bullet[i]->vecPosition.x;
+      bullet[i]->vecPosOrigin.y = bullet[i]->vecPosition.y;
+
+      isp_set_sprite_xy(sprites,
+                        bullet[i]->sprite_id,
+                        bullet[i]->vecPosition.x,
+                        bullet[i]->vecPosition.y);
+
+      // record the shot
+      e->last_shot_ms = chVTGetSystemTime();
+
+      if (e == player) {
+        // fire across network if the player is firing
+        send_bullet_create(bullet[i], dir_x, dir_y);
+      }
+
       i2sPlay("game/shot.snd");
       return;
     }
   }
+  // We failed to fire the shot becasue we're out of bullet memory.
+  // this shouldn't ever happen, but we'll make some noise anyway.
+  i2sPlay("game/error.snd");
+
 }
 
-#endif
+void update_bullets(void) {
+  int i;
+  uint16_t dmg;
+  uint16_t max_range,travelled;
+
+  for (i = 0; i < MAX_BULLETS; i++) {
+    if (bullet[i]) {
+      entity_update(bullet[i], FRAME_DELAY);
+
+      // figure out how far away the bullet is using Pythagorean theorem.
+      if (bullet[i]->type == T_BULLET_PLAYER) {
+          max_range = shiptable[player->ship_type].shot_range;
+      } else {
+          max_range = shiptable[current_enemy->ship_type].shot_range;
+      }
+
+      travelled = sqrt(
+        pow(bullet[i]->vecPosOrigin.x - bullet[i]->vecPosition.x, 2) +
+        pow(bullet[i]->vecPosOrigin.y - bullet[i]->vecPosition.y, 2));
+
+      // did this bullet hit anything?
+      if (bullet[i] && bullet[i]->type == T_BULLET_ENEMY) {
+        if (isp_check_sprites_collision(sprites,
+                                        player->e.sprite_id,
+                                        bullet[i]->sprite_id,
+                                        FALSE,
+                                        FALSE)) {
+          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+          free(bullet[i]);
+          bullet[i] = NULL;
+          i2sPlay("game/explode2.snd");
+        }
+      }
+
+      if (bullet[i] && bullet[i]->type == T_BULLET_PLAYER) {
+        if (isp_check_sprites_collision(sprites,
+                                        current_enemy->e.sprite_id,
+                                        bullet[i]->sprite_id,
+                                        FALSE,
+                                        FALSE)) {
+
+          // TODO: calc random damage amount, send damage over to other side.
+          // players are authoratitive for thier own objects, so if they hit,
+          // we tell the other side to update their damage.
+
+          // damage is random, half to full damage.
+          dmg = randRange(shiptable[player->ship_type].max_dmg * .75,
+                          shiptable[player->ship_type].max_dmg);
+
+          current_enemy->hp = current_enemy->hp - dmg;
+
+          i2sPlay("game/explode2.snd");
+
+          send_state_update(BATTLE_OP_TAKE_DMG, dmg);
+          printf("HIT for %d Damage, HP: %d / %d\n",
+            dmg,
+            current_enemy->hp,
+            shiptable[current_enemy->ship_type].max_hp
+          );
+          drawProgressBar(200, 26, 120, 6,
+            shiptable[current_enemy->ship_type].max_hp,
+            current_enemy->hp, FALSE, TRUE);
+
+          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+          free(bullet[i]);
+          bullet[i] = NULL;
+        }
+      }
+
+      // check for oob or max distance
+      if (bullet[i]) {
+        if ((travelled > max_range) ||
+            (entity_OOB(bullet[i]))) {
+          // expire bullet
+          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+          i2sPlay("game/splash.snd");
+          free(bullet[i]);
+          bullet[i] = NULL;
+          continue;
+        }
+      }
+    }
+  }
+}
+
 
 bool
 entity_OOB(ENTITY *e)
@@ -474,6 +631,19 @@ void expire_enemies(void *e)
   }
 }
 
+static bool
+fire_allowed(ENEMY *e) {
+  // returns true if player is allowed to fire a shot.
+  if (e->last_shot_ms == 0) return TRUE;
+
+  if (chVTTimeElapsedSinceX(e->last_shot_ms) >=
+      TIME_MS2I(shiptable[e->ship_type].shot_msec)){
+        return TRUE;
+  }
+
+  return FALSE;
+}
+
 static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
@@ -483,6 +653,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   BattleHandles *       bh;
   bp_header_t *         ph;
   GEvent *              pe;
+  GEventMouse *         me;
   GEventGWinButton *    be;
   OrchardAppRadioEvent *radio;
   ble_evt_t *           evt;
@@ -490,9 +661,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ble_gatts_evt_write_t *req;
 
   bp_vs_pkt_t *    pkt_vs;
+  bp_state_pkt_t *    pkt_state;
   bp_entity_pkt_t *pkt_entity;
+  bp_bullet_pkt_t *pkt_bullet;
 
   char tmp[40];
+
   bh = (BattleHandles *)context->priv;
 
   /* MAIN GAME EVENT LOOP */
@@ -555,16 +729,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       entity_update(&(current_enemy->e), FRAME_DELAY);
 
       // move bullets if any
+      update_bullets();
 
-      // check for collisions with land
+      // TBD:check for player vs enemy collision ( ramming speed! )
 
-      // check for collisions with bullets
-
-      // check for player vs enemy collision ( ramming speed! )
-
-      // fire new bullets if any
-
-      // expire bullets if any
+      if ((player->hp <= 0) || (current_enemy->hp <= 0)) {
+        changeState(SHOW_RESULTS);
+        return;
+      }
 
       isp_draw_all_sprites(sprites);
     }
@@ -574,8 +746,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   if (event->type == ugfxEvent)
   {
     pe = event->ugfx.pEvent;
+    me = (GEventMouse *)event->ugfx.pEvent;
 
-    if (pe->type == GEVENT_TOUCH) {
+    if (pe->type == GEVENT_TOUCH && me->buttons & GMETA_MOUSE_DOWN) {
 
       /*
        * When the user touches the screen in the world map and
@@ -751,10 +924,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         {
         case BATTLE_OP_SHIP_CONFIRM:
           current_enemy->ship_locked_in = TRUE;
-
         /* intentional fall-through */
         case BATTLE_OP_SHIP_SELECT:
-          printf("got ship type packet\n");
           pkt_vs = (bp_vs_pkt_t *)&bh->rxbuf;
           current_enemy->ship_type = pkt_vs->bp_shiptype;
           current_enemy->hp        = shiptable[current_enemy->ship_type].max_hp;
@@ -775,27 +946,50 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       {
         switch (ph->bp_opcode)
         {
-        case BATTLE_OP_ENTITY_UPDATE:
-          // the enemy is updating their position and velocity
-          pkt_entity = (bp_entity_pkt_t *)&bh->rxbuf;
-          if (pkt_entity->bp_header.bp_type == T_ENEMY)
-          {
-            // copy the packet in to the current_enemy.
-            // players are authoratitive for themselves, always.
-            current_enemy->e.vecPosition.x     = pkt_entity->bp_x;
-            current_enemy->e.vecPosition.y     = pkt_entity->bp_y;
-            current_enemy->e.vecVelocity.x     = pkt_entity->bp_velocity_x;
-            current_enemy->e.vecVelocity.y     = pkt_entity->bp_velocity_y;
-            current_enemy->e.vecVelocityGoal.x = pkt_entity->bp_velogoal_x;
-            current_enemy->e.vecVelocityGoal.y = pkt_entity->bp_velogoal_y;
-
-            isp_set_sprite_xy(sprites,
-                              current_enemy->e.sprite_id,
-                              current_enemy->e.vecPosition.x,
-                              current_enemy->e.vecPosition.y);
-          }
+          case BATTLE_OP_TAKE_DMG:
+            // take damage from opponent.
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            player->hp = player->hp - pkt_state->bp_operand;
+            // player's stats
+            drawProgressBar(0, 26, 120, 6, shiptable[player->ship_type].max_hp, player->hp, FALSE, FALSE);
           break;
-        }
+          case BATTLE_OP_CLOCKUPDATE:
+            // we are receiving clock from the other badge.
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            state_time_left = pkt_state->bp_operand;
+#ifdef DEBUG_BATTLE_STATE
+            printf("OP_CLOCKUPDATE: 0x%02x %d\n",
+              ph->bp_opcode,
+              pkt_state->bp_operand);
+#endif
+            redraw_combat_clock();
+            break;
+          case BATTLE_OP_ENTITY_CREATE:
+            // enemy is firing a bullet from their current position.
+            pkt_bullet = (bp_bullet_pkt_t *)&bh->rxbuf;
+            fire_bullet(current_enemy, pkt_bullet->bp_dir_x, pkt_bullet->bp_dir_y);
+          break;
+          case BATTLE_OP_ENTITY_UPDATE:
+            // the enemy is updating their position and velocity
+            pkt_entity = (bp_entity_pkt_t *)&bh->rxbuf;
+            if (pkt_entity->bp_header.bp_type == T_ENEMY)
+            {
+              // copy the packet in to the current_enemy.
+              // players are authoratitive for themselves, always.
+              current_enemy->e.vecPosition.x     = pkt_entity->bp_x;
+              current_enemy->e.vecPosition.y     = pkt_entity->bp_y;
+              current_enemy->e.vecVelocity.x     = pkt_entity->bp_velocity_x;
+              current_enemy->e.vecVelocity.y     = pkt_entity->bp_velocity_y;
+              current_enemy->e.vecVelocityGoal.x = pkt_entity->bp_velogoal_x;
+              current_enemy->e.vecVelocityGoal.y = pkt_entity->bp_velogoal_y;
+
+              isp_set_sprite_xy(sprites,
+                                current_enemy->e.sprite_id,
+                                current_enemy->e.vecPosition.x,
+                                current_enemy->e.vecPosition.y);
+            }
+            break;
+          }
       }
       break;
 
@@ -946,6 +1140,23 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           }
           break;
 
+        /* weapons system */
+        case keyBUp:
+          if (current_battle_state == COMBAT && fire_allowed(player))
+            fire_bullet(player,0,-1);
+          break;
+        case keyBDown:
+          if (current_battle_state == COMBAT && fire_allowed(player))
+            fire_bullet(player,0,1);
+          break;
+        case keyBLeft:
+          if (current_battle_state == COMBAT && fire_allowed(player))
+            fire_bullet(player,-1,0);
+          break;
+        case keyBRight:
+          if (current_battle_state == COMBAT && fire_allowed(player))
+            fire_bullet(player,1,0);
+        break;
         case keyBSelect:
           if (current_battle_state == WORLD_MAP)
           {
@@ -972,8 +1183,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           }
           break;
 
-        default:
-          break;
+          default:
+            break;
         }
       }
     }   // keyEvent
@@ -1085,17 +1296,24 @@ static void battle_exit(OrchardAppContext *context)
 
   i2sPlay (NULL);
 
+  // disconnect anything
+  if (bh->cid != BLE_L2CAP_CID_INVALID)
+    bleL2CapDisconnect (bh->cid);
+  bleGapDisconnect ();
+
   // free players and related objects.
   // the sprite system will have been brought down
   // by the state transition to NONE above.
   if (player)
   {
     free(player);
+    player = NULL;
   }
 
   if (current_enemy)
   {
     free(current_enemy);
+    current_enemy = NULL;
   }
 
   for (int i = 0; i < MAX_BULLETS; i++)
@@ -1103,8 +1321,11 @@ static void battle_exit(OrchardAppContext *context)
     if (bullet[i])
     {
       free(bullet[i]);
+      bullet[i] = NULL;
     }
   }
+
+  last_near = NULL;
 
   free(context->priv);
   context->priv = NULL;
@@ -1115,6 +1336,10 @@ static void battle_exit(OrchardAppContext *context)
   // flush combat status if any
   config->in_combat = 0;
   configSave(config);
+
+  /* Also sync our over-the-air status */
+  bleGapUpdateState(config->last_x, config->last_y,
+    config->xp, config->level, config->current_ship, config->in_combat);
 
   return;
 }
@@ -1475,41 +1700,53 @@ void state_combat_enter(void)
 
 }
 
-void state_combat_tick(void)
-{
-  char tmp[10];
-  int  min;
-
+void redraw_combat_clock(void) {
+  // display the clock.
+  char tmp[20];
+  int min;
   BattleHandles *bh;
-
   bh = mycontext->priv;
 
+  min = state_time_left / 60;
+
+  sprintf(tmp, "%02d:%02d",
+          min,
+          state_time_left - (min * 60));
+
+  // update clock
+  drawBufferedStringBox(&bh->c_pxbuf,
+                        130,
+                        0,
+                        60,
+                        gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
+                        tmp,
+                        bh->fontSM,
+                        state_time_left > 10 ? Yellow : Red,
+                        justifyCenter);
+}
+
+void update_combat_clock(void) {
+  // if we are the master then we send clock.
   if (animtick % FPS == 0) {
-    state_time_left--;
-    min = state_time_left / 60;
-
-    sprintf(tmp, "%02d:%02d",
-            min,
-            state_time_left - (min * 60));
-
-    // update clock
-    drawBufferedStringBox(&bh->c_pxbuf,
-                          130,
-                          0,
-                          60,
-                          gdispGetFontMetric(bh->fontSM, fontHeight) + 2,
-                          tmp,
-                          bh->fontSM,
-                          Yellow,
-                          justifyCenter);
-
-    if (state_time_left == 0)
-    {
-      // time up.
-      i2sPlay("sound/foghrn.snd");
-      changeState(SHOW_RESULTS);
-    }
+      state_time_left--;
+      send_state_update(BATTLE_OP_CLOCKUPDATE, state_time_left);
+      redraw_combat_clock();
   }
+
+  if (state_time_left == 0)
+  {
+    // time up.
+    send_state_update(BATTLE_OP_CLOCKUPDATE, state_time_left);
+    send_state_update(BATTLE_OP_ENDGAME, 0);
+    i2sPlay("sound/foghrn.snd");
+    changeState(SHOW_RESULTS);
+  }
+}
+
+void state_combat_tick(void)
+{
+  if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
+    update_combat_clock();
 
   if (player == NULL)
     return;
@@ -1544,25 +1781,24 @@ void state_combat_exit(void)
 
   /* tear down sprite system */
   isp_shutdown(sprites);
-
-  // clean up after the game
-  free(current_enemy);
-  current_enemy = NULL;
-
-  free(player);
-  player = NULL;
-
-  if (bh->cid != BLE_L2CAP_CID_INVALID)
-    bleL2CapDisconnect (bh->cid);
-  bleGapDisconnect ();
 }
 
 static void state_show_results_enter(void) {
   char tmp[40];
   // figure out who won
+  //
+  // The Attacker is responsible for game calcs.
+  //
+  if (player->hp > current_enemy->hp) {
+      sprintf(tmp, "YOU WIN! (+%d XP)",0);
+  } else {
+    sprintf(tmp, "YOU LOSE! (+%d XP)",0);
+  }
 
+  if (player->hp == current_enemy->hp) {
+      sprintf(tmp, "TIE! (+%d XP)",0);
+  }
   // award xp
-  sprintf(tmp, "TIE GAME! (+%d XP)",0);
   screen_alert_draw(false, tmp);
   chThdSleepMilliseconds(ALERT_DELAY);
   orchardAppExit();
@@ -1815,6 +2051,30 @@ static void state_vs_draw_enemy(ENEMY *e, bool is_player)
   }
 }
 
+static void send_state_update(uint16_t opcode, uint16_t operand)
+{
+  BattleHandles *p;
+
+  // get private memory
+  p = (BattleHandles *)mycontext->priv;
+  bp_state_pkt_t pkt;
+
+  memset(p->txbuf, 0, sizeof(p->txbuf));
+  pkt.bp_header.bp_opcode = opcode;
+  pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
+  pkt.bp_operand = operand;
+  pkt.bp_pad = 0xffff;
+  memcpy(p->txbuf, &pkt, sizeof(bp_state_pkt_t));
+
+  if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_state_pkt_t)) != NRF_SUCCESS)
+  {
+    screen_alert_draw(TRUE, "BLE XMIT FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
+}
+
 static void send_ship_type(uint16_t type, bool final)
 {
   BattleHandles *p;
@@ -1865,6 +2125,35 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   memcpy(p->txbuf, &pkt, sizeof(bp_entity_pkt_t));
 
   if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_entity_pkt_t)) != NRF_SUCCESS)
+  {
+    screen_alert_draw(TRUE, "BLE XMIT FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
+}
+
+static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y)
+{
+  BattleHandles *p;
+
+  // get private memory
+  p = (BattleHandles *)mycontext->priv;
+  bp_bullet_pkt_t pkt;
+
+  memset(p->txbuf, 0, sizeof(p->txbuf));
+
+  pkt.bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
+  pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
+
+  pkt.bp_header.bp_id = e->id;
+
+  pkt.bp_dir_x      = dir_x;
+  pkt.bp_dir_y      = dir_y;
+
+  memcpy(p->txbuf, &pkt, sizeof(bp_bullet_pkt_t));
+
+  if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS)
   {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);

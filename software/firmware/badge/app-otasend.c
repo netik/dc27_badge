@@ -43,6 +43,7 @@
 #include "ble_gatts_lld.h"
 #include "ble_peer.h"
 #include "nrf52i2s_lld.h"
+#include "nullprot_lld.h"
 #include "ides_gfx.h"
 #include "crc32.h"
 
@@ -53,6 +54,9 @@
 
 #define OTA_SIZE	BLE_IDES_L2CAP_MTU
 
+extern uint32_t __ram7_init_text__;
+static uint8_t clone;
+
 typedef struct _OtaHandles {
 	FIL		f;
 	uint8_t		txbuf[OTA_SIZE];
@@ -61,11 +65,39 @@ typedef struct _OtaHandles {
 	uint32_t	last;
 	uint32_t	crc;
 	uint32_t	send_crc;
+	uint32_t	fwsize;
+	uint32_t	fwcnt;
+	uint8_t	*	fwpos;
 	char *		listitems[BLE_PEER_LIST_SIZE + 2];
 	ble_gap_addr_t	listaddrs[BLE_PEER_LIST_SIZE + 2];
 	OrchardUiContext uiCtx;
 	GListener	gl;
 } OtaHandles;
+
+static void
+dataGet (OtaHandles * p, UINT * br)
+{
+	if (clone == TRUE) {
+		/* Out of data */
+		if (p->fwsize == p->fwcnt) {
+			*br = 0;
+		/* Last chunk */
+		} else if ((p->fwsize - p->fwcnt) < OTA_SIZE) {
+			*br = p->fwsize - p->fwcnt;
+			memcpy (p->txbuf, p->fwpos, *br);
+			p->fwcnt += *br;
+		/* Get a chunk */
+		} else {
+			*br = OTA_SIZE;
+			memcpy (p->txbuf, p->fwpos, OTA_SIZE);
+			p->fwpos += OTA_SIZE;
+			p->fwcnt += OTA_SIZE;
+		}
+	} else
+	    f_read (&p->f, p->txbuf, OTA_SIZE, br);
+
+	return;
+}
 
 static uint32_t
 otasend_init (OrchardAppContext *context)
@@ -76,6 +108,23 @@ otasend_init (OrchardAppContext *context)
 	 * We don't want any extra stack space allocated for us.
 	 * We'll use the heap.
 	 */
+
+	clone = FALSE;
+
+	return (0);
+}
+
+static uint32_t
+otasend_clone (OrchardAppContext *context)
+{
+	(void)context;
+
+	/*
+	 * We don't want any extra stack space allocated for us.
+	 * We'll use the heap.
+	 */
+
+	clone = TRUE;
 
 	return (0);
 }
@@ -96,7 +145,13 @@ otasend_start (OrchardAppContext *context)
 
 	context->priv = p;
 
-	f_open (&p->f, "0:BADGE.BIN", FA_READ);
+	if (clone == TRUE) {
+		p->fwsize = (uint32_t)&__ram7_init_text__ - 2;
+		p->fwpos = NULL;
+		p->fwcnt = 0;
+		nullProtStop ();
+	} else
+		f_open (&p->f, "0:BADGE.BIN", FA_READ);
 
 	p->listitems[0] = "Choose a peer";
 	p->listitems[1] = "Exit";
@@ -239,7 +294,8 @@ otasend_event (OrchardAppContext *context,
 
 				if (p->retry == 0) {
 					br = 0;
-					f_read (&p->f, p->txbuf, OTA_SIZE,&br);
+
+					dataGet (p, &br);
 
 					/*
 					 * The only time the number of bytes
@@ -326,7 +382,10 @@ otasend_exit (OrchardAppContext *context)
 
 	p = context->priv;
 
-	f_close (&p->f);
+	if (clone == TRUE)
+		nullProtStart ();
+	else
+		f_close (&p->f);
 
 	geventRegisterCallback (&p->gl, NULL, NULL);
 	geventDetachSource (&p->gl, NULL);
@@ -343,3 +402,6 @@ otasend_exit (OrchardAppContext *context)
 
 orchard_app("OTA Send", "icons/fist.rgb", APP_FLAG_BLACKBADGE,
     otasend_init, otasend_start, otasend_event, otasend_exit, 1);
+
+orchard_app("OTA Clone", "icons/fist.rgb", APP_FLAG_BLACKBADGE,
+    otasend_clone, otasend_start, otasend_event, otasend_exit, 1);
