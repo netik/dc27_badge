@@ -86,6 +86,9 @@ static bool notify_handler(void * arg)
 	    req->data[0] != BLE_IDES_OTAUPDATE_OFFER)
 		return (FALSE);
 
+	if (rw->request.write.handle == ul_handle.value_handle)
+		return (FALSE);
+
 	memcpy (&radio_evt, evt, sizeof (radio_evt));
 
 	orchardAppRun (orchardAppByName ("Radio notification"));

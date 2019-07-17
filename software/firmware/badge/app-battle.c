@@ -1338,11 +1338,13 @@ static void battle_exit(OrchardAppContext *context)
   if (player)
   {
     free(player);
+    player = NULL;
   }
 
   if (current_enemy)
   {
     free(current_enemy);
+    current_enemy = NULL;
   }
 
   for (int i = 0; i < MAX_BULLETS; i++)
@@ -1350,8 +1352,11 @@ static void battle_exit(OrchardAppContext *context)
     if (bullet[i])
     {
       free(bullet[i]);
+      bullet[i] = NULL;
     }
   }
+
+  last_near = NULL;
 
   free(context->priv);
   context->priv = NULL;

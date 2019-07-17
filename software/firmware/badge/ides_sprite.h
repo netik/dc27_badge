@@ -61,12 +61,15 @@ enum ides_sprite_status_t {
 } ;
 
 
+
 enum ides_sprite_bg_type {
   ISP_BG_DYNAMIC,
   ISP_BG_FIXEDCOLOR,
 } ;
 
 typedef uint8_t ISPID;
+
+
 
 typedef struct _ides_sprite_buffer {
   pixel_t *buf;
@@ -91,6 +94,11 @@ typedef struct _ides_sprite {
   bool_t full_restore; /* flag to fully restore the BG. */
   color_t bgcolor;
 } ISPRITE;
+
+typedef struct _ides_sprite_holder {
+  ISPBUF sprite; /* uses x,y for offset  since sprite might be cropped */
+  WMAP *alpha;
+} ISPHOLDER;
 
 typedef struct _rectangle {
   coord_t x;  /* X left */
@@ -132,5 +140,8 @@ extern WMAP *wm_build_land_map_from_screen(void);
 extern bool_t wm_check_box_for_land_collision(WMAP *map, RECT r);
 extern pixel_t *boxmaker(coord_t x, coord_t y, color_t col);
 extern int isp_load_image_from_file(ISPRITESYS *iss, ISPID id, char *name);
-
+extern bool_t isp_set_sprite_from_spholder(ISPRITESYS *iss, ISPID id, ISPHOLDER *sph);
+extern ISPHOLDER *isp_get_spholder_from_sprite(ISPRITESYS *iss, ISPID id);
+extern ISPHOLDER *isp_get_spholder_from_file(char *name);
+extern void isp_destroy_spholder(ISPHOLDER *sph);
 #endif
