@@ -18,6 +18,8 @@ typedef struct _entity
   ISPID       sprite_id;  /* sprite id */
   bool        visible;
   bool        blinking;
+  bool        faces_right;
+
   int         ttl;             /* if -1, always visible, else a number of frames */
 
   VECTOR      vecVelocity;     /* current velocity */
