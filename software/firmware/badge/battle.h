@@ -111,6 +111,7 @@ typedef struct _bp_entity_pkt
   uint16_t    bp_velogoal_x;
   uint16_t    bp_velogoal_y;
   uint16_t    bp_visibility;
+  uint16_t    bp_faces_right;
   uint16_t    bp_pad;
 } bp_entity_pkt_t;
 

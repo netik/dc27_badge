@@ -511,6 +511,7 @@ void update_bullets(void) {
   int i;
   uint16_t dmg;
   uint16_t max_range,travelled;
+  char st;
 
   for (i = 0; i < MAX_BULLETS; i++) {
     if (bullet[i]) {
@@ -538,6 +539,16 @@ void update_bullets(void) {
           free(bullet[i]);
           bullet[i] = NULL;
           i2sPlay("game/explode2.snd");
+          putImageFile(getAvatarImage(player->ship_type,
+            TRUE, 'h', player->e.faces_right),
+            player->e.vecPosition.x,
+            player->e.vecPosition.y);
+          chThdSleepMilliseconds(100);
+          putImageFile(getAvatarImage(player->ship_type, TRUE, 'n',
+            player->e.faces_right),
+            player->e.vecPosition.x,
+            player->e.vecPosition.y);
+
         }
       }
 
@@ -566,13 +577,31 @@ void update_bullets(void) {
             current_enemy->hp,
             shiptable[current_enemy->ship_type].max_hp
           );
-          drawProgressBar(200, 26, 120, 6,
-            shiptable[current_enemy->ship_type].max_hp,
-            current_enemy->hp, FALSE, TRUE);
 
           isp_destroy_sprite(sprites, bullet[i]->sprite_id);
           free(bullet[i]);
           bullet[i] = NULL;
+
+          drawProgressBar(200, 26, 120, 6,
+            shiptable[current_enemy->ship_type].max_hp,
+            current_enemy->hp, FALSE, TRUE);
+          putImageFile(getAvatarImage(current_enemy->ship_type, FALSE, 'h',
+                       current_enemy->e.faces_right),
+                       current_enemy->e.vecPosition.x,
+                       current_enemy->e.vecPosition.y);
+          chThdSleepMilliseconds(100);
+
+          if (current_enemy->hp <= 0) {
+            st='d';
+          } else {
+            st='n';
+          }
+
+          putImageFile(getAvatarImage(current_enemy->ship_type, FALSE, st,
+                                      current_enemy->e.faces_right),
+                                      current_enemy->e.vecPosition.x,
+                                      current_enemy->e.vecPosition.y);
+         }
         }
       }
 
@@ -590,7 +619,6 @@ void update_bullets(void) {
       }
     }
   }
-}
 
 
 bool
@@ -982,6 +1010,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
               current_enemy->e.vecVelocity.y     = pkt_entity->bp_velocity_y;
               current_enemy->e.vecVelocityGoal.x = pkt_entity->bp_velogoal_x;
               current_enemy->e.vecVelocityGoal.y = pkt_entity->bp_velogoal_y;
+              current_enemy->e.faces_right       = pkt_entity->bp_faces_right;
 
               isp_set_sprite_xy(sprites,
                                 current_enemy->e.sprite_id,
@@ -1115,10 +1144,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         switch (event->key.code)
         {
         case keyALeft:
+          player->e.faces_right         = false;
           player->e.vecVelocityGoal.x = -VGOAL;
           break;
 
         case keyARight:
+          player->e.faces_right         = true;
           player->e.vecVelocityGoal.x = VGOAL;
           break;
 
@@ -1661,6 +1692,9 @@ void state_combat_enter(void)
     player->e.vecPosition.y        = ship_init_pos_table[newmap].attacker.y;
     current_enemy->e.vecPosition.x = ship_init_pos_table[newmap].defender.x;
     current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].defender.y;
+
+    player->e.faces_right            = true;
+    current_enemy->e.faces_right     = false;
   }
   else
   {
@@ -1669,12 +1703,15 @@ void state_combat_enter(void)
     player->e.vecPosition.y        = ship_init_pos_table[newmap].defender.y;
     current_enemy->e.vecPosition.x = ship_init_pos_table[newmap].attacker.x;
     current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].attacker.y;
+
+    player->e.faces_right            = false;
+    current_enemy->e.faces_right     = true;
   }
 
   // draw player
   isp_load_image_from_file(sprites,
     player->e.sprite_id,
-    getAvatarImage(player->ship_type, true, 'n', true));
+    getAvatarImage(player->ship_type, true, 'n', player->e.faces_right));
 
   isp_set_sprite_xy(sprites,
                     player->e.sprite_id,
@@ -1684,7 +1721,8 @@ void state_combat_enter(void)
   // draw enemy
   isp_load_image_from_file(sprites,
     current_enemy->e.sprite_id,
-    getAvatarImage(current_enemy->ship_type, false, 'n', false));
+    getAvatarImage(current_enemy->ship_type, false, 'n', current_enemy->e.
+    faces_right));
 
   isp_set_sprite_xy(sprites,
                     current_enemy->e.sprite_id,
@@ -1793,9 +1831,14 @@ static void state_show_results_enter(void) {
   if (player->hp == current_enemy->hp) {
       sprintf(tmp, "TIE! (+%d XP)",0);
   }
-  // award xp
+
+  // if we're the central, tell the preph that we
+  // are done.
+
+
+  // award xp here.
   screen_alert_draw(false, tmp);
-  chThdSleepMilliseconds(ALERT_DELAY);
+  chThdSleepMilliseconds(ALERT_DELAY * 2);
   orchardAppExit();
 }
 
@@ -2115,6 +2158,7 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   pkt.bp_velocity_y = e->vecVelocity.y;
   pkt.bp_velogoal_x = e->vecVelocityGoal.x;
   pkt.bp_velogoal_y = e->vecVelocityGoal.y;
+  pkt.bp_faces_right = e->faces_right;
 
   pkt.bp_pad = 0xffff;
   memcpy(p->txbuf, &pkt, sizeof(bp_entity_pkt_t));
