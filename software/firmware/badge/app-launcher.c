@@ -521,6 +521,8 @@ launcher_exit (OrchardAppContext *context)
 	struct launcher_list *list;
 	unsigned int i;
 
+	gdispClear (Black);
+
 	list = (struct launcher_list *)context->priv;
 
 	gdispCloseFont (list->fontXS);
