@@ -39,11 +39,7 @@ const ISPRITE isprite_default = {
   .auto_bg = TRUE,
   .mode_switch = FALSE,
   .full_restore = FALSE,
-<<<<<<< HEAD
   .bgcolor = HTML2COLOR(0x2603fb)
-=======
-  .bgcolor = BG_BLUE
->>>>>>> 1e1775e1ac19dc3af042458105949f664e1d9b7c
 };
 
 typedef struct _4rect {
