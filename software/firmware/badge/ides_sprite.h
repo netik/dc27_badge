@@ -70,6 +70,7 @@ enum ides_sprite_bg_type {
 
 typedef uint8_t ISPID;
 
+#define BG_BLUE HTML2COLOR(0x2603fb)
 
 
 typedef struct _ides_sprite_buffer {
