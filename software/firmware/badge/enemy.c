@@ -173,6 +173,7 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
         // if we match, we create an enemy, or we overwrite what was passed in.
         if (current_enemy == NULL) {
           current_enemy = malloc(sizeof(ENEMY));
+          memset(current_enemy, 0, sizeof(ENEMY));
         }
         memcpy(current_enemy->ble_peer_addr.addr, p->ble_peer_addr, 6);
         current_enemy->ble_peer_addr.addr_id_peer = TRUE;
@@ -290,7 +291,7 @@ void enemy_list_refresh(gll_t *enemies,
                p->ble_peer_addr[0]);
 #endif
         e = malloc(sizeof(ENEMY));
-
+        memset(e, 0, sizeof(ENEMY));
         // copy over game data
         strcpy(e->name, (char *)p->ble_peer_name);
         e->xp             = p->ble_game_state.ble_ides_xp;

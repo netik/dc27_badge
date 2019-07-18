@@ -46,7 +46,7 @@ typedef struct {
 
   /* fire params */
   int16_t shot_msec;   // this much time (in mS) between shots
-  int16_t shot_range;  // range is in px, but needs to be frames.
+  int16_t shot_range;  // range is in px
   int16_t shot_speed;  // pixels/second
   int16_t shot_cost;   // cost to fire shot
 

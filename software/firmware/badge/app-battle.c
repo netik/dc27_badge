@@ -695,7 +695,7 @@ fire_allowed(ENEMY *e) {
 static void fire_special(ENEMY *e) {
   // fires a special.
   if (e->energy < shiptable[e->ship_type].special_cost) {
-    // you can't afford it.
+    // you can't afford it. boop.
     i2sPlay("game/error.snd");
     return;
   }
@@ -705,16 +705,35 @@ static void fire_special(ENEMY *e) {
 
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
-    case SP_SHOT_FOURWAY:
+    case SP_AOE: /* battleship 8-way shot */
+      fire_bullet(e,0,-1,TRUE); // U
+      fire_bullet(e,0,1,TRUE);  // D
+      fire_bullet(e,-1,0,TRUE);  // L
+      fire_bullet(e,1,0,TRUE);   // R
+      /* intentional fall through -- we'll also fire these... */
+    case SP_SHOT_FOURWAY: /* pt boat */
       fire_bullet(e,-1,-1,TRUE); // UL
       fire_bullet(e,1,-1,TRUE);  // UR
       fire_bullet(e,-1,1,TRUE);  // LL
       fire_bullet(e,1,1,TRUE);   // LR
     break;
     case SP_SHIELD:
-      e->shield_up = TRUE;
+      e->is_shielded = TRUE;
       e->special_started_at = chVTGetSystemTime();
       break;
+    case SP_CLOAK:
+      e->is_cloaked = TRUE;
+      e->special_started_at = chVTGetSystemTime();
+      break;
+    case SP_TELEPORT:
+      break;
+    case SP_SHOT_EXTEND:
+      break;
+    case SP_MINE:
+      break;
+    case SP_HEAL:
+      break;
+
     default:
       break;
   }
@@ -807,7 +826,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       update_bullets();
 
       // TBD:check for player vs enemy collision ( ramming speed! )
-
+      // Did anyone die?
       if ((player->hp <= 0) || (current_enemy->hp <= 0)) {
         changeState(SHOW_RESULTS);
         return;
@@ -989,6 +1008,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         case BATTLE_OP_SHIP_SELECT:
           pkt_vs = (bp_vs_pkt_t *)&bh->rxbuf;
           current_enemy->ship_type = pkt_vs->bp_shiptype;
+          current_enemy->unlocks   = pkt_vs->bp_unlocks;
           current_enemy->hp        = shiptable[current_enemy->ship_type].max_hp;
           current_enemy->energy    = shiptable[current_enemy->ship_type].max_energy;
           state_vs_draw_enemy(current_enemy, FALSE);
@@ -1052,8 +1072,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
             // update enemy eng bar
             current_enemy->energy = current_enemy->energy - shiptable[current_enemy->ship_type].shot_cost;
-
-            // redraw energy bar.
             redraw_enemy_bars();
           break;
           case BATTLE_OP_ENTITY_UPDATE:
@@ -2290,9 +2308,8 @@ static void send_state_update(uint16_t opcode, uint16_t operand)
 
 static void send_ship_type(uint16_t type, bool final)
 {
+  userconfig *config = getConfig();
   BattleHandles *p;
-
-  // get private memory
   p = (BattleHandles *)mycontext->priv;
   bp_vs_pkt_t pkt;
 
@@ -2300,7 +2317,9 @@ static void send_ship_type(uint16_t type, bool final)
   pkt.bp_header.bp_opcode = final ? BATTLE_OP_SHIP_CONFIRM : BATTLE_OP_SHIP_SELECT;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
   pkt.bp_shiptype         = type;
-  pkt.bp_pad = 0xffff;
+  // this won't change during the game so we send it with the ship data.
+  pkt.bp_unlocks          = config->unlocks;
+
   memcpy(p->txbuf, &pkt, sizeof(bp_vs_pkt_t));
 
   if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_vs_pkt_t)) != NRF_SUCCESS)
@@ -2335,7 +2354,6 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   pkt.bp_velogoal_y = e->vecVelocityGoal.y;
   pkt.bp_faces_right = e->faces_right;
 
-  pkt.bp_pad = 0xffff;
   memcpy(p->txbuf, &pkt, sizeof(bp_entity_pkt_t));
 
   if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_entity_pkt_t)) != NRF_SUCCESS)
@@ -2428,7 +2446,8 @@ static void state_vs_enter(void)
   state_vs_draw_enemy(player, TRUE);
   state_vs_draw_enemy(current_enemy, FALSE);
 
-  // we'll now tell them what our ship is.
+  // we'll now tell them what our ship is and this will become the default
+  // if the user doesn't change anything and we timeout.
   send_ship_type(player->ship_type, FALSE);
 }
 

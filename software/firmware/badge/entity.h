@@ -4,18 +4,21 @@
 #include "vector.h"
 
 typedef uint16_t entity_type;
+
 #define T_PLAYER        0x01
 #define T_ENEMY         0x02
-#define T_BULLET_PLAYER 0x03
-#define T_BULLET_ENEMY  0x04
-#define T_SPECIAL       0x05
+#define T_BULLET_PLAYER 0x04
+#define T_BULLET_ENEMY  0x08
+#define T_MINE_PLAYER   0x10
+#define T_MINE_ENEMY    0x11
+#define T_SPECIAL       0x14
 
 typedef struct _entity
 {
   entity_type type;
 
-  uint16_t    id;         /* random. used for lookups */
-  ISPID       sprite_id;  /* sprite id */
+  uint16_t    id;              /* random. used for lookups */
+  ISPID       sprite_id;       /* sprite id */
   bool        visible;
   bool        blinking;
   bool        faces_right;
