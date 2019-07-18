@@ -22,9 +22,9 @@ const ship_type_t shiptable[8] = {
     "PT Boat",
     200, 10, 100, 4 ,
     500, 150, 50, 30,
-    10, -0.05, 12, 8, // PT boat is swiftest but does least damage.
+    20, -0.005, 20, 8, // PT boat is swiftest but does least damage.
     30, 40, 25, -1,
-    1, SP_SHOT_RESTRICT
+    1, SP_SHOT_RESTRICT // 4-way shot on diag!
   },
 
   {
@@ -37,8 +37,7 @@ const ship_type_t shiptable[8] = {
   },
 
   // destroyers are only ship that can lay mines.
-  // tbd: what does "do not move last 7 seconds each" mean?
-  // maybe mines don't move but persist for 7 seconds?
+  // Mines don't move but persist for 7 seconds?
   {
     "Destroyer",
     400, 50, 120, 3,
@@ -49,7 +48,7 @@ const ship_type_t shiptable[8] = {
   },
 
   {
-    // cruiser has impact blast of 25, wtf is that?
+    // cruiser has impact blast of 25 (at end of range?)
     // cruiser also has a shield at 50/energy/second cost
     "Cruiser",
     400, 45, 250, 3,
@@ -65,7 +64,7 @@ const ship_type_t shiptable[8] = {
     500, 500, 45, 70,
     DEFAULT_VRATES,
     60, -1, 20, 1000,
-    3, SP_HEAL
+    3, SP_HEAL  // make this be a acclearation to a goal, not instant.
   },
 
   {
@@ -74,7 +73,7 @@ const ship_type_t shiptable[8] = {
     333, 400, 35, 100,
     DEFAULT_VRATES,
     100, 80, 40, 1000,
-    3, SP_AOE
+    3, SP_AOE // 3 shots in all directions? 4-way shot on diag!
   },
 
   {
@@ -83,7 +82,7 @@ const ship_type_t shiptable[8] = {
     333, 350, 40, 45,
     DEFAULT_VRATES,
     40, -1, -1, 1000,
-    3, SP_CLOAK
+    3, SP_CLOAK // hides from other user. maybe show every N frames to tease?
   },
 
   {
@@ -92,7 +91,7 @@ const ship_type_t shiptable[8] = {
     333, 2000, 40, 45,
     DEFAULT_VRATES,
     300, -1, -1, -1,
-    4, SP_TELEPORT
+    4, SP_TELEPORT // teleports to random place, and if land, you die.
   }
 
 };
