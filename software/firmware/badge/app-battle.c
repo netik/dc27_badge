@@ -2346,12 +2346,12 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   pkt.bp_header.bp_opcode = opcode;
   pkt.bp_header.bp_type   = type; // always enemy.
 
-  pkt.bp_x          = e->vecPosition.x;
-  pkt.bp_y          = e->vecPosition.y;
-  pkt.bp_velocity_x = e->vecVelocity.x;
-  pkt.bp_velocity_y = e->vecVelocity.y;
-  pkt.bp_velogoal_x = e->vecVelocityGoal.x;
-  pkt.bp_velogoal_y = e->vecVelocityGoal.y;
+  pkt.bp_x           = e->vecPosition.x;
+  pkt.bp_y           = e->vecPosition.y;
+  pkt.bp_velocity_x  = e->vecVelocity.x;
+  pkt.bp_velocity_y  = e->vecVelocity.y;
+  pkt.bp_velogoal_x  = e->vecVelocityGoal.x;
+  pkt.bp_velogoal_y  = e->vecVelocityGoal.y;
   pkt.bp_faces_right = e->faces_right;
 
   memcpy(p->txbuf, &pkt, sizeof(bp_entity_pkt_t));

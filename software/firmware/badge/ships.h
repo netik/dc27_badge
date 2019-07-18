@@ -29,7 +29,7 @@
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
 #define VMULT       8        // on each time step, take this many steps.
-#define MAX_BULLETS 16       // counts all bullets from all players.
+#define MAX_BULLETS 32       // counts all bullets from all players, incl mines
 
 // size of sub-map tiles
 #define TILE_W 80
@@ -48,7 +48,7 @@ typedef struct {
   int16_t shot_msec;   // this much time (in mS) between shots
   int16_t shot_range;  // range is in px
   int16_t shot_speed;  // pixels/second
-  int16_t shot_cost;   // cost to fire shot
+  int16_t shot_cost;   // energy cost to fire shot
 
   /* accleration parameters */
   float  vdrag;
@@ -61,7 +61,7 @@ typedef struct {
   int16_t special_radius; // range of the special for collisions
   int16_t max_special_dmg;
   int16_t max_special_ttl;
-  float   energy_recharge_rate;
+  float   energy_recharge_rate; // This is per-frame, not per second.
 
   /* specials (bitmap) */
   uint8_t special_flags;
