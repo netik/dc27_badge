@@ -36,10 +36,10 @@ const ISPRITE isprite_default = {
   .xoffs = 0,
   .yoffs = 0,
   .visible = FALSE,
-  .auto_bg = FALSE,
+  .auto_bg = TRUE,
   .mode_switch = FALSE,
   .full_restore = FALSE,
-  .bgcolor = HTML2COLOR(0x000000)
+  .bgcolor = BG_BLUE
 };
 
 typedef struct _4rect {
@@ -789,6 +789,7 @@ static void isp_restore_bg(ISPRITESYS *iss, ISPID id)
   FOUR_RECTS rects;
   int i;
   coord_t xs, ys;
+  bool_t drew;
 
 
   if( (id < ISP_MAX_SPRITES) &&
@@ -821,6 +822,7 @@ printf(" ****** big fill x%d y%d xs%d ys%d\n", iss->list[id].bg_buf.x,iss->list[
         }
         else
         {
+          drew=FALSE;
           rects = get_exposed_bg_boxes(iss, id);
 
           for(i=0; i< 4; i++)
@@ -837,9 +839,16 @@ printf("-----small fill x%d y%d xs%d ys%d\n", rects.bx[i].x,rects.bx[i].y,xs,ys)
                             rects.bx[i].y,
                             xs, ys,
                             iss->list[id].bgcolor);
-
-
+              drew = TRUE;
             }
+          }
+          if(FALSE == drew)
+          {
+            gdispFillArea(iss->list[id].bg_buf.x,
+                          iss->list[id].bg_buf.y,
+                          iss->list[id].bg_buf.xs,
+                          iss->list[id].bg_buf.ys,
+                          iss->list[id].bgcolor);
           }
         }
 
@@ -911,6 +920,66 @@ static bool_t isp_capture_bg(ISPRITESYS *iss, ISPID id)
   return(ret);
 }
 
+static void isp_draw_sprite_with_alpha(ISPRITESYS *iss, ISPID id)
+{
+  coord_t xo, yo, x,y, w,h, block_start, len, buffoffs;
+  ISPBUF *s;
+  bool_t solid;
+
+  if( (id < ISP_MAX_SPRITES) &&
+      (iss->list[id].active) &&
+      (NULL != iss->list[id].sp_buf.buf)  &&
+      (iss->list[id].sp_buf.xs > 0) &&
+      (iss->list[id].sp_buf.ys > 0) )
+  {
+printf("in alpha draw\n");
+fflush(stdout);
+    s = &iss->list[id].sp_buf;
+    w = s->xs;
+    h = s->ys;
+
+    /* xo,yo are the on-screen position of upper left corner of sprite */
+    xo = s->x;
+    yo = s->y;
+
+    for(y=0; y < h; y++)
+    {
+      block_start = w;
+      len =0;
+      for(x=0; x < w; x++)
+      {
+
+        solid = wm_value(iss->list[id].alphamap, x,y,3);
+printf("h:%d w:%d - x:%d y:%d s:%d\n",h,w, x,y,solid);
+fflush(stdout);
+
+        if(solid)
+        {
+          if(block_start == w)
+          {
+            block_start = x;
+          }
+          len++;
+        }
+
+        /* if it's a non-solid pixel, or the last pixel in the row, draw to screen */
+        if( (!solid) || (x == (w-1)) )
+        {
+
+          buffoffs = ( y * s->ys) + x;
+          putPixelBlock(x+xo, y+yo,
+                        len, 1,
+                        &s->buf[buffoffs]);
+          block_start = w;
+          len = 0;
+        }
+
+      }
+    }
+  }
+}
+
+
 /* Draw the sprite */
 static void isp_draw_sprite(ISPRITESYS *iss, ISPID id)
 {
@@ -921,11 +990,22 @@ static void isp_draw_sprite(ISPRITESYS *iss, ISPID id)
   {
     if( NULL != iss->list[id].sp_buf.buf)
     {
+/*      if(ISP_BG_DYNAMIC == iss->list[id].bgtype)
+*/
+      if(0) /* bug here, don't call yet */
+      {
+printf("pre alpha draw\n");
+fflush(stdout);
+        isp_draw_sprite_with_alpha(iss, id);
+      }
+      else
+      {
         putPixelBlock(iss->list[id].sp_buf.x,
                       iss->list[id].sp_buf.y,
                       iss->list[id].sp_buf.xs,
                       iss->list[id].sp_buf.ys,
                       iss->list[id].sp_buf.buf);
+      }
     }
     iss->list[id].status = ISP_STAT_CLEAN;
   }
@@ -1603,7 +1683,7 @@ void  isp_draw_all_sprites(ISPRITESYS *iss)
   }
 
   /* Now that BG is restored, check if we have a WMAP, and then test all
-   * auto_bg sprites against it and set their BG modes accordingly.
+       * auto_bg sprites against it and set their BG modes accordingly.
   */
   if(NULL != iss->wm)
   {
@@ -1830,12 +1910,10 @@ timeit(1, "scan_for_water");
 
     isp_set_sprite_wmap_bgcolor(sl, s1, HTML2COLOR(0x0000ff));
     isp_set_sprite_wmap_bgcolor(sl, s2, HTML2COLOR(0x0000ff));
-timeit(0,"");
+
     isp_load_image_from_file(sl, s1, "game/s0p-n-r.rgb");
-timeit(1, "load img1 sprite");
-timeit(0,"");
     isp_load_image_from_file(sl, s2, "game/s0p-n-l.rgb");
-timeit(1, "load img2 sprite");
+
 //    isp_hide_sprite(sl, s1);
     isp_hide_sprite(sl, s2);
     l = isp_get_spholder_from_sprite(sl, s2);
