@@ -375,7 +375,7 @@ bleEnable (void)
 
 	r = sd_ble_cfg_set (BLE_GAP_CFG_ROLE_COUNT, &cfg, ram_start);
 
-	/* Set vendor-specific UUID count (not currently used) */
+	/* Set vendor-specific UUID count (1, for our custom UUID) */
 
 	memset (&cfg, 0, sizeof(cfg));
 
