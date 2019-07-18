@@ -18,4 +18,5 @@ void enemy_list_refresh(gll_t *enemies,
                         ISPRITESYS *sprites,
                         battle_state current_battle_state);
 
+extern calc_hit(ENEMY *attacker, ENEMY *victim);
 #endif
