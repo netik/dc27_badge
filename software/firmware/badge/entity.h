@@ -3,6 +3,16 @@
 
 #include "vector.h"
 
+/*
+ * We define entity types as macros rather than using an enum,
+ * because these type definitions will also be used as part of the
+ * network protocol packets, and using enums for over-the-wire
+ * data structures is a bad idea. The internal storage format
+ * for a C enum is Implemantation Defined (tm), which means
+ * you can't count on it being a particular size. We need to
+ * be unambiguous about the type and its size.
+ */
+
 typedef uint16_t entity_type;
 
 #define T_PLAYER        0x01

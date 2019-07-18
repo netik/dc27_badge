@@ -22,33 +22,23 @@
 #define SHIP_SIZE_ZOOMED      40
 #define BULLET_SIZE           10
 
-/*
- * We define these as macros rather than using an enum, because
- * these type definitions will also be used as part of the
- * network protocol packets, and using enums for over-the-wire
- * data structures is a bad idea. The internal storage format
- * for a C enum is Implemantation Defined (tm), which means
- * you can't count on it being a particular size. We need to
- * be unambiguous about the type and its size.
- */
+/* Entity opcodes */
+#define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
+#define BATTLE_OP_ENTITY_DESTROY    0x02 /* Discard existing entity */
+#define BATTLE_OP_ENTITY_UPDATE     0x03 /* Entity state update */
 
- /* Entity opcodes */
- #define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
- #define BATTLE_OP_ENTITY_DESTROY    0x02 /* Discard existing entity */
- #define BATTLE_OP_ENTITY_UPDATE     0x03 /* Entity state update */
+/* VS opcodes */
+#define BATTLE_OP_SHIP_SELECT       0x10 /* Current ship selection */
+#define BATTLE_OP_SHIP_CONFIRM      0x11 /* Final ship choice */
 
- /* VS opcodes */
- #define BATTLE_OP_SHIP_SELECT       0x10 /* Current ship selection */
- #define BATTLE_OP_SHIP_CONFIRM      0x11 /* Final ship choice */
+/* State opcodes */
+#define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
+#define BATTLE_OP_USE_ENG           0x21 /* I am using X of my energy. */
+#define BATTLE_OP_IAMDEAD           0x22 /* I've been killed */
+#define BATTLE_OP_YOUAREDEAD        0x24 /* You've been killed */
+#define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
 
- /* State opcodes */
- #define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
- #define BATTLE_OP_USE_ENG           0x21 /* I am using X of my energy. */
- #define BATTLE_OP_IAMDEAD           0x22 /* I've been killed */
- #define BATTLE_OP_YOUAREDEAD        0x24 /* You've been killed */
- #define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
-
- #define BATTLE_OP_ENDGAME           0xF0 /* this ends the game */
+#define BATTLE_OP_ENDGAME           0xF0 /* this ends the game */
 
 /*
  * Game network protocol definitions
