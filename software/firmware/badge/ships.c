@@ -24,7 +24,7 @@ const ship_type_t shiptable[8] = {
     500, 150, 50, 30,
     20, -0.005, 20, 8, // PT boat is swiftest but does least damage.
     30, 40, 25, -1,
-    1, SP_SHOT_RESTRICT // 4-way shot on diag!
+    1, SP_SHOT_FOURWAY // 4-way shot on diag!
   },
 
   {

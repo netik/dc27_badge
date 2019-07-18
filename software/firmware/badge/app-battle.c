@@ -429,7 +429,7 @@ draw_hud(OrchardAppContext *context)
 
 
 static void
-fire_bullet(ENEMY *e, int dir_x, int dir_y)
+fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
 {
   int count = 0;
 
@@ -447,17 +447,19 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y)
       return;
     }
 
-    if (player->energy - shiptable[e->ship_type].shot_cost <= 0) {
-      // no more energy
-      i2sPlay("game/error.snd");
-      return;
+    if (!is_free) {
+      if (player->energy - shiptable[e->ship_type].shot_cost <= 0) {
+        // no more energy
+        i2sPlay("game/error.snd");
+        return;
+      }
+
+      // bill the player.
+      player->energy = player->energy - shiptable[e->ship_type].shot_cost;
+
+      // redraw energy bar.
+      redraw_player_bars();
     }
-
-    // bill the player.
-    player->energy = player->energy - shiptable[e->ship_type].shot_cost;
-
-    // redraw energy bar.
-    redraw_player_bars();
   }
 
   for (int i = 0; i < MAX_BULLETS; i++)
@@ -565,17 +567,6 @@ void update_bullets(void) {
           isp_destroy_sprite(sprites, bullet[i]->sprite_id);
           free(bullet[i]);
           bullet[i] = NULL;
-          i2sPlay("game/explode2.snd");
-          putImageFile(getAvatarImage(player->ship_type,
-            TRUE, 'h', player->e.faces_right),
-            player->e.vecPosition.x,
-            player->e.vecPosition.y);
-          chThdSleepMilliseconds(100);
-          putImageFile(getAvatarImage(player->ship_type, TRUE, 'n',
-            player->e.faces_right),
-            player->e.vecPosition.x,
-            player->e.vecPosition.y);
-
         }
       }
 
@@ -627,6 +618,8 @@ void update_bullets(void) {
                                       current_enemy->e.faces_right),
                                       current_enemy->e.vecPosition.x,
                                       current_enemy->e.vecPosition.y);
+          if (st == 'd')
+            chThdSleepMilliseconds(500);
          }
         }
       }
@@ -697,6 +690,34 @@ fire_allowed(ENEMY *e) {
   }
 
   return FALSE;
+}
+
+static void fire_special(ENEMY *e) {
+  // fires a special.
+  if (e->energy < shiptable[e->ship_type].special_cost) {
+    // you can't afford it.
+    i2sPlay("game/error.snd");
+    return;
+  }
+  // charge them, mark last usage
+  e->energy = e->energy - shiptable[e->ship_type].special_cost;
+  e->last_special_ms = chVTGetSystemTime();
+
+  // do the appropriate action for this special.
+  switch (shiptable[e->ship_type].special_flags) {
+    case SP_SHOT_FOURWAY:
+      fire_bullet(e,-1,-1,TRUE); // UL
+      fire_bullet(e,1,-1,TRUE);  // UR
+      fire_bullet(e,-1,1,TRUE);  // LL
+      fire_bullet(e,1,1,TRUE);   // LR
+    break;
+    case SP_SHIELD:
+      e->shield_up = TRUE;
+      e->special_started_at = chVTGetSystemTime();
+      break;
+    default:
+      break;
+  }
 }
 
 static void
@@ -990,8 +1011,26 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             // take damage from opponent.
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             player->hp = player->hp - pkt_state->bp_operand;
-            // player's stats
+            i2sPlay("game/explode2.snd");
+            putImageFile(getAvatarImage(player->ship_type,
+              TRUE, 'h', player->e.faces_right),
+              player->e.vecPosition.x,
+              player->e.vecPosition.y);
+            chThdSleepMilliseconds(100);
+            if (player->hp <= 0) {
+              tmp[0]='d';
+            } else {
+              tmp[0]='n';
+            }
+            putImageFile(getAvatarImage(player->ship_type, TRUE, tmp[0],
+              player->e.faces_right),
+              player->e.vecPosition.x,
+              player->e.vecPosition.y);            // player's stats
             redraw_player_bars();
+
+            // u dead.
+            if (player->hp <= 0)
+              chThdSleepMilliseconds(250);
           break;
           case BATTLE_OP_CLOCKUPDATE:
             // we are receiving clock from the other badge.
@@ -1009,7 +1048,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             pkt_bullet = (bp_bullet_pkt_t *)&bh->rxbuf;
             fire_bullet(current_enemy,
               pkt_bullet->bp_dir_x,
-              pkt_bullet->bp_dir_y);
+              pkt_bullet->bp_dir_y, FALSE);
 
             // update enemy eng bar
             current_enemy->energy = current_enemy->energy - shiptable[current_enemy->ship_type].shot_cost;
@@ -1211,21 +1250,25 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         /* weapons system */
         case keyBUp:
           if (current_battle_state == COMBAT && fire_allowed(player))
-            fire_bullet(player,0,-1);
+            fire_bullet(player,0,-1,FALSE);
           break;
         case keyBDown:
           if (current_battle_state == COMBAT && fire_allowed(player))
-            fire_bullet(player,0,1);
+            fire_bullet(player,0,1,FALSE);
           break;
         case keyBLeft:
           if (current_battle_state == COMBAT && fire_allowed(player))
-            fire_bullet(player,-1,0);
+            fire_bullet(player,-1,0,FALSE);
           break;
         case keyBRight:
           if (current_battle_state == COMBAT && fire_allowed(player))
-            fire_bullet(player,1,0);
+            fire_bullet(player,1,0,FALSE);
         break;
         case keyBSelect:
+          if (current_battle_state == COMBAT) {
+            fire_special(player);
+          }
+
           if (current_battle_state == WORLD_MAP)
           {
             if ((nearest = enemy_engage(context, enemies, player)) != NULL)

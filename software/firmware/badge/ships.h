@@ -19,7 +19,7 @@
 #define SP_CLOAK         ( 1 << 1 )
 #define SP_TELEPORT      ( 1 << 2 )
 #define SP_MINE          ( 1 << 3 )
-#define SP_SHOT_RESTRICT ( 1 << 4 )
+#define SP_SHOT_FOURWAY  ( 1 << 4 )
 #define SP_SHOT_EXTEND   ( 1 << 5 )
 #define SP_SHIELD        ( 1 << 6 )
 #define SP_AOE           ( 1 << 7 ) // TBD

@@ -46,6 +46,12 @@ typedef struct _enemy
   uint8_t        ship_type;
 
   systime_t      last_shot_ms;
+  systime_t      last_special_ms;
+  systime_t      special_started_at;
+  
+  bool           shield_up;
+  bool           is_healing;
+  bool           cloaked;
 
   bool           ship_locked_in; // if the enemy has locked in their ship type
   uint8_t        ttl;
