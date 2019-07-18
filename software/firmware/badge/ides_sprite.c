@@ -789,7 +789,7 @@ static void isp_restore_bg(ISPRITESYS *iss, ISPID id)
   FOUR_RECTS rects;
   int i;
   coord_t xs, ys;
-  bool_t drew;
+  bool_t drew=FALSE;
 
 
   if( (id < ISP_MAX_SPRITES) &&
@@ -798,9 +798,6 @@ static void isp_restore_bg(ISPRITESYS *iss, ISPID id)
       (iss->list[id].bg_buf.xs > 0) &&
       (iss->list[id].bg_buf.ys > 0) )
   {
-/*
-printf("restore bg\n");
-*/
     switch(iss->list[id].bgtype)
     {
       /* add code to fill only the exposed parts of the BG rectangle.
@@ -835,11 +832,15 @@ printf(" ****** big fill x%d y%d xs%d ys%d\n", iss->list[id].bg_buf.x,iss->list[
 /*
 printf("-----small fill x%d y%d xs%d ys%d\n", rects.bx[i].x,rects.bx[i].y,xs,ys);
 */
-              gdispFillArea(rects.bx[i].x,
-                            rects.bx[i].y,
-                            xs, ys,
-                            iss->list[id].bgcolor);
-              drew = TRUE;
+              if( (xs > 0) && (ys > 0) )
+              {
+                gdispFillArea(rects.bx[i].x,
+                              rects.bx[i].y,
+                              xs, ys,
+                              iss->list[id].bgcolor);
+
+                drew = TRUE;
+              }
             }
           }
           if(FALSE == drew)

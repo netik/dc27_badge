@@ -2096,9 +2096,11 @@ static void state_levelup_enter(void)
                      p->fontSTENCIL,
                      Yellow,
                      justifyLeft);
-     config->level++;
-     configSave(config);
-     orchardAppExit();
+  config->level++;
+  configSave(config);
+
+  chThdSleepMilliseconds(ALERT_DELAY);
+  orchardAppExit();
 }
 
 static void state_vs_draw_enemy(ENEMY *e, bool is_player)
