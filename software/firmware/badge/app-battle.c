@@ -1013,7 +1013,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
               current_enemy->e.vecVelocity.y     = pkt_entity->bp_velocity_y;
               current_enemy->e.vecVelocityGoal.x = pkt_entity->bp_velogoal_x;
               current_enemy->e.vecVelocityGoal.y = pkt_entity->bp_velogoal_y;
-              current_enemy->e.faces_right       = pkt_entity->bp_faces_right;
+
+              if (current_enemy->e.faces_right != pkt_entity->bp_faces_right) {
+                current_enemy->e.faces_right = pkt_entity->bp_faces_right;
+
+                isp_set_sprite_from_spholder(sprites,
+                  current_enemy->e.sprite_id,
+                  current_enemy->e.faces_right ? bh->ce_right : bh->ce_left);
+              }
 
               isp_set_sprite_xy(sprites,
                                 current_enemy->e.sprite_id,
