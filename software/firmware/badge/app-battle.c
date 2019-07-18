@@ -1824,7 +1824,6 @@ void state_combat_tick(void)
 void state_combat_exit(void)
 {
   BattleHandles *bh;
-
   bh = mycontext->priv;
 
   free(bh->l_pxbuf);
@@ -1835,6 +1834,16 @@ void state_combat_exit(void)
 
   free(bh->r_pxbuf);
   bh->r_pxbuf = NULL;
+
+  // clear spholders
+  isp_destroy_spholder(bh->pl_left);
+  bh->pl_left = NULL;
+  isp_destroy_spholder(bh->pl_right);
+  bh->pl_right = NULL;
+  isp_destroy_spholder(bh->ce_left);
+  bh->ce_left = NULL;
+  isp_destroy_spholder(bh->ce_right);
+  bh->ce_right = NULL;
 
   /* tear down sprite system */
   isp_shutdown(sprites);
