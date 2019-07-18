@@ -207,9 +207,11 @@ bleGapDispatch (ble_evt_t * evt)
 			 * Try to request an upgrade to the coded PHY.
 			 * This should gain us longer range.
 			 *
-			 * Can't do this here yet, need some more research.
-			 * It prevents iPhones from establishing a proper
-			 * connection.
+			 * We do this only if we're a central, requesting
+	 		 * an update to a peripheral. Experimentation has
+			 * shown that if we do this as a peripheral, it
+			 * seems to prevent iPhones from establishing a
+			 * proper connection.
 			 */
 
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
