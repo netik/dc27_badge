@@ -15,8 +15,10 @@
 #define CONFIG_END_SIGNATURE  0xdeadfa11
 #define CONFIG_VERSION    6
 #define CONFIG_NAME_MAXLEN 20
-
 #define CONFIG_LEDSIGN_MAXLEN	124
+
+/* highest possible level */
+#define LEVEL_CAP        10
 
 /* WARNING: if you change the userconfig struct, update CONFIG_VERSION
  * above so that the config is automatically init'd with the new
@@ -77,6 +79,7 @@ extern void configSave(userconfig *);
 extern userconfig *getConfig(void);
 extern int16_t maxhp(uint16_t, uint8_t);
 extern uint16_t xp_for_level(uint8_t level);
+extern uint8_t calc_level(uint16_t xp);
 
 extern const char *rankname[];
 extern unsigned long rtc;

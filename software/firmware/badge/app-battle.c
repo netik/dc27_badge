@@ -1849,25 +1849,98 @@ void state_combat_exit(void)
   isp_shutdown(sprites);
 }
 
+static uint16_t calc_xp_gain(uint8_t won) {
+  userconfig *config = getConfig();
+  float factor = 1;
+
+  int8_t leveldelta;
+
+  leveldelta = current_enemy->level - config->level;
+  // range:
+  //
+  //  >=  3 = 2x XP     RED
+  //  >=  2 = 1.50x XP  ORG
+  //  >=  1 = 1.25x XP  YEL
+  //  ==  0 = 1x XP     GREEN
+  //  <= -1 = .75x XP   GREY
+  //  <= -2 = .25x XP   GREY
+  //  <= -3 = 0 XP      GREY
+
+  // you killed someone harder than you
+  if (leveldelta >= 3)
+    factor = 2;
+  else
+    if (leveldelta >= 2)
+      factor = 1.50;
+    else
+      if (leveldelta >= 1)
+        factor = 1.25;
+
+  // you killed someone weaker than you
+  if (leveldelta <= -3)
+    factor = 0;
+  else
+    if (leveldelta <= -2)
+      factor = .25;
+    else
+      if (leveldelta == -1)
+        factor = .75;
+
+  if (won) {
+    return (80 + ((config->level-1) * 16)) * factor;
+  }
+  else {
+    // someone killed you, so you get much less XP, but we will give
+    // some extra XP if someone higher than you killed you.
+    if (factor < 1)
+      factor = 1;
+
+    return (10 + ((config->level-1) * 16)) * factor;
+  }
+}
+
 static void state_show_results_enter(void) {
   char tmp[40];
+  userconfig *config = getConfig();
+  int xpgain = 0;
+
   // figure out who won
   //
   // The Attacker is responsible for game calcs.
   //
   if (player->hp > current_enemy->hp) {
-      sprintf(tmp, "YOU WIN! (+%d XP)",0);
+      xpgain = calc_xp_gain(TRUE);
+      config->won++;
+      sprintf(tmp, "YOU WIN! (+%d XP)",xpgain);
   } else {
-    sprintf(tmp, "YOU LOSE! (+%d XP)",0);
+    // record time of death
+    config->lastdeath = chVTGetSystemTime();
+
+    // reward (some) XP and exit
+    xpgain = calc_xp_gain(FALSE);
+    config->lost++;
+    sprintf(tmp, "YOU LOSE! (+%d XP)",xpgain);
   }
 
   if (player->hp == current_enemy->hp) {
-      sprintf(tmp, "TIE! (+%d XP)",0);
+    // Everybody wins.
+    xpgain = calc_xp_gain(TRUE);
+    config->lost++;
+    sprintf(tmp, "TIE! (+%d XP)",xpgain);
   }
+
+  config->xp += xpgain;
+  configSave(config);
 
   // if we're the central, tell the preph that we
   // are done.
 
+
+  // did we level up?
+  if ((config->level != calc_level(config->xp)) && (config->level != LEVEL_CAP)) {
+    changeState(LEVELUP);
+    return;
+  }
 
   // award xp here.
   screen_alert_draw(false, tmp);
