@@ -1,5 +1,6 @@
 #ifndef _IDES_SPRITE_
 #define _IDES_SPRITE_
+#include "images.h"
 
 #define ISP_MAX_SPRITES 32
 #define ISP_PATH_LENGTH 64

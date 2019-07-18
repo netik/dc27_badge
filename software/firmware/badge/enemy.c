@@ -24,6 +24,7 @@
 #include "userconfig.h"
 #include "enemy.h"
 #include "entity.h"
+#include "unlocks.h"
 
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
@@ -202,6 +203,8 @@ void enemy_list_refresh(gll_t *enemies,
 {
   ENEMY *         e;
   ble_peer_entry *p;
+  pixel_t *buf;
+  userconfig *config = getConfig();
 
   // copy enemies from BLE
   osalMutexLock(&peer_mutex);
@@ -288,6 +291,15 @@ void enemy_list_refresh(gll_t *enemies,
 #endif
         e = malloc(sizeof(ENEMY));
 
+        // copy over game data
+        strcpy(e->name, (char *)p->ble_peer_name);
+        e->xp             = p->ble_game_state.ble_ides_xp;
+        e->level          = p->ble_game_state.ble_ides_level;
+        e->ship_type      = p->ble_game_state.ble_ides_ship_type;
+        e->ship_locked_in = FALSE;
+        e->hp             = shiptable[e->ship_type].max_hp;
+        e->energy         = shiptable[e->ship_type].max_energy;
+
         if (current_battle_state == COMBAT)
         {
           entity_init(&(e->e), sprites, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_ENEMY);
@@ -295,6 +307,11 @@ void enemy_list_refresh(gll_t *enemies,
         else
         {
           entity_init(&(e->e), sprites, SHIP_SIZE_WORLDMAP, SHIP_SIZE_WORLDMAP, T_ENEMY);
+          buf = boxmaker(SHIP_SIZE_WORLDMAP,
+                         SHIP_SIZE_WORLDMAP,
+                         levelcolor(config->level, e->level));
+          isp_set_sprite_block(sprites, e->e.sprite_id, SHIP_SIZE_WORLDMAP, SHIP_SIZE_WORLDMAP, buf);
+          free(buf);
         }
 
         e->e.visible       = TRUE;
@@ -314,14 +331,6 @@ void enemy_list_refresh(gll_t *enemies,
         e->ble_peer_addr.addr_id_peer = TRUE;
         e->ble_peer_addr.addr_type    = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
 
-        // copy over game data
-        strcpy(e->name, (char *)p->ble_peer_name);
-        e->xp             = p->ble_game_state.ble_ides_xp;
-        e->level          = p->ble_game_state.ble_ides_level;
-        e->ship_type      = p->ble_game_state.ble_ides_ship_type;
-        e->ship_locked_in = FALSE;
-        e->hp             = shiptable[e->ship_type].max_hp;
-        e->energy         = shiptable[e->ship_type].max_energy;
         gll_push(enemies, e);
       }
     }
@@ -329,11 +338,12 @@ void enemy_list_refresh(gll_t *enemies,
   osalMutexUnlock(&peer_mutex);
 }
 
-static uint16_t calc_hit(ENEMY *attacker, ENEMY *victim) {
+uint16_t calc_hit(ENEMY *attacker, ENEMY *victim) {
   uint16_t basedmg;
   uint16_t basemax;
   uint16_t basemin;
   uint16_t basemult;
+  userconfig *config = getConfig();
 
   // This code calculates base hit and luck only for transmitting to
   // other badge. Do not implement buffs here, implement them in

@@ -24,8 +24,6 @@ static void state_combat_tick(void);
 static void state_combat_exit(void);
 
 static void state_levelup_enter(void);
-static void state_levelup_tick(void);
-static void state_levelup_exit(void);
 
 static void state_show_results_enter(void);
 
@@ -94,8 +92,8 @@ state_funcs battle_funcs[] = {
   },
   {  // levelup
     state_levelup_enter,
-    state_levelup_tick,
-    state_levelup_exit
+    NULL,
+    NULL
   },
 
 };

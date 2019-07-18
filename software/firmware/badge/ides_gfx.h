@@ -1,6 +1,8 @@
 #ifndef __IDES_GFX_H__
 #define __IDES_GFX_H__
 
+#include "battle.h"
+
 /* ides_gfx.h
  *
  * Shared Graphics Routines
@@ -41,6 +43,8 @@ extern void drawBufferedStringBox(
       font_t font,
       color_t color,
       justify_t justify);
+extern  color_t levelcolor(uint16_t player_level, uint16_t enemy_level);
+
 #endif /* __IDES_GFX_H__ */
 
 /* used by screen_alert_draw */

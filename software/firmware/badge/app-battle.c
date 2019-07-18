@@ -167,6 +167,23 @@ check_land_collision(ENTITY *p)
   return(test_sprite_for_land_collision(sprites, p->sprite_id));
 }
 
+static void redraw_player_bars(void) {
+  // player's stats
+  drawProgressBar(0, 26, 120, 6,
+    shiptable[player->ship_type].max_hp, player->hp, FALSE, FALSE);
+  drawProgressBar(0, 34, 120, 6,
+    shiptable[player->ship_type].max_energy, player->energy, FALSE, FALSE);
+}
+
+static void redraw_enemy_bars(void) {
+  // enemy stats
+  drawProgressBar(200, 26, 120, 6,
+    shiptable[current_enemy->ship_type].max_hp, current_enemy->hp, FALSE, TRUE);
+  drawProgressBar(200, 34, 120, 6,
+    shiptable[current_enemy->ship_type].max_energy, current_enemy->energy, FALSE, TRUE);
+}
+
+
 static void entity_update(ENTITY *p, float dt)
 {
   if ((p->ttl > -1) && (p->visible))
@@ -406,13 +423,8 @@ draw_hud(OrchardAppContext *context)
                         White,
                         justifyRight);
 
-  // player's stats
-  drawProgressBar(0, 26, 120, 6, shiptable[player->ship_type].max_hp, player->hp, FALSE, FALSE);
-  drawProgressBar(0, 34, 120, 6, shiptable[player->ship_type].max_energy, player->energy, FALSE, FALSE);
-
-  // enemy stats
-  drawProgressBar(200, 26, 120, 6, shiptable[current_enemy->ship_type].max_hp, current_enemy->hp, FALSE, TRUE);
-  drawProgressBar(200, 34, 120, 6, shiptable[current_enemy->ship_type].max_energy, current_enemy->energy, FALSE, TRUE);
+  redraw_player_bars();
+  redraw_enemy_bars();
 }
 
 
@@ -434,6 +446,18 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y)
       // no more for you.
       return;
     }
+
+    if (player->energy - shiptable[e->ship_type].shot_cost <= 0) {
+      // no more energy
+      i2sPlay("game/error.snd");
+      return;
+    }
+
+    // bill the player.
+    player->energy = player->energy - shiptable[e->ship_type].shot_cost;
+
+    // redraw energy bar.
+    redraw_player_bars();
   }
 
   for (int i = 0; i < MAX_BULLETS; i++)
@@ -585,9 +609,8 @@ void update_bullets(void) {
           free(bullet[i]);
           bullet[i] = NULL;
 
-          drawProgressBar(200, 26, 120, 6,
-            shiptable[current_enemy->ship_type].max_hp,
-            current_enemy->hp, FALSE, TRUE);
+          redraw_enemy_bars();
+
           putImageFile(getAvatarImage(current_enemy->ship_type, FALSE, 'h',
                        current_enemy->e.faces_right),
                        current_enemy->e.vecPosition.x,
@@ -611,7 +634,8 @@ void update_bullets(void) {
       // check for oob or max distance
       if (bullet[i]) {
         if ((travelled > max_range) ||
-            (entity_OOB(bullet[i]))) {
+            (entity_OOB(bullet[i])) ||
+            (check_land_collision(bullet[i]))) {
           // expire bullet
           isp_destroy_sprite(sprites, bullet[i]->sprite_id);
           i2sPlay("game/splash.snd");
@@ -679,7 +703,6 @@ static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
   (void)context;
-  userconfig *          config = getConfig();
   ENEMY *               nearest;
   BattleHandles *       bh;
   bp_header_t *         ph;
@@ -853,22 +876,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       }
     }
 
-    if (current_battle_state == LEVELUP)
-    {
-      pe = event->ugfx.pEvent;
-      if (pe->type == GEVENT_GWIN_BUTTON)
-      {
-        be = (GEventGWinButton *)pe;
-        if (be->gwin == bh->ghACCEPT)
-        {
-          // now that they've accepted, actually do the level-up.
-          i2sPlay("sound/click.snd");
-          config->level++;
-          configSave(config);
-          changeState(WORLD_MAP);
-        }
-      }
-    }
   }
 
   // deal with the radio
@@ -896,10 +903,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       break;
 
     case disconnectEvent:
+      if (current_battle_state != SHOW_RESULTS) {
         screen_alert_draw(FALSE, "Radio link lost");
         chThdSleepMilliseconds(ALERT_DELAY);
         orchardAppExit ();
-        break;
+      }
+      break;
 
     case gattsReadWriteAuthEvent:
       rw =
@@ -982,7 +991,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             player->hp = player->hp - pkt_state->bp_operand;
             // player's stats
-            drawProgressBar(0, 26, 120, 6, shiptable[player->ship_type].max_hp, player->hp, FALSE, FALSE);
+            redraw_player_bars();
           break;
           case BATTLE_OP_CLOCKUPDATE:
             // we are receiving clock from the other badge.
@@ -998,7 +1007,15 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           case BATTLE_OP_ENTITY_CREATE:
             // enemy is firing a bullet from their current position.
             pkt_bullet = (bp_bullet_pkt_t *)&bh->rxbuf;
-            fire_bullet(current_enemy, pkt_bullet->bp_dir_x, pkt_bullet->bp_dir_y);
+            fire_bullet(current_enemy,
+              pkt_bullet->bp_dir_x,
+              pkt_bullet->bp_dir_y);
+
+            // update enemy eng bar
+            current_enemy->energy = current_enemy->energy - shiptable[current_enemy->ship_type].shot_cost;
+
+            // redraw energy bar.
+            redraw_enemy_bars();
           break;
           case BATTLE_OP_ENTITY_UPDATE:
             // the enemy is updating their position and velocity
@@ -1154,13 +1171,23 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         switch (event->key.code)
         {
         case keyALeft:
-          player->e.faces_right         = false;
           player->e.vecVelocityGoal.x = -VGOAL;
+          player->e.faces_right       = false;
+
+          if (current_battle_state == COMBAT)
+            isp_set_sprite_from_spholder(sprites,
+              player->e.sprite_id,
+              player->e.faces_right ? bh->pl_right : bh->pl_left);
           break;
 
         case keyARight:
-          player->e.faces_right         = true;
+          player->e.faces_right       = true;
           player->e.vecVelocityGoal.x = VGOAL;
+
+          if (current_battle_state == COMBAT)
+            isp_set_sprite_from_spholder(sprites,
+              player->e.sprite_id,
+              player->e.faces_right ? bh->pl_right : bh->pl_left);
           break;
 
         case keyAUp:
@@ -1800,6 +1827,25 @@ void update_combat_clock(void) {
   }
 }
 
+void regen_energy(ENEMY *e) {
+  // regen energy
+  if (e->energy != shiptable[e->ship_type].max_energy) {
+    e->energy = e->energy + shiptable[e->ship_type].energy_recharge_rate;
+
+    if (e->energy > shiptable[e->ship_type].max_energy) {
+      e->energy = shiptable[e->ship_type].max_energy;
+    }
+
+    if (e == player) {
+      redraw_player_bars();
+    }
+
+    if (e == current_enemy) {
+      redraw_enemy_bars();
+    }
+  }
+}
+
 void state_combat_tick(void)
 {
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -1819,6 +1865,11 @@ void state_combat_tick(void)
       &(player->e)
       );
   }
+
+  // regen energy
+  regen_energy(player);
+  regen_energy(current_enemy);
+
 }
 
 void state_combat_exit(void)
@@ -1887,7 +1938,7 @@ static uint16_t calc_xp_gain(uint8_t won) {
         factor = .75;
 
   if (won) {
-    return (80 + ((config->level-1) * 16)) * factor;
+    return (80 + ((config->level) * 16)) * factor;
   }
   else {
     // someone killed you, so you get much less XP, but we will give
@@ -1895,7 +1946,7 @@ static uint16_t calc_xp_gain(uint8_t won) {
     if (factor < 1)
       factor = 1;
 
-    return (10 + ((config->level-1) * 16)) * factor;
+    return (10 + ((config->level) * 16)) * factor;
   }
 }
 
@@ -1903,11 +1954,11 @@ static void state_show_results_enter(void) {
   char tmp[40];
   userconfig *config = getConfig();
   int xpgain = 0;
+  BattleHandles *bh;
+  // free the UI
+  bh = (BattleHandles *)mycontext->priv;
 
   // figure out who won
-  //
-  // The Attacker is responsible for game calcs.
-  //
   if (player->hp > current_enemy->hp) {
       xpgain = calc_xp_gain(TRUE);
       config->won++;
@@ -1932,25 +1983,27 @@ static void state_show_results_enter(void) {
   config->xp += xpgain;
   configSave(config);
 
-  // if we're the central, tell the preph that we
-  // are done.
-
-
-  // did we level up?
-  if ((config->level != calc_level(config->xp)) && (config->level != LEVEL_CAP)) {
-    changeState(LEVELUP);
-    return;
-  }
+  // it's now safe to tear down the connection.
+  // we do not alarm for disconect events in SHOW_RESULTS
+  if (bh->cid != BLE_L2CAP_CID_INVALID)
+    bleL2CapDisconnect (bh->cid);
+  bleGapDisconnect();
 
   // award xp here.
   screen_alert_draw(false, tmp);
   chThdSleepMilliseconds(ALERT_DELAY * 2);
+
+  // did we level up?
+  if ((config->level + 1 != calc_level(config->xp)) && (config->level + 1 != LEVEL_CAP)) {
+    changeState(LEVELUP);
+    return;
+  }
+
   orchardAppExit();
 }
 
 static void state_levelup_enter(void)
 {
-  GWidgetInit    wi;
   BattleHandles *p      = mycontext->priv;
   userconfig *   config = getConfig();
   char           tmp[40];
@@ -2043,38 +2096,9 @@ static void state_levelup_enter(void)
                      p->fontSTENCIL,
                      Yellow,
                      justifyLeft);
-
-  // draw UI
-  gwinSetDefaultStyle(&RedButtonStyle, FALSE);
-  gwinWidgetClearInit(&wi);
-  wi.g.show   = TRUE;
-  wi.g.x      = 85;
-  wi.g.y      = 206;
-  wi.g.width  = 150;
-  wi.g.height = 34;
-  wi.text     = "CONTINUE";
-
-  p->ghACCEPT = gwinButtonCreate(0, &wi);
-
-  gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
-}
-
-static void state_levelup_tick(void)
-{
-  /* no-op we will hold the levelup screen indefinately until the user
-   * chooses. the user is also in-combat and cannot accept new fights
-   */
-}
-
-static void state_levelup_exit(void)
-{
-  BattleHandles *p = mycontext->priv;
-
-  if (p->ghACCEPT != NULL)
-  {
-    gwinDestroy(p->ghACCEPT);
-    p->ghACCEPT = NULL;
-  }
+     config->level++;
+     configSave(config);
+     orchardAppExit();
 }
 
 static void state_vs_draw_enemy(ENEMY *e, bool is_player)

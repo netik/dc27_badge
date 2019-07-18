@@ -36,10 +36,10 @@ const ISPRITE isprite_default = {
   .xoffs = 0,
   .yoffs = 0,
   .visible = FALSE,
-  .auto_bg = FALSE,
+  .auto_bg = TRUE,
   .mode_switch = FALSE,
   .full_restore = FALSE,
-  .bgcolor = HTML2COLOR(0x000000)
+  .bgcolor = HTML2COLOR(0x2603fb)
 };
 
 typedef struct _4rect {

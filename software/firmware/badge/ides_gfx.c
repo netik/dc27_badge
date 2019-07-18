@@ -23,6 +23,8 @@
 #include "async_io_lld.h"
 #include "badge.h"
 
+#include "battle.h"
+
 #include <stdio.h>
 
 // WidgetStyle: RedButton, the only button we really use
@@ -489,4 +491,36 @@ char *getAvatarImage(int shipclass, bool is_player, char frame, bool is_right) {
           is_right ? 'r' : 'l');
 
   return(fname);
+}
+
+color_t levelcolor(uint16_t player_level, uint16_t enemy_level) {
+  color_t color = HTML2COLOR(0x7efb03);
+  int16_t leveldelta;
+
+  leveldelta = enemy_level - player_level;
+  // range:
+  //
+  //  >=  3 = 2x XP     RED
+  //  >=  2 = 1.50x XP  ORG
+  //  >=  1 = 1.25x XP  YEL
+  //  ==  0 = 1x XP     GREEN
+  //  <= -1 = .75x XP   GREY
+  //  <= -2 = .25x XP   GREY
+  //  <= -3 = 0 XP      GREY
+
+  // you killed someone harder than you
+  if (leveldelta >= 3)
+    color = HTML2COLOR(0xff00ff);
+  else
+    if (leveldelta >= 2)
+      color = HTML2COLOR(0xf1a95b);
+    else
+      if (leveldelta >= 1)
+        color = HTML2COLOR(0xf6ff00);
+
+  // you killed someone weaker than you
+  if (leveldelta <= -1)
+    color = Grey;
+
+  return color;
 }

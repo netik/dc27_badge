@@ -96,6 +96,13 @@ int16_t maxhp(uint16_t unlocks, uint8_t level) {
 }
 
 uint8_t calc_level(uint16_t xp) {
+
+  // Returns human-readable level based on
+  // XP.
+
+  // note that Level storage in config
+  // starts at 0, not 1. 
+
   if(xp >= 6480) {
     return 10;
   }
