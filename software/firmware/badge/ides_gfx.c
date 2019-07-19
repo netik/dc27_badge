@@ -24,6 +24,7 @@
 #include "badge.h"
 
 #include "battle.h"
+#include "ships.h"
 
 #include <stdio.h>
 
@@ -450,7 +451,7 @@ void drawBufferedStringBox(
 
 char *getAvatarImage(int shipclass, bool is_player, char frame, bool is_right) {
   static char fname[64];
-
+  bool orientation;
   /*
    * Ships are identified by the following filename structure: game/ + ...
    *   s2e-h-l.tif
@@ -483,12 +484,19 @@ char *getAvatarImage(int shipclass, bool is_player, char frame, bool is_right) {
    *
    */
 
+  orientation = is_right;
+
+  // unfortunately we reversed these on the SD Card. Fix that.
+  if (shipclass == SHIP_SUBMARINE) {
+    orientation = !orientation;
+  }
+
   sprintf(fname,
           "game/s%d%c-%c-%c.rgb",
           shipclass,
           is_player ? 'p' : 'e',
           frame,
-          is_right ? 'r' : 'l');
+          orientation ? 'r' : 'l');
 
   return(fname);
 }

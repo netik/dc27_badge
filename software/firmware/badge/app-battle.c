@@ -1264,11 +1264,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         }
 
         // handle rotating selection
-        if (player->ship_type == 255)
+        // TODO: set based on user level and two unlocks
+        if (player->ship_type == 255) // underflow
         {
-          player->ship_type = 5;
-        }                                                        // underflow
-        if (player->ship_type > 5)
+          player->ship_type = 7;
+        }
+        if (player->ship_type > 7)
         {
           player->ship_type = 0;
         }

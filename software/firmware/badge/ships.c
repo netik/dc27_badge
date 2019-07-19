@@ -22,7 +22,7 @@ const ship_type_t shiptable[8] = {
     "PT Boat",
     200, 25, 100, 4 ,
     500, 150, 50, 30, 5,
-    20, -0.005, 20, 8, // PT boat is swiftest but does least damage.
+    25, -0.005, 20, 8, // PT boat is swiftest but does least damage.
     30, 40, 25, -1,
     1, SP_SHOT_FOURWAY_DIAG // 4-way shot on diag!
   },
@@ -31,7 +31,7 @@ const ship_type_t shiptable[8] = {
     "Patrol Boat",
     250, 40, 120, 4,
     1000, 120, 50, 30, 5,
-    DEFAULT_VRATES,
+    20, -0.005, 25, 8,
     40, 60, 35, 60,
     1, SP_SHOT_FOURWAY
   },
@@ -42,7 +42,7 @@ const ship_type_t shiptable[8] = {
     "Destroyer",
     400, 50, 120, 3,
     2000, 300, 40, 60, 7,
-    DEFAULT_VRATES,
+    15,VDRAG,15,VMULT,
     40, 40, 75, 7000,
     2, SP_MINE
   },
@@ -53,7 +53,7 @@ const ship_type_t shiptable[8] = {
     "Cruiser",
     400, 45, 250, 3,
     1250, 250, 35, 60, 7,
-    DEFAULT_VRATES,
+    18,VDRAG,15,VMULT,
     250, 0, 0, 2000,
     2, SP_SHIELD
   },
@@ -71,16 +71,16 @@ const ship_type_t shiptable[8] = {
     "Battleship",
     600, 60, 400, 3,
     333, 400, 35, 100, 10,
-    DEFAULT_VRATES,
+    6,VDRAG,VAPPROACH,VMULT,
     100, 80, 40, 1000,
     3, SP_AOE // 3 shots in all directions? 4-way shot on diag!
   },
 
   {
     "Submarine",
-    30, 30, 300, 3,
+    300, 30, 300, 3,
     333, 350, 40, 45, 6,
-    DEFAULT_VRATES,
+    10,-0.005,20,VMULT,
     40, -1, -1, 1000,
     3, SP_CLOAK // hides from other user. maybe show every N frames to tease?
   },
@@ -89,7 +89,7 @@ const ship_type_t shiptable[8] = {
     "Tesla",
     300, 30, 300, 3,
     333, 2000, 40, 45, 10,
-    DEFAULT_VRATES,
+    15,VDRAG,20,VMULT,
     300, -1, -1, -1,
     4, SP_TELEPORT // teleports to random place, and if land, you die.
   }
