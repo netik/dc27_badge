@@ -20,7 +20,6 @@
 #define COLOR_PLAYER          HTML2COLOR(0xeeeseee) // light grey
 #define SHIP_SIZE_WORLDMAP    10
 #define SHIP_SIZE_ZOOMED      40
-#define BULLET_SIZE           10
 
 /* Entity opcodes */
 #define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
@@ -33,7 +32,7 @@
 
 /* State opcodes */
 #define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
-#define BATTLE_OP_USE_ENG           0x21 /* I am using X of my energy. */
+#define BATTLE_OP_ENG_UPDATE        0x21 /* my eng is X. */
 #define BATTLE_OP_IAMDEAD           0x22 /* I've been killed */
 #define BATTLE_OP_YOUAREDEAD        0x24 /* You've been killed */
 #define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
@@ -91,6 +90,7 @@ typedef struct _bp_bullet_pkt
   uint16_t   bp_origin_y;
   int16_t    bp_dir_x;
   int16_t    bp_dir_y;
+  uint8_t    bp_is_free;
 } bp_bullet_pkt_t; /* 12 bytes */
 
 /*

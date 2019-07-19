@@ -126,7 +126,7 @@ static void render_all_enemies(void);
 static void send_ship_type(uint16_t type, bool final);
 static void state_vs_draw_enemy(ENEMY *e, bool is_player);
 static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e);
-static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y);
+static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y, bool is_free);
 static void send_state_update(uint16_t opcode, uint16_t operand);
 static void redraw_combat_clock(void);
 bool entity_OOB(ENTITY *e);
@@ -468,7 +468,11 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
     // create a new entity and fire something from it.
     if (bullet[i] == NULL) {
       bullet[i] = malloc(sizeof(ENTITY));
-      entity_init(bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, e == player ? T_PLAYER_BULLET : T_ENEMY_BULLET);
+      entity_init(bullet[i],
+        sprites,
+        shiptable[e->ship_type].shot_size,
+        shiptable[e->ship_type].shot_size,
+        e == player ? T_PLAYER_BULLET : T_ENEMY_BULLET);
       bullet[i]->visible = TRUE;
 
       // bullets don't use TTL, they are ranged (see update_bullets)
@@ -483,7 +487,7 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
       bullet[i]->vecVelocity.y = e->e.vecVelocity.y;
 
       if (dir_x < 0) {
-        bullet[i]->vecPosition.x = e->e.vecPosition.x - BULLET_SIZE;
+        bullet[i]->vecPosition.x = e->e.vecPosition.x - shiptable[e->ship_type].shot_size;
       }
 
       if (dir_x > 0) {
@@ -491,7 +495,7 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
       }
 
       if (dir_y < 0) {
-        bullet[i]->vecPosition.y = e->e.vecPosition.y - BULLET_SIZE;
+        bullet[i]->vecPosition.y = e->e.vecPosition.y - shiptable[e->ship_type].shot_size;
       }
 
       if (dir_y > 0) {
@@ -499,8 +503,8 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
       }
 
       // center the bullet
-      if (dir_x == 0) { bullet[i]->vecPosition.x += ((SHIP_SIZE_ZOOMED/2) - (BULLET_SIZE/2)); }
-      if (dir_y == 0) { bullet[i]->vecPosition.y += ((SHIP_SIZE_ZOOMED/2) - (BULLET_SIZE/2)); }
+      if (dir_x == 0) { bullet[i]->vecPosition.x += ((SHIP_SIZE_ZOOMED/2) - (shiptable[e->ship_type].shot_size/2)); }
+      if (dir_y == 0) { bullet[i]->vecPosition.y += ((SHIP_SIZE_ZOOMED/2) - (shiptable[e->ship_type].shot_size/2)); }
 
       // the goal and the current V should be the same.
       bullet[i]->vecVelocityGoal.x = dir_x * shiptable[e->ship_type].shot_speed;
@@ -523,7 +527,7 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
 
       if (e == player) {
         // fire across network if the player is firing
-        send_bullet_create(bullet[i], dir_x, dir_y);
+        send_bullet_create(bullet[i], dir_x, dir_y, is_free);
       }
 
       i2sPlay("game/shot.snd");
@@ -692,60 +696,32 @@ fire_allowed(ENEMY *e) {
   return FALSE;
 }
 
-static void lay_mine(ENEMY *e) {
-  // lays a mine at the present position
-
-}
-
-static void do_teleport(ENEMY *e) {
-
-}
-
 static void fire_special(ENEMY *e) {
   // fires a special.
   if (e->energy < shiptable[e->ship_type].special_cost) {
-    // you can't afford it. boop.
+    // you can't afford it.
     i2sPlay("game/error.snd");
     return;
   }
-
   // charge them, mark last usage
   e->energy = e->energy - shiptable[e->ship_type].special_cost;
   e->last_special_ms = chVTGetSystemTime();
-  e->special_started_at = chVTGetSystemTime();
+
+  if (e == player)
+    send_state_update(BATTLE_OP_ENG_UPDATE,e->energy);
 
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
-    case SP_AOE: /* battleship 8-way shot */
-      fire_bullet(e,0,-1,TRUE); // U
-      fire_bullet(e,0,1,TRUE);  // D
-      fire_bullet(e,-1,0,TRUE);  // L
-      fire_bullet(e,1,0,TRUE);   // R
-      /* intentional fall through -- we'll also fire these... */
-    case SP_SHOT_FOURWAY: /* pt boat */
+    case SP_SHOT_FOURWAY:
       fire_bullet(e,-1,-1,TRUE); // UL
       fire_bullet(e,1,-1,TRUE);  // UR
       fire_bullet(e,-1,1,TRUE);  // LL
       fire_bullet(e,1,1,TRUE);   // LR
     break;
-    case SP_MINE:
-      lay_mine(e);
-      break;
     case SP_SHIELD:
       e->is_shielded = TRUE;
+      e->special_started_at = chVTGetSystemTime();
       break;
-    case SP_CLOAK:
-      e->is_cloaked = TRUE;
-      break;
-    case SP_TELEPORT:
-      do_teleport(e);
-      break;
-    case SP_SHOT_EXTEND:
-      break;
-    case SP_HEAL:
-      e->is_healing = TRUE;
-      break;
-
     default:
       break;
   }
@@ -838,7 +814,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       update_bullets();
 
       // TBD:check for player vs enemy collision ( ramming speed! )
-      // Did anyone die?
+
       if ((player->hp <= 0) || (current_enemy->hp <= 0)) {
         changeState(SHOW_RESULTS);
         return;
@@ -1020,7 +996,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         case BATTLE_OP_SHIP_SELECT:
           pkt_vs = (bp_vs_pkt_t *)&bh->rxbuf;
           current_enemy->ship_type = pkt_vs->bp_shiptype;
-          current_enemy->unlocks   = pkt_vs->bp_unlocks;
           current_enemy->hp        = shiptable[current_enemy->ship_type].max_hp;
           current_enemy->energy    = shiptable[current_enemy->ship_type].max_energy;
           state_vs_draw_enemy(current_enemy, FALSE);
@@ -1064,6 +1039,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             if (player->hp <= 0)
               chThdSleepMilliseconds(250);
           break;
+          case BATTLE_OP_ENG_UPDATE:
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            current_enemy->energy = pkt_state->bp_operand;
+            redraw_player_bars();
+          break;
           case BATTLE_OP_CLOCKUPDATE:
             // we are receiving clock from the other badge.
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
@@ -1078,21 +1058,17 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           case BATTLE_OP_ENTITY_CREATE:
             // enemy is firing a bullet from their current position.
             pkt_bullet = (bp_bullet_pkt_t *)&bh->rxbuf;
-            if (pkt_bullet->bp_header.bp_type == T_ENEMY_BULLET) {
-              fire_bullet(current_enemy,
-                pkt_bullet->bp_dir_x,
-                pkt_bullet->bp_dir_y, FALSE);
+            fire_bullet(current_enemy,
+              pkt_bullet->bp_dir_x,
+              pkt_bullet->bp_dir_y,
+              pkt_bullet->bp_is_free);
 
-              // update enemy eng bar
+            // update enemy eng bar
+            if (! pkt_bullet->bp_is_free) {
               current_enemy->energy = current_enemy->energy - shiptable[current_enemy->ship_type].shot_cost;
+              // redraw energy bar.
               redraw_enemy_bars();
             }
-            if (pkt_bullet->bp_header.bp_type == T_ENEMY_MINE) {
-              fire_bullet(current_enemy,
-                pkt_bullet->bp_dir_x,
-                pkt_bullet->bp_dir_y, FALSE);
-            }
-
           break;
           case BATTLE_OP_ENTITY_UPDATE:
             // the enemy is updating their position and velocity
@@ -1818,6 +1794,7 @@ void state_combat_enter(void)
     getAvatarImage(current_enemy->ship_type, false, 'n', false));
   bh->ce_right = isp_get_spholder_from_file(
     getAvatarImage(current_enemy->ship_type, false, 'n', true));
+  // need shield if using Cruiser.
 
   /* move the player to the starting position */
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -2328,8 +2305,9 @@ static void send_state_update(uint16_t opcode, uint16_t operand)
 
 static void send_ship_type(uint16_t type, bool final)
 {
-  userconfig *config = getConfig();
   BattleHandles *p;
+
+  // get private memory
   p = (BattleHandles *)mycontext->priv;
   bp_vs_pkt_t pkt;
 
@@ -2337,9 +2315,6 @@ static void send_ship_type(uint16_t type, bool final)
   pkt.bp_header.bp_opcode = final ? BATTLE_OP_SHIP_CONFIRM : BATTLE_OP_SHIP_SELECT;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
   pkt.bp_shiptype         = type;
-  // this won't change during the game so we send it with the ship data.
-  pkt.bp_unlocks          = config->unlocks;
-
   memcpy(p->txbuf, &pkt, sizeof(bp_vs_pkt_t));
 
   if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_vs_pkt_t)) != NRF_SUCCESS)
@@ -2366,12 +2341,12 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   pkt.bp_header.bp_opcode = opcode;
   pkt.bp_header.bp_type   = type; // always enemy.
 
-  pkt.bp_x           = e->vecPosition.x;
-  pkt.bp_y           = e->vecPosition.y;
-  pkt.bp_velocity_x  = e->vecVelocity.x;
-  pkt.bp_velocity_y  = e->vecVelocity.y;
-  pkt.bp_velogoal_x  = e->vecVelocityGoal.x;
-  pkt.bp_velogoal_y  = e->vecVelocityGoal.y;
+  pkt.bp_x          = e->vecPosition.x;
+  pkt.bp_y          = e->vecPosition.y;
+  pkt.bp_velocity_x = e->vecVelocity.x;
+  pkt.bp_velocity_y = e->vecVelocity.y;
+  pkt.bp_velogoal_x = e->vecVelocityGoal.x;
+  pkt.bp_velogoal_y = e->vecVelocityGoal.y;
   pkt.bp_faces_right = e->faces_right;
 
   memcpy(p->txbuf, &pkt, sizeof(bp_entity_pkt_t));
@@ -2385,7 +2360,7 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   }
 }
 
-static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y)
+static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y, bool is_free)
 {
   BattleHandles *p;
 
@@ -2396,12 +2371,13 @@ static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y)
   memset(p->txbuf, 0, sizeof(p->txbuf));
 
   pkt.bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
-  pkt.bp_header.bp_type   = T_ENEMY_BULLET;
+  pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
 
   pkt.bp_header.bp_id = e->id;
 
   pkt.bp_dir_x      = dir_x;
   pkt.bp_dir_y      = dir_y;
+  pkt.bp_is_free    = is_free;
 
   memcpy(p->txbuf, &pkt, sizeof(bp_bullet_pkt_t));
 
@@ -2466,8 +2442,7 @@ static void state_vs_enter(void)
   state_vs_draw_enemy(player, TRUE);
   state_vs_draw_enemy(current_enemy, FALSE);
 
-  // we'll now tell them what our ship is and this will become the default
-  // if the user doesn't change anything and we timeout.
+  // we'll now tell them what our ship is.
   send_ship_type(player->ship_type, FALSE);
 }
 

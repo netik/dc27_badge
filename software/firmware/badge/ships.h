@@ -49,7 +49,8 @@ typedef struct {
   int16_t shot_range;  // range is in px
   int16_t shot_speed;  // pixels/second
   int16_t shot_cost;   // energy cost to fire shot
-
+  uint8_t shot_size;   // shot gfx size
+  
   /* accleration parameters */
   float  vdrag;
   int8_t vgoal;

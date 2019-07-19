@@ -338,38 +338,3 @@ void enemy_list_refresh(gll_t *enemies,
   }
   osalMutexUnlock(&peer_mutex);
 }
-
-uint16_t calc_hit(ENEMY *attacker, ENEMY *victim) {
-  uint16_t basedmg;
-  uint16_t basemax;
-  uint16_t basemin;
-  uint16_t basemult;
-  userconfig *config = getConfig();
-
-  // This code calculates base hit and luck only for transmitting to
-  // other badge. Do not implement buffs here, implement them in
-  // show_results.
-
-  // power table (x^0.3) to avoid using pow() math library
-  //  float exps[] = { 1.000000, 1.231144, 1.390389, 1.515717, 1.620657,
-  //                   1.711770, 1.792790, 1.866066, 1.933182, 1.995262  };
-
-  // power table (x^0.2) to avoid using pow() math library
-  float exps[] = { 1.000000, 1.148698, 1.245731, 1.319508, 1.379730,
-                   1.430969, 1.475773, 1.515717, 1.551846, 1.584893  };
-
-  // the max damage you can do
-  basemax = 42 * exps[attacker->level - 1];
-  basemin = basemax * .65;
-
-  // base multiplier is always rand 50% to 100% of basemax
-  basemult = rand() % (basemax - basemin + 1) + basemin;
-
-  // unlock?
-  if (config->unlocks & UL_PLUSDMG) {
-    basedmg = basedmg * 1.10; // +10% DMG
-  }
-
-  return basedmg;
-
-}
