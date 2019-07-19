@@ -7,29 +7,29 @@
 
 /* ships.h */
 
-/* ship parameter file
+/* ship parameter structures and defines
  *
  * J. Adams <jna@retina.net> 6/2019
  *
  */
 
 // bitfields
-#define SP_NONE          0
-#define SP_HEAL          ( 1 << 0 )
-#define SP_CLOAK         ( 1 << 1 )
-#define SP_TELEPORT      ( 1 << 2 )
-#define SP_MINE          ( 1 << 3 )
-#define SP_SHOT_RESTRICT ( 1 << 4 )
-#define SP_SHOT_EXTEND   ( 1 << 5 )
-#define SP_SHIELD        ( 1 << 6 )
-#define SP_AOE           ( 1 << 7 ) // TBD
+#define SP_NONE                0
+#define SP_HEAL                ( 1 << 0 )
+#define SP_CLOAK               ( 1 << 1 )
+#define SP_TELEPORT            ( 1 << 2 )
+#define SP_MINE                ( 1 << 3 )
+#define SP_SHOT_FOURWAY_DIAG   ( 1 << 4 )
+#define SP_SHOT_FOURWAY        ( 1 << 5 )
+#define SP_SHIELD              ( 1 << 6 )
+#define SP_AOE                 ( 1 << 7 ) // TBD
 
 // generic parameters for motion
 #define VGOAL       8        // ship accleration goal
 #define VDRAG       -0.01f   // this is constant
 #define VAPPROACH   12       // this is accel/decel rate
 #define VMULT       8        // on each time step, take this many steps.
-#define MAX_BULLETS 16       // counts all bullets from all players.
+#define MAX_BULLETS 32       // counts all bullets from all players, incl mines
 
 // size of sub-map tiles
 #define TILE_W 80
@@ -46,9 +46,10 @@ typedef struct {
 
   /* fire params */
   int16_t shot_msec;   // this much time (in mS) between shots
-  int16_t shot_range;  // range is in px, but needs to be frames.
+  int16_t shot_range;  // range is in px
   int16_t shot_speed;  // pixels/second
-  int16_t shot_cost;   // cost to fire shot
+  int16_t shot_cost;   // energy cost to fire shot
+  uint8_t shot_size;   // shot gfx size
 
   /* accleration parameters */
   float  vdrag;
@@ -61,7 +62,7 @@ typedef struct {
   int16_t special_radius; // range of the special for collisions
   int16_t max_special_dmg;
   int16_t max_special_ttl;
-  float   energy_recharge_rate;
+  float   energy_recharge_rate; // This is per-frame, not per second.
 
   /* specials (bitmap) */
   uint8_t special_flags;

@@ -110,6 +110,12 @@ geigerScan (GHandles * p, uint16_t freq)
 	 */
 
 	if (p->badgesOnly == TRUE) {
+		/*
+		 * We skip over 3 bytes of packet header data,
+		 * plus 6 bytes of station address. Offset 1
+		 * in the packet buffer should contain the
+		 * packet length.
+		 */
 		d = &p->rxpkt[3 + 6];
 		l = p->rxpkt[1];
 		if (bleGapAdvBlockFind (&d, &l,

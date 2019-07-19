@@ -12,7 +12,7 @@ const ship_type_t shiptable[8] = {
 
   //  type_name,
   //  max_hp, max_dmg, max_energy, max_bullets,
-  //  shots_msec, shot_range, shot_speed, shot_cost
+  //  shots_msec, shot_range, shot_speed, shot_cost, shot_size
   //  vgoal, vdrag, vapproach, vmult
   //  special_cost, special_radius, max_special_dmg, max_special_ttl,
   //  energy_recharge_rate, specials
@@ -20,40 +20,39 @@ const ship_type_t shiptable[8] = {
   // pt boat has -1 for special ttl, it's instant.
   {
     "PT Boat",
-    200, 10, 100, 4 ,
-    500, 150, 50, 30,
-    10, -0.05, 12, 8, // PT boat is swiftest but does least damage.
+    200, 25, 100, 4 ,
+    500, 150, 50, 30, 5,
+    20, -0.005, 20, 8, // PT boat is swiftest but does least damage.
     30, 40, 25, -1,
-    1, SP_SHOT_RESTRICT
+    1, SP_SHOT_FOURWAY_DIAG // 4-way shot on diag!
   },
 
   {
     "Patrol Boat",
-    250, 25, 120, 3,
-    1000, 120, 50, 30,
+    250, 40, 120, 4,
+    1000, 120, 50, 30, 5,
     DEFAULT_VRATES,
     40, 60, 35, 60,
-    1, SP_SHOT_EXTEND
+    1, SP_SHOT_FOURWAY
   },
 
   // destroyers are only ship that can lay mines.
-  // tbd: what does "do not move last 7 seconds each" mean?
-  // maybe mines don't move but persist for 7 seconds?
+  // Mines don't move but persist for 7 seconds?
   {
     "Destroyer",
     400, 50, 120, 3,
-    2000, 300, 40, 60,
+    2000, 300, 40, 60, 7,
     DEFAULT_VRATES,
     40, 40, 75, 7000,
     2, SP_MINE
   },
 
   {
-    // cruiser has impact blast of 25, wtf is that?
+    // cruiser has impact blast of 25 (at end of range?)
     // cruiser also has a shield at 50/energy/second cost
     "Cruiser",
     400, 45, 250, 3,
-    2000, 250, 35, 60,
+    2000, 250, 35, 60, 7,
     DEFAULT_VRATES,
     50, 0, 0, 1000,
     2, SP_SHIELD
@@ -62,37 +61,37 @@ const ship_type_t shiptable[8] = {
   {
     "Frigate",
     500, 80, 300, 3,
-    500, 500, 45, 70,
+    500, 500, 45, 70, 10,
     DEFAULT_VRATES,
     60, -1, 20, 1000,
-    3, SP_HEAL
+    3, SP_HEAL  // make this be a acclearation to a goal, not instant.
   },
 
   {
     "Battleship",
     600, 60, 400, 3,
-    333, 400, 35, 100,
+    333, 400, 35, 100, 10,
     DEFAULT_VRATES,
     100, 80, 40, 1000,
-    3, SP_AOE
+    3, SP_AOE // 3 shots in all directions? 4-way shot on diag!
   },
 
   {
     "Submarine",
     30, 30, 300, 3,
-    333, 350, 40, 45,
+    333, 350, 40, 45, 6,
     DEFAULT_VRATES,
     40, -1, -1, 1000,
-    3, SP_CLOAK
+    3, SP_CLOAK // hides from other user. maybe show every N frames to tease?
   },
 
   {
     "Tesla",
     300, 30, 300, 3,
-    333, 2000, 40, 45,
+    333, 2000, 40, 45, 10,
     DEFAULT_VRATES,
     300, -1, -1, -1,
-    4, SP_TELEPORT
+    4, SP_TELEPORT // teleports to random place, and if land, you die.
   }
 
 };

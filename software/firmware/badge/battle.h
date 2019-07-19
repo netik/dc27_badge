@@ -20,37 +20,24 @@
 #define COLOR_PLAYER          HTML2COLOR(0xeeeseee) // light grey
 #define SHIP_SIZE_WORLDMAP    10
 #define SHIP_SIZE_ZOOMED      40
-#define BULLET_SIZE           10
 
-/*
- * We define these as macros rather than using an enum, because
- * these type definitions will also be used as part of the
- * network protocol packets, and using enums for over-the-wire
- * data structures is a bad idea. The internal storage format
- * for a C enum is Implemantation Defined (tm), which means
- * you can't count on it being a particular size. We need to
- * be unambiguous about the type and its size.
- */
+/* Entity opcodes */
+#define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
+#define BATTLE_OP_ENTITY_DESTROY    0x02 /* Discard existing entity */
+#define BATTLE_OP_ENTITY_UPDATE     0x03 /* Entity state update */
 
+/* VS opcodes */
+#define BATTLE_OP_SHIP_SELECT       0x10 /* Current ship selection */
+#define BATTLE_OP_SHIP_CONFIRM      0x11 /* Final ship choice */
 
-typedef struct _enemy
-{
-  ble_gap_addr_t ble_peer_addr;
-  char           name[CONFIG_NAME_MAXLEN];
-  uint8_t        level;
+/* State opcodes */
+#define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
+#define BATTLE_OP_ENG_UPDATE        0x21 /* my eng is X. */
+#define BATTLE_OP_IAMDEAD           0x22 /* I've been killed */
+#define BATTLE_OP_YOUAREDEAD        0x24 /* You've been killed */
+#define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
 
-  // these represent the current state of the user.
-  int16_t        hp;
-  int16_t        xp;
-  int16_t        energy;
-  uint8_t        ship_type;
-
-  systime_t      last_shot_ms;
-
-  bool           ship_locked_in; // if the enemy has locked in their ship type
-  uint8_t        ttl;
-  ENTITY         e;
-} ENEMY;
+#define BATTLE_OP_ENDGAME           0xF0 /* this ends the game */
 
 /*
  * Game network protocol definitions
@@ -65,40 +52,22 @@ typedef struct _enemy
  * of 4 bytes.
  */
 
-/* Entity opcodes */
-#define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
-#define BATTLE_OP_ENTITY_DESTROY    0x02 /* Discard existing entity */
-#define BATTLE_OP_ENTITY_UPDATE     0x03 /* Entity state update */
-
-/* VS opcodes */
-#define BATTLE_OP_SHIP_SELECT       0x10 /* Current ship selection */
-#define BATTLE_OP_SHIP_CONFIRM      0x11 /* Final ship choice */
-
-/* State opcodes */
-#define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
-#define BATTLE_OP_USE_ENG           0x21 /* I am using X of my energy. */
-#define BATTLE_OP_IAMDEAD           0x22 /* I've been killed */
-#define BATTLE_OP_YOUAREDEAD        0x24 /* You've been killed */
-#define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
-
-#define BATTLE_OP_ENDGAME           0xF0 /* this ends the game */
-
 /*
  * Battle packet header
- * This is common to all packet types
+ * This is common to all packet types (8 bytes)
  */
 
 typedef struct _bp_header
 {
-  uint16_t    bp_opcode;                /* Opcode value */
-  entity_type bp_type;                  /* Entity type */
+  uint16_t    bp_opcode;                /* 16-bit Opcode value */
+  entity_type bp_type;                  /* 16-bit Entity type */
   uint32_t    bp_id;                    /* 32-bit index/ID */
 } bp_header_t;
 
 /*
  * Entity packets. Can be used to specify that a new entity
  * (combatant, bullet, etc...) is in the simulation, has left the
- * simulation, or is being updated.
+ * simulation, or is being updated. (24 bytes)
  */
 
 typedef struct _bp_entity_pkt
@@ -112,32 +81,37 @@ typedef struct _bp_entity_pkt
   uint16_t    bp_velogoal_y;
   uint16_t    bp_visibility;
   uint16_t    bp_faces_right;
-  uint16_t    bp_pad;
 } bp_entity_pkt_t;
 
 typedef struct _bp_bullet_pkt
 {
   bp_header_t bp_header;
+  uint16_t   bp_origin_x;
+  uint16_t   bp_origin_y;
   int16_t    bp_dir_x;
   int16_t    bp_dir_y;
-} bp_bullet_pkt_t;
+  uint8_t    bp_is_free;
+  uint8_t    bp_pad1;
+  uint16_t   bp_pad2;
+} bp_bullet_pkt_t; /* 20 bytes */
 
 /*
  * VS. packets. These are used in the VS. select screen,
  * when players are deciding which ship in their navy to use
- * when battling their opponent.
+ * when battling their opponent. (12 bytes)
  */
 
 typedef struct _bp_vs_pkt
 {
   bp_header_t bp_header;
   uint16_t    bp_shiptype;
-  uint16_t    bp_pad;
+  uint16_t    bp_unlocks;
 } bp_vs_pkt_t;
 
 /*
  * State packets. These are used to keep the state machine
  * from possibly getting stuck and to update game timers.
+ * (12 bytes)
  */
 
 typedef struct _bp_state_pkt
