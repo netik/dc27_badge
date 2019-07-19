@@ -91,7 +91,9 @@ typedef struct _bp_bullet_pkt
   int16_t    bp_dir_x;
   int16_t    bp_dir_y;
   uint8_t    bp_is_free;
-} bp_bullet_pkt_t; /* 12 bytes */
+  uint8_t    bp_pad1;
+  uint16_t   bp_pad2;
+} bp_bullet_pkt_t; /* 20 bytes */
 
 /*
  * VS. packets. These are used in the VS. select screen,

@@ -20,20 +20,20 @@ const ship_type_t shiptable[8] = {
   // pt boat has -1 for special ttl, it's instant.
   {
     "PT Boat",
-    200, 10, 100, 4 ,
+    200, 25, 100, 4 ,
     500, 150, 50, 30, 5,
     20, -0.005, 20, 8, // PT boat is swiftest but does least damage.
     30, 40, 25, -1,
-    1, SP_SHOT_FOURWAY // 4-way shot on diag!
+    1, SP_SHOT_FOURWAY_DIAG // 4-way shot on diag!
   },
 
   {
     "Patrol Boat",
-    250, 25, 120, 3,
+    250, 40, 120, 4,
     1000, 120, 50, 30, 5,
     DEFAULT_VRATES,
     40, 60, 35, 60,
-    1, SP_SHOT_EXTEND
+    1, SP_SHOT_FOURWAY
   },
 
   // destroyers are only ship that can lay mines.

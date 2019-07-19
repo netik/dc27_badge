@@ -14,15 +14,15 @@
  */
 
 // bitfields
-#define SP_NONE          0
-#define SP_HEAL          ( 1 << 0 )
-#define SP_CLOAK         ( 1 << 1 )
-#define SP_TELEPORT      ( 1 << 2 )
-#define SP_MINE          ( 1 << 3 )
-#define SP_SHOT_FOURWAY  ( 1 << 4 )
-#define SP_SHOT_EXTEND   ( 1 << 5 )
-#define SP_SHIELD        ( 1 << 6 )
-#define SP_AOE           ( 1 << 7 ) // TBD
+#define SP_NONE                0
+#define SP_HEAL                ( 1 << 0 )
+#define SP_CLOAK               ( 1 << 1 )
+#define SP_TELEPORT            ( 1 << 2 )
+#define SP_MINE                ( 1 << 3 )
+#define SP_SHOT_FOURWAY_DIAG   ( 1 << 4 )
+#define SP_SHOT_FOURWAY        ( 1 << 5 )
+#define SP_SHIELD              ( 1 << 6 )
+#define SP_AOE                 ( 1 << 7 ) // TBD
 
 // generic parameters for motion
 #define VGOAL       8        // ship accleration goal
@@ -50,7 +50,7 @@ typedef struct {
   int16_t shot_speed;  // pixels/second
   int16_t shot_cost;   // energy cost to fire shot
   uint8_t shot_size;   // shot gfx size
-  
+
   /* accleration parameters */
   float  vdrag;
   int8_t vgoal;

@@ -126,7 +126,7 @@ static void render_all_enemies(void);
 static void send_ship_type(uint16_t type, bool final);
 static void state_vs_draw_enemy(ENEMY *e, bool is_player);
 static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e);
-static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y, bool is_free);
+static void send_bullet_create(int16_t seq, ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free);
 static void send_state_update(uint16_t opcode, uint16_t operand);
 static void redraw_combat_clock(void);
 bool entity_OOB(ENTITY *e);
@@ -429,7 +429,7 @@ draw_hud(OrchardAppContext *context)
 
 
 static void
-fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
+fire_bullet(ENEMY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
 {
   int count = 0;
 
@@ -527,7 +527,7 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
 
       if (e == player) {
         // fire across network if the player is firing
-        send_bullet_create(bullet[i], dir_x, dir_y, is_free);
+        send_bullet_create(i, bullet[i], dir_x, dir_y, is_free);
       }
 
       i2sPlay("game/shot.snd");
@@ -713,6 +713,12 @@ static void fire_special(ENEMY *e) {
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
     case SP_SHOT_FOURWAY:
+      fire_bullet(e,0,-1,TRUE);  // U
+      fire_bullet(e,0,1,TRUE);   // D
+      fire_bullet(e,-1,0,TRUE);  // L
+      fire_bullet(e,1,0,TRUE);   // R
+      break;
+    case SP_SHOT_FOURWAY_DIAG:
       fire_bullet(e,-1,-1,TRUE); // UL
       fire_bullet(e,1,-1,TRUE);  // UR
       fire_bullet(e,-1,1,TRUE);  // LL
@@ -1062,6 +1068,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
               pkt_bullet->bp_dir_x,
               pkt_bullet->bp_dir_y,
               pkt_bullet->bp_is_free);
+            printf("got bullet pkt: id: %ld %d %d\n",
+              pkt_bullet->bp_header.bp_id,
+              pkt_bullet->bp_dir_x,
+              pkt_bullet->bp_dir_y );
 
             // update enemy eng bar
             if (! pkt_bullet->bp_is_free) {
@@ -2360,7 +2370,7 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   }
 }
 
-static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y, bool is_free)
+  static void send_bullet_create(int16_t seq, ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
 {
   BattleHandles *p;
 
@@ -2368,7 +2378,7 @@ static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y, bool i
   p = (BattleHandles *)mycontext->priv;
   bp_bullet_pkt_t pkt;
 
-  memset(p->txbuf, 0, sizeof(p->txbuf));
+  memset((p->txbuf + (sizeof(bp_bullet_pkt_t) * seq)), 0, sizeof(p->txbuf));
 
   pkt.bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
@@ -2379,9 +2389,13 @@ static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y, bool i
   pkt.bp_dir_y      = dir_y;
   pkt.bp_is_free    = is_free;
 
-  memcpy(p->txbuf, &pkt, sizeof(bp_bullet_pkt_t));
+  // the txbuf is around 1024 bytes. The packet offset is equal to
+  // bullet's id * sizeof(bp_bullet_pkt_t)
+  memcpy((p->txbuf + (sizeof(bp_bullet_pkt_t) * seq)), &pkt, sizeof(bp_bullet_pkt_t));
 
-  if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS)
+  printf("send bullet: seq: %d id:%ld %d %d\n", seq, pkt.bp_header.bp_id, pkt.bp_dir_x , pkt.bp_dir_y  );
+
+  if (bleL2CapSend((uint8_t *)(p->txbuf + (sizeof(bp_bullet_pkt_t) * seq)), sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS)
   {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
