@@ -701,7 +701,8 @@ fire_allowed(ENEMY *e) {
 }
 
 static void set_ship_sprite(ENEMY *e) {
-
+  BattleHandles *       bh;
+  bh = (BattleHandles *)mycontext->priv;
   if (e->is_shielded) {
     if (e == player) {
       isp_set_sprite_from_spholder(sprites,
@@ -727,8 +728,7 @@ static void set_ship_sprite(ENEMY *e) {
 }
 
 static void fire_special(ENEMY *e) {
-  BattleHandles *       bh;
-  bh = (BattleHandles *)mycontext->priv;
+
   // fires a special.
   if (e->energy < shiptable[e->ship_type].special_cost) {
     // you can't afford it.
@@ -1960,15 +1960,13 @@ void regen_energy(ENEMY *e) {
 }
 
 void check_special_timeouts(ENEMY *e) {
-  BattleHandles *       bh;
-  bh = (BattleHandles *)mycontext->priv;
   if ((e->ship_type == SHIP_CRUISER) &&
       (e->is_shielded) &&
       (chVTTimeElapsedSinceX(e->special_started_at) >=
         TIME_MS2I(shiptable[e->ship_type].max_special_ttl))) {
           e->is_shielded = FALSE;
           set_ship_sprite(e);
-        }
+  }
 }
 
 void state_combat_tick(void)
