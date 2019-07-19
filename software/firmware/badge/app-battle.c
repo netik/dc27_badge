@@ -111,6 +111,8 @@ typedef struct _BattleHandles
 
   // left and right variants of the players; used in COMBAT only.
   ISPHOLDER *pl_left, *pl_right, *ce_left, *ce_right;
+  // for the cruiser, we also need the shielded versions
+  ISPHOLDER *pl_s_left, *pl_s_right, *ce_s_left, *ce_s_right;
 } BattleHandles;
 
 // enemies -- linked list
@@ -303,6 +305,8 @@ copy_config_to_player(void)
   userconfig *config = getConfig();
 
   player = malloc(sizeof(ENEMY));
+  memset(player, 0, sizeof(ENEMY));
+
   // this is done once at startup. These are the "live" values used in game,
   // where as the config is the long-term/stored value.
   memset(&(player->ble_peer_addr), 0, sizeof(ble_gap_addr_t));
@@ -696,7 +700,35 @@ fire_allowed(ENEMY *e) {
   return FALSE;
 }
 
+static void set_ship_sprite(ENEMY *e) {
+
+  if (e->is_shielded) {
+    if (e == player) {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->pl_s_right : bh->pl_s_left);
+    } else {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->ce_s_right : bh->ce_s_left);
+    }
+  } else {
+    if (e == player) {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->pl_right : bh->pl_left);
+    } else {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->ce_right : bh->ce_left);
+    }
+  }
+
+}
+
 static void fire_special(ENEMY *e) {
+  BattleHandles *       bh;
+  bh = (BattleHandles *)mycontext->priv;
   // fires a special.
   if (e->energy < shiptable[e->ship_type].special_cost) {
     // you can't afford it.
@@ -726,7 +758,13 @@ static void fire_special(ENEMY *e) {
     break;
     case SP_SHIELD:
       e->is_shielded = TRUE;
+      if (e == player)
+        send_state_update(BATTLE_OP_SET_SHIELD,e->is_shielded);
+
       e->special_started_at = chVTGetSystemTime();
+
+      set_ship_sprite(e);
+
       break;
     default:
       break;
@@ -1045,6 +1083,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             if (player->hp <= 0)
               chThdSleepMilliseconds(250);
           break;
+          case BATTLE_OP_SET_SHIELD:
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            current_enemy->is_shielded = pkt_state->bp_operand;
+            break;
           case BATTLE_OP_ENG_UPDATE:
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             current_enemy->energy = pkt_state->bp_operand;
@@ -1068,10 +1110,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
               pkt_bullet->bp_dir_x,
               pkt_bullet->bp_dir_y,
               pkt_bullet->bp_is_free);
-            printf("got bullet pkt: id: %ld %d %d\n",
-              pkt_bullet->bp_header.bp_id,
-              pkt_bullet->bp_dir_x,
-              pkt_bullet->bp_dir_y );
 
             // update enemy eng bar
             if (! pkt_bullet->bp_is_free) {
@@ -1096,10 +1134,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
               if (current_enemy->e.faces_right != pkt_entity->bp_faces_right) {
                 current_enemy->e.faces_right = pkt_entity->bp_faces_right;
-
-                isp_set_sprite_from_spholder(sprites,
-                  current_enemy->e.sprite_id,
-                  current_enemy->e.faces_right ? bh->ce_right : bh->ce_left);
+                set_ship_sprite(current_enemy);
               }
 
               isp_set_sprite_xy(sprites,
@@ -1237,20 +1272,18 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           player->e.vecVelocityGoal.x = -VGOAL;
           player->e.faces_right       = false;
 
-          if (current_battle_state == COMBAT)
-            isp_set_sprite_from_spholder(sprites,
-              player->e.sprite_id,
-              player->e.faces_right ? bh->pl_right : bh->pl_left);
+          if (current_battle_state == COMBAT) {
+            set_ship_sprite(player);
+          }
           break;
 
         case keyARight:
           player->e.faces_right       = true;
           player->e.vecVelocityGoal.x = VGOAL;
 
-          if (current_battle_state == COMBAT)
-            isp_set_sprite_from_spholder(sprites,
-              player->e.sprite_id,
-              player->e.faces_right ? bh->pl_right : bh->pl_left);
+          if (current_battle_state == COMBAT) {
+            set_ship_sprite(player);
+          }
           break;
 
         case keyAUp:
@@ -1804,7 +1837,23 @@ void state_combat_enter(void)
     getAvatarImage(current_enemy->ship_type, false, 'n', false));
   bh->ce_right = isp_get_spholder_from_file(
     getAvatarImage(current_enemy->ship_type, false, 'n', true));
-  // need shield if using Cruiser.
+
+  // player - need shield if using Cruiser.
+  if (player->ship_type == SHIP_CRUISER) {
+    bh->pl_s_left  = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 's', false));
+    bh->pl_s_right = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 's', true));
+  }
+
+  // enemy - need shield if using Cruiser.
+  if (current_enemy->ship_type == SHIP_CRUISER) {
+    bh->ce_s_left  = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 's', false));
+    bh->ce_s_right = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 's', true));
+  }
+
 
   /* move the player to the starting position */
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -1829,9 +1878,7 @@ void state_combat_enter(void)
   }
 
   // draw player
-  isp_set_sprite_from_spholder(sprites,
-    player->e.sprite_id,
-    player->e.faces_right ? bh->pl_right : bh->pl_left);
+  set_ship_sprite(player);
 
   isp_set_sprite_xy(sprites,
                     player->e.sprite_id,
@@ -1839,9 +1886,7 @@ void state_combat_enter(void)
                     player->e.vecPosition.y);
 
   // draw enemy
-  isp_set_sprite_from_spholder(sprites,
-    current_enemy->e.sprite_id,
-    current_enemy->e.faces_right ? bh->ce_right : bh->ce_left);
+  set_ship_sprite(current_enemy);
 
   isp_set_sprite_xy(sprites,
                     current_enemy->e.sprite_id,
@@ -1914,6 +1959,18 @@ void regen_energy(ENEMY *e) {
   }
 }
 
+void check_special_timeouts(ENEMY *e) {
+  BattleHandles *       bh;
+  bh = (BattleHandles *)mycontext->priv;
+  if ((e->ship_type == SHIP_CRUISER) &&
+      (e->is_shielded) &&
+      (chVTTimeElapsedSinceX(e->special_started_at) >=
+        TIME_MS2I(shiptable[e->ship_type].max_special_ttl))) {
+          e->is_shielded = FALSE;
+          set_ship_sprite(e);
+        }
+}
+
 void state_combat_tick(void)
 {
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -1938,6 +1995,11 @@ void state_combat_tick(void)
   regen_energy(player);
   regen_energy(current_enemy);
 
+  check_special_timeouts(player);
+  check_special_timeouts(current_enemy);
+
+  // force sprite redraw
+  isp_draw_all_sprites(sprites);
 }
 
 void state_combat_exit(void)
@@ -2390,8 +2452,6 @@ static void send_bullet_create(int16_t seq, ENTITY *e, int16_t dir_x, int16_t di
   pkt->bp_dir_x      = dir_x;
   pkt->bp_dir_y      = dir_y;
   pkt->bp_is_free    = is_free;
-
-  printf("send bullet: seq: %d id:%ld %d %d\n", seq, pkt->bp_header.bp_id, pkt->bp_dir_x , pkt->bp_dir_y  );
 
   if (bleL2CapSend((uint8_t *)pkt, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS) {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");

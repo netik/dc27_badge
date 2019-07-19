@@ -52,9 +52,9 @@ const ship_type_t shiptable[8] = {
     // cruiser also has a shield at 50/energy/second cost
     "Cruiser",
     400, 45, 250, 3,
-    2000, 250, 35, 60, 7,
+    1250, 250, 35, 60, 7,
     DEFAULT_VRATES,
-    50, 0, 0, 1000,
+    250, 0, 0, 2000,
     2, SP_SHIELD
   },
 

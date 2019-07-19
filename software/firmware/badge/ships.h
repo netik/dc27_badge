@@ -35,6 +35,16 @@
 #define TILE_W 80
 #define TILE_H 60
 
+// ship type defines
+#define SHIP_PTBOAT     0
+#define SHIP_PATROL     1
+#define SHIP_DESTROYER  2
+#define SHIP_CRUISER    3
+#define SHIP_FRIGATE    4
+#define SHIP_BATTLESHIP 5
+#define SHIP_SUBMARINE  6
+#define SHIP_TESLA      7
+
 typedef struct {
   char type_name[12]; /* type */
 
