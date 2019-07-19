@@ -76,12 +76,17 @@ const ship_type_t shiptable[8] = {
     3, SP_AOE // 3 shots in all directions? 4-way shot on diag!
   },
 
+  // on the submarine we do not use the special timer. You can stay
+  // submerged until you run out of energy. In app-battle.c we will
+  // charge you 100 ENG to submerge. Then 30 ENG per second to stay down.
+  // shots too will have a cost specified below. Run out of energy, and
+  // you auto-surface.
   {
     "Submarine",
     300, 30, 300, 3,
     333, 350, 40, 45, 6,
     10,-0.005,20,VMULT,
-    40, -1, -1, 1000,
+    100, -1, -1, -1,
     3, SP_CLOAK // hides from other user. maybe show every N frames to tease?
   },
 

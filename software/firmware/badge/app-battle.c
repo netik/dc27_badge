@@ -39,6 +39,8 @@
 #include "ble_peer.h"
 #include "strutil.h"
 
+#include "slaballoc.h"
+
 // debugging defines ---------------------------------------
 // debugs the discovery process
 #undef DEBUG_ENEMY_DISCOVERY
@@ -85,39 +87,6 @@ static uint8_t state_time_left = 0;
 
 OrchardAppContext *mycontext;
 
-/* private memory */
-typedef struct _BattleHandles
-{
-  GListener gl;
-  GListener gl2;
-  font_t    fontLG;
-  font_t    fontXS;
-  font_t    fontSM;
-  font_t    fontSTENCIL;
-  GHandle   ghTitleL;
-  GHandle   ghTitleR;
-  GHandle   ghACCEPT;
-  GHandle   ghDECLINE;
-
-  // these are the top row, player stats frame buffers.
-  pixel_t * l_pxbuf;
-  pixel_t * c_pxbuf;
-  pixel_t * r_pxbuf;
-
-  // misc variables
-  uint16_t  cid;       // l2capchannelid for combat
-  char      txbuf[MAX_PEERMEM + BLE_IDES_L2CAP_MTU + 3];
-  char      rxbuf[BLE_IDES_L2CAP_MTU];
-
-  // left and right variants of the players; used in COMBAT only.
-  ISPHOLDER *pl_left, *pl_right, *ce_left, *ce_right;
-  // for the cruiser, we also need the shielded versions
-  ISPHOLDER *pl_s_left, *pl_s_right, *ce_s_left, *ce_s_right;
-  // for the frigate we need the healing versions
-  ISPHOLDER *pl_g_left, *pl_g_right, *ce_g_left, *ce_g_right;
-
-} BattleHandles;
-
 // enemies -- linked list
 gll_t *enemies = NULL;
 
@@ -131,7 +100,7 @@ static void render_all_enemies(void);
 static void send_ship_type(uint16_t type, bool final);
 static void state_vs_draw_enemy(ENEMY *e, bool is_player);
 static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e);
-static void send_bullet_create(int16_t seq, ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free);
+static void send_bullet_create(ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free);
 static void send_state_update(uint16_t opcode, uint16_t operand);
 static void redraw_combat_clock(void);
 bool entity_OOB(ENTITY *e);
@@ -534,7 +503,7 @@ fire_bullet(ENEMY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
 
       if (e == player) {
         // fire across network if the player is firing
-        send_bullet_create(i, bullet[i], dir_x, dir_y, is_free);
+        send_bullet_create(bullet[i], dir_x, dir_y, is_free);
       }
 
       i2sPlay("game/shot.snd");
@@ -713,6 +682,8 @@ static void set_ship_sprite(ENEMY *e) {
 
   // this logic is a bit insnae, but it's the only
   // place that we calculate the sprite look per player.
+
+  // handle healing - make ship green
   if (e->is_healing) {
     if (e == player) {
       isp_set_sprite_from_spholder(sprites,
@@ -723,10 +694,25 @@ static void set_ship_sprite(ENEMY *e) {
         e->e.sprite_id,
         e->e.faces_right ? bh->ce_g_right : bh->ce_g_left);
     }
-
     return;
   }
 
+  // cloaked
+  if (e->is_cloaked) {
+    if (e == player) {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->pl_u_right : bh->pl_u_left);
+    } else {
+      // for subs we switch the player to the submerged icon
+      // and we hide the sprite on the other player's display.
+      // dive! dive!
+      isp_hide_sprite(sprites,e->e.sprite_id);
+    }
+    return;
+  }
+
+  // shieled puts an outline around the cruiser
   if (e->is_shielded) {
     if (e == player) {
       isp_set_sprite_from_spholder(sprites,
@@ -752,17 +738,21 @@ static void set_ship_sprite(ENEMY *e) {
 
 static void fire_special(ENEMY *e) {
   // fires a special.
-  if (e->energy < shiptable[e->ship_type].special_cost) {
-    // you can't afford it.
-    i2sPlay("game/error.snd");
-    return;
-  }
-  // charge them, mark last usage
-  e->energy = e->energy - shiptable[e->ship_type].special_cost;
-  e->last_special_ms = chVTGetSystemTime();
+  // if you've got the submarine and you're cloaked, then this
+  // operation will uncloak you.
+  if (e->ship_type != SHIP_SUBMARINE && e->is_cloaked == FALSE) {
+    if (e->energy < shiptable[e->ship_type].special_cost) {
+      // you can't afford it.
+      i2sPlay("game/error.snd");
+      return;
+    }
+    // charge them, mark last usage
+    e->energy = e->energy - shiptable[e->ship_type].special_cost;
+    e->last_special_ms = chVTGetSystemTime();
 
-  if (e == player)
-    send_state_update(BATTLE_OP_ENG_UPDATE,e->energy);
+    if (e == player)
+      send_state_update(BATTLE_OP_ENG_UPDATE,e->energy);
+  }
 
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
@@ -792,6 +782,20 @@ static void fire_special(ENEMY *e) {
       e->special_started_at = chVTGetSystemTime();
       set_ship_sprite(e);
       break;
+    case SP_CLOAK:
+      // this toggles the cloaking.
+      e->is_cloaked = !e->is_cloaked;
+      if (e == player)
+        send_state_update(BATTLE_OP_SET_CLOAK,e->is_cloaked);
+      e->special_started_at = chVTGetSystemTime();
+      set_ship_sprite(e);
+      break;
+    case SP_MINE:
+      break;
+    case SP_AOE:
+      break;
+    case SP_TELEPORT:
+      break;
     default:
       break;
   }
@@ -811,6 +815,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ble_evt_t *           evt;
   ble_gatts_evt_rw_authorize_request_t *rw;
   ble_gatts_evt_write_t *req;
+  ble_l2cap_evt_ch_tx_t * tx;
 
   bp_vs_pkt_t     *pkt_vs;
   bp_state_pkt_t  *pkt_state;
@@ -1133,6 +1138,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             current_enemy->special_started_at = chVTGetSystemTime();
             set_ship_sprite(current_enemy);
             break;
+          case BATTLE_OP_SET_CLOAK:
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            current_enemy->is_cloaked = pkt_state->bp_operand;
+            current_enemy->special_started_at = chVTGetSystemTime();
+            set_ship_sprite(current_enemy);
+            break;
           case BATTLE_OP_ENG_UPDATE:
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             current_enemy->energy = pkt_state->bp_operand;
@@ -1199,7 +1210,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       break;
 
     case l2capTxEvent:
-      // after transmit... they got the data.
+      // after transmit, release the buffer.
+      tx = &evt->evt.l2cap_evt.params.tx;
+      // And then look at tx->sdu_buf.p_data, tx->sdu_buf.len.
+      sl_release(tx->sdu_buf.p_data);
       break;
 
     case l2capConnectEvent:
@@ -1819,14 +1833,66 @@ void state_approval_demand_exit(void)
 }
 
 // COMBAT --------------------------------------------------------------------
+void combat_load_sprites(void) {
+  BattleHandles *bh;
+  bh = mycontext->priv;
 
+  // load sprites
+  bh->pl_left  = isp_get_spholder_from_file(
+    getAvatarImage(player->ship_type, true, 'n', false));
+  bh->pl_right = isp_get_spholder_from_file(
+    getAvatarImage(player->ship_type, true, 'n', true));
+  bh->ce_left  = isp_get_spholder_from_file(
+    getAvatarImage(current_enemy->ship_type, false, 'n', false));
+  bh->ce_right = isp_get_spholder_from_file(
+    getAvatarImage(current_enemy->ship_type, false, 'n', true));
+
+  // player - need shield if using Cruiser.
+  if (player->ship_type == SHIP_CRUISER) {
+    bh->pl_s_left  = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 's', false));
+    bh->pl_s_right = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 's', true));
+  }
+
+  // enemy - need shield if using Cruiser.
+  if (current_enemy->ship_type == SHIP_CRUISER) {
+    bh->ce_s_left  = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 's', false));
+    bh->ce_s_right = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 's', true));
+  }
+
+  // player - need heal if using Frigate.
+  if (player->ship_type == SHIP_FRIGATE) {
+    bh->pl_g_left  = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 'g', false));
+    bh->pl_g_right = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 'g', true));
+  }
+
+  // enemy - need heal if using Frigate.
+  if (current_enemy->ship_type == SHIP_FRIGATE) {
+    bh->ce_g_left  = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 'g', false));
+    bh->ce_g_right = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 'g', true));
+  }
+
+  // player - need submerged if using sub -- we will not load a submerged
+  // one for the enemy, because they will just be set to !visible
+  if (player->ship_type == SHIP_SUBMARINE) {
+    bh->pl_u_left  = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 'u', false));
+    bh->pl_u_right = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 'u', true));
+  }
+}
 void state_combat_enter(void)
 {
   char        fnbuf[30];
   int         newmap;
   userconfig *config = getConfig();
-  BattleHandles * bh;
-  bh       = (BattleHandles *)mycontext->priv;
 
   // we're in combat now, send our last advertisement.
   state_time_left   = 120;
@@ -1879,48 +1945,7 @@ void state_combat_enter(void)
   // players
   entity_init(&player->e, sprites, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_PLAYER);
   entity_init(&current_enemy->e, sprites, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_ENEMY);
-
-  // load sprites
-  bh->pl_left  = isp_get_spholder_from_file(
-    getAvatarImage(player->ship_type, true, 'n', false));
-  bh->pl_right = isp_get_spholder_from_file(
-    getAvatarImage(player->ship_type, true, 'n', true));
-  bh->ce_left  = isp_get_spholder_from_file(
-    getAvatarImage(current_enemy->ship_type, false, 'n', false));
-  bh->ce_right = isp_get_spholder_from_file(
-    getAvatarImage(current_enemy->ship_type, false, 'n', true));
-
-  // player - need shield if using Cruiser.
-  if (player->ship_type == SHIP_CRUISER) {
-    bh->pl_s_left  = isp_get_spholder_from_file(
-      getAvatarImage(player->ship_type, true, 's', false));
-    bh->pl_s_right = isp_get_spholder_from_file(
-      getAvatarImage(player->ship_type, true, 's', true));
-  }
-
-  // enemy - need shield if using Cruiser.
-  if (current_enemy->ship_type == SHIP_CRUISER) {
-    bh->ce_s_left  = isp_get_spholder_from_file(
-      getAvatarImage(current_enemy->ship_type, false, 's', false));
-    bh->ce_s_right = isp_get_spholder_from_file(
-      getAvatarImage(current_enemy->ship_type, false, 's', true));
-  }
-
-  // player - need shield if using Cruiser.
-  if (player->ship_type == SHIP_FRIGATE) {
-    bh->pl_g_left  = isp_get_spholder_from_file(
-      getAvatarImage(player->ship_type, true, 'g', false));
-    bh->pl_g_right = isp_get_spholder_from_file(
-      getAvatarImage(player->ship_type, true, 'g', true));
-  }
-
-  // enemy - need shield if using Cruiser.
-  if (current_enemy->ship_type == SHIP_FRIGATE) {
-    bh->ce_g_left  = isp_get_spholder_from_file(
-      getAvatarImage(current_enemy->ship_type, false, 'g', false));
-    bh->ce_g_right = isp_get_spholder_from_file(
-      getAvatarImage(current_enemy->ship_type, false, 'g', true));
-  }
+  combat_load_sprites();
 
   /* move the player to the starting position */
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -2001,6 +2026,7 @@ void update_combat_clock(void) {
   {
     // time up.
     send_state_update(BATTLE_OP_CLOCKUPDATE, state_time_left);
+    chThdSleepMilliseconds(100);
     send_state_update(BATTLE_OP_ENDGAME, 0);
     i2sPlay("sound/foghrn.snd");
     changeState(SHOW_RESULTS);
@@ -2009,6 +2035,10 @@ void update_combat_clock(void) {
 
 void regen_energy(ENEMY *e) {
   // regen energy
+
+  // you can't regen energy underwater.
+  if (e->is_cloaked) return;
+
   if (e->energy != shiptable[e->ship_type].max_energy) {
     e->energy = e->energy + shiptable[e->ship_type].energy_recharge_rate;
 
@@ -2055,13 +2085,43 @@ void check_special_timeouts(ENEMY *e) {
         TIME_MS2I(shiptable[e->ship_type].max_special_ttl))) {
           e->is_shielded = FALSE;
           set_ship_sprite(e);
+          return;
   }
+
   if ((e->ship_type == SHIP_FRIGATE) &&
       (e->is_healing) &&
       (chVTTimeElapsedSinceX(e->special_started_at) >=
         TIME_MS2I(shiptable[e->ship_type].max_special_ttl))) {
           e->is_healing = FALSE;
           set_ship_sprite(e);
+          return;
+  }
+
+  // if you are cloaked we charge you energy (1 ENG / frame))
+  // and tell the other player about it.
+  if (e->is_cloaked) {
+    e->energy = e->energy - 1;
+
+    // slow down this rate, otherwise we will drop packets
+    if (e == player && animtick % 3 == 0)
+      send_state_update(BATTLE_OP_ENG_UPDATE,e->energy);
+
+    if (e == player) {
+      redraw_player_bars();
+    }
+
+    if (e == current_enemy) {
+      redraw_enemy_bars();
+    }
+  }
+
+  // the sub will resurface if it runs out of energy underwater
+  if ((e->ship_type == SHIP_SUBMARINE) &&
+      (e->is_cloaked) && (e->energy <= 0)) {
+          e->is_cloaked = FALSE;
+          isp_show_sprite(sprites,e->e.sprite_id);
+          set_ship_sprite(e);
+          return;
   }
 }
 
@@ -2113,15 +2173,37 @@ void state_combat_exit(void)
   free(bh->r_pxbuf);
   bh->r_pxbuf = NULL;
 
-  // clear spholders
+  // clear spholders - player
   isp_destroy_spholder(bh->pl_left);
   bh->pl_left = NULL;
   isp_destroy_spholder(bh->pl_right);
   bh->pl_right = NULL;
+  isp_destroy_spholder(bh->pl_s_left);
+  bh->pl_s_left = NULL;
+  isp_destroy_spholder(bh->pl_s_right);
+  bh->pl_s_right = NULL;
+  isp_destroy_spholder(bh->pl_g_left);
+  bh->pl_g_left = NULL;
+  isp_destroy_spholder(bh->pl_g_right);
+  bh->pl_g_right = NULL;
+  isp_destroy_spholder(bh->pl_u_left);
+  bh->pl_u_left = NULL;
+  isp_destroy_spholder(bh->pl_u_right);
+  bh->pl_u_right = NULL;
+
+  // clear spholders - enemy
   isp_destroy_spholder(bh->ce_left);
   bh->ce_left = NULL;
   isp_destroy_spholder(bh->ce_right);
   bh->ce_right = NULL;
+  isp_destroy_spholder(bh->ce_s_left);
+  bh->ce_s_left = NULL;
+  isp_destroy_spholder(bh->ce_s_right);
+  bh->ce_s_right = NULL;
+  isp_destroy_spholder(bh->ce_g_left);
+  bh->ce_g_left = NULL;
+  isp_destroy_spholder(bh->ce_g_right);
+  bh->ce_g_right = NULL;
 
   /* tear down sprite system */
   isp_shutdown(sprites);
@@ -2450,20 +2532,17 @@ static void state_vs_draw_enemy(ENEMY *e, bool is_player)
 
 static void send_state_update(uint16_t opcode, uint16_t operand)
 {
-  BattleHandles *p;
-
-  // get private memory
-  p = (BattleHandles *)mycontext->priv;
   bp_state_pkt_t pkt;
+  uint8_t *buf;
+  buf = sl_alloc();
 
-  memset(p->txbuf, 0, sizeof(p->txbuf));
   pkt.bp_header.bp_opcode = opcode;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
   pkt.bp_operand = operand;
   pkt.bp_pad = 0xffff;
-  memcpy(p->txbuf, &pkt, sizeof(bp_state_pkt_t));
+  memcpy(buf, &pkt, sizeof(bp_state_pkt_t));
 
-  if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_state_pkt_t)) != NRF_SUCCESS)
+  if (bleL2CapSend((uint8_t *)buf, sizeof(bp_state_pkt_t)) != NRF_SUCCESS)
   {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
@@ -2474,19 +2553,16 @@ static void send_state_update(uint16_t opcode, uint16_t operand)
 
 static void send_ship_type(uint16_t type, bool final)
 {
-  BattleHandles *p;
-
-  // get private memory
-  p = (BattleHandles *)mycontext->priv;
   bp_vs_pkt_t pkt;
+  uint8_t *buf;
+  buf = sl_alloc();
 
-  memset(p->txbuf, 0, sizeof(p->txbuf));
   pkt.bp_header.bp_opcode = final ? BATTLE_OP_SHIP_CONFIRM : BATTLE_OP_SHIP_SELECT;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
   pkt.bp_shiptype         = type;
-  memcpy(p->txbuf, &pkt, sizeof(bp_vs_pkt_t));
+  memcpy(buf, &pkt, sizeof(bp_vs_pkt_t));
 
-  if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_vs_pkt_t)) != NRF_SUCCESS)
+  if (bleL2CapSend((uint8_t *)buf, sizeof(bp_vs_pkt_t)) != NRF_SUCCESS)
   {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
@@ -2497,13 +2573,10 @@ static void send_ship_type(uint16_t type, bool final)
 
 static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTITY *e)
 {
-  BattleHandles *p;
-
-  // get private memory
-  p = (BattleHandles *)mycontext->priv;
   bp_entity_pkt_t pkt;
+  uint8_t *buf;
+  buf = sl_alloc();
 
-  memset(p->txbuf, 0, sizeof(p->txbuf));
   pkt.bp_header.bp_id = id;
 
   // pkt.bp_header.bp_shiptype = 0x0; // we ignore this on update/create
@@ -2518,9 +2591,9 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   pkt.bp_velogoal_y = e->vecVelocityGoal.y;
   pkt.bp_faces_right = e->faces_right;
 
-  memcpy(p->txbuf, &pkt, sizeof(bp_entity_pkt_t));
+  memcpy(buf, &pkt, sizeof(bp_entity_pkt_t));
 
-  if (bleL2CapSend((uint8_t *)p->txbuf, sizeof(bp_entity_pkt_t)) != NRF_SUCCESS)
+  if (bleL2CapSend((uint8_t *)buf, sizeof(bp_entity_pkt_t)) != NRF_SUCCESS)
   {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
@@ -2529,28 +2602,23 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   }
 }
 
-static void send_bullet_create(int16_t seq, ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
+static void send_bullet_create(ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
 {
-  BattleHandles *p;
   bp_bullet_pkt_t *pkt;
+  uint8_t *buf;
+  buf = sl_alloc();
 
   // get private memory
-  p = (BattleHandles *)mycontext->priv;
-
-  pkt = (bp_bullet_pkt_t *)p->txbuf;
-  pkt = &pkt[seq];
-  memset(pkt, 0, sizeof(bp_bullet_pkt_t));
+  pkt = (bp_bullet_pkt_t *)buf;
 
   pkt->bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
   pkt->bp_header.bp_type   = T_ENEMY; // always enemy.
-
   pkt->bp_header.bp_id = e->id;
-
   pkt->bp_dir_x      = dir_x;
   pkt->bp_dir_y      = dir_y;
   pkt->bp_is_free    = is_free;
 
-  if (bleL2CapSend((uint8_t *)pkt, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS) {
+  if (bleL2CapSend((uint8_t *)buf, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS) {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
     orchardAppExit();
