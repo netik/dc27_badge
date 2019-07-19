@@ -64,7 +64,6 @@ bleL2CapDispatch (ble_evt_t * evt)
 #endif
 	ble_l2cap_evt_ch_setup_request_t * request;
 	ble_l2cap_evt_ch_rx_t * rx;
-	ble_l2cap_evt_ch_tx_t * tx;
 	ble_data_t rx_data;
 
 	switch (evt->header.evt_id) {
@@ -149,12 +148,11 @@ bleL2CapDispatch (ble_evt_t * evt)
 			break;
 
 		case BLE_L2CAP_EVT_CH_TX:
-			tx = &evt->evt.l2cap_evt.params.tx;
 #ifdef BLE_L2CAP_VERBOSE
 			printf ("L2CAP SDU transmitted\n");
 #endif
 			orchardAppRadioCallback (l2capTxEvent, evt,
-			    tx->sdu_buf.p_data, tx->sdu_buf.len);
+			    NULL, 0);
 			break;
 
 		default:
