@@ -17,10 +17,10 @@ typedef uint16_t entity_type;
 
 #define T_PLAYER        0x01
 #define T_ENEMY         0x02
-#define T_BULLET_PLAYER 0x04
-#define T_BULLET_ENEMY  0x08
-#define T_MINE_PLAYER   0x10
-#define T_MINE_ENEMY    0x11
+#define T_ENEMY_BULLET  0x04
+#define T_ENEMY_MINE    0x08
+#define T_PLAYER_BULLET 0x10
+#define T_PLAYER_MINE   0x11
 #define T_SPECIAL       0x14
 
 typedef struct _entity

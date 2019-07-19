@@ -7,7 +7,7 @@
 
 /* ships.h */
 
-/* ship parameter file
+/* ship parameter structures and defines
  *
  * J. Adams <jna@retina.net> 6/2019
  *

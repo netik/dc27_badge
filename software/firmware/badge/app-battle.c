@@ -437,7 +437,7 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
   // possible for the player's current ship type.
   if (e == player) {
     for (int i = 0; i < MAX_BULLETS; i++) {
-      if (bullet[i] != NULL && bullet[i]->type == T_BULLET_PLAYER) {
+      if (bullet[i] != NULL && bullet[i]->type == T_PLAYER_BULLET) {
         count++;
       }
     }
@@ -468,7 +468,7 @@ fire_bullet(ENEMY *e, int dir_x, int dir_y, bool is_free)
     // create a new entity and fire something from it.
     if (bullet[i] == NULL) {
       bullet[i] = malloc(sizeof(ENTITY));
-      entity_init(bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, e == player ? T_BULLET_PLAYER : T_BULLET_ENEMY);
+      entity_init(bullet[i], sprites, BULLET_SIZE, BULLET_SIZE, e == player ? T_PLAYER_BULLET : T_ENEMY_BULLET);
       bullet[i]->visible = TRUE;
 
       // bullets don't use TTL, they are ranged (see update_bullets)
@@ -547,7 +547,7 @@ void update_bullets(void) {
       entity_update(bullet[i], FRAME_DELAY);
 
       // figure out how far away the bullet is using Pythagorean theorem.
-      if (bullet[i]->type == T_BULLET_PLAYER) {
+      if (bullet[i]->type == T_PLAYER_BULLET) {
           max_range = shiptable[player->ship_type].shot_range;
       } else {
           max_range = shiptable[current_enemy->ship_type].shot_range;
@@ -558,7 +558,7 @@ void update_bullets(void) {
         pow(bullet[i]->vecPosOrigin.y - bullet[i]->vecPosition.y, 2));
 
       // did this bullet hit anything?
-      if (bullet[i] && bullet[i]->type == T_BULLET_ENEMY) {
+      if (bullet[i] && bullet[i]->type == T_ENEMY_BULLET) {
         if (isp_check_sprites_collision(sprites,
                                         player->e.sprite_id,
                                         bullet[i]->sprite_id,
@@ -570,7 +570,7 @@ void update_bullets(void) {
         }
       }
 
-      if (bullet[i] && bullet[i]->type == T_BULLET_PLAYER) {
+      if (bullet[i] && bullet[i]->type == T_PLAYER_BULLET) {
         if (isp_check_sprites_collision(sprites,
                                         current_enemy->e.sprite_id,
                                         bullet[i]->sprite_id,
@@ -692,6 +692,15 @@ fire_allowed(ENEMY *e) {
   return FALSE;
 }
 
+static void lay_mine(ENEMY *e) {
+  // lays a mine at the present position
+
+}
+
+static void do_teleport(ENEMY *e) {
+
+}
+
 static void fire_special(ENEMY *e) {
   // fires a special.
   if (e->energy < shiptable[e->ship_type].special_cost) {
@@ -699,9 +708,11 @@ static void fire_special(ENEMY *e) {
     i2sPlay("game/error.snd");
     return;
   }
+
   // charge them, mark last usage
   e->energy = e->energy - shiptable[e->ship_type].special_cost;
   e->last_special_ms = chVTGetSystemTime();
+  e->special_started_at = chVTGetSystemTime();
 
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
@@ -717,21 +728,22 @@ static void fire_special(ENEMY *e) {
       fire_bullet(e,-1,1,TRUE);  // LL
       fire_bullet(e,1,1,TRUE);   // LR
     break;
+    case SP_MINE:
+      lay_mine(e);
+      break;
     case SP_SHIELD:
       e->is_shielded = TRUE;
-      e->special_started_at = chVTGetSystemTime();
       break;
     case SP_CLOAK:
       e->is_cloaked = TRUE;
-      e->special_started_at = chVTGetSystemTime();
       break;
     case SP_TELEPORT:
+      do_teleport(e);
       break;
     case SP_SHOT_EXTEND:
       break;
-    case SP_MINE:
-      break;
     case SP_HEAL:
+      e->is_healing = TRUE;
       break;
 
     default:
@@ -1066,13 +1078,21 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           case BATTLE_OP_ENTITY_CREATE:
             // enemy is firing a bullet from their current position.
             pkt_bullet = (bp_bullet_pkt_t *)&bh->rxbuf;
-            fire_bullet(current_enemy,
-              pkt_bullet->bp_dir_x,
-              pkt_bullet->bp_dir_y, FALSE);
+            if (pkt_bullet->bp_header.bp_type == T_ENEMY_BULLET) {
+              fire_bullet(current_enemy,
+                pkt_bullet->bp_dir_x,
+                pkt_bullet->bp_dir_y, FALSE);
 
-            // update enemy eng bar
-            current_enemy->energy = current_enemy->energy - shiptable[current_enemy->ship_type].shot_cost;
-            redraw_enemy_bars();
+              // update enemy eng bar
+              current_enemy->energy = current_enemy->energy - shiptable[current_enemy->ship_type].shot_cost;
+              redraw_enemy_bars();
+            }
+            if (pkt_bullet->bp_header.bp_type == T_ENEMY_MINE) {
+              fire_bullet(current_enemy,
+                pkt_bullet->bp_dir_x,
+                pkt_bullet->bp_dir_y, FALSE);
+            }
+
           break;
           case BATTLE_OP_ENTITY_UPDATE:
             // the enemy is updating their position and velocity
@@ -2376,7 +2396,7 @@ static void send_bullet_create(ENTITY *e, uint16_t dir_x, uint16_t dir_y)
   memset(p->txbuf, 0, sizeof(p->txbuf));
 
   pkt.bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
-  pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
+  pkt.bp_header.bp_type   = T_ENEMY_BULLET;
 
   pkt.bp_header.bp_id = e->id;
 

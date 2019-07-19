@@ -58,11 +58,11 @@ entity_init(ENTITY *p, ISPRITESYS *sprites, int16_t size_x, int16_t size_y, enti
     color = Red;
     break;
 
-  case T_BULLET_PLAYER:
+  case T_PLAYER_BULLET:
     color = Black;
     break;
 
-  case T_BULLET_ENEMY:
+  case T_ENEMY_BULLET:
     color = Red;
     break;
 

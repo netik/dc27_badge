@@ -87,6 +87,8 @@ typedef struct _bp_entity_pkt
 typedef struct _bp_bullet_pkt
 {
   bp_header_t bp_header;
+  uint16_t   bp_origin_x;
+  uint16_t   bp_origin_y;
   int16_t    bp_dir_x;
   int16_t    bp_dir_y;
 } bp_bullet_pkt_t; /* 12 bytes */
