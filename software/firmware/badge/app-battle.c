@@ -590,9 +590,13 @@ void update_bullets(void) {
           // we tell the other side to update their damage.
 
           // damage is random, half to full damage.
-          dmg = randRange(shiptable[player->ship_type].max_dmg * .75,
-                          shiptable[player->ship_type].max_dmg);
 
+          if (current_enemy->is_shielded) {
+            dmg = 0;
+          } else {
+            dmg = randRange(shiptable[player->ship_type].max_dmg * .75,
+                            shiptable[player->ship_type].max_dmg);
+          }
           current_enemy->hp = current_enemy->hp - dmg;
 
           i2sPlay("game/explode2.snd");
@@ -786,8 +790,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   ble_gatts_evt_rw_authorize_request_t *rw;
   ble_gatts_evt_write_t *req;
 
-  bp_vs_pkt_t *    pkt_vs;
-  bp_state_pkt_t *    pkt_state;
+  bp_vs_pkt_t     *pkt_vs;
+  bp_state_pkt_t  *pkt_state;
   bp_entity_pkt_t *pkt_entity;
   bp_bullet_pkt_t *pkt_bullet;
 
@@ -1063,20 +1067,32 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             player->hp = player->hp - pkt_state->bp_operand;
             i2sPlay("game/explode2.snd");
-            putImageFile(getAvatarImage(player->ship_type,
-              TRUE, 'h', player->e.faces_right),
-              player->e.vecPosition.x,
-              player->e.vecPosition.y);
-            chThdSleepMilliseconds(100);
-            if (player->hp <= 0) {
-              tmp[0]='d';
+            if (! player->is_shielded) {
+              putImageFile(getAvatarImage(player->ship_type,
+                TRUE, 'h', player->e.faces_right),
+                player->e.vecPosition.x,
+                player->e.vecPosition.y);
+              chThdSleepMilliseconds(100);
+              if (player->hp <= 0) {
+                tmp[0]='d';
+              } else {
+                tmp[0]='n';
+              }
+              putImageFile(getAvatarImage(player->ship_type, TRUE, tmp[0],
+                player->e.faces_right),
+                player->e.vecPosition.x,
+                player->e.vecPosition.y);            // player's stats
             } else {
-              tmp[0]='n';
+              putImageFile(getAvatarImage(player->ship_type,
+                TRUE, 'n', player->e.faces_right),
+                player->e.vecPosition.x,
+                player->e.vecPosition.y);
+              chThdSleepMilliseconds(100);
+              putImageFile(getAvatarImage(player->ship_type,
+                TRUE, 's', player->e.faces_right),
+                player->e.vecPosition.x,
+                player->e.vecPosition.y);
             }
-            putImageFile(getAvatarImage(player->ship_type, TRUE, tmp[0],
-              player->e.faces_right),
-              player->e.vecPosition.x,
-              player->e.vecPosition.y);            // player's stats
             redraw_player_bars();
 
             // u dead.
@@ -1086,6 +1102,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           case BATTLE_OP_SET_SHIELD:
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             current_enemy->is_shielded = pkt_state->bp_operand;
+            current_enemy->special_started_at = chVTGetSystemTime();
+            set_ship_sprite(current_enemy);
             break;
           case BATTLE_OP_ENG_UPDATE:
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
