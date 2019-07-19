@@ -2370,33 +2370,30 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   }
 }
 
-  static void send_bullet_create(int16_t seq, ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
+static void send_bullet_create(int16_t seq, ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
 {
   BattleHandles *p;
+  bp_bullet_pkt_t *pkt;
 
   // get private memory
   p = (BattleHandles *)mycontext->priv;
-  bp_bullet_pkt_t pkt;
 
-  memset((p->txbuf + (sizeof(bp_bullet_pkt_t) * seq)), 0, sizeof(p->txbuf));
+  pkt = (bp_bullet_pkt_t *)p->txbuf;
+  pkt = &pkt[seq];
+  memset(pkt, 0, sizeof(bp_bullet_pkt_t));
 
-  pkt.bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
-  pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
+  pkt->bp_header.bp_opcode = BATTLE_OP_ENTITY_CREATE;
+  pkt->bp_header.bp_type   = T_ENEMY; // always enemy.
 
-  pkt.bp_header.bp_id = e->id;
+  pkt->bp_header.bp_id = e->id;
 
-  pkt.bp_dir_x      = dir_x;
-  pkt.bp_dir_y      = dir_y;
-  pkt.bp_is_free    = is_free;
+  pkt->bp_dir_x      = dir_x;
+  pkt->bp_dir_y      = dir_y;
+  pkt->bp_is_free    = is_free;
 
-  // the txbuf is around 1024 bytes. The packet offset is equal to
-  // bullet's id * sizeof(bp_bullet_pkt_t)
-  memcpy((p->txbuf + (sizeof(bp_bullet_pkt_t) * seq)), &pkt, sizeof(bp_bullet_pkt_t));
+  printf("send bullet: seq: %d id:%ld %d %d\n", seq, pkt->bp_header.bp_id, pkt->bp_dir_x , pkt->bp_dir_y  );
 
-  printf("send bullet: seq: %d id:%ld %d %d\n", seq, pkt.bp_header.bp_id, pkt.bp_dir_x , pkt.bp_dir_y  );
-
-  if (bleL2CapSend((uint8_t *)(p->txbuf + (sizeof(bp_bullet_pkt_t) * seq)), sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS)
-  {
+  if (bleL2CapSend((uint8_t *)pkt, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS) {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
     orchardAppExit();
