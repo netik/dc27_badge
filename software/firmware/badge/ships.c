@@ -63,7 +63,7 @@ const ship_type_t shiptable[8] = {
     500, 80, 300, 3,
     500, 500, 45, 70, 10,
     DEFAULT_VRATES,
-    60, -1, 20, 1000,
+    150, -1, 20, 1000,
     3, SP_HEAL  // make this be a acclearation to a goal, not instant.
   },
 

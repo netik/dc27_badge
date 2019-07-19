@@ -113,6 +113,9 @@ typedef struct _BattleHandles
   ISPHOLDER *pl_left, *pl_right, *ce_left, *ce_right;
   // for the cruiser, we also need the shielded versions
   ISPHOLDER *pl_s_left, *pl_s_right, *ce_s_left, *ce_s_right;
+  // for the frigate we need the healing versions
+  ISPHOLDER *pl_g_left, *pl_g_right, *ce_g_left, *ce_g_right;
+
 } BattleHandles;
 
 // enemies -- linked list
@@ -707,6 +710,23 @@ fire_allowed(ENEMY *e) {
 static void set_ship_sprite(ENEMY *e) {
   BattleHandles *       bh;
   bh = (BattleHandles *)mycontext->priv;
+
+  // this logic is a bit insnae, but it's the only
+  // place that we calculate the sprite look per player.
+  if (e->is_healing) {
+    if (e == player) {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->pl_g_right : bh->pl_g_left);
+    } else {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->ce_g_right : bh->ce_g_left);
+    }
+
+    return;
+  }
+
   if (e->is_shielded) {
     if (e == player) {
       isp_set_sprite_from_spholder(sprites,
@@ -728,11 +748,9 @@ static void set_ship_sprite(ENEMY *e) {
         e->e.faces_right ? bh->ce_right : bh->ce_left);
     }
   }
-
 }
 
 static void fire_special(ENEMY *e) {
-
   // fires a special.
   if (e->energy < shiptable[e->ship_type].special_cost) {
     // you can't afford it.
@@ -764,11 +782,15 @@ static void fire_special(ENEMY *e) {
       e->is_shielded = TRUE;
       if (e == player)
         send_state_update(BATTLE_OP_SET_SHIELD,e->is_shielded);
-
       e->special_started_at = chVTGetSystemTime();
-
       set_ship_sprite(e);
-
+      break;
+    case SP_HEAL:
+      e->is_healing = TRUE;
+      if (e == player)
+        send_state_update(BATTLE_OP_SET_HEAL,e->is_healing);
+      e->special_started_at = chVTGetSystemTime();
+      set_ship_sprite(e);
       break;
     default:
       break;
@@ -1105,11 +1127,22 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             current_enemy->special_started_at = chVTGetSystemTime();
             set_ship_sprite(current_enemy);
             break;
+          case BATTLE_OP_SET_HEAL:
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            current_enemy->is_healing = pkt_state->bp_operand;
+            current_enemy->special_started_at = chVTGetSystemTime();
+            set_ship_sprite(current_enemy);
+            break;
           case BATTLE_OP_ENG_UPDATE:
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             current_enemy->energy = pkt_state->bp_operand;
-            redraw_player_bars();
-          break;
+            redraw_enemy_bars();
+            break;
+          case BATTLE_OP_HP_UPDATE:
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            current_enemy->hp = pkt_state->bp_operand;
+            redraw_enemy_bars();
+            break;
           case BATTLE_OP_CLOCKUPDATE:
             // we are receiving clock from the other badge.
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
@@ -1872,6 +1905,21 @@ void state_combat_enter(void)
       getAvatarImage(current_enemy->ship_type, false, 's', true));
   }
 
+  // player - need shield if using Cruiser.
+  if (player->ship_type == SHIP_FRIGATE) {
+    bh->pl_g_left  = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 'g', false));
+    bh->pl_g_right = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 'g', true));
+  }
+
+  // enemy - need shield if using Cruiser.
+  if (current_enemy->ship_type == SHIP_FRIGATE) {
+    bh->ce_g_left  = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 'g', false));
+    bh->ce_g_right = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 'g', true));
+  }
 
   /* move the player to the starting position */
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -1977,12 +2025,41 @@ void regen_energy(ENEMY *e) {
   }
 }
 
+void regen_health(ENEMY *e) {
+  // regen energy
+  if (e->is_healing) {
+    // The FRIGATE is the only ship that can regen.
+    // It can regen for one second, so this will restore 125 HP
+    e->hp = e->hp + 5;
+
+    if (e->hp > shiptable[e->ship_type].max_hp) {
+      e->hp = shiptable[e->ship_type].max_hp;
+    }
+
+    if (e == player) {
+      send_state_update(BATTLE_OP_HP_UPDATE,e->hp);
+      redraw_player_bars();
+    }
+
+    if (e == current_enemy) {
+      redraw_enemy_bars();
+    }
+  }
+}
+
 void check_special_timeouts(ENEMY *e) {
   if ((e->ship_type == SHIP_CRUISER) &&
       (e->is_shielded) &&
       (chVTTimeElapsedSinceX(e->special_started_at) >=
         TIME_MS2I(shiptable[e->ship_type].max_special_ttl))) {
           e->is_shielded = FALSE;
+          set_ship_sprite(e);
+  }
+  if ((e->ship_type == SHIP_FRIGATE) &&
+      (e->is_healing) &&
+      (chVTTimeElapsedSinceX(e->special_started_at) >=
+        TIME_MS2I(shiptable[e->ship_type].max_special_ttl))) {
+          e->is_healing = FALSE;
           set_ship_sprite(e);
   }
 }
@@ -2010,6 +2087,9 @@ void state_combat_tick(void)
   // regen energy
   regen_energy(player);
   regen_energy(current_enemy);
+
+  regen_health(player);
+  regen_health(current_enemy);
 
   check_special_timeouts(player);
   check_special_timeouts(current_enemy);

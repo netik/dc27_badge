@@ -33,14 +33,15 @@
 /* State opcodes */
 #define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
 #define BATTLE_OP_ENG_UPDATE        0x21 /* my eng is X. */
+#define BATTLE_OP_HP_UPDATE         0x22 /* my eng is X. */
 
-#define BATTLE_OP_SET_SHIELD        0x22 /* My shield is ... */
-#define BATTLE_OP_SET_HEAL          0x24 /* I am healing */
-#define BATTLE_OP_SET_TELEPORT      0x28 /* I am teleporting */
+#define BATTLE_OP_SET_SHIELD        0x24 /* My shield is ... */
+#define BATTLE_OP_SET_HEAL          0x28 /* I am healing */
+#define BATTLE_OP_SET_TELEPORT      0x2A /* I am teleporting */
 
 #define BATTLE_OP_IAMDEAD           0x30 /* I've been killed */
 #define BATTLE_OP_YOUAREDEAD        0x31 /* You've been killed */
-#define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
+#define BATTLE_OP_CLOCKUPDATE       0x32 /* this is the current game time. */
 
 #define BATTLE_OP_ENDGAME           0xF0 /* this ends the game */
 
