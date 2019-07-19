@@ -18,6 +18,7 @@
 #include "badge.h"
 #include "images.h"
 #include "ides_sprite.h"
+#include "sprite_fx.h"
 #include <math.h>
 
 /* stored default structs for initializing */
@@ -217,37 +218,40 @@ WMAP *wm_copy_wmap(WMAP *w)
 static void wm_set_first_last_per_row(WMAP *w)
 {
   coord_t y, x,last;
-  last = (w->w - 1);
-
-  for(y=0; y < w->h; y++)
+  if(NULL != w)
   {
-    if(TRUE == w->map[y].notblank)
+    last = (w->w - 1);
+
+    for(y=0; y < w->h; y++)
     {
-      w->map[y].first_px = 0;
-      w->map[y].last_px  = last;
-
-      for(x=0; x < w->w; x++)
+      if(TRUE == w->map[y].notblank)
       {
-        if(wm_value(w, x,y, 3))
-        {
+        w->map[y].first_px = 0;
+        w->map[y].last_px  = last;
 
-          w->map[y].first_px = x;
-          break;
+        for(x=0; x < w->w; x++)
+        {
+          if(wm_value(w, x,y, 3))
+          {
+
+            w->map[y].first_px = x;
+            break;
+          }
+        }
+        for(x = last ; x >= w->map[y].first_px; x--)
+        {
+          if(wm_value(w, x,y, 3))
+          {
+            w->map[y].last_px = x;
+            break;
+          }
         }
       }
-      for(x = last ; x >= w->map[y].first_px; x--)
+      else
       {
-        if(wm_value(w, x,y, 3))
-        {
-          w->map[y].last_px = x;
-          break;
-        }
+        w->map[y].first_px = last;
+        w->map[y].last_px  = 0;
       }
-    }
-    else
-    {
-      w->map[y].first_px = last;
-      w->map[y].last_px  = 0;
     }
   }
 }
@@ -689,7 +693,7 @@ FOUR_RECTS get_exposed_bg_boxes(ISPRITESYS *iss, ISPID id)
 
 void isp_copy_ipsbuf(ISPBUF *dst, ISPBUF *src)
 {
-  coord_t size;
+  int size;
   if( (src->xs > 0) &&
       (src->ys > 0) &&
       (NULL != src->buf) )
@@ -701,7 +705,14 @@ void isp_copy_ipsbuf(ISPBUF *dst, ISPBUF *src)
     dst->buf = NULL; /* not necessary, but here for clarity. duplicate buffer */
     size = src->xs * src->ys * sizeof(pixel_t);
     dst->buf = malloc(size);
-    memcpy(dst->buf, src->buf, size);
+    if(dst->buf == NULL)
+    {
+      printf("Error: Unable to alloc %d bytes for sprite size X: %d Y: %d\n", size, src->xs, src->ys);
+    }
+    else
+    {
+      memcpy(dst->buf, src->buf, size);
+    }
   }
 }
 
@@ -1097,15 +1108,16 @@ bool_t isp_set_sprite_from_spholder(ISPRITESYS *iss, ISPID id, ISPHOLDER *sph)
     *  what the offset on the incoming one will be.*/
     x = iss->list[id].sp_buf.x - iss->list[id].xoffs;
     y = iss->list[id].sp_buf.y - iss->list[id].yoffs;
+
     isp_destroy_ispbuf(&iss->list[id].sp_buf);
     iss->list[id].xoffs = sph->sprite.x;
     iss->list[id].yoffs = sph->sprite.y;
+    isp_copy_ipsbuf(&iss->list[id].sp_buf, &sph->sprite);
     isp_set_sprite_xy(iss, id, x, y);
 
-    isp_copy_ipsbuf(&iss->list[id].sp_buf, &sph->sprite);
     wm_destroy_wmap(iss->list[id].alphamap);
     iss->list[id].alphamap = wm_copy_wmap(sph->alpha);
-    if(ISP_STAT_DIRTY_BOTH != iss->list[id].status) /* if BG is dirty, FG is dirty, so don't change status */
+    if(1 )//ISP_STAT_DIRTY_BOTH != iss->list[id].status) /* if BG is dirty, FG is dirty, so don't change status */
     {
       iss->list[id].status = ISP_STAT_DIRTY_SP;
     }
@@ -1894,6 +1906,7 @@ void sprite_tester_mapaware(void)
   static double i = 0.0;
   static ISPID s1, s2;
   static bool_t overland=TRUE;
+  static int j=0;
   coord_t x,y;
 
   if(NULL == sl)
@@ -1902,10 +1915,10 @@ void sprite_tester_mapaware(void)
     s1 = isp_make_sprite(sl); // make sprites.  none are drawn yet.
     s2 = isp_make_sprite(sl);
 
+ fx_init(sl);
 
-timeit(0, "");
     isp_scan_screen_for_water(sl);
-timeit(1, "scan_for_water");
+
 
 //wmap_header_dump(sl->wm, "main");
 
@@ -1929,7 +1942,14 @@ timeit(1, "scan_for_water");
 
 
   isp_set_sprite_xy(sl, s1, x, y );
-
+j++;
+if(j > 9)
+{
+  j=0;
+/*  fx_make_sizer_box(x, y, 20, 5, HTML2COLOR(0xFF0000), HTML2COLOR(0x00ff00), 50, 500);
+*/
+}
+//fx_update();
 //  isp_set_sprite_xy(sl, s2, x, y );
   if(test_sprite_for_land_collision(sl, s1))
   {
@@ -1963,7 +1983,7 @@ isp_set_sprite_from_spholder(sl, s1, l);
 
 
 
-  i += 0.005;
+  i += 0.15;
 
   isp_draw_all_sprites(sl);
 

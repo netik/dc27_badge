@@ -3,7 +3,7 @@
 #include "images.h"
 
 #define ISP_MAX_SPRITES 32
-#define ISP_PATH_LENGTH 64
+
 
 /* 0 water, 1 land */
 #define WMAP_W SCREEN_W / 32
