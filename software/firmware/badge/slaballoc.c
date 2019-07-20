@@ -20,7 +20,7 @@ uint8_t *sl_alloc(void) {
   for (i=0; i < MAX_SLABS;i++) {
     if (slabs[i].active == FALSE) {
       memset(slabs[i].txb_data, 0, sizeof(slabs[i].txb_data));
-      slabs[i].active == TRUE;
+      slabs[i].active = TRUE;
       //printf("slalloc = %p\n", (void *) &(slabs[i].txb_data[0]));
       return(&(slabs[i].txb_data[0]));
     }
