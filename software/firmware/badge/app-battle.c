@@ -770,7 +770,13 @@ static void fire_special(ENEMY *e) {
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
     case SP_AOE:
-      break;
+      // for now we're gonna ship with this, unless
+      // we have a better idea.
+      fire_bullet(e,-1,-1,TRUE); // UL
+      fire_bullet(e,1,-1,TRUE);  // UR
+      fire_bullet(e,-1,1,TRUE);  // LL
+      fire_bullet(e,1,1,TRUE);   // LR
+    break;
     case SP_CLOAK:
       // this toggles the cloaking.
       e->is_cloaked = !e->is_cloaked;
@@ -1214,6 +1220,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
               redraw_enemy_bars();
             }
           break;
+          case BATTLE_OP_ENDGAME:
+            changeState(SHOW_RESULTS);
+            break;
           case BATTLE_OP_ENTITY_UPDATE:
             // the enemy is updating their position and velocity
             pkt_entity = (bp_entity_pkt_t *)&bh->rxbuf;
@@ -1945,7 +1954,7 @@ void state_combat_enter(void)
   userconfig *config = getConfig();
 
   // we're in combat now, send our last advertisement.
-  state_time_left   = 120;
+  state_time_left   = 5; // test only
   config->in_combat = 1;
   configSave(config);
 
@@ -2401,22 +2410,28 @@ static void state_show_results_enter(void) {
 
   config->xp += xpgain;
   configSave(config);
-
+  printf("A\n");
   // it's now safe to tear down the connection.
   // we do not alarm for disconect events in SHOW_RESULTS
+
+  printf("B\n");
   if (bh->cid != BLE_L2CAP_CID_INVALID)
     bleL2CapDisconnect (bh->cid);
+  printf("C\n");
+
   bleGapDisconnect();
 
   // award xp here.
   screen_alert_draw(false, tmp);
   chThdSleepMilliseconds(ALERT_DELAY * 2);
+  printf("D\n");
 
   // did we level up?
   if ((config->level + 1 != calc_level(config->xp)) && (config->level + 1 != LEVEL_CAP)) {
     changeState(LEVELUP);
     return;
   }
+  printf("E\n");
 
   orchardAppExit();
 }
