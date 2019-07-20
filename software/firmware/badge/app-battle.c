@@ -201,7 +201,6 @@ static void entity_update(ENTITY *p, float dt)
     if (p->type == T_PLAYER || p->type == T_ENEMY) {
       if (check_land_collision(p) || entity_OOB(p))
       {
-
         // if in combat, you take damage.
         p->vecPosition.x     = p->prevPos.x;
         p->vecPosition.y     = p->prevPos.y;
@@ -697,6 +696,20 @@ static void set_ship_sprite(ENEMY *e) {
     return;
   }
 
+  // teleporting
+  if (e->is_teleporting) {
+    if (e == player) {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->pl_t_right : bh->pl_t_left);
+    } else {
+      isp_set_sprite_from_spholder(sprites,
+        e->e.sprite_id,
+        e->e.faces_right ? bh->ce_t_right : bh->ce_t_left);
+    }
+    return;
+  }
+
   // cloaked
   if (e->is_cloaked) {
     if (e == player) {
@@ -756,6 +769,23 @@ static void fire_special(ENEMY *e) {
 
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
+    case SP_AOE:
+      break;
+    case SP_CLOAK:
+      // this toggles the cloaking.
+      e->is_cloaked = !e->is_cloaked;
+      if (e == player)
+        send_state_update(BATTLE_OP_SET_CLOAK,e->is_cloaked);
+      e->special_started_at = chVTGetSystemTime();
+      set_ship_sprite(e);
+      break;
+    case SP_HEAL:
+      e->is_healing = TRUE;
+      if (e == player)
+        send_state_update(BATTLE_OP_SET_HEAL,e->is_healing);
+      e->special_started_at = chVTGetSystemTime();
+      set_ship_sprite(e);
+      break;
     case SP_SHOT_FOURWAY:
       fire_bullet(e,0,-1,TRUE);  // U
       fire_bullet(e,0,1,TRUE);   // D
@@ -768,6 +798,8 @@ static void fire_special(ENEMY *e) {
       fire_bullet(e,-1,1,TRUE);  // LL
       fire_bullet(e,1,1,TRUE);   // LR
     break;
+    case SP_MINE:
+      break;
     case SP_SHIELD:
       e->is_shielded = TRUE;
       if (e == player)
@@ -775,26 +807,13 @@ static void fire_special(ENEMY *e) {
       e->special_started_at = chVTGetSystemTime();
       set_ship_sprite(e);
       break;
-    case SP_HEAL:
-      e->is_healing = TRUE;
-      if (e == player)
-        send_state_update(BATTLE_OP_SET_HEAL,e->is_healing);
-      e->special_started_at = chVTGetSystemTime();
-      set_ship_sprite(e);
-      break;
-    case SP_CLOAK:
-      // this toggles the cloaking.
-      e->is_cloaked = !e->is_cloaked;
-      if (e == player)
-        send_state_update(BATTLE_OP_SET_CLOAK,e->is_cloaked);
-      e->special_started_at = chVTGetSystemTime();
-      set_ship_sprite(e);
-      break;
-    case SP_MINE:
-      break;
-    case SP_AOE:
-      break;
     case SP_TELEPORT:
+      e->is_teleporting = TRUE;
+      if (e == player)
+        send_state_update(BATTLE_OP_SET_TELEPORT,e->is_teleporting);
+      e->special_started_at = chVTGetSystemTime();
+      i2sPlay("sound/levelup.snd");
+      set_ship_sprite(e);
       break;
     default:
       break;
@@ -1126,6 +1145,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             if (player->hp <= 0)
               chThdSleepMilliseconds(250);
           break;
+          // really we should have replaced all of these with a single
+          // SPECIAL_FLAGS call. oh well.
           case BATTLE_OP_SET_SHIELD:
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             current_enemy->is_shielded = pkt_state->bp_operand;
@@ -1141,6 +1162,19 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           case BATTLE_OP_SET_CLOAK:
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             current_enemy->is_cloaked = pkt_state->bp_operand;
+            current_enemy->special_started_at = chVTGetSystemTime();
+            // if we're coming out of cloak we have to update.
+            if (!current_enemy->is_cloaked) {
+              isp_show_sprite(sprites,current_enemy->e.sprite_id);
+            }
+            set_ship_sprite(current_enemy);
+            break;
+          case BATTLE_OP_SET_TELEPORT:
+            pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
+            current_enemy->is_teleporting = pkt_state->bp_operand;
+            // woooosh
+            if (current_enemy->is_teleporting)
+              i2sPlay("sound/levelup.snd");
             current_enemy->special_started_at = chVTGetSystemTime();
             set_ship_sprite(current_enemy);
             break;
@@ -1887,6 +1921,22 @@ void combat_load_sprites(void) {
     bh->pl_u_right = isp_get_spholder_from_file(
       getAvatarImage(player->ship_type, true, 'u', true));
   }
+
+  // player - need heal if using Frigate.
+  if (player->ship_type == SHIP_TESLA) {
+    bh->pl_t_left  = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 't', false));
+    bh->pl_t_right = isp_get_spholder_from_file(
+      getAvatarImage(player->ship_type, true, 't', true));
+  }
+
+  // enemy - need heal if using Frigate.
+  if (current_enemy->ship_type == SHIP_TESLA) {
+    bh->ce_t_left  = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 't', false));
+    bh->ce_t_right = isp_get_spholder_from_file(
+      getAvatarImage(current_enemy->ship_type, false, 't', true));
+  }
 }
 void state_combat_enter(void)
 {
@@ -2079,6 +2129,8 @@ void regen_health(ENEMY *e) {
 }
 
 void check_special_timeouts(ENEMY *e) {
+  RECT r;
+
   if ((e->ship_type == SHIP_CRUISER) &&
       (e->is_shielded) &&
       (chVTTimeElapsedSinceX(e->special_started_at) >=
@@ -2093,6 +2145,56 @@ void check_special_timeouts(ENEMY *e) {
       (chVTTimeElapsedSinceX(e->special_started_at) >=
         TIME_MS2I(shiptable[e->ship_type].max_special_ttl))) {
           e->is_healing = FALSE;
+          set_ship_sprite(e);
+          return;
+  }
+
+  // do the animation for the tesla, now that enough time went by
+  if ((e->ship_type == SHIP_TESLA) &&
+      (e->is_teleporting) &&
+      (chVTTimeElapsedSinceX(e->special_started_at) >=
+        TIME_MS2I(500))) { // delay before teleporting
+          e->is_teleporting = FALSE;
+          if (e == player) {
+            // animation over, teleport user to new loc.
+            // store our position
+
+            r.x = randRange16(0,320);
+            r.y = randRange16(0,240);
+
+            r.xr = r.x + e->e.size_x;
+            r.yb = r.y + e->e.size_y;
+
+            // much like asteroids, you can teleport into oblivion...
+            // figure out if we've died.
+            e->e.vecPosition.x = r.x;
+            e->e.vecPosition.y = r.y;
+
+            if (wm_check_box_for_land_collision(sprites->wm, r) ||
+                entity_OOB(&(e->e))) {
+              // you die. The next timer tick will do the anim.
+              e->hp = 0;
+              i2sPlay("game/explode2.snd");
+
+              send_state_update(BATTLE_OP_HP_UPDATE,e->hp);
+              redraw_player_bars();
+            } else {
+              // move player. combat tick will set the new
+              // position for our sprite
+              isp_set_sprite_xy(sprites,
+                                e->e.sprite_id,
+                                e->e.vecPosition.x,
+                                e->e.vecPosition.y);
+
+              // transmit our new position so the other guy gets it.
+              send_position_update(
+                player->e.id,
+                BATTLE_OP_ENTITY_UPDATE,
+                T_ENEMY,
+                &(player->e)
+              );
+            }
+          }
           set_ship_sprite(e);
           return;
   }
@@ -2190,6 +2292,10 @@ void state_combat_exit(void)
   bh->pl_u_left = NULL;
   isp_destroy_spholder(bh->pl_u_right);
   bh->pl_u_right = NULL;
+  isp_destroy_spholder(bh->pl_t_left);
+  bh->pl_t_left = NULL;
+  isp_destroy_spholder(bh->pl_t_right);
+  bh->pl_t_right = NULL;
 
   // clear spholders - enemy
   isp_destroy_spholder(bh->ce_left);
@@ -2204,6 +2310,10 @@ void state_combat_exit(void)
   bh->ce_g_left = NULL;
   isp_destroy_spholder(bh->ce_g_right);
   bh->ce_g_right = NULL;
+  isp_destroy_spholder(bh->ce_t_left);
+  bh->ce_t_left = NULL;
+  isp_destroy_spholder(bh->ce_t_right);
+  bh->ce_t_right = NULL;
 
   /* tear down sprite system */
   isp_shutdown(sprites);

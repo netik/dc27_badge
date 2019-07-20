@@ -90,3 +90,11 @@ uint8_t randRange(uint8_t min, uint8_t max) {
   }
   return (randByte() % (max - min)) + min;
 }
+
+// used for teleport. 
+uint16_t randRange16(uint16_t min, uint16_t max) {
+  if (max == min) {
+    return min;
+  }
+  return (randUInt16() % (max - min)) + min;
+}

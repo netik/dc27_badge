@@ -77,6 +77,9 @@ typedef struct _BattleHandles
   ISPHOLDER *pl_g_left, *pl_g_right, *ce_g_left, *ce_g_right;
   // for the sub we need only the player submerged
   ISPHOLDER *pl_u_left, *pl_u_right;
+  // for the tesla we need the teleporting view.
+  ISPHOLDER *pl_t_left, *pl_t_right, *ce_t_left, *ce_t_right;
+
 } BattleHandles;
 
 /*
