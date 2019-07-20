@@ -22,7 +22,7 @@
 #define SP_SHOT_FOURWAY_DIAG   ( 1 << 4 )
 #define SP_SHOT_FOURWAY        ( 1 << 5 )
 #define SP_SHIELD              ( 1 << 6 )
-#define SP_AOE                 ( 1 << 7 ) // TBD
+#define SP_TWOSHOT             ( 1 << 7 )
 
 // generic parameters for motion
 #define VGOAL       8        // ship accleration goal

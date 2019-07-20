@@ -71,7 +71,9 @@ typedef struct _BattleHandles
 
   // left and right variants of the players; used in COMBAT only.
   ISPHOLDER *pl_left, *pl_right, *ce_left, *ce_right;
-  // for the cruiser, we also need the shielded versions
+  // these are shown when you get HIT
+  ISPHOLDER *pl_h_left, *pl_h_right, *ce_h_left, *ce_h_right;
+    // for the cruiser, we also need the shielded versions
   ISPHOLDER *pl_s_left, *pl_s_right, *ce_s_left, *ce_s_right;
   // for the frigate we need the healing versions
   ISPHOLDER *pl_g_left, *pl_g_right, *ce_g_left, *ce_g_right;

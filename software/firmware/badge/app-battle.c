@@ -103,6 +103,7 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
 static void send_bullet_create(ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free);
 static void send_state_update(uint16_t opcode, uint16_t operand);
 static void redraw_combat_clock(void);
+static void set_ship_sprite(ENEMY *e);
 bool entity_OOB(ENTITY *e);
 /* end protos */
 
@@ -515,11 +516,31 @@ fire_bullet(ENEMY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
 
 }
 
+void show_hit(ENEMY *e) {
+  BattleHandles *bh;
+  bh = (BattleHandles *)mycontext->priv;
+
+  // show the hit for 100ms or so
+  if (e == player) {
+    isp_set_sprite_from_spholder(sprites,
+      e->e.sprite_id,
+      e->e.faces_right ? bh->pl_h_right : bh->pl_h_left);
+  } else {
+    isp_set_sprite_from_spholder(sprites,
+      e->e.sprite_id,
+      e->e.faces_right ? bh->ce_h_right : bh->ce_h_left);
+  }
+  isp_draw_all_sprites(sprites);
+  chThdSleepMilliseconds(100);
+
+  // restore ship
+  set_ship_sprite(e);
+}
+
 void update_bullets(void) {
   int i;
   uint16_t dmg;
   uint16_t max_range,travelled;
-  char st;
 
   for (i = 0; i < MAX_BULLETS; i++) {
     if (bullet[i]) {
@@ -584,25 +605,7 @@ void update_bullets(void) {
           bullet[i] = NULL;
 
           redraw_enemy_bars();
-
-          putImageFile(getAvatarImage(current_enemy->ship_type, FALSE, 'h',
-                       current_enemy->e.faces_right),
-                       current_enemy->e.vecPosition.x,
-                       current_enemy->e.vecPosition.y);
-          chThdSleepMilliseconds(100);
-
-          if (current_enemy->hp <= 0) {
-            st='d';
-          } else {
-            st='n';
-          }
-
-          putImageFile(getAvatarImage(current_enemy->ship_type, FALSE, st,
-                                      current_enemy->e.faces_right),
-                                      current_enemy->e.vecPosition.x,
-                                      current_enemy->e.vecPosition.y);
-          if (st == 'd')
-            chThdSleepMilliseconds(500);
+          show_hit(current_enemy);
          }
         }
       }
@@ -737,6 +740,17 @@ static void set_ship_sprite(ENEMY *e) {
         e->e.faces_right ? bh->ce_s_right : bh->ce_s_left);
     }
   } else {
+
+    // are you dead or alive?
+    if (e->hp <= 0) {
+      putImageFile(getAvatarImage(e->ship_type,
+        TRUE, 'd', e->e.faces_right),
+        e->e.vecPosition.x,
+        e->e.vecPosition.y);
+      chThdSleepMilliseconds(500);
+      return;
+    }
+
     if (e == player) {
       isp_set_sprite_from_spholder(sprites,
         e->e.sprite_id,
@@ -769,14 +783,6 @@ static void fire_special(ENEMY *e) {
 
   // do the appropriate action for this special.
   switch (shiptable[e->ship_type].special_flags) {
-    case SP_AOE:
-      // for now we're gonna ship with this, unless
-      // we have a better idea.
-      fire_bullet(e,-1,-1,TRUE); // UL
-      fire_bullet(e,1,-1,TRUE);  // UR
-      fire_bullet(e,-1,1,TRUE);  // LL
-      fire_bullet(e,1,1,TRUE);   // LR
-    break;
     case SP_CLOAK:
       // this toggles the cloaking.
       e->is_cloaked = !e->is_cloaked;
@@ -803,6 +809,12 @@ static void fire_special(ENEMY *e) {
       fire_bullet(e,1,-1,TRUE);  // UR
       fire_bullet(e,-1,1,TRUE);  // LL
       fire_bullet(e,1,1,TRUE);   // LR
+    break;
+    case SP_TWOSHOT:
+      // for now we're gonna ship with this, unless
+      // we have a better idea. ran outta time!
+      fire_bullet(e,-1,0,TRUE);  // L
+      fire_bullet(e,1,0,TRUE);   // R
     break;
     case SP_MINE:
       break;
@@ -915,11 +927,15 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
       // TBD:check for player vs enemy collision ( ramming speed! )
 
-      if ((player->hp <= 0) || (current_enemy->hp <= 0)) {
-        changeState(SHOW_RESULTS);
-        return;
+      // only the master controls the game
+      if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
+      {
+        if ((player->hp <= 0) || (current_enemy->hp <= 0)) {
+          send_state_update(BATTLE_OP_ENDGAME, 0);
+          changeState(SHOW_RESULTS);
+          return;
+        }
       }
-
       isp_draw_all_sprites(sprites);
     }
   } /* timerEvent */
@@ -1120,30 +1136,15 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             player->hp = player->hp - pkt_state->bp_operand;
             i2sPlay("game/explode2.snd");
             if (! player->is_shielded) {
-              putImageFile(getAvatarImage(player->ship_type,
-                TRUE, 'h', player->e.faces_right),
-                player->e.vecPosition.x,
-                player->e.vecPosition.y);
-              chThdSleepMilliseconds(100);
-              if (player->hp <= 0) {
-                tmp[0]='d';
-              } else {
-                tmp[0]='n';
-              }
-              putImageFile(getAvatarImage(player->ship_type, TRUE, tmp[0],
-                player->e.faces_right),
-                player->e.vecPosition.x,
-                player->e.vecPosition.y);            // player's stats
+              show_hit(player);
             } else {
+              // blink the sheild.
               putImageFile(getAvatarImage(player->ship_type,
                 TRUE, 'n', player->e.faces_right),
                 player->e.vecPosition.x,
                 player->e.vecPosition.y);
               chThdSleepMilliseconds(100);
-              putImageFile(getAvatarImage(player->ship_type,
-                TRUE, 's', player->e.faces_right),
-                player->e.vecPosition.x,
-                player->e.vecPosition.y);
+              set_ship_sprite(player);
             }
             redraw_player_bars();
 
@@ -1634,7 +1635,7 @@ void state_handshake_enter(void)
 {
   gdispClear(Black);
   screen_alert_draw(TRUE, "HANDSHAKING...");
-  state_time_left = 120;
+  state_time_left = 5;
 }
 
 void state_handshake_tick(void)
@@ -1890,6 +1891,16 @@ void combat_load_sprites(void) {
   bh->ce_right = isp_get_spholder_from_file(
     getAvatarImage(current_enemy->ship_type, false, 'n', true));
 
+  // hit images
+  bh->pl_h_left  = isp_get_spholder_from_file(
+    getAvatarImage(player->ship_type, true, 'h', false));
+  bh->pl_h_right = isp_get_spholder_from_file(
+    getAvatarImage(player->ship_type, true, 'h', true));
+  bh->ce_h_left  = isp_get_spholder_from_file(
+    getAvatarImage(current_enemy->ship_type, false, 'h', false));
+  bh->ce_h_right = isp_get_spholder_from_file(
+    getAvatarImage(current_enemy->ship_type, false, 'h', true));
+
   // player - need shield if using Cruiser.
   if (player->ship_type == SHIP_CRUISER) {
     bh->pl_s_left  = isp_get_spholder_from_file(
@@ -1954,7 +1965,7 @@ void state_combat_enter(void)
   userconfig *config = getConfig();
 
   // we're in combat now, send our last advertisement.
-  state_time_left   = 5; // test only
+  state_time_left   = 120;
   config->in_combat = 1;
   configSave(config);
 
@@ -2168,8 +2179,8 @@ void check_special_timeouts(ENEMY *e) {
             // animation over, teleport user to new loc.
             // store our position
 
-            r.x = randRange16(0,320);
-            r.y = randRange16(0,240);
+            r.x = randRange16(0,320-SHIP_SIZE_ZOOMED);
+            r.y = randRange16(0,240-SHIP_SIZE_ZOOMED);
 
             r.xr = r.x + e->e.size_x;
             r.yb = r.y + e->e.size_y;
@@ -2390,38 +2401,42 @@ static void state_show_results_enter(void) {
   // free the UI
   bh = (BattleHandles *)mycontext->priv;
 
-  // figure out who won
-  if (player->hp > current_enemy->hp) {
-      xpgain = calc_xp_gain(TRUE);
-      config->won++;
-      sprintf(tmp, "YOU WIN! (+%d XP)",xpgain);
+  if ( (player->hp == shiptable[player->ship_type].max_hp) &&
+       (current_enemy->hp == shiptable[current_enemy->ship_type].max_hp)) {
+    sprintf(tmp, "Y U NO PLAY? (0 XP!)");
   } else {
-    // record time of death
-    config->lastdeath = chVTGetSystemTime();
+    // figure out who won
+    if (player->hp > current_enemy->hp) {
+        xpgain = calc_xp_gain(TRUE);
+        config->won++;
+        sprintf(tmp, "YOU WIN! (+%d XP)",xpgain);
+    } else {
+      // record time of death
+      config->lastdeath = chVTGetSystemTime();
 
-    // reward (some) XP and exit
-    xpgain = calc_xp_gain(FALSE);
-    config->lost++;
-    sprintf(tmp, "YOU LOSE! (+%d XP)",xpgain);
+      // reward (some) XP and exit
+      xpgain = calc_xp_gain(FALSE);
+      config->lost++;
+      sprintf(tmp, "YOU LOSE! (+%d XP)",xpgain);
+    }
+
+    if (player->hp == current_enemy->hp) {
+      // Everybody wins.
+      xpgain = calc_xp_gain(TRUE);
+
+      config->lost++;
+      sprintf(tmp, "TIE! (+%d XP)",xpgain);
+    }
+
+    config->xp += xpgain;
   }
 
-  if (player->hp == current_enemy->hp) {
-    // Everybody wins.
-    xpgain = calc_xp_gain(TRUE);
-    config->lost++;
-    sprintf(tmp, "TIE! (+%d XP)",xpgain);
-  }
-
-  config->xp += xpgain;
+  config->in_combat = 0;
   configSave(config);
-  printf("A\n");
   // it's now safe to tear down the connection.
   // we do not alarm for disconect events in SHOW_RESULTS
-
-  printf("B\n");
   if (bh->cid != BLE_L2CAP_CID_INVALID)
     bleL2CapDisconnect (bh->cid);
-  printf("C\n");
 
   bleGapDisconnect();
 
