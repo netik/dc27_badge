@@ -1634,7 +1634,7 @@ void state_handshake_enter(void)
 {
   gdispClear(Black);
   screen_alert_draw(TRUE, "HANDSHAKING...");
-  state_time_left = 5;
+  state_time_left = 120;
 }
 
 void state_handshake_tick(void)
@@ -2267,7 +2267,9 @@ void state_combat_tick(void)
   check_special_timeouts(current_enemy);
 
   // force sprite redraw
-  isp_draw_all_sprites(sprites);
+
+  if (sprites != NULL)
+    isp_draw_all_sprites(sprites);
 }
 
 void state_combat_exit(void)
@@ -2326,6 +2328,7 @@ void state_combat_exit(void)
 
   /* tear down sprite system */
   isp_shutdown(sprites);
+  sprites = NULL;
 }
 
 static uint16_t calc_xp_gain(uint8_t won) {
@@ -2383,6 +2386,7 @@ static void state_show_results_enter(void) {
   userconfig *config = getConfig();
   int xpgain = 0;
   BattleHandles *bh;
+
   // free the UI
   bh = (BattleHandles *)mycontext->priv;
 
