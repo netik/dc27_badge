@@ -33,7 +33,7 @@
 /* State opcodes */
 #define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
 #define BATTLE_OP_ENG_UPDATE        0x21 /* my eng is X. */
-#define BATTLE_OP_HP_UPDATE         0x22 /* my eng is X. */
+#define BATTLE_OP_HP_UPDATE         0x22 /* my hp is X. */
 
 #define BATTLE_OP_SET_SHIELD        0x24 /* My shield is ... */
 #define BATTLE_OP_SET_HEAL          0x28 /* I am healing */

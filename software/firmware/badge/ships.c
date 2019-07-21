@@ -69,11 +69,11 @@ const ship_type_t shiptable[8] = {
 
   {
     "Battleship",
-    600, 100, 400, 3,
+    600, 100, 400, 5,
     333, 400, 35, 100, 10,
     6,VDRAG,VAPPROACH,VMULT,
     100, 80, 40, 1000,
-    3, SP_TWOSHOT // 3 shots in all directions? 4-way shot on diag!
+    3, SP_SHOT_FOURWAY_DIAG // 3 shots in all directions? 4-way shot on diag!
   },
 
   // on the submarine we do not use the special timer. You can stay

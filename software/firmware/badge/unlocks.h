@@ -25,7 +25,7 @@
 #define UL_PLUSDEF      ( 1 << 0 )  // +10% DEF - ok
 #define UL_PLUSHP       ( 1 << 1 )  // +10% HP - ok
 #define UL_PLUSDMG      ( 1 << 2 )  // +10% DMG - ok
-#define UL_SPEED        ( 1 << 3 )  // +20% SPEED - not done
+#define UL_SPEED        ( 1 << 3 )  // +20% SPEED - ok
 #define UL_REPAIR       ( 1 << 4 )  // FAST REPAIR - ok`
 #define UL_LEDS         ( 1 << 5 )  // MORE LEDs - ok
 #define UL_VIDEO1       ( 1 << 6 )  // Unlocks additional videos - ok

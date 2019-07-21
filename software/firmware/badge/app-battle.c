@@ -211,6 +211,15 @@ static void entity_update(ENTITY *p, float dt)
       if (check_land_collision(p) || entity_OOB(p))
       {
         // if in combat, you take damage.
+        if (current_battle_state == COMBAT) {
+           if (p->type == T_PLAYER && !player->is_shielded) {
+             i2sPlay("game/aground.snd");
+             player->hp = player->hp - (int)((float)PLAYER_MAX_HP * 0.1);
+             send_state_update(BATTLE_OP_HP_UPDATE, player->hp);
+             redraw_player_bars();
+           }
+        }
+
         p->vecPosition.x     = p->prevPos.x;
         p->vecPosition.y     = p->prevPos.y;
         p->vecVelocity.x     = 0;
@@ -842,12 +851,6 @@ static void fire_special(ENEMY *e) {
       fire_bullet(e,-1,1,TRUE);  // LL
       fire_bullet(e,1,1,TRUE);   // LR
     break;
-    case SP_TWOSHOT:
-      // for now we're gonna ship with this, unless
-      // we have a better idea. ran outta time!
-      fire_bullet(e,-1,0,TRUE);  // L
-      fire_bullet(e,1,0,TRUE);   // R
-    break;
     case SP_MINE:
       break;
     case SP_SHIELD:
@@ -1003,9 +1006,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
        * they haven't chosen a ship yet, trigger a ship select.
        */
 
-      if (current_battle_state == VS_SCREEN &&
-          player->ship_locked_in == FALSE) {
-        player->ship_locked_in = TRUE;
+      if (current_battle_state == VS_SCREEN) {
+        player->ship_locked_in = !player->ship_locked_in;
         i2sPlay("sound/ping.snd");
         send_ship_type(player->ship_type, TRUE);
 
@@ -1319,7 +1321,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   }
 
   // handle ship selection screen (VS_SCREEN) ------------------------------
-  if (current_battle_state == VS_SCREEN && player->ship_locked_in == FALSE)
+  if (current_battle_state == VS_SCREEN)
   {
     if (event->type == keyEvent)
     {
@@ -1328,17 +1330,19 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         switch (event->key.code)
         {
         case keyALeft:
-          player->ship_type--;
+          if (!player->ship_locked_in)
+            player->ship_type--;
           break;
 
         case keyARight:
-          player->ship_type++;
+          if (!player->ship_locked_in)
+            player->ship_type++;
           break;
 
         case keyBSelect:
-          player->ship_locked_in = TRUE;
+          player->ship_locked_in = !player->ship_locked_in;
           i2sPlay("sound/ping.snd");
-          send_ship_type(player->ship_type, TRUE);
+          send_ship_type(player->ship_type, player->ship_locked_in);
 
           if (current_enemy->ship_locked_in && player->ship_locked_in)
           {
@@ -2248,17 +2252,24 @@ void check_special_timeouts(ENEMY *e) {
           if (e == player) {
             // animation over, teleport user to new loc.
             // store our position
+#define SAFE_TELEPORT
+#ifdef SAFE_TELEPORT
+            do {
+#endif
+              r.x = randRange16(0,320-SHIP_SIZE_ZOOMED);
+              r.y = randRange16(0,240-SHIP_SIZE_ZOOMED);
 
-            r.x = randRange16(0,320-SHIP_SIZE_ZOOMED);
-            r.y = randRange16(0,240-SHIP_SIZE_ZOOMED);
+              r.xr = r.x + e->e.size_x;
+              r.yb = r.y + e->e.size_y;
 
-            r.xr = r.x + e->e.size_x;
-            r.yb = r.y + e->e.size_y;
-
-            // much like asteroids, you can teleport into oblivion...
-            // figure out if we've died.
-            e->e.vecPosition.x = r.x;
-            e->e.vecPosition.y = r.y;
+              // much like asteroids, you can teleport into oblivion...
+              // figure out if we've died.
+              e->e.vecPosition.x = r.x;
+              e->e.vecPosition.y = r.y;
+#ifdef SAFE_TELEPORT
+            } while (wm_check_box_for_land_collision(sprites->wm, r) ||
+                entity_OOB(&(e->e)));
+#endif
 
             if (wm_check_box_for_land_collision(sprites->wm, r) ||
                 entity_OOB(&(e->e))) {
@@ -2317,6 +2328,28 @@ void check_special_timeouts(ENEMY *e) {
   }
 }
 
+void check_ship_collisions(void) {
+  if (isp_check_sprites_collision(sprites,
+                                  player->e.sprite_id,
+                                  current_enemy->e.sprite_id,
+                                  FALSE,
+                                  FALSE)) {
+        // ping-pong ball style simulation with lossage
+        player->e.vecVelocity.x     = -player->e.vecVelocity.x * .85;
+        player->e.vecVelocity.y     = -player->e.vecVelocity.y * .85;
+        player->e.vecVelocityGoal.x = -player->e.vecVelocityGoal.x * .85;
+        player->e.vecVelocityGoal.y = -player->e.vecVelocityGoal.y * .85;
+        // sound
+        // take damage
+        if (!player->is_shielded) {
+            i2sPlay("game/aground.snd");
+            player->hp = player->hp - (int)((float)PLAYER_MAX_HP * 0.1);
+            send_state_update(BATTLE_OP_HP_UPDATE, player->hp);
+            redraw_player_bars();
+        }
+  }
+}
+
 void state_combat_tick(void)
 {
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -2347,6 +2380,7 @@ void state_combat_tick(void)
   check_special_timeouts(player);
   check_special_timeouts(current_enemy);
 
+  check_ship_collisions();
   // force sprite redraw
 
   if (sprites != NULL)
