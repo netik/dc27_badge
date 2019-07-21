@@ -1,6 +1,7 @@
 #ifndef _SPRITE_FX_
 #define _SPRITE_FX_
 
+#define MAX_FX 16
 
 enum fx_type {
   FX_NONE,
@@ -29,15 +30,15 @@ typedef struct _fx_object {
 } FX_OBJ;
 
 typedef struct _fx_list {
-  FX_OBJ **list;
   int count;
+  FX_OBJ *list[MAX_FX];
 } FXLIST;
 
 
 
 
 extern void fx_init(ISPRITESYS *i);
-extern void fx_shutdown(ISPRITESYS *i);
+extern void fx_shutdown(void);
 extern ISPID fx_make_sizer_box(coord_t x, coord_t y, coord_t sz_s, coord_t sz_e, color_t c_s, color_t c_e, int delay, int lifespan);
 extern void fx_update(void);
 

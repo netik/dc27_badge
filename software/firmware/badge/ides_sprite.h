@@ -146,4 +146,5 @@ extern bool_t isp_set_sprite_from_spholder(ISPRITESYS *iss, ISPID id, ISPHOLDER 
 extern ISPHOLDER *isp_get_spholder_from_sprite(ISPRITESYS *iss, ISPID id);
 extern ISPHOLDER *isp_get_spholder_from_file(char *name);
 extern void isp_destroy_spholder(ISPHOLDER *sph);
+extern int  fix_range(int i, int a, int b);
 #endif

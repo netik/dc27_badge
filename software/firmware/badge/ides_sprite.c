@@ -49,6 +49,43 @@ typedef struct _4rect {
 
 const RECT rect_default = {.x=0, .y=0, .xr=0, .yb=0};
 
+static int allo_num=0;
+
+
+void *dmalloc(size_t s, char *msg)
+{
+  void *ret;
+  ret = malloc(s);
+  if(NULL != ret)
+  {
+      allo_num++;
+  }
+
+//    printf("%08x  , malloc %d, anum:, %d, - %s\n", ret, s, allo_num,msg);
+  return(ret);
+}
+
+void *dcalloc(size_t num, size_t siz, char *msg)
+{
+  void *ret;
+  ret = calloc(num, siz);
+  if(NULL != ret)
+  {
+      allo_num++;
+  }
+
+//    printf("%08x , calloc %d/%d , anum:, %d, - %s\n", ret, num, siz, allo_num, msg);
+  return(ret);
+}
+
+void dfree(void *ptr, char *msg)
+{
+  allo_num--;
+  free(ptr);
+//  printf("%08x , free , anum:, %d, - %s\n", ptr,  allo_num, msg);
+
+}
+
 /* This is a library for simplifying sprite usage.
  * it supports
  *
@@ -105,7 +142,22 @@ s3 = isp_make_sprite(sl);
 
 */
 
+int  fix_range(int i, int a, int b)
+{
+  int min, max;
+  min = (a < b)? a : b;
+  max = (a > b)? a : b;
 
+  if(i > max)
+  {
+    i = max;
+  }
+  if(i < min)
+  {
+    i = min;
+  }
+  return(i);
+}
 
 void timeit(int g, char *str)
 {
@@ -125,25 +177,26 @@ void timeit(int g, char *str)
 WMAP *wm_make_wmap_size(coord_t width, coord_t height)
 {
   WMAP *w=NULL;
-  if(width > SCREEN_W)
-  {
-    width = SCREEN_W;
-  }
-  if(height > SCREEN_H)
-  {
-    height = SCREEN_H;
-  }
-  w = calloc(1, sizeof(WMAP));
 
-  if ( NULL != w )
+  width = fix_range(width, 0, SCREEN_W);
+  height =  fix_range(height, 0, SCREEN_H);
+
+  if( (height > 0) && (width > 0) )
   {
-    w->h = height;
-    w->w = width;
-//printf("wm blk alloc %d\n", height * sizeof(WROW));
-    w->map = calloc(height, sizeof(WROW));
+    w = dcalloc(1, sizeof(WMAP), "wm_make_wmap_size: w alloc");
 
+    if ( NULL != w )
+    {
+      w->h = height;
+      w->w = width;
+  /*
+  printf("wm blk alloc %d w:%d h:%d\n", height * sizeof(WROW), width, height);
+  fflush(stdout);
+  */
+      w->map = dcalloc(height, sizeof(WROW), "wm_make_wmap_size: w->map alloc");
+
+    }
   }
-
   return(w);
 }
 
@@ -187,10 +240,10 @@ void wm_destroy_wmap(WMAP *w)
   {
     if(NULL != w->map)
     {
-      free(w->map);
+      dfree(w->map, "destroy_wmap w->map");
       w->map = NULL;
     }
-    free(w);
+    dfree(w, "destroy_wmap w");
   }
 }
 
@@ -355,16 +408,16 @@ WMAP *wm_build_land_map_from_screen(void)
   bufx = SCREEN_W;
   bufy = 20;
 //printf("land map c alloc %d\n", bufx * bufy * sizeof(pixel_t));
-  buf = calloc(bufx * bufy, sizeof(pixel_t));
+  buf = dcalloc(bufx * bufy, sizeof(pixel_t), "wm_build_land_map_from_screen");
   w = wm_make_wmap_size(SCREEN_W, SCREEN_H);
 
   for(y=0; y < SCREEN_H; y += bufy)
   {
     /* grab 20 rows at a time */
-   getPixelBlock(0, y, bufx, bufy, buf);
+    getPixelBlock(0, y, bufx, bufy, buf);
     wm_scan_from_img(w, 0, y, bufx, bufy, buf);
   }
-  free(buf);
+  dfree(buf,"wm_build_land_map_from_screen");
   return(w);
 }
 
@@ -377,7 +430,7 @@ RECT wm_make_bounding_box(WMAP *w)
 
   top = 0;
   left =0;
-  bot = (w->w -1);
+  bot = (w->h -1);
   right = (w->w -1);
 
   for(y=0; y < bot; y++)
@@ -702,9 +755,9 @@ void isp_copy_ipsbuf(ISPBUF *dst, ISPBUF *src)
      * and then allocate and copy from source.
      */
     memcpy(dst, src, sizeof(ISPBUF));
-    dst->buf = NULL; /* not necessary, but here for clarity. duplicate buffer */
+
     size = src->xs * src->ys * sizeof(pixel_t);
-    dst->buf = malloc(size);
+    dst->buf = dmalloc(size, "isp_copy_ipsbuf()");
     if(dst->buf == NULL)
     {
       printf("Error: Unable to alloc %d bytes for sprite size X: %d Y: %d\n", size, src->xs, src->ys);
@@ -720,8 +773,9 @@ void isp_destroy_ispbuf(ISPBUF *b)
 {
   if(NULL != b->buf)
   {
-    free(b->buf);
+    dfree(b->buf, "isp_destroy_ispbuf");
     *b = isbuf_default;
+    b->buf = NULL;
   }
 }
 
@@ -744,7 +798,7 @@ static pixel_t *crop_buf(coord_t *xs, coord_t *ys, coord_t *xoffs, coord_t *yoff
     copysize = width * sizeof(pixel_t);
 
 // printf("crop alloc %d\n", height * copysize);
-    buf = malloc( height * copysize);
+    buf = dmalloc( height * copysize, "new buffer in crop_buf");
     src_wid = *xs;
     /* doing this mainly to have the memcpy code easier to read.*/
     for(y = 0; y < height; y++)
@@ -909,12 +963,13 @@ static bool_t isp_capture_bg(ISPRITESYS *iss, ISPID id)
       if((NULL == iss->list[id].bg_buf.buf))
       {
 //printf("cap bg alloc %d\n", size);
-        iss->list[id].bg_buf.buf = (pixel_t *)malloc(size);
+        iss->list[id].bg_buf.buf = (pixel_t *)dmalloc(size, "isp_capture_bg() dynamic BG buffer");
       }
       else if( (iss->list[id].bg_buf.xs != iss->list[id].sp_buf.xs) ||
                (iss->list[id].bg_buf.ys != iss->list[id].sp_buf.ys) )
       {
-        iss->list[id].bg_buf.buf = (pixel_t *)realloc(iss->list[id].bg_buf.buf, size);
+        dfree(iss->list[id].bg_buf.buf, "isp_capture_bg free old buffer");
+        iss->list[id].bg_buf.buf = (pixel_t *)dmalloc(size, "isp_capture_bg new buffer");
       }
       /* */
       getPixelBlock(iss->list[id].sp_buf.x, iss->list[id].sp_buf.y,
@@ -1032,7 +1087,7 @@ fflush(stdout);
 ISPHOLDER *isp_make_spholder(void)
 {
   ISPHOLDER *ret=NULL;
-  ret = calloc(1, sizeof(ISPHOLDER));
+  ret = dcalloc(1, sizeof(ISPHOLDER), "isp_make_spholder()");
   if(NULL != ret)
   {
     ret->sprite = isbuf_default;
@@ -1043,50 +1098,59 @@ ISPHOLDER *isp_make_spholder(void)
 
 void isp_destroy_spholder(ISPHOLDER *sph)
 {
-  if( (sph->sprite.xs > 0) && (sph->sprite.xs > 0) && (NULL != sph->sprite.buf ) )
+  if( (NULL != sph)  )
   {
     isp_destroy_ispbuf(&sph->sprite);
     wm_destroy_wmap(sph->alpha);
+    dfree(sph, "isp_destroy_spholder free ISPHOLDER");
   }
 }
 
 /* makes a proper ISPHOLDER from a passed in buffer.  crops image, makes alpha */
 ISPHOLDER *isp_buf_to_spholder(coord_t xs, coord_t ys, pixel_t *buf)
 {
-  ISPHOLDER *ret;
+  ISPHOLDER *ret=NULL;
   WMAP *wm;
   RECT r;
-  ret = isp_make_spholder();
   if( (NULL != buf) && (xs > 0) && (ys > 0) )
   {
-    ret->sprite.xs = xs;
-    ret->sprite.ys = ys;
-
-    /* make a bit map from the image.  use that to determine the bounding box
-     * for cropping the sprite_tester
-     */
-    wm = wm_make_wmap_size(xs, ys);
-    wm_scan_from_img(wm, 0, 0, xs, ys, buf);
-    wm_set_first_last_per_row(wm);
-    r = wm_make_bounding_box(wm);
-    wm_destroy_wmap(wm);
-
-    ret->sprite.buf = crop_buf(&ret->sprite.xs, &ret->sprite.ys,
-                               &ret->sprite.x,  &ret->sprite.y, r, buf);
-
-    if(NULL == ret->sprite.buf)
+    ret = isp_make_spholder();
+    if(NULL != ret)
     {
-      ret->sprite.buf = buf;
-    }
-    else
-    {
-      free(buf);
-    }
-    ret->alpha = wm_make_wmap_size(ret->sprite.xs, ret->sprite.ys);
+      ret->sprite.xs = xs;
+      ret->sprite.ys = ys;
 
-    wm_scan_from_img(ret->alpha, 0, 0, ret->sprite.xs,
-                     ret->sprite.ys, ret->sprite.buf);
-    wm_set_first_last_per_row(ret->alpha);
+      /* make a bit map from the image.  use that to determine the bounding box
+       * for cropping the sprite_tester
+       */
+      wm = wm_make_wmap_size(xs, ys);
+      wm_scan_from_img(wm, 0, 0, xs, ys, buf);
+      wm_set_first_last_per_row(wm);
+      r = wm_make_bounding_box(wm);
+      wm_destroy_wmap(wm);
+
+      ret->sprite.buf = crop_buf(&ret->sprite.xs, &ret->sprite.ys,
+                                 &ret->sprite.x,  &ret->sprite.y, r, buf);
+
+      if(NULL == ret->sprite.buf)
+      {
+        ret->sprite.buf = buf;
+      }
+      else
+      {
+        dfree(buf, "isp_buf_to_spholder");
+      }
+
+      ret->alpha = wm_make_wmap_size(ret->sprite.xs, ret->sprite.ys);
+
+      wm_scan_from_img(ret->alpha, 0, 0, ret->sprite.xs,
+                       ret->sprite.ys, ret->sprite.buf);
+      wm_set_first_last_per_row(ret->alpha);
+    }
+  }
+  else
+  {
+    printf("ERROR: isp_buf_to_spholder xs%d ys%d buf %08x\n", xs, ys, buf);
   }
 
   return(ret);
@@ -1100,6 +1164,7 @@ bool_t isp_set_sprite_from_spholder(ISPRITESYS *iss, ISPID id, ISPHOLDER *sph)
 
   if( (id < ISP_MAX_SPRITES) &&
       (iss->list[id].active) &&
+      (NULL != sph) &&
       (sph->sprite.xs > 0) &&
       (sph->sprite.ys > 0) &&
       (NULL != sph->sprite.buf) )
@@ -1174,11 +1239,11 @@ ISPHOLDER *isp_get_spholder_from_file(char *name)
   len = h * w * sizeof(pixel_t);
 //printf("sp file alloc %d\n", len);
 
-  buf = malloc(len);
+  buf = dmalloc(len,"isp_get_spholder_from_file()");
   fread(buf, 1, len, f);
   fclose(f);
   ret = isp_buf_to_spholder(w, h, buf);
-  free(buf);
+  dfree(buf, "isp_get_spholder_from_file");
   return(ret);
 }
 
@@ -1190,7 +1255,7 @@ ISPRITESYS *isp_init(void)
 {
   ISPID i;
   ISPRITESYS *iss=NULL;
-  iss = (ISPRITESYS *)malloc(sizeof(ISPRITESYS));
+  iss = (ISPRITESYS *)dmalloc(sizeof(ISPRITESYS), "isp_init()");
   if(NULL != iss)
   {
     iss->wm = NULL;
@@ -1378,7 +1443,7 @@ void isp_show_sprite(ISPRITESYS *iss, ISPID id)
 /* this will immediately repaint the background */
 void isp_destroy_sprite(ISPRITESYS *iss, ISPID id)
 {
-  if(id < ISP_MAX_SPRITES)
+  if( (NULL != iss ) && (id < ISP_MAX_SPRITES) )
   {
     isp_hide_sprite(iss, id);
     isp_restore_bg(iss, id);
@@ -1436,93 +1501,11 @@ void wm_print_map(WMAP *w)
 void isp_set_sprite_block(ISPRITESYS *iss, ISPID id, coord_t xs, coord_t ys, pixel_t * buf)
 {
   ISPHOLDER *hold;
+
   hold = isp_buf_to_spholder(xs, ys, buf);
   isp_set_sprite_from_spholder(iss, id, hold);
   isp_destroy_spholder(hold);
 }
-
-#ifdef NOOOOOOOEORERO
-
-/* crops a sprite and sets all the appropriate values */
-static void crop_sprite(ISPRITESYS *iss, ISPID id, RECT r)
-{
-  pixel_t * buf=NULL;
-
-  buf = crop_buf(&iss->list[id].sp_buf.xs, &iss->list[id].sp_buf.ys,
-                 &iss->list[id].xoffs,     &iss->list[id].xoffs,
-                 r, iss->list[id].sp_buf.buf);
-  if(NULL != buf)
-  {
-    free(iss->list[id].sp_buf.buf);
-    iss->list[id].sp_buf.buf = buf;
-    iss->list[id].sp_buf.x += iss->list[id].xoffs;
-    iss->list[id].sp_buf.y += iss->list[id].yoffs;
-  }
-}
-
-void isp_set_sprite_block(ISPRITESYS *iss, ISPID id, coord_t xs, coord_t ys, pixel_t * buf)
-{
-  int size=0, old_size =0;
-  WMAP *w=NULL;
-  RECT r;
-
-  /* if coords and size are same as BG, don't flag BG as dirty */
-  if( (id < ISP_MAX_SPRITES) && (xs > 0) && (ys > 0) && (NULL != buf) )
-
-  {
-    old_size = iss->list[id].sp_buf.xs * iss->list[id].sp_buf.ys * sizeof(pixel_t);
-    iss->list[id].sp_buf.xs  = xs;
-    iss->list[id].sp_buf.ys  = ys;
-    /* reset the offset, as we have to calculate a new one for the incomioing image */
-    iss->list[id].sp_buf.x -= iss->list[id].xoffs;
-    iss->list[id].sp_buf.y -= iss->list[id].yoffs;
-    iss->list[id].xoffs = 0;
-    iss->list[id].yoffs = 0;
-    size = xs * ys *sizeof(pixel_t);
-    if(NULL != iss->list[id].sp_buf.buf)
-    {
-      if(size != old_size)
-      {
-        iss->list[id].sp_buf.buf = realloc(iss->list[id].sp_buf.buf, size);
-      }
-    }
-    else
-    {
-//printf("sp blk alloc %d\n", size);
-      iss->list[id].sp_buf.buf = malloc(size);
-    }
-    memcpy(iss->list[id].sp_buf.buf, buf, size);
-    w = wm_make_wmap_size(xs, ys);
-
-    wm_scan_from_img(w, 0, 0, xs, ys, iss->list[id].sp_buf.buf);
-
-    r = wm_make_bounding_box(w);
-    wm_destroy_wmap(w);
-
-    crop_sprite(iss, id, r);
-
-    xs = iss->list[id].sp_buf.xs;
-    ys = iss->list[id].sp_buf.ys;
-
-    wm_destroy_wmap(iss->list[id].alphamap);
-    iss->list[id].alphamap = wm_make_wmap_size(xs, ys);
-
-    wm_scan_from_img(iss->list[id].alphamap, 0, 0, xs, ys, iss->list[id].sp_buf.buf);
-    wm_set_first_last_per_row(iss->list[id].alphamap);
-
-
-    /* flag it dity so it redraws */
-    if(ISP_STAT_DIRTY_BOTH != iss->list[id].status) /* if BG is dirty, FG is dirty, so don't change status */
-    {
-      iss->list[id].status = ISP_STAT_DIRTY_SP;
-    }
-  }
-}
-#endif
-
-
-
-
 
 
 
@@ -1549,7 +1532,7 @@ int isp_load_image_from_file(ISPRITESYS *iss, ISPID id, char *name)
 
     len = h * w * sizeof(pixel_t);
 //printf("sp file alloc %d\n", len);
-    buf = malloc (len);
+    buf = dmalloc(len, "isp_load_image_from_file()");
 
     fread(buf, 1, len, f);
     fclose(f);
@@ -1752,7 +1735,7 @@ void isp_shutdown(ISPRITESYS *iss)
     if(NULL != iss->wm)
     {
       wm_destroy_wmap(iss->wm);
-      free(iss->wm);
+      dfree(iss->wm, "isp_shutdown wm");
       iss->wm = NULL;
     }
     for(i=0; i < ISP_MAX_SPRITES; i++)
@@ -1760,7 +1743,7 @@ void isp_shutdown(ISPRITESYS *iss)
       isp_destroy_sprite(iss, i);
     }
   }
-  free(iss);
+  dfree(iss, "isp_shutdown iss");
 }
 
 
@@ -1769,8 +1752,12 @@ pixel_t *boxmaker(coord_t x, coord_t y, color_t col)
 
   int i, max;
   pixel_t *buf;
+
+  x = fix_range(x, 1,100);
+  y = fix_range(y, 1,100);
+
   max = x * y;
-  buf = malloc(max*sizeof(pixel_t));
+  buf = dmalloc(max*sizeof(pixel_t), "boxmaker()");
   for(i=0; i < max; i++)
   {
     buf[i] = col;
@@ -1781,17 +1768,19 @@ pixel_t *boxmaker(coord_t x, coord_t y, color_t col)
 void sprite_tester(void)
 {
   static ISPRITESYS *sl=NULL;
+  ISPHOLDER *hold;
   static double i = 0.0;
-  static int col=0;
+  static int col=0, jj=0;;
   static ISPID s1, s2, s3, s4, s5, s6, s7, s8,s9;
   pixel_t *buf;
   coord_t xs,ys;
-
+  char str[90];
 
   if(NULL == sl)
   {
+printf("init 2nd engine\n");
     sl = isp_init();
-    s1 = isp_make_sprite(sl); // make sprites.  none are drawn yet.
+/*    s1 = isp_make_sprite(sl); // make sprites.  none are drawn yet.
     s2 = isp_make_sprite(sl); // they have no position or pixel data yet.
     s3 = isp_make_sprite(sl);
     s4 = isp_make_sprite(sl); // make sprites.  none are drawn yet.
@@ -1799,8 +1788,10 @@ void sprite_tester(void)
     s6 = isp_make_sprite(sl);
     s7 = isp_make_sprite(sl); // make sprites.  none are drawn yet.
     s8 = isp_make_sprite(sl); // they have no position or pixel data yet.
-    s9 = isp_make_sprite(sl);
+    */
 
+    s9 = isp_make_sprite(sl);
+/*
     xs=8;
     ys=15;
     buf = boxmaker(xs,ys, HTML2COLOR(0xff00ff));
@@ -1848,12 +1839,13 @@ void sprite_tester(void)
     isp_set_sprite_block(sl, s8, xs, ys, buf);
     free(buf);
 
+
     xs=12;
     ys=12;
     buf = boxmaker(xs,ys, HTML2COLOR(0xffff00));
     isp_set_sprite_block(sl, s9, xs, ys, buf);
     free(buf);
-
+*/
 /* switch to this instead of the block of code below it to have all sprites moving
   isp_set_sprite_xy(sl, s1, 160 + (sin(i) * 25), 120 + (cos(i) * 25) );
   isp_set_sprite_xy(sl, s2, 160 + (sin(i+2) * 35), 120 + (cos(i+2) * 35) );
@@ -1866,7 +1858,7 @@ void sprite_tester(void)
   isp_set_sprite_xy(sl, s9, 160 + (sin(1.3*-i+4.5) * 75), 120 + (cos(-i+4) * 60) );
 */
 
-  isp_set_sprite_xy(sl, s1, 160 + (sin(2) * 25), 120 + (cos(2) * 25) );
+/*  isp_set_sprite_xy(sl, s1, 160 + (sin(2) * 25), 120 + (cos(2) * 25) );
   isp_set_sprite_xy(sl, s2, 160 + (sin(2+2) * 35), 120 + (cos(2+2) * 35) );
   isp_set_sprite_xy(sl, s3, 160 + (sin(2+4) * 55), 120 + (cos(2+4) * 55) );
   isp_set_sprite_xy(sl, s4, 160 + (sin(-2) * 25), 120 + (cos(-2) * 25) );
@@ -1874,18 +1866,37 @@ void sprite_tester(void)
   isp_set_sprite_xy(sl, s6, 160 + (sin(-3+4) * 65), 120 + (cos(-3+4) * 65) );
   isp_set_sprite_xy(sl, s7, 160 + (sin(-1.2*4+1) * 45), 120 + (cos(-1.2) * 45) );
   isp_set_sprite_xy(sl, s8, 160 + (sin(-4+4.3) * 95), 120 + (cos(-5+3.8) * 90) );
+  */
   isp_set_sprite_bgcolor(sl, s9, HTML2COLOR(0x0000ff));
+
+
+
+xs =20;
+ys= 20;
+sprintf(str, " inner boxmaker in tester x%d y%d ", xs, ys);
+buf = boxmaker(xs,ys, HTML2COLOR(col));
+isp_set_sprite_block(sl, s9, xs, ys, buf);
+dfree(buf, "boxmaker in tester cleanup");
 }
 isp_set_sprite_xy(sl, s9, 160 + (sin(-i+4.5) * 75), 120 + (cos(-i+4) * 60) );
 
 
-xs=(int)25;
-ys=(int)25;
+xs=(int)15+(cos(i*33)*9);
+ys=(int)15+(sin(i*33)*9);
 
-buf = boxmaker(xs,ys, HTML2COLOR(col));
 
-free(buf);
-col += 0x010101;
+if(jj > 1)
+{
+  sprintf(str, "boxmaker in tester x%d y%d ", xs, ys);
+  buf = boxmaker(xs,ys, HTML2COLOR(col));
+  isp_set_sprite_block(sl, s9, xs, ys, buf);
+
+
+  dfree(buf, "boxmaker in tester cleanup");
+  jj=0;
+}
+jj++;
+col += 0x040404;
 if(col > 0xffffff)
 {
   col=0;
@@ -1943,13 +1954,13 @@ void sprite_tester_mapaware(void)
 
   isp_set_sprite_xy(sl, s1, x, y );
 j++;
-if(j > 9)
+if(j > 4)
 {
   j=0;
-/*  fx_make_sizer_box(x, y, 20, 5, HTML2COLOR(0xFF0000), HTML2COLOR(0x00ff00), 50, 500);
-*/
+  fx_make_sizer_box(x, y, 3, 15, HTML2COLOR(0xFF0000), HTML2COLOR(0x00ff00), 30, 1500);
+
 }
-//fx_update();
+fx_update();
 //  isp_set_sprite_xy(sl, s2, x, y );
   if(test_sprite_for_land_collision(sl, s1))
   {
