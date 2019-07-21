@@ -62,8 +62,8 @@ typedef struct {
   uint8_t shot_size;   // shot gfx size
 
   /* accleration parameters */
-  float  vdrag;
   int8_t vgoal;
+  float  vdrag;
   int8_t vapproach;
   int8_t vmult;
 

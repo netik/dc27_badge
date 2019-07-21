@@ -36,24 +36,9 @@ static void cmd_config_led_eye(BaseSequentialStream *chp, int argc, char *argv[]
 
 static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
 {
-#ifdef BLACK_BADGE
-  tmElements_t dt;
-  unsigned long curtime;
-  unsigned long delta;
-#endif
   userconfig *config = getConfig();
   (void)argv;
   (void)argc;
-
-#ifdef BLACK_BADGE
-  if (rtc != 0) {
-    delta = (chVTGetSystemTime() - rtc_set_at);
-    curtime = rtc + delta;
-    breakTime(curtime, &dt);
-
-    printf ("%02d/%02d/%02d %02d:%02d:%02d\n", 1970+dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
-  }
-#endif
 
   printf ("name       %s\n", config->name);
   printf ("config ver %ld\n", config->version);
@@ -94,10 +79,11 @@ static void cmd_config_show(BaseSequentialStream *chp, int argc, char *argv[])
 static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
   (void)argv;
   (void)argc;
-#ifdef BLACK_BADGE
-  uint32_t val;
-#endif
 
+#ifdef BLACK_BADGE
+  unsigned int val;
+#endif
+  
   userconfig *config = getConfig();
 
   if (argc != 3) {
@@ -133,14 +119,14 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
   }
 
   if (!strcasecmp(argv[1], "ship_type")) {
-    config->current_ship_type = val;
-    printf ("Current Ship set to %d.\n", config->current_ship_type);
+    config->current_ship = val;
+    printf ("Current Ship set to %d.\n", config->current_ship);
     return;
   }
 
   if (!strcasecmp(argv[1], "unlocks")) {
     config->unlocks = val;
-    printf ("Unlocks set to %d.\n", config->unlocks);
+    printf ("Unlocks set to %ld.\n", config->unlocks);
     return;
   }
 
@@ -158,7 +144,7 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
   if (!strcasecmp(argv[1], "rtc")) {
     rtc = val;
     rtc_set_at = chVTGetSystemTime();
-    printf ("rtc set to %d.\n", rtc);
+    printf ("rtc set to %ld.\n", rtc);
     return;
   }
 #endif

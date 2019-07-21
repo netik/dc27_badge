@@ -30,6 +30,7 @@
 #include "rand.h"
 #include "userconfig.h"
 #include "enemy.h"
+#include "unlocks.h"
 
 #include "ble_lld.h"
 #include "ble_gap_lld.h"
@@ -107,6 +108,10 @@ static void set_ship_sprite(ENEMY *e);
 bool entity_OOB(ENTITY *e);
 /* end protos */
 
+/* helpers */
+#define PLAYER_MAX_HP (player->unlocks & UL_PLUSHP ? (uint16_t)((float)shiptable[player->ship_type].max_hp * 1.1) : shiptable[player->ship_type].max_hp)
+#define ENEMY_MAX_HP  (current_enemy->unlocks & UL_PLUSHP ? (uint16_t)((float)shiptable[current_enemy->ship_type].max_hp * 1.1): shiptable[current_enemy->ship_type].max_hp)
+
 static
 int getMapTile(ENTITY *e)
 {
@@ -145,7 +150,8 @@ check_land_collision(ENTITY *p)
 static void redraw_player_bars(void) {
   // player's stats
   drawProgressBar(0, 26, 120, 6,
-    shiptable[player->ship_type].max_hp, player->hp, FALSE, FALSE);
+    PLAYER_MAX_HP,
+    player->hp, FALSE, FALSE);
   drawProgressBar(0, 34, 120, 6,
     shiptable[player->ship_type].max_energy, player->energy, FALSE, FALSE);
 }
@@ -153,9 +159,11 @@ static void redraw_player_bars(void) {
 static void redraw_enemy_bars(void) {
   // enemy stats
   drawProgressBar(200, 26, 120, 6,
-    shiptable[current_enemy->ship_type].max_hp, current_enemy->hp, FALSE, TRUE);
+    ENEMY_MAX_HP,
+    current_enemy->hp, FALSE, TRUE);
   drawProgressBar(200, 34, 120, 6,
-    shiptable[current_enemy->ship_type].max_energy, current_enemy->energy, FALSE, TRUE);
+    shiptable[current_enemy->ship_type].max_energy,
+    current_enemy->energy, FALSE, TRUE);
 }
 
 
@@ -178,14 +186,14 @@ static void entity_update(ENTITY *p, float dt)
 
   p->vecVelocity.x = approach(p->vecVelocityGoal.x,
                               p->vecVelocity.x,
-                              dt * VAPPROACH);
+                              dt * p->vapproach);
 
   p->vecVelocity.y = approach(p->vecVelocityGoal.y,
                               p->vecVelocity.y,
-                              dt * VAPPROACH);
+                              dt * p->vapproach);
 
-  p->vecPosition.x = p->vecPosition.x + p->vecVelocity.x * dt * VMULT;
-  p->vecPosition.y = p->vecPosition.y + p->vecVelocity.y * dt * VMULT;
+  p->vecPosition.x = p->vecPosition.x + p->vecVelocity.x * dt * p->vmult;
+  p->vecPosition.y = p->vecPosition.y + p->vecVelocity.y * dt * p->vmult;
 
   p->vecVelocity.x = p->vecVelocity.x + p->vecGravity.x * dt;
   p->vecVelocity.y = p->vecVelocity.y + p->vecGravity.y * dt;
@@ -287,13 +295,14 @@ copy_config_to_player(void)
 
   // we cannot determine hp or xp until ship has been selected but we can
   // guess based on last used.
-  player->hp             = shiptable[config->current_ship].max_hp;
+  player->hp             = PLAYER_MAX_HP;
   player->energy         = shiptable[config->current_ship].max_energy;
   player->xp             = config->xp;
   player->ship_type      = config->current_ship;
   player->ship_locked_in = FALSE;
   player->ttl            = -1;
   player->last_shot_ms   = 0;
+  player->unlocks        = config->unlocks;
   // ENTITY player.e will be init'd during combat
 }
 
@@ -526,6 +535,9 @@ void show_hit(ENEMY *e) {
       e->e.sprite_id,
       e->e.faces_right ? bh->pl_h_right : bh->pl_h_left);
   } else {
+    if (e->is_cloaked) {
+      isp_show_sprite(sprites, e->e.sprite_id);
+    }
     isp_set_sprite_from_spholder(sprites,
       e->e.sprite_id,
       e->e.faces_right ? bh->ce_h_right : bh->ce_h_left);
@@ -535,6 +547,11 @@ void show_hit(ENEMY *e) {
 
   // restore ship
   set_ship_sprite(e);
+  if (e != player) {
+    if (e->is_cloaked) {
+      isp_hide_sprite(sprites, e->e.sprite_id);
+    }
+  }
 }
 
 void update_bullets(void) {
@@ -589,6 +606,21 @@ void update_bullets(void) {
             dmg = randRange(shiptable[player->ship_type].max_dmg * .75,
                             shiptable[player->ship_type].max_dmg);
           }
+
+          // if you are submerged, then you get hit for 1.5 x
+          if (current_enemy->is_cloaked) {
+            dmg = dmg * 1.5;
+          }
+
+          // handle unlocks
+          if (current_enemy->unlocks & UL_PLUSDEF) {
+            dmg = dmg * .9;
+
+          }
+          if (player->unlocks & UL_PLUSDMG) {
+            dmg = dmg * 1.1;
+          }
+
           current_enemy->hp = current_enemy->hp - dmg;
 
           i2sPlay("game/explode2.snd");
@@ -597,7 +629,7 @@ void update_bullets(void) {
           printf("HIT for %d Damage, HP: %d / %d\n",
             dmg,
             current_enemy->hp,
-            shiptable[current_enemy->ship_type].max_hp
+            ENEMY_MAX_HP
           );
 
           isp_destroy_sprite(sprites, bullet[i]->sprite_id);
@@ -1107,12 +1139,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         switch (ph->bp_opcode)
         {
         case BATTLE_OP_SHIP_CONFIRM:
+          pkt_vs = (bp_vs_pkt_t *)&bh->rxbuf;
           current_enemy->ship_locked_in = TRUE;
+          current_enemy->unlocks = pkt_vs->bp_unlocks;
         /* intentional fall-through */
         case BATTLE_OP_SHIP_SELECT:
           pkt_vs = (bp_vs_pkt_t *)&bh->rxbuf;
           current_enemy->ship_type = pkt_vs->bp_shiptype;
-          current_enemy->hp        = shiptable[current_enemy->ship_type].max_hp;
+          current_enemy->hp        = ENEMY_MAX_HP;
           current_enemy->energy    = shiptable[current_enemy->ship_type].max_energy;
           state_vs_draw_enemy(current_enemy, FALSE);
 
@@ -1331,7 +1365,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         {
           player->ship_type = 0;
         }
-        player->hp     = shiptable[player->ship_type].max_hp;
+        player->hp     = PLAYER_MAX_HP;
         player->energy = shiptable[player->ship_type].max_energy;
 
         state_vs_draw_enemy(player, TRUE);
@@ -1379,7 +1413,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         switch (event->key.code)
         {
         case keyALeft:
-          player->e.vecVelocityGoal.x = -VGOAL;
+          player->e.vecVelocityGoal.x = -player->e.vgoal;
           player->e.faces_right       = false;
 
           if (current_battle_state == COMBAT) {
@@ -1389,7 +1423,7 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
         case keyARight:
           player->e.faces_right       = true;
-          player->e.vecVelocityGoal.x = VGOAL;
+          player->e.vecVelocityGoal.x = player->e.vgoal;
 
           if (current_battle_state == COMBAT) {
             set_ship_sprite(player);
@@ -1397,11 +1431,11 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           break;
 
         case keyAUp:
-          player->e.vecVelocityGoal.y = -VGOAL;
+          player->e.vecVelocityGoal.y = -player->e.vgoal;
           break;
 
         case keyADown:
-          player->e.vecVelocityGoal.y = VGOAL;
+          player->e.vecVelocityGoal.y = player->e.vgoal;
           break;
 
         case keyASelect:
@@ -2015,6 +2049,28 @@ void state_combat_enter(void)
   // players
   entity_init(&player->e, sprites, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_PLAYER);
   entity_init(&current_enemy->e, sprites, SHIP_SIZE_ZOOMED, SHIP_SIZE_ZOOMED, T_ENEMY);
+
+  // set velocity params according to the ship
+  player->e.vecGravity.x  = shiptable[player->ship_type].vdrag;
+  player->e.vecGravity.y  = shiptable[player->ship_type].vdrag;
+  player->e.vgoal         =
+    player->unlocks & UL_SPEED ? (int)((float)shiptable[player->ship_type].vgoal * 1.2) :
+                                 shiptable[player->ship_type].vgoal;
+  player->e.vdrag         = shiptable[player->ship_type].vdrag;
+  player->e.vapproach     = shiptable[player->ship_type].vapproach;
+  player->e.vmult         = shiptable[player->ship_type].vmult;
+
+  current_enemy->e.vecGravity.x  = shiptable[current_enemy->ship_type].vdrag;
+  current_enemy->e.vecGravity.y  = shiptable[current_enemy->ship_type].vdrag;
+
+  current_enemy->e.vgoal         =
+    current_enemy->unlocks & UL_SPEED ? (int)((float)shiptable[current_enemy->ship_type].vgoal * 1.2) :
+                                        shiptable[current_enemy->ship_type].vgoal;
+
+  current_enemy->e.vapproach     = shiptable[current_enemy->ship_type].vapproach;
+  current_enemy->e.vmult         = shiptable[current_enemy->ship_type].vmult;
+  current_enemy->e.vdrag         = shiptable[current_enemy->ship_type].vdrag;
+
   combat_load_sprites();
 
   /* move the player to the starting position */
@@ -2023,9 +2079,10 @@ void state_combat_enter(void)
     // Attacker (the central) gets left side, and faces right.
     player->e.vecPosition.x        = ship_init_pos_table[newmap].attacker.x;
     player->e.vecPosition.y        = ship_init_pos_table[newmap].attacker.y;
+    player->e.faces_right          = true;
+
     current_enemy->e.vecPosition.x = ship_init_pos_table[newmap].defender.x;
     current_enemy->e.vecPosition.y = ship_init_pos_table[newmap].defender.y;
-    player->e.faces_right          = true;
     current_enemy->e.faces_right   = false;
   }
   else
@@ -2128,13 +2185,26 @@ void regen_energy(ENEMY *e) {
 
 void regen_health(ENEMY *e) {
   // regen energy
+
+  int16_t maxhp;
+
+  if (e == player) {
+    maxhp = PLAYER_MAX_HP;
+  } else {
+    maxhp = ENEMY_MAX_HP;
+  }
+
   if (e->is_healing) {
     // The FRIGATE is the only ship that can regen.
     // It can regen for one second, so this will restore 125 HP
     e->hp = e->hp + 5;
 
-    if (e->hp > shiptable[e->ship_type].max_hp) {
-      e->hp = shiptable[e->ship_type].max_hp;
+    if ((e == player) && (player->unlocks & UL_REPAIR)) {
+        e->hp = e->hp + 2;
+    }
+
+    if (e->hp > maxhp) {
+      e->hp = maxhp;
     }
 
     if (e == player) {
@@ -2401,8 +2471,8 @@ static void state_show_results_enter(void) {
   // free the UI
   bh = (BattleHandles *)mycontext->priv;
 
-  if ( (player->hp == shiptable[player->ship_type].max_hp) &&
-       (current_enemy->hp == shiptable[current_enemy->ship_type].max_hp)) {
+  if ( (player->hp == PLAYER_MAX_HP) &&
+       (current_enemy->hp == ENEMY_MAX_HP)) {
     sprintf(tmp, "Y U NO PLAY? (0 XP!)");
   } else {
     // figure out who won
@@ -2442,7 +2512,7 @@ static void state_show_results_enter(void) {
 
   // award xp here.
   screen_alert_draw(false, tmp);
-  chThdSleepMilliseconds(ALERT_DELAY * 2);
+  chThdSleepMilliseconds(ALERT_DELAY);
   printf("D\n");
 
   // did we level up?
@@ -2700,10 +2770,13 @@ static void send_ship_type(uint16_t type, bool final)
   bp_vs_pkt_t pkt;
   uint8_t *buf;
   buf = sl_alloc();
+  userconfig *config = getConfig();
 
   pkt.bp_header.bp_opcode = final ? BATTLE_OP_SHIP_CONFIRM : BATTLE_OP_SHIP_SELECT;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
   pkt.bp_shiptype         = type;
+  pkt.bp_unlocks          = config->unlocks;
+
   memcpy(buf, &pkt, sizeof(bp_vs_pkt_t));
 
   if (bleL2CapSend((uint8_t *)buf, sizeof(bp_vs_pkt_t)) != NRF_SUCCESS)

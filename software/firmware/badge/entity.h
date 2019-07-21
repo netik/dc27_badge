@@ -43,6 +43,11 @@ typedef struct _entity
   VECTOR      vecGravity;
   VECTOR      vecPositionLast; /* if this doesn't match, we'll erase and repaint */
 
+  float       vdrag;
+  int8_t      vapproach;
+  int8_t      vmult;
+  int8_t      vgoal;
+
   uint8_t     size_x;
   uint8_t     size_y;
 } ENTITY;

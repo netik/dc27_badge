@@ -22,7 +22,7 @@ const ship_type_t shiptable[8] = {
     "PT Boat",
     200, 25, 100, 4 ,
     500, 150, 50, 30, 5,
-    25, -0.005, 20, 8, // PT boat is swiftest but does least damage.
+    30, -0.005, 20, 8, // PT boat is swiftest but does least damage.
     30, 40, 25, -1,
     1, SP_SHOT_FOURWAY_DIAG // 4-way shot on diag!
   },
@@ -60,7 +60,7 @@ const ship_type_t shiptable[8] = {
 
   {
     "Frigate",
-    500, 80, 300, 3,
+    250, 80, 300, 3,
     500, 500, 45, 70, 10,
     DEFAULT_VRATES,
     150, -1, 20, 1000,
@@ -69,7 +69,7 @@ const ship_type_t shiptable[8] = {
 
   {
     "Battleship",
-    600, 60, 400, 3,
+    600, 100, 400, 3,
     333, 400, 35, 100, 10,
     6,VDRAG,VAPPROACH,VMULT,
     100, 80, 40, 1000,
@@ -92,7 +92,7 @@ const ship_type_t shiptable[8] = {
 
   {
     "Tesla",
-    300, 30, 300, 3,
+    300, 60, 300, 3,
     333, 2000, 40, 45, 10,
     15,VDRAG,20,VMULT,
     300, -1, -1, -1,

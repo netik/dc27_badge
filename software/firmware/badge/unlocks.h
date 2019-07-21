@@ -22,16 +22,16 @@
  * uses the access password)
  */
 
-#define UL_PLUSDEF      ( 1 << 0 )  // +10% DEF
-#define UL_PLUSHP       ( 1 << 1 )  // +10% HP
-#define UL_PLUSDMG      ( 1 << 2 )  // +10% DMG
-#define UL_SPEED        ( 1 << 3 )  // +20% SPEED
-#define UL_REPAIR       ( 1 << 4 )  // FAST REPAIR
-#define UL_LEDS         ( 1 << 5 )  // MORE LEDs
-#define UL_VIDEO1       ( 1 << 6 )  // Unlocks additional videos
-#define UL_SHIP1        ( 1 << 7 )  // Unlocks additional ships
-#define UL_SHIP2        ( 1 << 8 )  // Unlocks additional ship #2
-#define UL_GOD          ( 1 << 9 )  // GOD_MODE
+#define UL_PLUSDEF      ( 1 << 0 )  // +10% DEF - ok
+#define UL_PLUSHP       ( 1 << 1 )  // +10% HP - ok
+#define UL_PLUSDMG      ( 1 << 2 )  // +10% DMG - ok
+#define UL_SPEED        ( 1 << 3 )  // +20% SPEED - not done
+#define UL_REPAIR       ( 1 << 4 )  // FAST REPAIR - ok`
+#define UL_LEDS         ( 1 << 5 )  // MORE LEDs - ok
+#define UL_VIDEO1       ( 1 << 6 )  // Unlocks additional videos - ok
+#define UL_SHIP1        ( 1 << 7 )  // Unlocks additional ships - ok
+#define UL_SHIP2        ( 1 << 8 )  // Unlocks additional ship #2 - ok
+#define UL_GOD          ( 1 << 9 )  // GOD_MODE - not done
 #define UL_PINGDUMP     ( 1 << 10 ) // NETWORK DEBUG (BLACK_BADGE only)
 #define UL_BLACKBADGE	  ( 1 << 11 ) // black badge
 
