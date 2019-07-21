@@ -105,6 +105,7 @@ static void send_bullet_create(ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t 
 static void send_state_update(uint16_t opcode, uint16_t operand);
 static void redraw_combat_clock(void);
 static void set_ship_sprite(ENEMY *e);
+static void send_mine_create(ENTITY *e);
 bool entity_OOB(ENTITY *e);
 /* end protos */
 
@@ -421,6 +422,60 @@ draw_hud(OrchardAppContext *context)
   redraw_enemy_bars();
 }
 
+static void
+lay_mine(ENEMY *e) {
+  int count = 0;
+
+  if (e == player) {
+    for (int i = 0; i < MAX_BULLETS; i++) {
+      if (bullet[i] != NULL && bullet[i]->type == T_PLAYER_MINE) {
+        count++;
+      }
+    }
+
+    // only one ship can mine, so six max.
+    if (count >= MAX_MINES) {
+      // no more for you.
+      return;
+    }
+
+    // we can lay.
+    i2sPlay("sound/click.snd");
+  }
+
+  for (int i = 0; i < MAX_BULLETS; i++)
+  {
+    // find the first available bullet structure
+    // create a new entity and fire something from it.
+    if (bullet[i] == NULL) {
+      bullet[i] = malloc(sizeof(ENTITY));
+      entity_init(bullet[i],
+        sprites,
+        MINE_SIZE,
+        MINE_SIZE,
+        e == player ? T_PLAYER_MINE : T_ENEMY_MINE);
+      bullet[i]->visible = TRUE;
+      bullet[i]->vecPosition.x = e->e.vecPosition.x;
+      bullet[i]->vecPosition.y = e->e.vecPosition.y;
+
+      // center the mine under the ship.
+      bullet[i]->vecPosition.x += ((SHIP_SIZE_ZOOMED/2) - (MINE_SIZE/2));
+      bullet[i]->vecPosition.y += ((SHIP_SIZE_ZOOMED/2) - (MINE_SIZE/2));
+
+      // mines have a TTL.
+      bullet[i]->ttl  = 5 * FPS;
+      if (e == player) {
+        send_mine_create(bullet[i]);
+      }
+      return;
+
+      printf("lay mine at %f, %f with ttl %d\n",
+        bullet[i]->vecPosition.x,
+        bullet[i]->vecPosition.x,
+        bullet[i]->ttl);
+    }
+  }
+}
 
 static void
 fire_bullet(ENEMY *e, int16_t dir_x, int16_t dir_y, uint8_t is_free)
@@ -653,29 +708,33 @@ void update_bullets(void) {
 
       // check for oob or max distance
       if (bullet[i]) {
-        if ((travelled > max_range) ||
-            (entity_OOB(bullet[i])) ||
-            (check_land_collision(bullet[i]))) {
-          // expire bullet
-          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
-          i2sPlay("game/splash.snd");
-          free(bullet[i]);
-          bullet[i] = NULL;
-          continue;
+        // mines can expire their TTL.
+        if (bullet[i]->type != T_PLAYER_MINE &&
+            bullet[i]->type != T_ENEMY_MINE) {
+          // bullets can max out their range
+          if ((travelled > max_range) ||
+              (entity_OOB(bullet[i])) ||
+              (check_land_collision(bullet[i]))) {
+            // expire bullet
+            isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+            i2sPlay("game/splash.snd");
+            free(bullet[i]);
+            bullet[i] = NULL;
+            continue;
+          }
         }
       }
     }
-  }
-
+}
 
 bool
 entity_OOB(ENTITY *e)
 {
   // returns TRUE if entity is out of bounds
-  if ((e->vecPosition.x >= SCREEN_W - e->size_x) ||
+  if ((e->vecPosition.x >= (SCREEN_W-1) - e->size_x) ||
       (e->vecPosition.x < 0) ||
       (e->vecPosition.y < 0) ||
-      (e->vecPosition.y >= SCREEN_H - e->size_y))
+      (e->vecPosition.y >= (SCREEN_H-1) - e->size_y))
   {
     return(TRUE);
   }
@@ -852,6 +911,7 @@ static void fire_special(ENEMY *e) {
       fire_bullet(e,1,1,TRUE);   // LR
     break;
     case SP_MINE:
+      lay_mine(e);
       break;
     case SP_SHIELD:
       e->is_shielded = TRUE;
@@ -1241,6 +1301,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
               pkt_state->bp_operand);
 #endif
             redraw_combat_clock();
+            break;
+          case BATTLE_OP_MINE_CREATE:
+            pkt_bullet = (bp_bullet_pkt_t *)&bh->rxbuf;
+            lay_mine(current_enemy);
             break;
           case BATTLE_OP_ENTITY_CREATE:
             // enemy is firing a bullet from their current position.
@@ -2514,6 +2578,7 @@ static void state_show_results_enter(void) {
         xpgain = calc_xp_gain(TRUE);
         config->won++;
         sprintf(tmp, "YOU WIN! (+%d XP)",xpgain);
+        i2sPlay("game/victory.snd");
     } else {
       // record time of death
       config->lastdeath = chVTGetSystemTime();
@@ -2525,8 +2590,8 @@ static void state_show_results_enter(void) {
     }
 
     if (player->hp == current_enemy->hp) {
-      // Everybody wins.
-      xpgain = calc_xp_gain(TRUE);
+      // Everybody wins. Half.
+      xpgain = calc_xp_gain(TRUE) / 2;
 
       config->lost++;
       sprintf(tmp, "TIE! (+%d XP)",xpgain);
@@ -2547,14 +2612,12 @@ static void state_show_results_enter(void) {
   // award xp here.
   screen_alert_draw(false, tmp);
   chThdSleepMilliseconds(ALERT_DELAY);
-  printf("D\n");
 
   // did we level up?
   if ((config->level + 1 != calc_level(config->xp)) && (config->level + 1 != LEVEL_CAP)) {
     changeState(LEVELUP);
     return;
   }
-  printf("E\n");
 
   orchardAppExit();
 }
@@ -2846,6 +2909,29 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
 
   if (bleL2CapSend((uint8_t *)buf, sizeof(bp_entity_pkt_t)) != NRF_SUCCESS)
   {
+    screen_alert_draw(TRUE, "BLE XMIT FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
+}
+
+static void send_mine_create(ENTITY *e)
+{
+  bp_bullet_pkt_t *pkt;
+  uint8_t *buf;
+  buf = sl_alloc();
+
+  // get private memory
+  pkt = (bp_bullet_pkt_t *)buf;
+
+  pkt->bp_header.bp_opcode = BATTLE_OP_MINE_CREATE;
+  pkt->bp_header.bp_type   = T_ENEMY; // always enemy.
+  pkt->bp_header.bp_id     = e->id;
+  pkt->bp_origin_x         = (uint16_t)e->vecPosition.x;
+  pkt->bp_origin_y         = (uint16_t)e->vecPosition.y;
+
+  if (bleL2CapSend((uint8_t *)buf, sizeof(bp_bullet_pkt_t)) != NRF_SUCCESS) {
     screen_alert_draw(TRUE, "BLE XMIT FAILED!");
     chThdSleepMilliseconds(ALERT_DELAY);
     orchardAppExit();

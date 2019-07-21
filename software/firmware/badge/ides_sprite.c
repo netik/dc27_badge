@@ -1098,19 +1098,12 @@ ISPHOLDER *isp_make_spholder(void)
 
 void isp_destroy_spholder(ISPHOLDER *sph)
 {
-<<<<<<< HEAD
-  if( (NULL != sph)  )
-=======
   if (sph == NULL)
     return;
-
-  if( (sph->sprite.xs > 0) && (sph->sprite.xs > 0) && (NULL != sph->sprite.buf ) )
->>>>>>> be1629712c3524a16f0706f76a926dc6c8bb6957
-  {
-    isp_destroy_ispbuf(&sph->sprite);
-    wm_destroy_wmap(sph->alpha);
-    dfree(sph, "isp_destroy_spholder free ISPHOLDER");
-  }
+    
+  isp_destroy_ispbuf(&sph->sprite);
+  wm_destroy_wmap(sph->alpha);
+  dfree(sph, "isp_destroy_spholder free ISPHOLDER");
 }
 
 /* makes a proper ISPHOLDER from a passed in buffer.  crops image, makes alpha */
@@ -1775,7 +1768,6 @@ pixel_t *boxmaker(coord_t x, coord_t y, color_t col)
 void sprite_tester(void)
 {
   static ISPRITESYS *sl=NULL;
-  ISPHOLDER *hold;
   static double i = 0.0;
   static int col=0, jj=0;;
   static ISPID s1, s2, s3, s4, s5, s6, s7, s8,s9;

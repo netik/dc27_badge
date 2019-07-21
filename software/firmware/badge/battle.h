@@ -20,12 +20,14 @@
 #define COLOR_PLAYER          HTML2COLOR(0xeeeseee) // light grey
 #define SHIP_SIZE_WORLDMAP    10
 #define SHIP_SIZE_ZOOMED      40
+#define MINE_SIZE             5
+#define MAX_MINES             6
 
 /* Entity opcodes */
 #define BATTLE_OP_ENTITY_CREATE     0x01 /* New entity in play */
 #define BATTLE_OP_ENTITY_DESTROY    0x02 /* Discard existing entity */
 #define BATTLE_OP_ENTITY_UPDATE     0x03 /* Entity state update */
-
+#define BATTLE_OP_MINE_CREATE       0x04 /* have a nice mine */
 /* VS opcodes */
 #define BATTLE_OP_SHIP_SELECT       0x10 /* Current ship selection */
 #define BATTLE_OP_SHIP_CONFIRM      0x11 /* Final ship choice */

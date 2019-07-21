@@ -49,7 +49,7 @@ entity_init(ENTITY *p, ISPRITESYS *sprites, int16_t size_x, int16_t size_y, enti
   p->vapproach = VAPPROACH;
   p->vmult = VAPPROACH;
   p->vgoal = VGOAL;
-  
+
   p->sprite_id = isp_make_sprite(sprites);
 
   switch (p->type)
@@ -68,6 +68,14 @@ entity_init(ENTITY *p, ISPRITESYS *sprites, int16_t size_x, int16_t size_y, enti
 
   case T_ENEMY_BULLET:
     color = Red;
+    break;
+
+  case T_PLAYER_MINE:
+    color = Yellow;
+    break;
+
+  case T_ENEMY_MINE:
+    color = Yellow;
     break;
 
   case T_SPECIAL:
