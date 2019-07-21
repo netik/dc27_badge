@@ -1150,7 +1150,7 @@ ISPHOLDER *isp_buf_to_spholder(coord_t xs, coord_t ys, pixel_t *buf)
   }
   else
   {
-    printf("ERROR: isp_buf_to_spholder xs%d ys%d buf %08x\n", xs, ys, buf);
+    printf("ERROR: isp_buf_to_spholder xs%d ys%d\n", xs, ys);
   }
 
   return(ret);
