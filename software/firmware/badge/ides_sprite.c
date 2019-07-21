@@ -1098,7 +1098,14 @@ ISPHOLDER *isp_make_spholder(void)
 
 void isp_destroy_spholder(ISPHOLDER *sph)
 {
+<<<<<<< HEAD
   if( (NULL != sph)  )
+=======
+  if (sph == NULL)
+    return;
+
+  if( (sph->sprite.xs > 0) && (sph->sprite.xs > 0) && (NULL != sph->sprite.buf ) )
+>>>>>>> be1629712c3524a16f0706f76a926dc6c8bb6957
   {
     isp_destroy_ispbuf(&sph->sprite);
     wm_destroy_wmap(sph->alpha);

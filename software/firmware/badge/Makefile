@@ -194,6 +194,7 @@ CSRC += main.c \
 	ships.c \
 	enemy.c \
 	entity.c \
+	slaballoc.c \
 	app-badge.c \
 	app-battle.c \
 	app-launcher.c \
@@ -332,7 +333,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -DSHELL_PROMPT_STR="\"boom> \"" -DSHELL_MAX_ARGUMENTS=6
+UDEFS = -DSHELL_PROMPT_STR="\"boom> \"" -DSHELL_MAX_ARGUMENTS=6 -DBLACK_BADGE=1
 
 # Define ASM defines here
 UADEFS =

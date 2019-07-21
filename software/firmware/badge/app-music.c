@@ -154,12 +154,6 @@ columnDraw (int col, short amp)
 	if (amp > MUSIC_FFT_MAX_AMPLITUDE)
 		amp = MUSIC_FFT_MAX_AMPLITUDE;
 
-	/*
-	 * Set the drawing aperture.
-	 * We offset the bar graph by 7 pixels to the right
-	 * so that it appears centered.
-	 */
-
 	GDISP->p.x = col;
 
 	/* Now draw the column */

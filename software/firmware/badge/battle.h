@@ -33,16 +33,56 @@
 /* State opcodes */
 #define BATTLE_OP_TAKE_DMG          0x20 /* I hit you for X dmg... */
 #define BATTLE_OP_ENG_UPDATE        0x21 /* my eng is X. */
+#define BATTLE_OP_HP_UPDATE         0x22 /* my hp is X. */
 
-#define BATTLE_OP_SET_SHIELD        0x22 /* My shield is ... */
-#define BATTLE_OP_SET_HEAL          0x24 /* I am healing */
-#define BATTLE_OP_SET_TELEPORT      0x28 /* I am teleporting */
+#define BATTLE_OP_SET_SHIELD        0x24 /* My shield is ... */
+#define BATTLE_OP_SET_HEAL          0x28 /* I am healing */
+#define BATTLE_OP_SET_TELEPORT      0x2A /* I am teleporting */
+#define BATTLE_OP_SET_CLOAK         0x2B /* I am cloaked */
 
 #define BATTLE_OP_IAMDEAD           0x30 /* I've been killed */
 #define BATTLE_OP_YOUAREDEAD        0x31 /* You've been killed */
-#define BATTLE_OP_CLOCKUPDATE       0x28 /* this is the current game time. */
+#define BATTLE_OP_CLOCKUPDATE       0x32 /* this is the current game time. */
 
 #define BATTLE_OP_ENDGAME           0xF0 /* this ends the game */
+
+/* private memory */
+typedef struct _BattleHandles
+{
+  GListener gl;
+  GListener gl2;
+  font_t    fontLG;
+  font_t    fontXS;
+  font_t    fontSM;
+  font_t    fontSTENCIL;
+  GHandle   ghTitleL;
+  GHandle   ghTitleR;
+  GHandle   ghACCEPT;
+  GHandle   ghDECLINE;
+
+  // these are the top row, player stats frame buffers.
+  pixel_t * l_pxbuf;
+  pixel_t * c_pxbuf;
+  pixel_t * r_pxbuf;
+
+  // misc variables
+  uint16_t  cid;       // l2capchannelid for combat
+  char      rxbuf[BLE_IDES_L2CAP_MTU];
+
+  // left and right variants of the players; used in COMBAT only.
+  ISPHOLDER *pl_left, *pl_right, *ce_left, *ce_right;
+  // these are shown when you get HIT
+  ISPHOLDER *pl_h_left, *pl_h_right, *ce_h_left, *ce_h_right;
+    // for the cruiser, we also need the shielded versions
+  ISPHOLDER *pl_s_left, *pl_s_right, *ce_s_left, *ce_s_right;
+  // for the frigate we need the healing versions
+  ISPHOLDER *pl_g_left, *pl_g_right, *ce_g_left, *ce_g_right;
+  // for the sub we need only the player submerged
+  ISPHOLDER *pl_u_left, *pl_u_right;
+  // for the tesla we need the teleporting view.
+  ISPHOLDER *pl_t_left, *pl_t_right, *ce_t_left, *ce_t_right;
+
+} BattleHandles;
 
 /*
  * Game network protocol definitions

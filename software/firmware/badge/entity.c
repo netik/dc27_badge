@@ -46,6 +46,10 @@ entity_init(ENTITY *p, ISPRITESYS *sprites, int16_t size_x, int16_t size_y, enti
   p->vecGravity.x = VDRAG;
   p->vecGravity.y = VDRAG;
 
+  p->vapproach = VAPPROACH;
+  p->vmult = VAPPROACH;
+  p->vgoal = VGOAL;
+  
   p->sprite_id = isp_make_sprite(sprites);
 
   switch (p->type)

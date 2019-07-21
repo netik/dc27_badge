@@ -25,7 +25,8 @@ typedef struct _enemy
   bool           is_shielded;
   bool           is_healing;
   bool           is_cloaked;
-
+  bool           is_teleporting;
+  
   bool           ship_locked_in; // if the enemy has locked in their ship type
 
   uint16_t       unlocks;

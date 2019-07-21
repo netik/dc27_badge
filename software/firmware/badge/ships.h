@@ -22,7 +22,6 @@
 #define SP_SHOT_FOURWAY_DIAG   ( 1 << 4 )
 #define SP_SHOT_FOURWAY        ( 1 << 5 )
 #define SP_SHIELD              ( 1 << 6 )
-#define SP_AOE                 ( 1 << 7 ) // TBD
 
 // generic parameters for motion
 #define VGOAL       8        // ship accleration goal
@@ -62,8 +61,8 @@ typedef struct {
   uint8_t shot_size;   // shot gfx size
 
   /* accleration parameters */
-  float  vdrag;
   int8_t vgoal;
+  float  vdrag;
   int8_t vapproach;
   int8_t vmult;
 

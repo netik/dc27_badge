@@ -27,8 +27,7 @@ const char *rankname[] = {
   "Rear Adm.2",  // 7
   "Vice Adm.",   // 8
   "Admiral",     // 9
-  "Flt Admiral", // 10
-  "WOPR"         // 11
+  "WOPR"         // 10 (yeah it goes to 11.)
 };
 
 // so that we don't have to search for starting places, here's a list
@@ -101,8 +100,11 @@ uint8_t calc_level(uint16_t xp) {
   // XP.
 
   // note that Level storage in config
-  // starts at 0, not 1. 
-
+  // starts at 0, not 1.
+  if (xp >= 10000) {
+    return 11;
+  }
+  
   if(xp >= 6480) {
     return 10;
   }
