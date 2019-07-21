@@ -1778,7 +1778,6 @@ void sprite_tester(void)
 
   if(NULL == sl)
   {
-printf("init 2nd engine\n");
     sl = isp_init();
 /*    s1 = isp_make_sprite(sl); // make sprites.  none are drawn yet.
     s2 = isp_make_sprite(sl); // they have no position or pixel data yet.
@@ -1791,7 +1790,7 @@ printf("init 2nd engine\n");
     */
 
     s9 = isp_make_sprite(sl);
-/*
+
     xs=8;
     ys=15;
     buf = boxmaker(xs,ys, HTML2COLOR(0xff00ff));
@@ -1845,7 +1844,7 @@ printf("init 2nd engine\n");
     buf = boxmaker(xs,ys, HTML2COLOR(0xffff00));
     isp_set_sprite_block(sl, s9, xs, ys, buf);
     free(buf);
-*/
+
 /* switch to this instead of the block of code below it to have all sprites moving
   isp_set_sprite_xy(sl, s1, 160 + (sin(i) * 25), 120 + (cos(i) * 25) );
   isp_set_sprite_xy(sl, s2, 160 + (sin(i+2) * 35), 120 + (cos(i+2) * 35) );
