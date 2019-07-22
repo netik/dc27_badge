@@ -2467,11 +2467,18 @@ void state_combat_tick(void)
   check_special_timeouts(player);
   check_special_timeouts(current_enemy);
 
+  /*
+   * If we closed down the sprite library, then don't bother
+   * checking for sprite collisions or doing redraws.
+   */
+
+  if (sprites == NULL)
+    return;
+
   check_ship_collisions();
   // force sprite redraw
 
-  if (sprites != NULL)
-    isp_draw_all_sprites(sprites);
+  isp_draw_all_sprites(sprites);
 }
 
 void state_combat_exit(void)
