@@ -327,6 +327,10 @@ battle_start(OrchardAppContext *context)
   bh->cid   = BLE_L2CAP_CID_INVALID;
   mycontext = context;
 
+  // initialize the slab allocator
+
+  sl_init();
+
   // turn off the LEDs
   ledSetPattern(LED_PATTERN_WORLDMAP);
 
@@ -2887,6 +2891,13 @@ static void send_state_update(uint16_t opcode, uint16_t operand)
   uint8_t *buf;
   buf = sl_alloc();
 
+  if (buf == NULL) {
+    screen_alert_draw(TRUE, "PKT ALLOC FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
+
   pkt.bp_header.bp_opcode = opcode;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
   pkt.bp_operand = operand;
@@ -2909,6 +2920,13 @@ static void send_ship_type(uint16_t type, bool final)
   buf = sl_alloc();
   userconfig *config = getConfig();
 
+  if (buf == NULL) {
+    screen_alert_draw(TRUE, "PKT ALLOC FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
+
   pkt.bp_header.bp_opcode = final ? BATTLE_OP_SHIP_CONFIRM : BATTLE_OP_SHIP_SELECT;
   pkt.bp_header.bp_type   = T_ENEMY; // always enemy.
   pkt.bp_shiptype         = type;
@@ -2930,6 +2948,13 @@ static void send_position_update(uint16_t id, uint8_t opcode, uint8_t type, ENTI
   bp_entity_pkt_t pkt;
   uint8_t *buf;
   buf = sl_alloc();
+
+  if (buf == NULL) {
+    screen_alert_draw(TRUE, "PKT ALLOC FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
 
   pkt.bp_header.bp_id = id;
 
@@ -2962,6 +2987,13 @@ static void send_mine_create(ENTITY *e)
   uint8_t *buf;
   buf = sl_alloc();
 
+  if (buf == NULL) {
+    screen_alert_draw(TRUE, "PKT ALLOC FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
+
   // get private memory
   pkt = (bp_bullet_pkt_t *)buf;
 
@@ -2984,6 +3016,13 @@ static void send_bullet_create(ENTITY *e, int16_t dir_x, int16_t dir_y, uint8_t 
   bp_bullet_pkt_t *pkt;
   uint8_t *buf;
   buf = sl_alloc();
+
+  if (buf == NULL) {
+    screen_alert_draw(TRUE, "PKT ALLOC FAILED!");
+    chThdSleepMilliseconds(ALERT_DELAY);
+    orchardAppExit();
+    return;
+  }
 
   // get private memory
   pkt = (bp_bullet_pkt_t *)buf;
