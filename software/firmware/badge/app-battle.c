@@ -176,7 +176,6 @@ static void entity_update(ENTITY *p, float dt)
     if (p->ttl == 0)
     {
       p->visible = FALSE;
-      i2sPlay("game/splash.snd");
       return;
     }
   }
@@ -643,8 +642,22 @@ void update_bullets(void) {
         pow(bullet[i]->vecPosOrigin.x - bullet[i]->vecPosition.x, 2) +
         pow(bullet[i]->vecPosOrigin.y - bullet[i]->vecPosition.y, 2));
 
-      // did this bullet hit anything?
-      if (bullet[i] && bullet[i]->type == T_ENEMY_BULLET) {
+      // manage the mine, first handle TTL. both sides can do that.
+      if (bullet[i] && ( bullet[i]->type == T_ENEMY_MINE ||
+                         bullet[i]->type == T_PLAYER_MINE) ) {
+        if (bullet[i]->ttl == 0) {
+          // mine has expired
+          i2sPlay("game/splash.snd");
+          isp_destroy_sprite(sprites, bullet[i]->sprite_id);
+          free(bullet[i]);
+          bullet[i] = NULL;
+        }
+      }
+
+      // did this bullet hit anything? if so we remove it. The enemy will
+      // tell us the damage in a few.
+      if (bullet[i] && (bullet[i]->type == T_ENEMY_BULLET ||
+                        bullet[i]->type == T_ENEMY_MINE)) {
         if (isp_check_sprites_collision(sprites,
                                         player->e.sprite_id,
                                         bullet[i]->sprite_id,
@@ -656,7 +669,8 @@ void update_bullets(void) {
         }
       }
 
-      if (bullet[i] && bullet[i]->type == T_PLAYER_BULLET) {
+      if (bullet[i] && (bullet[i]->type == T_PLAYER_BULLET ||
+                        bullet[i]->type == T_PLAYER_MINE)) {
         if (isp_check_sprites_collision(sprites,
                                         current_enemy->e.sprite_id,
                                         bullet[i]->sprite_id,
@@ -679,6 +693,11 @@ void update_bullets(void) {
           // if you are submerged, then you get hit for 1.5 x
           if (current_enemy->is_cloaked) {
             dmg = dmg * 1.5;
+          }
+
+          // mines do the ship's damage and 25% more!
+          if (bullet[i]->type == T_PLAYER_MINE) {
+              dmg = dmg * 1.25;
           }
 
           // handle unlocks
@@ -713,7 +732,6 @@ void update_bullets(void) {
 
       // check for oob or max distance
       if (bullet[i]) {
-        // mines can expire their TTL.
         if (bullet[i]->type != T_PLAYER_MINE &&
             bullet[i]->type != T_ENEMY_MINE) {
           // bullets can max out their range
