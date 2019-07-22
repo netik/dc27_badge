@@ -537,5 +537,5 @@ caesar_exit(OrchardAppContext *context)
 	context->priv = NULL;
 }
 
-orchard_app("Ceasar", "icons/bell.rgb", 0, caesar_init,
+orchard_app("Caesar", "icons/bell.rgb", 0, caesar_init,
              caesar_start, caesar_event, caesar_exit, 9999);
