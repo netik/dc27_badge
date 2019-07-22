@@ -175,6 +175,7 @@ CSRC += main.c \
 	userconfig.c \
 	rand.c \
 	led.c \
+	strlcpy.c \
 	cmd-audio.c \
 	cmd-credits.c \
 	cmd-config.c \
@@ -218,6 +219,7 @@ CSRC += main.c \
 	app-spectrum.c \
 	app-puzwatch.c \
 	app-spa-pin.c \
+	app-caesar.c \
 	app-geiger.c \
 	app-info.c \
 	fix_fft.c \

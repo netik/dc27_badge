@@ -52,6 +52,7 @@
 ///////////////////////////////////////////////////////////////////////////
 #define GFX_USE_GDISP                                TRUE
 
+#define GDISP_NEED_TEXT_WORDWRAP			TRUE
 //#define GDISP_NEED_AUTOFLUSH                         FALSE
 //#define GDISP_NEED_TIMERFLUSH                        FALSE
 //#define GDISP_NEED_VALIDATION                        TRUE
