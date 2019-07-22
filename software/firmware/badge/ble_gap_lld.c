@@ -718,12 +718,12 @@ bleGapConnect (ble_gap_addr_t * peer)
 	sparams.extended = 0;
 	sparams.scan_phys = BLE_GAP_PHY_AUTO;
 	sparams.timeout = BLE_IDES_SCAN_TIMEOUT;
-	sparams.window = MSEC_TO_UNITS(100, UNIT_0_625_MS);
-	sparams.interval = MSEC_TO_UNITS(200, UNIT_0_625_MS);
+	sparams.window = MSEC_TO_UNITS(25, UNIT_0_625_MS);
+	sparams.interval = MSEC_TO_UNITS(50, UNIT_0_625_MS);
 	sparams.active = 1;
 
 	cparams.min_conn_interval = MSEC_TO_UNITS(10, UNIT_1_25_MS);
-	cparams.max_conn_interval = MSEC_TO_UNITS(10, UNIT_1_25_MS);
+	cparams.max_conn_interval = MSEC_TO_UNITS(13, UNIT_1_25_MS);
 	cparams.slave_latency = 0;
 	cparams.conn_sup_timeout = MSEC_TO_UNITS(500, UNIT_10_MS);
 
