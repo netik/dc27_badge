@@ -34,8 +34,8 @@ Things currently completed:
 - LED array support
 - Infocom Z-Machine support
 - OTA firmware update support
+- Game app
 
 Things still to do:
 
 - BLE pairing PIN support
-- Game app (in progress)
