@@ -8,6 +8,7 @@ typedef struct _txbuf {
 } TXBUF;
 
 extern void sl_release(uint8_t *p);
+extern void sl_init(void);
 extern uint8_t *sl_alloc(void);
 extern TXBUF  slabs[MAX_SLABS];
 
