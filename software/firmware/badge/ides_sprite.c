@@ -56,12 +56,12 @@ void *dmalloc(size_t s, char *msg)
 {
   void *ret;
   ret = malloc(s);
+//    printf("%08x  , malloc %d, anum:, %d, - %s\n", ret, s, allo_num,msg);
   if(NULL != ret)
   {
       allo_num++;
   }
 
-//    printf("%08x  , malloc %d, anum:, %d, - %s\n", ret, s, allo_num,msg);
   return(ret);
 }
 
@@ -69,12 +69,12 @@ void *dcalloc(size_t num, size_t siz, char *msg)
 {
   void *ret;
   ret = calloc(num, siz);
+//    printf("%08x , calloc %d/%d , anum:, %d, - %s\n", ret, num, siz, allo_num, msg);
   if(NULL != ret)
   {
       allo_num++;
   }
 
-//    printf("%08x , calloc %d/%d , anum:, %d, - %s\n", ret, num, siz, allo_num, msg);
   return(ret);
 }
 
@@ -1734,8 +1734,8 @@ void isp_shutdown(ISPRITESYS *iss)
   {
     if(NULL != iss->wm)
     {
+      /* Note: destroying the map also free()s it */
       wm_destroy_wmap(iss->wm);
-      dfree(iss->wm, "isp_shutdown wm");
       iss->wm = NULL;
     }
     for(i=0; i < ISP_MAX_SPRITES; i++)
