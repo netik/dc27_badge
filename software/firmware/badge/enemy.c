@@ -150,6 +150,8 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
          peer->addr[1],
          peer->addr[0]);
 
+  blePeerLock ();
+
   for (int i = 0; i < BLE_PEER_LIST_SIZE; i++)
   {
     p = &ble_peer_list[i];
@@ -190,10 +192,13 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
 
         current_enemy->level          = p->ble_game_state.ble_ides_level;
         current_enemy->ship_locked_in = FALSE;
+        blePeerUnlock ();
         return(current_enemy);
       }
     }
   }
+
+  blePeerUnlock ();
 
   return(NULL);
 }
