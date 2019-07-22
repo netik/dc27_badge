@@ -961,6 +961,70 @@ static void fire_special(ENEMY *e) {
 }
 
 static void
+getPrevShip(void) {
+  userconfig *config = getConfig();
+  player->ship_type--;
+
+  if (player->ship_type == 255) {
+    if (config->unlocks & UL_SHIP2) {
+      player->ship_type = SHIP_TESLA; // 7
+      return;
+    }
+    if (config->unlocks & UL_SHIP1) {
+      player->ship_type = SHIP_SUBMARINE;  // 6
+      return;
+    }
+    player->ship_type =  config->level > 5 ? 5 : config->level;
+    return;
+  }
+
+  if ( (player->ship_type == SHIP_SUBMARINE) &&
+       ((config->unlocks & UL_SHIP1) == 0) ) {
+     player->ship_type =  config->level > 5 ? 5 : config->level;
+  }
+}
+
+static void
+getNextShip(void) {
+  userconfig *config = getConfig();
+  player->ship_type++;
+
+  if (player->ship_type > config->level) {
+    if ( (player->ship_type == SHIP_SUBMARINE) &&
+         (config->unlocks & UL_SHIP1) ) {
+      return;
+    }
+    if ( (player->ship_type == SHIP_TESLA) &&
+         (config->unlocks & UL_SHIP2) ) {
+      return;
+    }
+    player->ship_type = 0;
+  }
+
+  // your level unlocks ships up to level 5.
+  if (player->ship_type > SHIP_BATTLESHIP) { /* 5 */
+    // If you don't have the ul_ship1 unlock and you are at
+    // 6, then we'll test ul_ship_2. If you have it, we Stop
+    // else, we move you back to 0.
+    if (  (player->ship_type == SHIP_SUBMARINE) && /* 6 */
+          ( (config->unlocks & UL_SHIP1) == 0) ) {
+      if (config->unlocks & UL_SHIP2) {
+        player->ship_type++;
+      } else {
+         player->ship_type = 0;
+      }
+    }
+
+    if (  (player->ship_type == SHIP_TESLA) &&
+          ( (config->unlocks & UL_SHIP2) == 0 ) ) {
+       player->ship_type = 0;
+    }
+
+  }
+}
+
+
+static void
 battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 {
   (void)context;
@@ -982,7 +1046,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
   bp_bullet_pkt_t *pkt_bullet;
 
   char tmp[40];
-
   bh = (BattleHandles *)context->priv;
 
   /* MAIN GAME EVENT LOOP */
@@ -1046,8 +1109,6 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
 
       // move bullets if any
       update_bullets();
-
-      // TBD:check for player vs enemy collision ( ramming speed! )
 
       // only the master controls the game
       if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
@@ -1422,13 +1483,16 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         switch (event->key.code)
         {
         case keyALeft:
-          if (!player->ship_locked_in)
-            player->ship_type--;
-          break;
+          if (!player->ship_locked_in) {
+            getPrevShip();
+          }
+        break;
 
         case keyARight:
-          if (!player->ship_locked_in)
-            player->ship_type++;
+          // this is bit tricky!
+          if (!player->ship_locked_in) {
+            getNextShip();
+          }
           break;
 
         case keyBSelect:
@@ -1451,19 +1515,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
           break;
         }
 
-        // handle rotating selection
-        // TODO: set based on user level and two unlocks
-        if (player->ship_type == 255) // underflow
-        {
-          player->ship_type = 7;
-        }
-        if (player->ship_type > 7)
-        {
-          player->ship_type = 0;
-        }
         player->hp     = PLAYER_MAX_HP;
         player->energy = shiptable[player->ship_type].max_energy;
-
         state_vs_draw_enemy(player, TRUE);
         send_ship_type(player->ship_type, FALSE);
       }
