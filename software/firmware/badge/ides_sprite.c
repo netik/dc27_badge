@@ -1243,7 +1243,12 @@ ISPHOLDER *isp_get_spholder_from_file(char *name)
   fread(buf, 1, len, f);
   fclose(f);
   ret = isp_buf_to_spholder(w, h, buf);
-  dfree(buf, "isp_get_spholder_from_file");
+  /*
+   * I don't think this needs to be here. Devon or John,
+   * please conform. isp_buf_to_spholder() already releases
+   * the supplied buffer if it creates a crop buffer.
+   */
+  /*dfree(buf, "isp_get_spholder_from_file");*/
   return(ret);
 }
 

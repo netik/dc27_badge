@@ -2510,6 +2510,16 @@ void state_combat_exit(void)
   isp_destroy_spholder(bh->pl_t_right);
   bh->pl_t_right = NULL;
 
+  // clear spholders - hit images
+  isp_destroy_spholder(bh->pl_h_left);
+  bh->pl_h_left = NULL;
+  isp_destroy_spholder(bh->pl_h_right);
+  bh->pl_h_right = NULL;
+  isp_destroy_spholder(bh->ce_h_left);
+  bh->ce_h_left = NULL;
+  isp_destroy_spholder(bh->ce_h_right);
+  bh->ce_h_right = NULL;
+
   // clear spholders - enemy
   isp_destroy_spholder(bh->ce_left);
   bh->ce_left = NULL;
