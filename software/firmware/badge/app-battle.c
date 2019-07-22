@@ -1199,10 +1199,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       {
         screen_alert_draw(FALSE,
                           "Battle Declined.");
-        chThdSleepMilliseconds(2000);
+        chThdSleepMilliseconds(ALERT_DELAY_SHORT);
         bleGapDisconnect();
 
-        changeState(WORLD_MAP);
+        orchardAppExit();
       }
 
       // we under attack, yo.
