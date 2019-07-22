@@ -24,7 +24,7 @@ do
     echo "[*] Attempting serial provision for 2102 ..."
     
     NEWSERIAL=`arm-none-eabi-gdb -q --batch --command=scripts/deviceid.txt | grep DEVICEID | cut -c10-27`
-    ./bin/cp2102 -p "da Bomb" -m "Team Ides" -g on -s ${NEWSERIAL}
+    ./bin/cp2102 -x 500 -p "da Bomb" -m "Team Ides" -g on -s ${NEWSERIAL}
     
 
     echo "[*] Provisioned serial ${NEWSERIAL}..."
