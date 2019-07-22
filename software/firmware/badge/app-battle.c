@@ -464,15 +464,20 @@ lay_mine(ENEMY *e) {
 
       // mines have a TTL.
       bullet[i]->ttl  = 5 * FPS;
+
+      isp_set_sprite_xy(sprites,
+                        bullet[i]->sprite_id,
+                        bullet[i]->vecPosition.x,
+                        bullet[i]->vecPosition.y);
+
       if (e == player) {
         send_mine_create(bullet[i]);
       }
-      return;
-
       printf("lay mine at %f, %f with ttl %d\n",
         bullet[i]->vecPosition.x,
         bullet[i]->vecPosition.x,
         bullet[i]->ttl);
+      return;
     }
   }
 }
