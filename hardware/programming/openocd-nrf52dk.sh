@@ -9,4 +9,4 @@
 
 openocd -f board/nordic_nrf52_dk.cfg		\
 	-c "gdb_flash_program enable"		\
-	-c "gdb_breakpoint_override hard"	$*
+	-c "gdb_breakpoint_override hard"	"$@"

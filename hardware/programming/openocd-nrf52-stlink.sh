@@ -17,4 +17,4 @@
 openocd -f interface/stlink.cfg				\
 	-f target/nrf52.cfg				\
 	-c "gdb_flash_program enable"			\
-	-c "gdb_breakpoint_override hard"	$*
+	-c "gdb_breakpoint_override hard"	"$@"
