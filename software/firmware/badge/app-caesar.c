@@ -251,7 +251,7 @@ draw_screen(OrchardAppContext *context)
 	wi.customDraw = gwinButtonDraw_Normal;
 
 	/* Create button widgets */
-	wi.customStyle = &DarkPurpleStyle;
+	wi.customStyle = &DarkPurpleFilledStyle;
 
 	for (i = 0; i < CB_NBUTTONS; i++) {
 		b = &caesar_buttons[i];
@@ -537,5 +537,5 @@ caesar_exit(OrchardAppContext *context)
 	context->priv = NULL;
 }
 
-orchard_app("Caesar", "icons/bell.rgb", 0, caesar_init,
+orchard_app("Caesar", "icons/chains.rgb", 0, caesar_init,
              caesar_start, caesar_event, caesar_exit, 9999);

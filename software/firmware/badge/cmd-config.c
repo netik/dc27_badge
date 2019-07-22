@@ -118,6 +118,18 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     return;
   }
 
+  if (!strcasecmp(argv[1], "won")) {
+    config->won = val;
+    printf ("won count set to %d.\n", config->won);
+    return;
+  }
+
+  if (!strcasecmp(argv[1], "lost")) {
+    config->lost = val;
+    printf ("lost count set to %d.\n", config->lost);
+    return;
+  }
+
   if (!strcasecmp(argv[1], "ship_type")) {
     config->current_ship = val;
     printf ("Current Ship set to %d.\n", config->current_ship);

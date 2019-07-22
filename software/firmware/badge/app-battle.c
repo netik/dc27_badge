@@ -1168,7 +1168,8 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       break;
 
     case disconnectEvent:
-      if (current_battle_state != SHOW_RESULTS) {
+      if (current_battle_state != SHOW_RESULTS &&
+          current_battle_state != LEVELUP) {
         screen_alert_draw(FALSE, "Radio link lost");
         chThdSleepMilliseconds(ALERT_DELAY);
         orchardAppExit ();
@@ -1198,10 +1199,10 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
       {
         screen_alert_draw(FALSE,
                           "Battle Declined.");
-        chThdSleepMilliseconds(2000);
+        chThdSleepMilliseconds(ALERT_DELAY_SHORT);
         bleGapDisconnect();
 
-        changeState(WORLD_MAP);
+        orchardAppExit();
       }
 
       // we under attack, yo.
@@ -2866,7 +2867,7 @@ static void state_vs_draw_enemy(ENEMY *e, bool is_player)
                        164,
                        110,
                        gdispGetFontMetric(p->fontSM, fontHeight),
-                       "WAITING",
+                       "CHOOSE!",
                        p->fontSM,
                        White,
                        justifyCenter);
