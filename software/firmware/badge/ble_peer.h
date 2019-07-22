@@ -37,7 +37,7 @@
 
 #define BLE_PEER_NAME_MAX		31
 
-#define BLE_PEER_LIST_SIZE		32
+#define BLE_PEER_LIST_SIZE		64
 
 #define BLE_PEER_LIST_TTL		16
 

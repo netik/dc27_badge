@@ -96,8 +96,6 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * data, uint8_t len, int8_t rssi)
 
 	p = &ble_peer_list[firstfree];
 
-	memcpy (p->ble_peer_addr, peer_addr, 6);
-
 	/* Check for name. */
 
 	d = data;
@@ -128,10 +126,28 @@ blePeerAdd (uint8_t * peer_addr, uint8_t * data, uint8_t len, int8_t rssi)
 			p->ble_isbadge = FALSE;
 	}
 
+#ifndef BLE_PEER_SCAN_ALL
+
+	/*
+	 * We discovered that in a very densely populated BLE
+	 * environment, the peer list can fill up with so
+ 	 * many non-badge devices that real badges never have
+	 * a chance to be seen. So for now we only allow devices
+	 * we know are badges into the peer list.
+	 */
+
+	if (p->ble_isbadge == FALSE)
+		goto out;
+#endif
+
+	memcpy (p->ble_peer_addr, peer_addr, 6);
 	p->ble_rssi = rssi;
 	p->ble_ttl = BLE_PEER_LIST_TTL;
 	p->ble_used = 1;
 
+#ifndef BLE_PEER_SCAN_ALL
+out:
+#endif
 	osalMutexUnlock (&peer_mutex);
 
 	return;
