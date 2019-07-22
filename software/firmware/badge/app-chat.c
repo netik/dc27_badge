@@ -30,6 +30,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _BSD_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -52,7 +53,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_PEERS	50
+#define MAX_PEERS	BLE_PEER_LIST_SIZE
 #define PEER_ADDR_LEN	12 + 5
 #define MAX_PEERMEM	(PEER_ADDR_LEN + BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_MAX_SUPPORTED + 1)
 
@@ -72,6 +73,7 @@ typedef struct _ChatHandles {
 
 extern orchard_app_instance instance;
 
+#ifdef CHAT_SCAN_NEW_PEERS
 static int
 insert_peer (OrchardAppContext * context, ble_evt_t * evt,
     OrchardAppRadioEvent * radio)
@@ -126,6 +128,7 @@ insert_peer (OrchardAppContext * context, ble_evt_t * evt,
 
 	return (0);
 }
+#endif
 
 static void
 chat_session_start (OrchardAppContext * context)
@@ -239,11 +242,43 @@ chat_event (OrchardAppContext *context,
 				return;
 			}
 
+#ifdef CHAT_SCAN_NEW_PEERS
 			p->peernames[0] = "Scanning for users...";
+			p->uiCtx.total = 1;
+#else
+			p->peernames[0] = "Choose a peer...";
+			blePeerLock ();
+			for (i = 0; i < BLE_PEER_LIST_SIZE; i++) {
+				peer = &ble_peer_list[i];
+				if (peer->ble_used) {
+					p->peernames[p->peers] =
+					    strdup (
+					       (char *) peer->ble_peer_name);
+					p->peeraddrs[p->peers].addr[0] =
+					    peer->ble_peer_addr[0];
+					p->peeraddrs[p->peers].addr[1] =
+					    peer->ble_peer_addr[1];
+					p->peeraddrs[p->peers].addr[2] =
+					    peer->ble_peer_addr[2];
+					p->peeraddrs[p->peers].addr[3] =
+					    peer->ble_peer_addr[3];
+					p->peeraddrs[p->peers].addr[4] =
+					    peer->ble_peer_addr[4];
+					p->peeraddrs[p->peers].addr[5] =
+					    peer->ble_peer_addr[5];
+					p->peeraddrs[p->peers].addr_type =
+					    BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+					p->peeraddrs[p->peers].addr_id_peer =
+					    TRUE;
+					p->peers++;
+				}
+			}
+			blePeerUnlock ();
+			p->uiCtx.total = p->peers - 1;
+#endif
 			p->peernames[1] = "Exit";
 
 			p->uiCtx.itemlist = (const char **)p->peernames;
-			p->uiCtx.total = 1;
 
 			context->instance->ui = getUiByName ("list");
 			context->instance->uicontext = &p->uiCtx;
@@ -308,6 +343,7 @@ chat_event (OrchardAppContext *context,
 		/* A new advertisement has arrived, update the user list */
 
 		if (radio->type == advAndScanEvent) {
+#ifdef CHAT_SCAN_NEW_PEERS
 			if (ui == getUiByName ("list") &&
 			    insert_peer (context, evt, radio) != -1) {
 				uiContext->selected = p->peers - 1;
@@ -315,6 +351,7 @@ chat_event (OrchardAppContext *context,
 				e->ui.flags = uiOK;
 				ui->event (context, e);
 			}
+#endif
 			return;
 		}
 
