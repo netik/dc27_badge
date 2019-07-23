@@ -45,12 +45,14 @@
 // debugging defines ---------------------------------------
 // debugs the discovery process
 #undef DEBUG_ENEMY_DISCOVERY
-// track battle state
+// track battle state and l2cap battle events
 #undef DEBUG_BATTLE_STATE
 // debug TTL of objects
 #undef DEBUG_ENEMY_TTL
 // debug map selection
 #undef DEBUG_BLE_MAPS
+// debug hits and mines
+#undef DEBUG_WEAPONS
 
 // end debug defines ---------------------------------------
 #define ENABLE_MAP_PING    1        // if you want the sonar sounds
@@ -518,10 +520,12 @@ lay_mine(ENEMY *e) {
       if (e == player) {
         send_mine_create(bullet[i]);
       }
+#ifdef DEBUG_WEAPONS
       printf("lay mine at %f, %f with ttl %d\n",
         bullet[i]->vecPosition.x,
         bullet[i]->vecPosition.x,
         bullet[i]->ttl);
+#endif
       return;
     }
   }
@@ -760,12 +764,13 @@ void update_bullets(void) {
           i2sPlay("game/explode2.snd");
 
           send_state_update(BATTLE_OP_TAKE_DMG, dmg);
+#ifdef DEBUG_WEAPONS
           printf("HIT for %d Damage, HP: %d / %d\n",
             dmg,
             current_enemy->hp,
             ENEMY_MAX_HP
           );
-
+#endif
           isp_destroy_sprite(sprites, bullet[i]->sprite_id);
           free(bullet[i]);
           bullet[i] = NULL;
@@ -1492,7 +1497,9 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
     case l2capConnectEvent:
       // now we have a peer connection.
       // we send with bleL2CapSend(data, size) == NRF_SUCCESS ...
+#ifdef DEBUG_BATTLE_STATE
       printf("BATTLE: l2CapConnection Success\n");
+#endif
       // stash the channel id
       bh->cid = evt->evt.l2cap_evt.local_cid;
       // kill and restart our timer so that our timers are in sync
@@ -1986,6 +1993,7 @@ void state_worldmap_exit(void)
 void state_approval_wait_enter(void)
 {
   // we will now attempt to open a BLE gap connect to the user.
+#ifdef DEBUG_BATTLE_STATE
   printf("engage: %x:%x:%x:%x:%x:%x\n",
          current_enemy->ble_peer_addr.addr[5],
          current_enemy->ble_peer_addr.addr[4],
@@ -1993,6 +2001,7 @@ void state_approval_wait_enter(void)
          current_enemy->ble_peer_addr.addr[2],
          current_enemy->ble_peer_addr.addr[1],
          current_enemy->ble_peer_addr.addr[0]);
+#endif
 
   gdispClear(Black);
   screen_alert_draw(FALSE, "Connecting...");
