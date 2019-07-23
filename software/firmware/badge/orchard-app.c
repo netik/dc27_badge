@@ -63,7 +63,8 @@ void orchardAppUgfxCallback (void * arg, GEvent * pe)
   osalSysLock ();
   if (ugfxPend)
     osalThreadSuspendS (&ugfxThreadReference);
-  ugfxPend++;
+  else
+    ugfxPend = 1;
   osalSysUnlock ();
 
   gl = (GListener *)arg;
@@ -85,7 +86,7 @@ static void ugfx_event(eventid_t id) {
   geventEventComplete (ugfx_evt.ugfx.pListener);
 
   osalSysLock ();
-  ugfxPend--;
+  ugfxPend = 0;
   osalThreadResumeS (&ugfxThreadReference, MSG_OK);
   osalSysUnlock ();
 
