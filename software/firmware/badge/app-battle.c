@@ -1009,7 +1009,7 @@ getPrevShip(ENEMY *e) {
 
   memset(&allowed,0,sizeof(allowed));
 
-  for (x=0; x <  (e->level>5 ? 5 : e->level); x++) {
+  for (x=0; x <  (e->level > 6 ? 6 : e->level); x++) {
     allowed[x] = TRUE;
   }
 
@@ -1021,7 +1021,7 @@ getPrevShip(ENEMY *e) {
     allowed[7] = TRUE;
   }
 
-  for (x = e->ship_type-1; x > -1;x--) {
+  for (x = e->ship_type - 1; x > -1; x--) {
     if (allowed[x]) return x;
   }
 
@@ -1044,7 +1044,7 @@ getNextShip(ENEMY *e) {
 
   memset(&allowed,0,sizeof(allowed));
 
-  for (x=0; x <  (e->level>5 ? 5 : e->level); x++) {
+  for (x=0; x <  (e->level > 6 ? 6 : e->level); x++) {
     allowed[x] = TRUE;
   }
 
@@ -1056,7 +1056,7 @@ getNextShip(ENEMY *e) {
     allowed[7] = TRUE;
   }
 
-  for (x = e->ship_type+1; x < 10;x++) {
+  for (x = e->ship_type + 1; x < 10; x++) {
     if (allowed[x]) return x;
   }
 
