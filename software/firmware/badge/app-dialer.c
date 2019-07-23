@@ -214,6 +214,8 @@ dialer_i2s_init (void)
 static void
 dialer_i2s_restore (void)
 {
+	userconfig * config;
+
 	NRF_I2S->ENABLE = 0;
 	NRF_I2S->TASKS_STOP = 1;
 
@@ -228,7 +230,9 @@ dialer_i2s_restore (void)
 	NRF_I2S->ENABLE = 1;
 	NRF_I2S->TASKS_START = 1;
 
-	i2sEnabled = TRUE;
+	config = getConfig ();
+
+	i2sEnabled = config->sound_enabled;
 
 	/* Power down the audio amp */
 
