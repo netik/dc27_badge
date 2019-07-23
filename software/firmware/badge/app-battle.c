@@ -46,16 +46,19 @@
 // debugs the discovery process
 #undef DEBUG_ENEMY_DISCOVERY
 // track battle state
-#define DEBUG_BATTLE_STATE    1
+#undef DEBUG_BATTLE_STATE
 // debug TTL of objects
 #undef DEBUG_ENEMY_TTL
-#define ENABLE_MAP_PING    1        // if you want the sonar sounds
+// debug map selection
+#undef DEBUG_BLE_MAPS
 
 // end debug defines ---------------------------------------
+#define ENABLE_MAP_PING    1        // if you want the sonar sounds
 
 #include "battle_states.h"
 #include "statemachine.h"
 #include "ships.h"
+
 
 #ifdef DEBUG_BATTLE_STATE
 const char* battle_state_name[]  = {
@@ -152,19 +155,56 @@ static void redraw_player_bars(void) {
   // player's stats
   drawProgressBar(0, 26, 120, 6,
     PLAYER_MAX_HP,
-    player->hp, FALSE, FALSE);
+    player->hp, TRUE, FALSE);
+
+  ledBar((float)( (float) player->hp  /
+                  (float)PLAYER_MAX_HP ),
+                  TRUE,
+                  -1,
+                  30,
+                  8,
+                  0);
+
   drawProgressBar(0, 34, 120, 6,
     shiptable[player->ship_type].max_energy, player->energy, FALSE, FALSE);
+
+  // energy bar is in orange at top for player
+  ledBar((float)( (float)player->energy /
+                  (float)shiptable[player->ship_type].max_energy ),
+                  FALSE,
+                  17,
+                  -1,
+                  6,
+                  0x000080);
 }
 
 static void redraw_enemy_bars(void) {
   // enemy stats
   drawProgressBar(200, 26, 120, 6,
     ENEMY_MAX_HP,
-    current_enemy->hp, FALSE, TRUE);
+    current_enemy->hp, TRUE, TRUE);
+
+  //enemy HP
+  ledBar((float)( (float)current_enemy->hp /
+                  (float)ENEMY_MAX_HP),
+                  FALSE,
+                  0,
+                  -1,
+                  8,
+                  0);
+
   drawProgressBar(200, 34, 120, 6,
     shiptable[current_enemy->ship_type].max_energy,
     current_enemy->energy, FALSE, TRUE);
+    // energy bar is in orange at top for player
+
+  ledBar((float)( (float)current_enemy->energy /
+                  (float)shiptable[current_enemy->ship_type].max_energy),
+                  TRUE,
+                  -1,
+                  14,
+                  7,
+                  0xff8000);
 }
 
 
@@ -333,6 +373,8 @@ battle_start(OrchardAppContext *context)
 
   // turn off the LEDs
   ledSetPattern(LED_PATTERN_WORLDMAP);
+  led_clear();
+  led_show();
 
   context->priv   = bh;
   bh->fontXS      = gdispOpenFont(FONT_XS);
@@ -2172,20 +2214,24 @@ void state_combat_enter(void)
   if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
   {
     newmap = getMapTile(&player->e);
+#ifdef DEBUG_BLE_MAPS
     printf("BLECENTRAL: map %d from player at %f, %f\n",
            newmap,
            player->e.vecPosition.x,
            player->e.vecPosition.y
            );
+#endif
   }
   else
   {
     newmap = getMapTile(&current_enemy->e);
+#ifdef DEBUG_BLE_MAPS
     printf("BLEPREPH: map %d from player at %f, %f\n",
            newmap,
            current_enemy->e.vecPosition.x,
            current_enemy->e.vecPosition.y
            );
+#endif
   }
 
   sprintf(fnbuf, "game/map-%02d.rgb", newmap);
@@ -3107,12 +3153,8 @@ static void state_vs_enter(void)
 
   putImageFile("game/world.rgb", 0, 0);
 
-  if (ble_gap_role == BLE_GAP_ROLE_CENTRAL)
-  {
-    // Was gonna play this on both devices, but then
-    // it sounds out of sync and crazy.
-    i2sPlay("sound/ffenem.snd");
-  }
+  // play theme on both badges
+  i2sPlay("sound/ffenem.snd");
 
   // boxes
   gdispFillArea(0, 14, 320, 30, Black);

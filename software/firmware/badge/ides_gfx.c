@@ -23,6 +23,8 @@
 #include "async_io_lld.h"
 #include "badge.h"
 
+#include "led.h"
+
 #include "battle.h"
 #include "ships.h"
 

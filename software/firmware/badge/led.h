@@ -36,6 +36,12 @@ extern void ledStart(void);
 extern uint8_t ledStop(void);
 extern void ledSetPattern(uint8_t pattern);
 extern void ledDraw (short amplitude);
+extern void ledBar(float remain_f,
+                   bool reverse,
+                   int fwd_start,
+                   int rev_start,
+                   int barlen,
+                   int32_t color);
 extern uint8_t led_brightness_get(void);
 extern void led_brightness_set(uint8_t brightness);
 extern void led_clear(void);

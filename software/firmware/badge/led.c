@@ -301,8 +301,56 @@ ledDraw (short amp)
 	}
 
 	led_show ();
-	
+
 	return;
+}
+
+void
+ledBar(float remain_f,
+       bool reverse,
+       int fwd_start,
+       int rev_start,
+       int barlen,
+       int32_t color)
+{
+  // uses a selected portion of the LEDs to draw a stop-light style
+  // bar graph.
+  int x,r,g,b;
+  int to_light;
+
+  if (color > 0) {
+     r = (color & 0xff0000) >> 16;
+     g = (color & 0x00ff00) >> 8;
+     b = (color & 0x0000ff);
+  } else {
+    if (remain_f >= 0.8) {
+      r = 0; g = 127; b = 0;
+    } else if (remain_f >= 0.5) {
+      r = 127; g = 127; b = 0;
+    } else {
+      r = 127; g = 0; b = 0;
+    }
+  }
+  to_light = (int)((float)barlen * remain_f);
+
+  if (reverse == TRUE) {
+    for (x=rev_start; x > rev_start-barlen; x--) {
+      led_set(x,0,0,0);
+    }
+    for (x=rev_start; x > rev_start-to_light; x--) {
+      led_set(x,r,g,b);
+    }
+  } else {
+    for (x=fwd_start; x < fwd_start+barlen; x++) {
+      led_set(x,0,0,0);
+    }
+    for (x=fwd_start; x < fwd_start+to_light; x++) {
+      led_set(x,r,g,b);
+    }
+  }
+
+  led_show ();
+  return;
 }
 
 void led_set(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
@@ -598,7 +646,7 @@ static THD_FUNCTION(bling_thread, arg) {
         led_pattern_bgsparkle(255,0,255,&anim_pos16,true);
         break;
       case LED_PATTERN_WORLDMAP:
-        led_clear();
+        // do nothing, as we're using progress bars.
         break;
       case LED_PATTERN_UNLOCK:
         led_pattern_unlock(&anim_uindex, &anim_index);
@@ -615,6 +663,7 @@ static THD_FUNCTION(bling_thread, arg) {
       }
 
       update_eye();
+      led_show();
     }
 
     if ( ledExitRequest ) {
