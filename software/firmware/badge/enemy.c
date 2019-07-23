@@ -142,6 +142,7 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
   // enemy or NULL if we do not.
   ble_peer_entry *p;
 
+#ifdef DEBUG_ENEMY_DISCOVERY
   printf("searching for %x:%x:%x:%x:%x:%x\n",
          peer->addr[5],
          peer->addr[4],
@@ -149,6 +150,7 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
          peer->addr[2],
          peer->addr[1],
          peer->addr[0]);
+#endif
 
   blePeerLock ();
 
@@ -162,6 +164,7 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
 
     if (p->ble_isbadge == TRUE)
     {
+#ifdef DEBUG_ENEMY_DISCOVERY
       printf("found peer enemy %x:%x:%x:%x:%x:%x (TTL %d)\n",
              p->ble_peer_addr[5],
              p->ble_peer_addr[4],
@@ -170,6 +173,7 @@ ENEMY *getEnemyFromBLE(ble_gap_addr_t *peer, ENEMY *current_enemy)
              p->ble_peer_addr[1],
              p->ble_peer_addr[0],
              p->ble_ttl);
+#endif
       if (memcmp(p->ble_peer_addr, peer->addr, 6) == 0)
       {
         // if we match, we create an enemy, or we overwrite what was passed in.
