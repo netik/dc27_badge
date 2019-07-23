@@ -49,7 +49,7 @@
 #define DEBUG_BATTLE_STATE    1
 // debug TTL of objects
 #undef DEBUG_ENEMY_TTL
-#undef ENABLE_MAP_PING                   // if you want the sonar sounds
+#define ENABLE_MAP_PING    1        // if you want the sonar sounds
 
 // end debug defines ---------------------------------------
 
@@ -960,67 +960,65 @@ static void fire_special(ENEMY *e) {
   }
 }
 
-static void
-getPrevShip(void) {
-  userconfig *config = getConfig();
-  player->ship_type--;
+static uint16_t
+getPrevShip(ENEMY *e) {
+  int allowed[10];
+  int x;
 
-  if (player->ship_type == 255) {
-    if (config->unlocks & UL_SHIP2) {
-      player->ship_type = SHIP_TESLA; // 7
-      return;
-    }
-    if (config->unlocks & UL_SHIP1) {
-      player->ship_type = SHIP_SUBMARINE;  // 6
-      return;
-    }
-    player->ship_type =  config->level > 5 ? 5 : config->level;
-    return;
+  memset(&allowed,0,sizeof(allowed));
+
+  for (x=0; x <  (e->level>5 ? 5 : e->level); x++) {
+    allowed[x] = TRUE;
   }
 
-  if ( (player->ship_type == SHIP_SUBMARINE) &&
-       ((config->unlocks & UL_SHIP1) == 0) ) {
-     player->ship_type =  config->level > 5 ? 5 : config->level;
+  if (e->unlocks & UL_SHIP1) {
+    allowed[6] = TRUE;
   }
+
+  if (e->unlocks & UL_SHIP2) {
+    allowed[7] = TRUE;
+  }
+
+  for (x = e->ship_type-1; x > -1;x--) {
+    if (allowed[x]) return x;
+  }
+
+  if (allowed[7]) {
+    return 7;
+  } else {
+    if (allowed[6]) {
+      return 6;
+    }
+  }
+
+  return e->level;
 }
 
-static void
-getNextShip(void) {
-  userconfig *config = getConfig();
-  player->ship_type++;
+static uint16_t
+getNextShip(ENEMY *e) {
 
-  if (player->ship_type > config->level) {
-    if ( (player->ship_type == SHIP_SUBMARINE) &&
-         (config->unlocks & UL_SHIP1) ) {
-      return;
-    }
-    if ( (player->ship_type == SHIP_TESLA) &&
-         (config->unlocks & UL_SHIP2) ) {
-      return;
-    }
-    player->ship_type = 0;
+  int allowed[10];
+  int x;
+
+  memset(&allowed,0,sizeof(allowed));
+
+  for (x=0; x <  (e->level>5 ? 5 : e->level); x++) {
+    allowed[x] = TRUE;
   }
 
-  // your level unlocks ships up to level 5.
-  if (player->ship_type > SHIP_BATTLESHIP) { /* 5 */
-    // If you don't have the ul_ship1 unlock and you are at
-    // 6, then we'll test ul_ship_2. If you have it, we Stop
-    // else, we move you back to 0.
-    if (  (player->ship_type == SHIP_SUBMARINE) && /* 6 */
-          ( (config->unlocks & UL_SHIP1) == 0) ) {
-      if (config->unlocks & UL_SHIP2) {
-        player->ship_type++;
-      } else {
-         player->ship_type = 0;
-      }
-    }
-
-    if (  (player->ship_type == SHIP_TESLA) &&
-          ( (config->unlocks & UL_SHIP2) == 0 ) ) {
-       player->ship_type = 0;
-    }
-
+  if (e->unlocks & UL_SHIP1) {
+    allowed[6] = TRUE;
   }
+
+  if (e->unlocks & UL_SHIP2) {
+    allowed[7] = TRUE;
+  }
+
+  for (x = e->ship_type+1; x < 10;x++) {
+    if (allowed[x]) return x;
+  }
+
+  return 0;
 }
 
 
@@ -1484,14 +1482,14 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
         {
         case keyALeft:
           if (!player->ship_locked_in) {
-            getPrevShip();
+            player->ship_type = getPrevShip(player);
           }
         break;
 
         case keyARight:
           // this is bit tricky!
           if (!player->ship_locked_in) {
-            getNextShip();
+            player->ship_type = getNextShip(player);
           }
           break;
 
@@ -1877,6 +1875,10 @@ void state_worldmap_enter(void)
   enemies = gll_init();
   enemy_list_refresh(enemies, sprites, current_battle_state);
 
+  // send one ping only.
+#ifdef ENABLE_MAP_PING
+  i2sPlay("game/map_ping.snd");
+#endif
   render_all_enemies();
 }
 
