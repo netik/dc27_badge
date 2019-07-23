@@ -85,7 +85,7 @@ static void draw_setup_buttons(SetupHandles * p) {
   // create checkbox widget: ghCheckRotate
   wi.g.show = TRUE;
   wi.g.y = 180;
-  wi.text = "Rot. Led Sign";
+  wi.text = "Rot. LED Sign";
   wi.customDraw = gwinCheckboxDraw_CheckOnLeft;
   p->ghCheckRotate = gwinCheckboxCreate(0, &wi);
   gwinCheckboxCheck(p->ghCheckRotate, config->rotate);
