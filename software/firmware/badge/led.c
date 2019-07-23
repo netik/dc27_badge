@@ -273,6 +273,11 @@ void ledSetPattern(uint8_t patt) {
   if (leds_init_ok == false)
     return;
 
+  /* If pattern is 0 (off), turn off all LEDs */
+
+  if (patt == 0)
+    led_clear();
+
   if (ledExitRequest == 1) {
     // our thread is stopped.
     ledStart();
