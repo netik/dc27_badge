@@ -346,7 +346,6 @@ copy_config_to_player(void)
 
   // we cannot determine hp or xp until ship has been selected but we can
   // guess based on last used.
-  player->hp             = PLAYER_MAX_HP;
   player->energy         = shiptable[config->current_ship].max_energy;
   player->xp             = config->xp;
   player->ship_type      = config->current_ship;
@@ -354,6 +353,7 @@ copy_config_to_player(void)
   player->ttl            = -1;
   player->last_shot_ms   = 0;
   player->unlocks        = config->unlocks;
+  player->hp             = PLAYER_MAX_HP;
   // ENTITY player.e will be init'd during combat
 }
 
@@ -675,7 +675,7 @@ void show_hit(ENEMY *e) {
 void update_bullets(void) {
   int i;
   uint16_t dmg;
-  uint16_t max_range,travelled;
+  uint16_t max_range = 0,travelled = 0;
 
   for (i = 0; i < MAX_BULLETS; i++) {
     if (bullet[i]) {
