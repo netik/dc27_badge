@@ -80,9 +80,7 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
   (void)argv;
   (void)argc;
 
-#ifdef BLACK_BADGE
   unsigned int val;
-#endif
   
   userconfig *config = getConfig();
 
@@ -109,7 +107,9 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     return;
   }
 
-#ifdef BLACK_BADGE
+  if ((config->unlocks & UL_BLACKBADGE) == 0)
+    goto skip;
+
   val = strtoul (argv[2], NULL, 0);;
 
   if (!strcasecmp(argv[1], "level")) {
@@ -159,7 +159,9 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
     printf ("rtc set to %ld.\n", rtc);
     return;
   }
-#endif
+
+skip:
+
   printf ("Invalid set command.\n");
 }
 

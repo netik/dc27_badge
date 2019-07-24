@@ -2851,6 +2851,12 @@ static void state_levelup_enter(void)
     // we'll draw the next level message in it's place.
     curpos = 79;
   }
+
+  config->level++;
+
+  if (config->level == (LEVEL_CAP - 1))
+    goto skip;
+
   gdispDrawStringBox(110,
                      curpos,
                      210,
@@ -2862,7 +2868,7 @@ static void state_levelup_enter(void)
 
   curpos = curpos + gdispGetFontMetric(p->fontSTENCIL, fontHeight) + 2;
 
-  sprintf(tmp, "AT %d XP", xp_for_level(config->level + 2));
+  sprintf(tmp, "AT %d XP", xp_for_level(config->level + 1));
   gdispDrawStringBox(110,
                      curpos,
                      210,
@@ -2871,7 +2877,9 @@ static void state_levelup_enter(void)
                      p->fontSTENCIL,
                      Yellow,
                      justifyLeft);
-  config->level++;
+
+skip:
+
   configSave(config);
 
   chThdSleepMilliseconds(ALERT_DELAY);
