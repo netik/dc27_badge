@@ -1014,7 +1014,7 @@ getPrevShip(ENEMY *e) {
 
   memset(&allowed,0,sizeof(allowed));
 
-  for (x=0; x <  (e->level > 6 ? 6 : e->level); x++) {
+  for (x=0; x < (e->level + 1 > 6 ? 6 : e->level + 1); x++) {
     allowed[x] = TRUE;
   }
 
@@ -1048,8 +1048,7 @@ getNextShip(ENEMY *e) {
   int x;
 
   memset(&allowed,0,sizeof(allowed));
-
-  for (x=0; x <  (e->level > 6 ? 6 : e->level); x++) {
+  for (x=0; x < (e->level + 1 > 6 ? 6 : e->level + 1); x++) {
     allowed[x] = TRUE;
   }
 
@@ -1364,6 +1363,12 @@ battle_event(OrchardAppContext *context, const OrchardAppEvent *event)
             // take damage from opponent.
             pkt_state = (bp_state_pkt_t *)&bh->rxbuf;
             player->hp = player->hp - pkt_state->bp_operand;
+#ifdef DEBUG_WEAPONS
+            printf("TAKEDMG: %d (%d / %d)\n",
+              pkt_state->bp_operand,
+              player->hp,
+              PLAYER_MAX_HP);
+#endif
             i2sPlay("game/explode2.snd");
             if (! player->is_shielded) {
               show_hit(player);
