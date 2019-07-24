@@ -18,7 +18,7 @@
 #define CONFIG_LEDSIGN_MAXLEN	124
 
 /* highest possible level */
-#define LEVEL_CAP        10
+#define LEVEL_CAP        11
 
 /* WARNING: if you change the userconfig struct, update CONFIG_VERSION
  * above so that the config is automatically init'd with the new
