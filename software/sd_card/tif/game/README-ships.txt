@@ -14,7 +14,7 @@ Ship class numbers
 0:   PT_Boat
 1:   Patrol_Ship
 2:   Destroyer
-3:   ruiser
+3:   Cruiser
 4:   Frigate
 5:   Battleship
 6:   Submarine
