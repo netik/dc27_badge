@@ -222,6 +222,7 @@ CSRC += main.c \
 	app-caesar.c \
 	app-geiger.c \
 	app-info.c \
+	app-doomguy.c \
 	fix_fft.c \
 	async_io_lld.c \
 	scroll_lld.c \

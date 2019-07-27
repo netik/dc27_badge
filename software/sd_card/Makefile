@@ -35,6 +35,10 @@ tools_dep:
 # These rules will build the standard images only if the source images
 # have changed.
 
+rgb/doom/%.rgb : jpg/doom/%.jpg
+	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
+	mv $(subst .jpg,.rgb,$<) $(@)
+
 rgb/font/led/%.rgb : jpg/font/led/%.jpg
 	$(TOOLS_DIR)/scripts/convert_to_rgb.sh $<
 	mv $(subst .jpg,.rgb,$<) $(@)
@@ -146,6 +150,7 @@ images: dirs tools_dep photos \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.tif))))) \
         $(addprefix rgb/game/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/game/*.jpg))))) \
         $(addprefix rgb/flags/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard tif/flags/*.tif))))) \
+        $(addprefix rgb/doom/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/doom/*.jpg))))) \
         $(addprefix rgb/font/led/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led/*.jpg))))) \
         $(addprefix rgb/font/led_90/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/font/led_90/*.jpg))))) \
         $(addprefix rgb/, $(notdir  $(addsuffix .rgb, $(basename $(wildcard jpg/*.jpg)))))
@@ -167,6 +172,7 @@ sdcard: dirs tools_dep images sounds video_misc video_dabomb video_civildef
 	-cp jpg/bomb.gif $(STAGING_DIR)/images
 	-cp rgb/icons/*.rgb $(STAGING_DIR)/icons
 	-cp rgb/flags/*.rgb $(STAGING_DIR)/flags
+	-cp rgb/doom/*.rgb $(STAGING_DIR)/doom
 	-cp rgb/font/led/*.rgb $(STAGING_DIR)/font/led
 	-cp rgb/font/led_90/*.rgb $(STAGING_DIR)/font/led_90
 	-cp ../../software/firmware/badge/build/badge.bin $(STAGING_DIR)
@@ -216,6 +222,7 @@ dirs:
 	-[ -d $(STAGING_DIR)/videos/dabomb ] || mkdir -p $(STAGING_DIR)/videos/dabomb
 	-[ -d $(STAGING_DIR)/videos/civildef ] || mkdir -p $(STAGING_DIR)/videos/civildef
 	-[ -d $(STAGING_DIR)/flags ] || mkdir -p $(STAGING_DIR)/flags
+	-[ -d $(STAGING_DIR)/doom ] || mkdir -p $(STAGING_DIR)/doom
 	-[ -d $(STAGING_DIR)/font/led ] || mkdir -p $(STAGING_DIR)/font/led
 	-[ -d $(STAGING_DIR)/font/led_90 ] || mkdir -p $(STAGING_DIR)/font/led_90
 	-[ -d $(STAGING_DIR)/stories ] || mkdir -p $(STAGING_DIR)/stories
@@ -223,6 +230,7 @@ dirs:
 	-[ -d rgb/icons ] || mkdir -p rgb/icons
 	-[ -d rgb/flags ] || mkdir -p rgb/flags
 	-[ -d rgb/game ] || mkdir -p rgb/game
+	-[ -d rgb/doom ] || mkdir -p rgb/doom
 	-[ -d rgb/font/led ] || mkdir -p rgb/font/led
 	-[ -d rgb/font/led_90 ] || mkdir -p rgb/font/led_90
 	-[ -d saves ] || mkdir -p saves
