@@ -211,22 +211,18 @@ static void nextLedPattern(uint8_t max_led_patterns) {
   userconfig *config = getConfig();
   config->led_pattern++;
   if (config->led_pattern >= max_led_patterns) config->led_pattern = 0;
-  ledSetPattern(config->led_pattern);
-
-  if (config->led_pattern == 0) {
+  if (config->led_pattern == 0)
     ledStop();
-  }
+  ledSetPattern(config->led_pattern);
 }
 
 static void prevLedPattern(uint8_t max_led_patterns) {
   userconfig *config = getConfig();
   config->led_pattern--;
   if (config->led_pattern == 255) config->led_pattern = max_led_patterns - 1;
-  ledSetPattern(config->led_pattern);
-
-  if (config->led_pattern == 0) {
+  if (config->led_pattern == 0)
     ledStop();
-  }
+  ledSetPattern(config->led_pattern);
 }
 
 static void prevLedBright() {

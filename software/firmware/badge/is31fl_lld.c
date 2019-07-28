@@ -55,6 +55,9 @@ uint8_t hal_i2c_read_reg_byte(uint8_t i2c_address, uint8_t reg) {
   uint8_t rxbuf;
   msg_t r;
 
+  if (led_current_func == 0)
+    return (0);
+
   rxbuf = 0xff;
 
   txbuf = reg;
@@ -76,6 +79,9 @@ bool hal_i2c_write_reg_byte(uint8_t i2c_address, uint8_t reg, uint8_t value) {
 #ifdef LED_VERBOSE
   i2cflags_t e;
 #endif
+
+  if (led_current_func == 0)
+    return (false);
 
   txbuf[0] = reg;
   txbuf[1] = value;
