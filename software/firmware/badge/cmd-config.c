@@ -102,7 +102,6 @@ static void cmd_config_set(BaseSequentialStream *chp, int argc, char *argv[]) {
       config->sound_enabled = 0;
     }
 
-    strncpy(config->name, argv[2], CONFIG_NAME_MAXLEN);
     printf ("Sound set to %d.\n", config->sound_enabled);
     return;
   }
