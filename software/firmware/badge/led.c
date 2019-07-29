@@ -78,7 +78,7 @@ static uint8_t ledExitRequest = 0;
 uint8_t ledsOff = 1;
 static bool leds_init_ok = false;
 // the current function that updates the LEDs. Override with ledSetFunction();
-uint8_t led_current_func = 1;
+static uint8_t led_current_func = 1;
 
 // if we're random, our last function was this, which always starts at 2.
 static uint8_t led_current_random = 2;
@@ -250,11 +250,6 @@ color_rgb_t util_hsv_to_rgb(float H, float S, float V) {
 }
 
 bool led_init() {
-  userconfig * config;
-  config = getConfig ();
-
-  led_current_func = config->led_pattern;
-
   // on exit, the chip is now in the PWM page
   for (uint8_t i = 0; i < ISSI_ADDR_MAX + 2; i++) {
     led_memory[i] = 0;
@@ -268,46 +263,31 @@ bool led_init() {
 }
 
 void led_clear() {
-  uint8_t i;
-
-  /* Clear means clear everything, including the eye. */
-
-  for (i = 0; i < LED_COUNT_INTERNAL; i++)
-      led_set (i, 0, 0, 0);
-
+  led_set_all(0, 0, 0);
   led_show();
 }
 
 void ledSetPattern(uint8_t patt) {
+  led_current_func = patt;
 
-  if (patt != 0)
-      led_current_func = patt;
-
-  if (leds_init_ok == false && patt != 0)
-     led_init();
+  if (leds_init_ok == false)
+    return;
 
   /* If pattern is 0 (off), turn off all LEDs */
 
   if (patt == 0)
     led_clear();
 
-  if (patt == 0)
-      led_current_func = patt;
-
-  if (pThread == NULL) {
+  if (ledExitRequest == 1) {
     // our thread is stopped.
     ledStart();
   }
-
 }
 
 void
 ledDraw (short amp)
 {
 	int i;
-
-	if (led_current_func == 0)
-		return;
 
 	if (amp > LED_COUNT_INTERNAL)
 		amp = LED_COUNT_INTERNAL;
@@ -464,7 +444,7 @@ led_reinit (void)
 void led_show() {
   msg_t r;
 
-  if (leds_init_ok == false || led_current_func == 0)
+  if (leds_init_ok == false)
     return;
 
   i2cAcquireBus(&I2CD2);
@@ -725,7 +705,6 @@ uint8_t ledStop(void) {
   chThdWait(pThread);
   pThread = NULL;
 
-  led_clear ();
   return ledsOff;
 }
 
