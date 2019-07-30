@@ -20,6 +20,11 @@
  * 2) unlock it via radio using a phone, with the access password
  * 3) unlock it using the special app-radiounlock app (which also
  * uses the access password)
+ *
+ * The UL_LEDSDISABLE unlock can be activated by holding down joystick A
+ * during reset. This turns off all LED support. (Repeating the process
+ * toggles it back on again.) This is a workaround for a problem with
+ * SAOs that use the same I2C address as the ISSI LED controller chip.
  */
 
 #define UL_PLUSDEF      ( 1 << 0 )  // +10% DEF - ok
@@ -33,7 +38,8 @@
 #define UL_SHIP2        ( 1 << 8 )  // Unlocks additional ship #2 - ok
 #define UL_GOD          ( 1 << 9 )  // GOD_MODE - not done
 #define UL_PINGDUMP     ( 1 << 10 ) // NETWORK DEBUG (BLACK_BADGE only)
-#define UL_BLACKBADGE	  ( 1 << 11 ) // black badge
+#define UL_BLACKBADGE   ( 1 << 11 ) // black badge
+#define UL_LEDSDISABLE  ( 1 << 31 ) // Disable LEDs
 
 /* we store our codes in the UICR instead of in files */
 /* check the provisioning script to change the codes. */

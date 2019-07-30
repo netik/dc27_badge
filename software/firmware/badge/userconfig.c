@@ -16,6 +16,9 @@
 #include "rand.h"
 #include "vector.h"
 
+#include "gfx.h"
+extern void tonePlay (GWidgetObject * w, uint8_t b, uint32_t duration);
+
 const char *rankname[] = {
   "Ensign",      // 0
   "Lt. Junior",  // 1
@@ -236,6 +239,8 @@ static void init_config(userconfig *config) {
 void configStart(void) {
   userconfig *config = (userconfig *)CONFIG_FLASH_ADDR;
   uint8_t wipeconfig = false;
+  uint8_t toggleleds = false;
+
   osalMutexObjectInit(&config_mutex);
 
   /* if the user is holding down BOTH SELECTS, then we will wipe the configuration */
@@ -253,12 +258,37 @@ void configStart(void) {
 #endif
     printf("FACTORY RESET requested\n");
 
-    /* play a tone to tell them we're resetting */
-    i2sPlay("sound/ping.snd");
-    i2sWait ();
+    /*
+     * Play a tone to tell them we're resetting. We need to do
+     * this using the touch tone generator because we haven't
+     * mounted the SD card yet (and that's where the sound
+     * effects are.
+     */
+
+    chThdSleepMilliseconds(50);
+    tonePlay (NULL, 0, 30);
+    chThdSleepMilliseconds(10);
+    tonePlay (NULL, 0, 30);
+    chThdSleepMilliseconds(10);
+    tonePlay (NULL, 0, 30);
 
     wipeconfig = true;
   }
+
+#ifdef ENABLE_JOYPAD
+  if ((palReadPad (BUTTON_A_ENTER_PORT, BUTTON_A_ENTER_PIN) == 0) &&
+      (palReadPad (BUTTON_B_ENTER_PORT, BUTTON_B_ENTER_PIN) == 1)) {
+
+    chThdSleepMilliseconds(50);
+    tonePlay (NULL, 1, 30);
+    chThdSleepMilliseconds(10);
+    tonePlay (NULL, 2, 30);
+    chThdSleepMilliseconds(10);
+    tonePlay (NULL, 3, 30);
+
+    toggleleds = true;
+  }
+#endif
 
   if ( (config->signature != CONFIG_SIGNATURE) ||
    (config->end_signature != CONFIG_END_SIGNATURE) || (wipeconfig)) {
@@ -284,6 +314,14 @@ void configStart(void) {
         config_cache.in_combat = 0;
         configSave(&config_cache);
     }
+  }
+
+  if (toggleleds == true) {
+    if ((config->unlocks & UL_LEDSDISABLE) == 0)
+      config_cache.unlocks |= UL_LEDSDISABLE;
+    else
+      config_cache.unlocks &= ~UL_LEDSDISABLE;
+    configSave (&config_cache);
   }
 
   return;

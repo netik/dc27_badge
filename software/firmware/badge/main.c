@@ -38,6 +38,7 @@
 #include "splash.h"
 #include "led.h"
 #include "images.h"
+#include "unlocks.h"
 
 // Drop dead if the SD Card isn't inserted.
 #define HALT_ON_SDFAIL 1
@@ -435,13 +436,17 @@ int main(void)
      * done once the flash driver is initialized.
      */
     configStart();
+    config = getConfig ();
 
+    if (config->unlocks & UL_LEDSDISABLE) {
+        printf ("LEDs disabled by user - "
+            "press joystick A and reset to re-enable.\n");
     /* start the LEDs */
-    if (led_init()) {
-        printf("I2C LED controller found.\r\n");
+    } else if (led_init()) {
+        printf ("I2C LED controller found.\r\n");
         ledStart();
     } else {
-        printf("I2C LED controller not found. No Bling ;(\r\n");
+        printf ("I2C LED controller not found. No Bling ;(\r\n");
     }
 
     /* Enable display and touch panel */
@@ -502,8 +507,6 @@ int main(void)
 
     /* Enable bluetooth subsystem */
     bleStart ();
-
-    config = getConfig ();
 
     /* Set current game board position */
     bleGapUpdateState (config->last_x,
