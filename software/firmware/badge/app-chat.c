@@ -313,6 +313,16 @@ chat_event (OrchardAppContext *context,
 	ui = context->instance->ui;
 	uiContext = context->instance->uicontext;
 
+	if (event->type == timerEvent) {
+		screen_alert_draw (FALSE, "Connection timed out!");
+		chThdSleepMilliseconds (1000);
+		ui = context->instance->ui;
+		if (ui != NULL)
+			ui->exit (context);
+		orchardAppExit ();
+		return;
+	}
+
  	if (event->type == keyEvent && event->key.flags == keyPress) {
 		if (ui == getUiByName ("keyboard")) {
 			orchardAppExit ();
@@ -374,6 +384,8 @@ chat_event (OrchardAppContext *context,
 				p->len = sizeof(p->uuid);
 				bleGattcRead (ble_gatts_ides_handle,
 				     p->uuid, &p->len, FALSE);
+				/* Wait a few seconds for response */
+				orchardAppTimer (context, 10000000, FALSE);
 			}
 			return;
 		}
@@ -401,7 +413,7 @@ chat_event (OrchardAppContext *context,
 			p->uuid[0] = BLE_IDES_CHATREQ_REQUEST;
 			bleGattcWrite (ch_handle.value_handle,
 			    p->uuid, 1, FALSE);
-
+#ifdef notdef
 			if (ble_gap_role == BLE_GAP_ROLE_CENTRAL) {
 				if (bleL2CapConnect (BLE_IDES_CHAT_PSM) !=
 				    NRF_SUCCESS) {
@@ -417,12 +429,15 @@ chat_event (OrchardAppContext *context,
 				    "L2CAP Connecting...");
 			} else
 				screen_alert_draw (FALSE, "Wrong role?");
+#endif
 
 			return;
 		}
 
 		if (radio->type == l2capConnectEvent) {
 			screen_alert_draw (FALSE, "Channel open!");
+			/* Cancel timeout timer */
+			orchardAppTimer (context, 0, FALSE);
 			chThdSleepMilliseconds (1000);
 			p->cid = evt->evt.l2cap_evt.local_cid;
 			chat_session_start (context);
@@ -438,8 +453,23 @@ chat_event (OrchardAppContext *context,
 					    "Chat request declined!");
 					i2sPlay ("sound/wilhelm.snd");
 					chThdSleepMilliseconds (1000);
-				} else
-					return;
+				} else {
+					if (bleL2CapConnect
+					    (BLE_IDES_CHAT_PSM) !=
+						    NRF_SUCCESS) {
+						screen_alert_draw (FALSE,
+						  "L2CAP Connection refused!");
+						chThdSleepMilliseconds (1000);
+						ui = context->instance->ui;
+						if (ui != NULL)
+							ui->exit (context);
+						orchardAppExit ();
+					} else {
+						screen_alert_draw (FALSE,
+						    "L2CAP Connecting...");
+						return;
+					}
+				}
 			}
 			return;
 		}

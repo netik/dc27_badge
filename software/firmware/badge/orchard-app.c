@@ -448,6 +448,8 @@ static THD_FUNCTION(orchard_app_thread, arg) {
   evtTableUnhook(orchard_app_events, orchard_app_radio, radio_event);
   evtTableUnhook(orchard_app_events, orchard_app_key, key_event);
 
+  flush_radio_queue ();
+
   /* Atomically broadcasting the event source and terminating the thread,
      there is not a chSysUnlock() because the thread terminates upon return.*/
 
