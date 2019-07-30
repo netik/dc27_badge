@@ -352,6 +352,8 @@ geiger_event (OrchardAppContext *context,
 	if (event->type == ugfxEvent) {
 		pe = event->ugfx.pEvent;
 		if (pe->type == GEVENT_GWIN_BUTTON) {
+			while (p->rxAction)
+				chThdSleep (1);
 			p->rxAction = RX_ACTION_PLAY_CLICK;
 			be = (GEventGWinButton *)pe;
 			if (be->gwin == p->ghExit) {
@@ -395,6 +397,8 @@ geiger_event (OrchardAppContext *context,
  		    event->key.code == keyBDown ||
  		    event->key.code == keyALeft ||
  		    event->key.code == keyBLeft) {
+			while (p->rxAction)
+				chThdSleep (1);
 			p->rxAction = RX_ACTION_PLAY_CLICK;
 			if (p->rxThreshold > 0 ) {
 				p->rxThreshold--;
@@ -425,10 +429,11 @@ geiger_exit (OrchardAppContext *context)
 
 	p = context->priv;
 
+	while (p->rxAction)
+		chThdSleep (1);
+
 	p->rxAction = RX_ACTION_EXIT;
 	chThdWait (p->pThread);
-
-	i2sPlay ("/sound/click.snd");
 
 	config = getConfig();
 	ledSetPattern (config->led_pattern);
